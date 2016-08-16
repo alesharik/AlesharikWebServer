@@ -40,7 +40,7 @@ public class MainHttpHandler extends org.glassfish.grizzly.http.server.HttpHandl
         String uri = request.getDecodedRequestURI();
         Logger.log(uri);
         String file = uri.equals("/") ? "/index.html" : uri;
-        if(fileManager.exists(file)) {
+        if(fileManager.exists(file, true)) {
             String type = MIMETypes.findType(file.substring(file.contains(".") ? file.lastIndexOf('.') : 0));
             byte[] bytes = fileManager.readFile(file);
             response.setContentType((type == null) ? "text/plain" : type);

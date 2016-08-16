@@ -1,7 +1,10 @@
 package com.alesharik.webserver.main;
 
+import com.alesharik.webserver.api.CompressionUtils;
 import com.alesharik.webserver.exceptions.FileFoundException;
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.Prefix;
+import one.nio.mem.OutOfMemoryException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,13 +22,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.zip.DataFormatException;
 
-//TODO test check
+@Prefix("[FileManager]")
 public class FileManager {
+    /**
+     * 2 Gb
+     */
+    private static final long DEFAULT_MAX_FILE_SIZE = 2147483648L;
 
-    private static final String PREFIX = "[FileManager]";
+    private final long maxFileSize;
     /**
      * This node contains root folder
      */
@@ -45,17 +52,41 @@ public class FileManager {
     private boolean disableIgnoringFiles = false;
     private boolean hiddenFilesIgnored = false;
     private boolean isLogsIgnored = true;
+    private boolean isCompressionEnabled = false;
+
+    private int compressionLevel = -1;
 
     public FileManager(File rootFolder, FileHoldingMode mode) {
         this.rootFolder = rootFolder;
         this.holdingMode = mode;
+        this.maxFileSize = DEFAULT_MAX_FILE_SIZE;
+        check();
         init();
     }
 
     public FileManager(File rootFolder, FileHoldingMode mode, FileHoldingParams... params) {
         this.rootFolder = rootFolder;
         this.holdingMode = mode;
+        this.maxFileSize = DEFAULT_MAX_FILE_SIZE;
         parseParameters(params);
+        check();
+        init();
+    }
+
+    public FileManager(File rootFolder, FileHoldingMode mode, long maxFileSize) {
+        this.rootFolder = rootFolder;
+        this.holdingMode = mode;
+        this.maxFileSize = maxFileSize;
+        check();
+        init();
+    }
+
+    public FileManager(File rootFolder, FileHoldingMode mode, long maxFileSize, FileHoldingParams... params) {
+        this.rootFolder = rootFolder;
+        this.holdingMode = mode;
+        this.maxFileSize = maxFileSize;
+        parseParameters(params);
+        check();
         init();
     }
 
@@ -65,16 +96,24 @@ public class FileManager {
                 this.logsFolder = new File(rootFolder + "/logs");
             }
             this.mainNode = readFolder(this.rootFolder);
-            Logger.log(PREFIX, "FileManager successfully initialized");
+            Logger.log("FileManager successfully initialized");
 
             if(holdingMode == FileHoldingMode.HOLD_AND_CHECK) {
                 fileChecker = new FileChecker();
                 fileChecker.start();
             }
         } catch (FileFoundException | FileNotFoundException e) {
-            Logger.log(PREFIX, e);
+            Logger.log(e);
             dumpState();
             throw new RuntimeException("Can't initialize FileManager!");
+        }
+    }
+
+    private void check() {
+        if(holdingMode != FileHoldingMode.NO_HOLD) {
+            if(this.rootFolder.length() > (Runtime.getRuntime().freeMemory() - 100 * 1024 * 1024)) {
+                throw new OutOfMemoryException("Can't allocate memory on file holding!");
+            }
         }
     }
 
@@ -90,10 +129,19 @@ public class FileManager {
                 case DISABLE_IGNORE_LOGS_FOLDER:
                     isLogsIgnored = false;
                     break;
+                case ENABLE_COMPRESSION:
+                    isCompressionEnabled = true;
+                    if(fileHoldingParameter.getValue() != null) {
+                        compressionLevel = ((Integer) fileHoldingParameter.getValue());
+                    }
+                    break;
             }
         });
     }
 
+    /**
+     * If you use HOLD_AND_CHECK mode, please, on program shutdown execute this method!
+     */
     public void shutdown() {
         if(holdingMode == FileHoldingMode.HOLD_AND_CHECK) {
             fileChecker.shutdown();
@@ -109,10 +157,15 @@ public class FileManager {
         }
         String[] parts = file.getPath().substring(rootFolder.getPath().length() + 1).split("/");
         FileNode node = findFileNodeFromParts(parts);
-        FileHolder holder = new FileHolder(file, file.getName());
-        if(!(holdingMode == FileHoldingMode.NO_HOLD)) {
-            holder.read();
+        FileHolder holder;
+        if(file.length() > maxFileSize || holdingMode == FileHoldingMode.NO_HOLD) {
+            Logger.log("File " + file + " is too large!");
+            holder = new FileHolder(file, file.getName(), FileHoldingMode.NO_HOLD);
+        } else {
+            holder = new FileHolder(file, file.getName(), holdingMode);
         }
+        holder.check();
+        holder.setCompression(isCompressionEnabled, compressionLevel);
         node.files.put(file.getName(), holder);
     }
 
@@ -137,34 +190,21 @@ public class FileManager {
      * @param file dynamical path to file
      */
     public void reload(String file) throws FileNotFoundException, FileFoundException {
-        if(file.contains(".")) {
-            if(holdingMode != FileHoldingMode.NO_HOLD) {
-                getFileFromPath(file).read();
-            }
-        } else {
-            String[] parts = file.split("/");
-            FileNode folder = findFileNodeFromParts(parts);
-            FileNode newFolder = readFolder(new File(rootFolder + (file.startsWith("/") ? file : "/" + file)));
-            folder.nodes = newFolder.nodes;
-            folder.files = newFolder.files;
-            if(!folder.name.equals(newFolder.name)) {
-                throw new RuntimeException("This is never happens!");
-            }
-        }
+        getFileFromPath(file).check();
     }
 
     /**
      * Delete file/folder from holding. If need to delete folder from holding, this delete file and all contents form
      * holding
      */
-    public void removeFileFromHold(String file) {
+    public void removeFileFromHold(String file, boolean isFile) {
         if(file.startsWith("/")) {
             file = file.substring(1);
         }
         String[] parts = file.split("/");
         FileNode folder = findFileNodeFromParts(parts);
         String fileName = parts[parts.length - 1];
-        if(fileName.contains(".")) {
+        if(isFile) {
             folder.files.remove(fileName);
         } else {
             folder.nodes.remove(fileName);
@@ -175,31 +215,22 @@ public class FileManager {
      * Read file and return it's content. If file was not found return byte[0]
      */
     public byte[] readFile(String file) {
-        if(holdingMode == FileHoldingMode.NO_HOLD) {
-            return getFileFromPath(file).getFileContentFromRealFile();
-        } else {
-            return getFileFromPath(file).data;
-        }
+        return getFileFromPath(file).read();
     }
 
     /**
      * Write/replace content in file
      */
     public void writeToFile(String file, byte[] data) {
-        if(holdingMode == FileHoldingMode.NO_HOLD) {
-            getFileFromPath(file).writeToRealFile(data);
-        } else {
-            FileHolder fileHolder = getFileFromPath(file);
-            fileHolder.data = data;
-            fileHolder.write();
-        }
+        FileHolder fileHolder = getFileFromPath(file);
+        fileHolder.write(data);
     }
 
     /**
      * Return true if file/folder exists in holding
      */
-    public boolean exists(String file) {
-        if(file.contains(".")) {
+    public boolean exists(String file, boolean isFile) {
+        if(isFile) {
             return getFileFromPath(file) != null;
         } else {
             if(file.startsWith("/")) {
@@ -233,14 +264,17 @@ public class FileManager {
     /**
      * Delete file/folder form hold and from disk
      */
-    public void realDelete(String file) {
-        if(file.contains(".")) {
+    public void realDelete(String file, boolean isFile) {
+        if(isFile) {
             FileHolder holder = getFileFromPath(file);
-            holder.file.delete();
-            removeFileFromHold(file);
+            if(holder.file.delete()) {
+                removeFileFromHold(file, true);
+            }
         } else {
-            new File(rootFolder + (file.contains("/") ? file : "/" + file)).delete();
-            removeFileFromHold(file);
+            if(!new File(rootFolder + (file.contains("/") ? file : "/" + file)).delete()) {
+                Logger.log("Can't delete file " + file);
+            }
+            removeFileFromHold(file, false);
         }
     }
 
@@ -260,12 +294,12 @@ public class FileManager {
     }
 
     public void dumpState() {
-        Logger.log(PREFIX, "Root folder: " + rootFolder);
-        Logger.log(PREFIX, "Logs folder: " + logsFolder);
-        Logger.log(PREFIX, "Holding mode: " + holdingMode);
-        Logger.log(PREFIX, "disableIgnoringFiles=" + disableIgnoringFiles);
-        Logger.log(PREFIX, "hiddenFilesIgnored=" + hiddenFilesIgnored);
-        Logger.log(PREFIX, "ignoreLogsFolder=" + isLogsIgnored);
+        Logger.log("Root folder: " + rootFolder);
+        Logger.log("Logs folder: " + logsFolder);
+        Logger.log("Holding mode: " + holdingMode);
+        Logger.log("disableIgnoringFiles=" + disableIgnoringFiles);
+        Logger.log("hiddenFilesIgnored=" + hiddenFilesIgnored);
+        Logger.log("ignoreLogsFolder=" + isLogsIgnored);
     }
 
     private FileNode readFolder(File folder) throws FileFoundException, FileNotFoundException {
@@ -277,7 +311,8 @@ public class FileManager {
             return new FileNode();
         }
 
-        if(folder.listFiles() == null) {
+        final File[] listFiles = folder.listFiles();
+        if(listFiles == null) {
             return new FileNode(folder.getName());
         }
 
@@ -303,17 +338,22 @@ public class FileManager {
             }
         }
 
-        List<File> folderContent = Arrays.asList(folder.listFiles()).stream().collect(Collectors.toCollection(ArrayList::new));
+        List<File> folderContent = Arrays.stream(listFiles).collect(Collectors.toCollection(ArrayList::new));
         HashMap<String, FileHolder> files = new HashMap<>();
         folderContent.parallelStream()
                 .filter(File::isFile)
                 .filter(file -> !ignoredFiles.contains(file))
                 .filter(file -> !hiddenFilesIgnored || !file.isHidden())
                 .forEach(file -> {
-                    FileHolder holder = new FileHolder(file, file.getName());
-                    if(holdingMode != FileHoldingMode.NO_HOLD) {
-                        holder.read();
+                    FileHolder holder;
+                    if(file.length() > maxFileSize || holdingMode == FileHoldingMode.NO_HOLD) {
+                        Logger.log("File " + file + " is too large!");
+                        holder = new FileHolder(file, file.getName(), FileHoldingMode.NO_HOLD);
+                    } else {
+                        holder = new FileHolder(file, file.getName(), holdingMode);
                     }
+                    holder.check();
+                    holder.setCompression(isCompressionEnabled, compressionLevel);
                     files.put(file.getName(), holder);
                 });
         HashMap<String, FileNode> folders = new HashMap<>();
@@ -326,7 +366,7 @@ public class FileManager {
                         FileNode node = readFolder(file);
                         folders.put(file.getName(), node);
                     } catch (FileNotFoundException | FileFoundException e) {
-                        Logger.log(PREFIX, "Can't read folder " + file + " because " + e.getLocalizedMessage());
+                        Logger.log("Can't read folder " + file + " because " + e.getLocalizedMessage());
                         Logger.log(e);
                     }
                 });
@@ -344,7 +384,7 @@ public class FileManager {
             String fileName = parts[parts.length - 1];
             return folder.files.get(fileName);
         } catch (NullPointerException e) {
-            return null;
+            return FileHolder.EMPTY_FILE_HOLDER;
         }
     }
 
@@ -358,6 +398,7 @@ public class FileManager {
         return node;
     }
 
+    @Prefix("[FileChecker]")
     private class FileChecker extends Thread {
         private boolean isRunning = true;
 
@@ -366,50 +407,62 @@ public class FileManager {
         }
 
         public void run() {
-            WatchService watcher = null;
-            try {
-                watcher = FileSystems.getDefault().newWatchService();
-                rootFolder.toPath().register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
-            } catch (IOException e) {
-                Logger.log(e);
-            }
-            try {
+            try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
+                rootFolder.toPath().register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
+                        StandardWatchEventKinds.ENTRY_DELETE,
+                        StandardWatchEventKinds.ENTRY_MODIFY);
+
                 while(isRunning) {
-                    final WatchKey key = watcher.poll(10, TimeUnit.SECONDS);
-                    if(key != null) {
-                        key.pollEvents().forEach(watchEvent -> {
-                            try {
-                                final WatchEvent.Kind<?> kind = watchEvent.kind();
-                                File realFile = new File(FileManager.this.rootFolder + "/" + ((WatchEvent<Path>) watchEvent).context().toFile().getPath());
-                                File fileAddress = new File("/" + ((WatchEvent<Path>) watchEvent).context().toFile().getPath());
-                                if(kind.equals(StandardWatchEventKinds.ENTRY_CREATE)) {
-                                    if(realFile.isDirectory()) {
-                                        FileManager.this.addFolderWithFiles(realFile);
-                                    } else {
-                                        FileManager.this.addFile(realFile);
-                                    }
-                                } else if(kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
-                                    FileManager.this.reload(realFile.getPath().substring(FileManager.this.rootFolder.getPath().length()));
-                                } else if(kind.equals(StandardWatchEventKinds.ENTRY_DELETE)) {
-                                    FileManager.this.removeFileFromHold(realFile.getPath().substring(FileManager.this.rootFolder.getPath().length()));
-                                }
-                            } catch (FileNotFoundException | FileFoundException e) {
-                                Logger.log(e);
-                            }
-                        });
-                    }
+                    mainLoop(watcher);
                 }
-            } catch (InterruptedException e) {
-                Logger.log(e);
-            }
-            try {
+
                 watcher.close();
-            } catch (IOException e) {
+            } catch (InterruptedException | IOException e) {
                 Logger.log(e);
             }
         }
 
+        private void mainLoop(WatchService watcher) throws InterruptedException {
+            final WatchKey key = watcher.take();
+            if(key != null) {
+                processWatchKey(key);
+            }
+        }
+
+        private void processWatchKey(WatchKey key) {
+            key.pollEvents().forEach(watchEvent -> {
+                try {
+                    final WatchEvent.Kind<?> kind = watchEvent.kind();
+                    if(kind == StandardWatchEventKinds.OVERFLOW) {
+                        Logger.log("Oops! We have a problem! Watcher is overflowed!");
+                        return;
+                    }
+
+                    File realFile = new File(FileManager.this.rootFolder + "/" + ((WatchEvent<Path>) watchEvent).context().toFile().getPath());
+                    if(kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                        if(realFile.isDirectory()) {
+                            FileManager.this.addFolderWithFiles(realFile);
+                        } else {
+                            FileManager.this.addFile(realFile);
+                        }
+                    } else if(kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                        FileManager.this.reload(realFile.getPath().substring(FileManager.this.rootFolder.getPath().length()));
+                    } else if(kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                        FileManager.this.removeFileFromHold(realFile.getPath().substring(FileManager.this.rootFolder.getPath().length()), realFile.isFile());
+                    }
+                } catch (FileNotFoundException | FileFoundException e) {
+                    Logger.log(e);
+                }
+            });
+
+            key.reset();
+            if(!key.isValid()) {
+                shutdown();
+            }
+        }
+
         public void shutdown() {
+            Logger.log("Shutting down FileChecker");
             this.isRunning = false;
         }
     }
@@ -476,43 +529,61 @@ public class FileManager {
      * This class hold file and it's data
      */
     private static class FileHolder {
-        /**
-         * Address of hold file
-         */
-        public File file;
-        /**
-         * Data of hold file
-         */
-        public byte[] data;
-        /**
-         * Name of real file
-         */
-        public String name;
+        public static final FileHolder EMPTY_FILE_HOLDER = new FileHolder(new File(""), "", FileHoldingMode.HOLD);
 
-        public FileHolder(File file, String name) {
+        private final FileHoldingMode mode;
+        public final File file;
+        public final String name;
+
+        public byte[] data = new byte[0];
+
+        private boolean isCompressionEnabled = false;
+        private int compressionLevel;
+
+        public FileHolder(File file, String name, FileHoldingMode mode) {
             this.file = file;
             this.name = name;
+            this.mode = mode;
+        }
+
+        public void setCompression(boolean enabled, int level) {
+            this.isCompressionEnabled = enabled;
+            this.compressionLevel = level;
         }
 
         /**
          * Read data from file
          */
-        public void read() {
+        public byte[] read() {
             try {
-                this.data = Files.readAllBytes(file.toPath());
-            } catch (IOException e) {
+                if(mode == FileHoldingMode.NO_HOLD) {
+                    return Files.readAllBytes(file.toPath());
+                } else if(isCompressionEnabled) {
+                    return CompressionUtils.decompress(data);
+                } else {
+                    return data;
+                }
+            } catch (IOException | DataFormatException e) {
                 Logger.log("Error in reading file " + file);
                 Logger.log(e);
             } catch (SecurityException e) {
                 Logger.log("Can't read file " + file + " because " + e.getLocalizedMessage());
             }
+            return new byte[0];
         }
 
         /**
          * Write data to file
          */
-        public void write() {
+        public void write(byte[] data) {
             try {
+                if(mode != FileHoldingMode.NO_HOLD) {
+                    if(isCompressionEnabled) {
+                        this.data = CompressionUtils.compress(data, compressionLevel);
+                    } else {
+                        this.data = data;
+                    }
+                }
                 Files.write(file.toPath(), data);
             } catch (IOException e) {
                 Logger.log("Error in writing file " + file);
@@ -528,28 +599,21 @@ public class FileManager {
             return file.exists();
         }
 
-        /**
-         * Read real file and return its content
-         */
-        public byte[] getFileContentFromRealFile() {
-            try {
-                return Files.readAllBytes(file.toPath());
-            } catch (IOException e) {
-                Logger.log("Error in reading file " + file);
-                Logger.log(e);
-            } catch (SecurityException e) {
-                Logger.log("Can't read file " + file + " because " + e.getLocalizedMessage());
-            }
-            return new byte[0];
-        }
-
-        public void writeToRealFile(byte[] data) {
-            try {
-                Files.write(file.toPath(), data);
-            } catch (IOException e) {
-                Logger.log("Error in writing file " + file);
-            } catch (SecurityException e) {
-                Logger.log("Can't read file " + file + " because " + e.getLocalizedMessage());
+        public void check() {
+            if(mode != FileHoldingMode.NO_HOLD) {
+                try {
+                    if(isCompressionEnabled) {
+                        this.data = CompressionUtils.compress(Files.readAllBytes(file.toPath()), compressionLevel);
+                    } else {
+                        this.data = Files.readAllBytes(file.toPath());
+                        ;
+                    }
+                } catch (IOException e) {
+                    Logger.log("Error in reading file " + file);
+                    Logger.log(e);
+                } catch (SecurityException e) {
+                    Logger.log("Can't read file " + file + " because " + e.getLocalizedMessage());
+                }
             }
         }
 
@@ -577,7 +641,8 @@ public class FileManager {
         @Override
         public String toString() {
             return "FileHolder{" +
-                    "file=" + file +
+                    "mode=" + mode +
+                    ", file=" + file +
                     ", name='" + name + '\'' +
                     '}';
         }
@@ -614,6 +679,24 @@ public class FileManager {
         /**
          * Disable ignoring /logs
          */
-        DISABLE_IGNORE_LOGS_FOLDER
+        DISABLE_IGNORE_LOGS_FOLDER,
+        /**
+         * Enable file compression. Use value to set compression level. Value must be {@link Integer}!
+         */
+        ENABLE_COMPRESSION;
+
+        private Object value = null;
+
+        FileHoldingParams() {
+        }
+
+        public FileHoldingParams setValue(Object value) {
+            this.value = value;
+            return this;
+        }
+
+        public Object getValue() {
+            return value;
+        }
     }
 }

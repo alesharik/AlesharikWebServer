@@ -25,7 +25,7 @@ public final class AdvancedErrorPageGenerator implements ErrorPageGenerator {
 
     @Override
     public String generate(Request request, int status, String reasonPhrase, String description, Throwable exception) {
-        if(fileManager.exists("/errors/" + status + ".html")) {
+        if(fileManager.exists("/errors/" + status + ".html", true)) {
             String file = new String(fileManager.readFile("/errors/" + status + ".html"));
             String content = "";
             if(description != null && !description.isEmpty()) {

@@ -14,6 +14,7 @@ import com.alesharik.webserver.plugin.PluginManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.BaseAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
+import one.nio.mem.OutOfMemoryException;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -199,9 +200,17 @@ public final class ServerController {
 
     //TODO Set to hold and check
     private void initMainServer() {
-        mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
-                FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+        try {
+            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
+                    FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+                    FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+        } catch (OutOfMemoryException e) {
+            Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
+            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
+                    FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+                    FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+        }
+
         server = new WebServer(host, port, mainFileManager, this);
         Logger.log("Main server initialized");
     }
@@ -209,9 +218,17 @@ public final class ServerController {
     //TODO Set to hold and check
     private void initControlServer() throws ConfigurationException, IOException {
         checkServerDashboard();
-        this.mainFileManager = new FileManager(Main.SERVER_DASHBOARD,
-                FileManager.FileHoldingMode.NO_HOLD,
-                FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES);
+        try {
+            mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.HOLD_AND_CHECK,
+                    FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+                    FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+        } catch (OutOfMemoryException e) {
+            Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
+            mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.NO_HOLD,
+                    FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+                    FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+        }
+
         server = new ControlServer(host, port, mainFileManager, new AdminDataHolder(serverPassword));
         ((ControlServer) server).setupControlAccessManagerBuilder(controlAccessManagerBuilder);
         Logger.log("Control server initialized");

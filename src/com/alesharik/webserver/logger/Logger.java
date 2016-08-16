@@ -48,15 +48,13 @@ public class Logger {
     }
 
     public static void log(String prefix, Throwable throwable) {
-        LOGGER.log(Level.WARNING, prefix + ": " + throwable.getLocalizedMessage());
+        LOGGER.log(Level.WARNING, prefix + ": " + throwable.toString());
         Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> LOGGER.log(Level.WARNING, stackTraceElement.toString()));
     }
 
     //WARNING! Don't works in JDK9
     public static void log(String message) {
-        String prefix = null;
-        //            prefix = getPrefixFromClass(Class.forName(SharedSecrets.getJavaLangAccess().getStackTraceElement(new Exception(), 1).getClassName()));
-        prefix = getPrefixFromClass(new CallingClass().getCallingClasses()[2]);
+        String prefix = getPrefixFromClass(new CallingClass().getCallingClasses()[2]);
         if(prefix.isEmpty()) {
             log(getPrefixLocation(2), message);
         } else {

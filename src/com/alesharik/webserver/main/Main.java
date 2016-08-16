@@ -20,8 +20,9 @@ public class Main {
         try {
             initStructure();
             Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
-            controller = new ServerController();
-            controller.start();
+//            controller = new ServerController();
+//            controller.start();
+
 //            WebSocketController controller = new WebSocketController(new URI("ws://" + HOST + ":7000/serverControl"), "admin", "admin");
 //            controller.connect();
 //            Logger.log(controller.getComputerInfo());
@@ -53,7 +54,20 @@ public class Main {
 //        OldPluginManager pl = new OldPluginManager(ServerController.USER_DIR);
 //        pl.loadPlugins();
 //        pl.test();
-
+//        FileManager mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.HOLD_AND_CHECK,
+//                FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+//                FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER
+//                FileManager.FileHoldingParams.ENABLE_COMPRESSION.setValue(CompressionUtils.CompressLevel.BEST_COMPRESSION.getValue()));
+//        );
+//        new Thread(() -> {
+//            while(true) {
+//                try {
+//                    sleep(1);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }).start();
     }
 
     public static void shutdown() {
