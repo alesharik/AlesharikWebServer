@@ -3,7 +3,7 @@ package com.alesharik.webserver.api.server.dashboard;
 /**
  * This interface used for give plugins access to Dashboard web socket.
  */
-public interface DashboardServerWebsocketPlugin {
+public interface DashboardWebsocketPlugin {
     /**
      * Return unique name of this plugin.<br>
      * This name must be not null or empty!

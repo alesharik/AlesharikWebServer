@@ -9,10 +9,24 @@ import org.glassfish.grizzly.http.util.Base64Utils;
 
 import java.io.IOException;
 
-public class SerialRepository {
-    public static Object deserialize(String message) throws SerializerNotFoundException {
+/**
+ * This class used for serialize and deserialize classes using one-nio method
+ */
+public final class SerialRepository {
+    private SerialRepository() {
+    }
+
+    /**
+     * Deserialize string into class instance before serialization
+     *
+     * @param serialized base64 serialized {@link DataStream}
+     * @return class instance
+     * @throws SerializerNotFoundException throw if {@link Repository} has no serializer to deserialize string.
+     *                                     For deserialization you need to request serializer with specific uid. Exception contains needed uid.
+     */
+    public static Object deserialize(String serialized) throws SerializerNotFoundException {
         try {
-            DataStream stream = new DataStream(Base64Utils.decodeFast(message));
+            DataStream stream = new DataStream(Base64Utils.decodeFast(serialized));
             return stream.readObject();
         } catch (SerializerNotFoundException e) {
             throw new SerializerNotFoundException(e.getUid());
@@ -22,6 +36,11 @@ public class SerialRepository {
         return null;
     }
 
+    /**
+     * Serialize object
+     * @param object class instance ot serialize
+     * @return base64 encoded {@link DataStream} with object
+     */
     public static String serialize(Object object) {
         try {
             DataStream stream = new DataStream(256);
@@ -33,20 +52,32 @@ public class SerialRepository {
         return "";
     }
 
+    /**
+     * Serialize specific serializer for send to other server
+     * @param uid uid of serializer
+     * @return base64 encoded {@link DataStream} with serializer
+     * @throws SerializerNotFoundException throw if serializer not found
+     */
     public static String serializeSerializer(long uid) throws SerializerNotFoundException {
         try {
             DataStream dataStream = new DataStream(256);
             dataStream.writeObject(Repository.requestSerializer(uid));
-            return Base64Utils.encodeToString(dataStream.array(), false)
+            return Base64Utils.encodeToString(dataStream.array(), false);
         } catch (IOException e) {
             Logger.log(e);
         }
         return "";
     }
 
-    public static Serializer deserializeSerializer(String message) {
+    /**
+     * Deserialize serializer
+     *
+     * @param serialized base64 {@link DataStream} with serializer
+     * @return serializer instance
+     */
+    public static Serializer deserializeSerializer(String serialized) {
         try {
-            DataStream dataStream = new DataStream(Base64Utils.decodeFast(message));
+            DataStream dataStream = new DataStream(Base64Utils.decodeFast(serialized));
             return (Serializer) dataStream.readObject();
         } catch (ClassNotFoundException | IOException e) {
             Logger.log(e);
@@ -54,8 +85,13 @@ public class SerialRepository {
         return null;
     }
 
-    public static void addSerializedSeriaizer(String message) {
-        Serializer serializer = deserializeSerializer(message);
+    /**
+     * Deserialize and add serializer to {@link Repository}
+     *
+     * @param serialized base64 {@link DataStream} with serializer
+     */
+    public static void addSerializedSeriaizer(String serialized) {
+        Serializer serializer = deserializeSerializer(serialized);
         if(serializer != null) {
             Repository.provideSerializer(serializer);
         }

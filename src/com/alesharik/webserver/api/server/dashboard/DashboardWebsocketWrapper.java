@@ -7,9 +7,9 @@ import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketAp
  */
 public final class DashboardWebsocketWrapper {
     private final DashboardWebSocketApplication application;
-    private final DashboardServerWebsocketPlugin plugin;
+    private final DashboardWebsocketPlugin plugin;
 
-    public DashboardWebsocketWrapper(DashboardWebSocketApplication application, DashboardServerWebsocketPlugin plugin) {
+    public DashboardWebsocketWrapper(DashboardWebSocketApplication application, DashboardWebsocketPlugin plugin) {
         this.application = application;
         this.plugin = plugin;
     }

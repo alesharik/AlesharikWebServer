@@ -1,6 +1,6 @@
 package com.alesharik.webserver.control.websockets.dashboard;
 
-import com.alesharik.webserver.api.server.dashboard.DashboardServerWebsocketPlugin;
+import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketPlugin;
 import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketWrapper;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import org.glassfish.grizzly.http.HttpRequestPacket;
@@ -71,12 +71,12 @@ public final class DashboardWebSocketApplication extends WebSocketApplication {
     }
 
     /**
-     * Register new {@link DashboardServerWebsocketPlugin}
+     * Register new {@link DashboardWebsocketPlugin}
      *
      * @param plugin plugin
      * @return {@link DashboardWebsocketWrapper}, used for works with websocket
      */
-    public DashboardWebsocketWrapper registerNewPlugin(DashboardServerWebsocketPlugin plugin) {
+    public DashboardWebsocketWrapper registerNewPlugin(DashboardWebsocketPlugin plugin) {
         DashboardWebsocketWrapper wrapper = new DashboardWebsocketWrapper(this, plugin);
         if(wrapper.getName().contains(":")) {
             throw new IllegalArgumentException("Name must contains no ':' character!");

@@ -9,6 +9,8 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.main.server.ControlServer;
 import com.alesharik.webserver.main.server.WebServer;
+import com.alesharik.webserver.plugin.PluginManager;
+import com.alesharik.webserver.plugin.PluginManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.BaseAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
@@ -51,6 +53,7 @@ public final class ServerController {
     private final ControlAccessManagerBuilder controlAccessManagerBuilder = new ControlAccessManagerBuilder();
     private final ServerAccessManagerBuilder serverAccessManagerBuilder = new ServerAccessManagerBuilder();
 
+    private PluginManager pluginManager;
     /**
      * Init all needed systems
      */
@@ -69,6 +72,15 @@ public final class ServerController {
             server.setupServerAccessManagerBuilder(serverAccessManagerBuilder);
             baseAccessManagerBuilder.setFileManager(mainFileManager);
             Logger.log("Server successfully initialized");
+
+            pluginManager = new PluginManagerBuilder()
+                    .setBaseAccessManager(baseAccessManagerBuilder.build())
+                    .setControlAccessManager(controlAccessManagerBuilder.build())
+                    .setServerAccessManager(serverAccessManagerBuilder.build())
+                    .build();
+            pluginManager.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
+            pluginManager.loadPlugins();
+            pluginManager.start();
         } catch (IOException | ConfigurationException e) {
             Logger.log(e);
         }
@@ -187,7 +199,7 @@ public final class ServerController {
 
     //TODO Set to hold and check
     private void initMainServer() {
-        mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
+        mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
                 FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
                 FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         server = new WebServer(host, port, mainFileManager, this);

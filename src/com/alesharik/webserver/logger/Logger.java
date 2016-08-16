@@ -55,11 +55,8 @@ public class Logger {
     //WARNING! Don't works in JDK9
     public static void log(String message) {
         String prefix = null;
-        try {
-            prefix = getPrefixFromClass(Class.forName(SharedSecrets.getJavaLangAccess().getStackTraceElement(new Exception(), 1).getClassName()));
-        } catch (ClassNotFoundException e) {
-            log(e);
-        }
+        //            prefix = getPrefixFromClass(Class.forName(SharedSecrets.getJavaLangAccess().getStackTraceElement(new Exception(), 1).getClassName()));
+        prefix = getPrefixFromClass(new CallingClass().getCallingClasses()[2]);
         if(prefix.isEmpty()) {
             log(getPrefixLocation(2), message);
         } else {
@@ -102,4 +99,16 @@ public class Logger {
             return "";
         }
     }
+
+    private static class CallingClass extends SecurityManager {
+        public static final CallingClass INSTANCE = new CallingClass();
+
+        private CallingClass() {
+        }
+
+        public Class[] getCallingClasses() {
+            return getClassContext();
+        }
+    }
 }
+

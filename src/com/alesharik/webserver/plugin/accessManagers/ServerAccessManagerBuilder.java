@@ -15,7 +15,10 @@ public class ServerAccessManagerBuilder {
         this.errorPageGenerator = errorPageGenerator;
     }
 
-    public void build() {
-
+    public ServerAccessManager build() {
+        ServerAccessManager manager = new ServerAccessManager();
+        manager.server = server;
+        manager.errorPageGenerator = errorPageGenerator;
+        return manager;
     }
 }

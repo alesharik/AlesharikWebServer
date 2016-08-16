@@ -8,4 +8,10 @@ public class BaseAccessManagerBuilder {
     public void setFileManager(FileManager fileManager) {
         this.fileManager = fileManager;
     }
+
+    public BaseAccessManager build() {
+        BaseAccessManager manager = new BaseAccessManager();
+        manager.fileManager = fileManager;
+        return manager;
+    }
 }

@@ -26,7 +26,7 @@ public class Main {
 //            controller.connect();
 //            Logger.log(controller.getComputerInfo());
             System.in.read();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Logger.log(e);
         }
 //        try {

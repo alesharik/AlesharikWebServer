@@ -9,25 +9,28 @@ public class PluginManagerBuilder {
     private ControlAccessManager controlAccessManager = null;
     private ServerAccessManager serverAccessManager = null;
 
-    public void setBaseAccessManager(BaseAccessManager baseAccessManager) {
+    public PluginManagerBuilder setBaseAccessManager(BaseAccessManager baseAccessManager) {
         if(baseAccessManager == null) {
             throw new IllegalArgumentException();
         }
         this.baseAccessManager = baseAccessManager;
+        return this;
     }
 
-    public void setControlAccessManager(ControlAccessManager controlAccessManager) {
+    public PluginManagerBuilder setControlAccessManager(ControlAccessManager controlAccessManager) {
         if(controlAccessManager == null) {
             throw new IllegalArgumentException();
         }
         this.controlAccessManager = controlAccessManager;
+        return this;
     }
 
-    public void setServerAccessManager(ServerAccessManager serverAccessManager) {
+    public PluginManagerBuilder setServerAccessManager(ServerAccessManager serverAccessManager) {
         if(serverAccessManager == null) {
             throw new IllegalArgumentException();
         }
         this.serverAccessManager = serverAccessManager;
+        return this;
     }
 
     public PluginManager build() {

@@ -1,5 +1,6 @@
 package com.alesharik.webserver.api;
 
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
@@ -16,7 +17,6 @@ import java.util.function.BiConsumer;
  * @param <V> object, what holds in this list
  */
 public class LiveArrayList<V> {
-
     /**
      * Default period between ticks
      */
@@ -87,6 +87,10 @@ public class LiveArrayList<V> {
 
     public Iterator<Map.Entry<V, Long>> iterator() {
         return liveArrayList.entrySet().iterator();
+    }
+
+    public Enumeration<V> keys() {
+        return liveArrayList.keys();
     }
 
     public void clear() {

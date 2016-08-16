@@ -3,7 +3,7 @@ package com.alesharik.webserver.plugin;
 import joptsimple.util.KeyValuePair;
 
 import java.util.Arrays;
-import java.util.jar.Attributes;
+import java.util.HashMap;
 
 /**
  * This class used as abstraction on meta file.<br>
@@ -16,15 +16,15 @@ class MetaFile {
     MetaFile() {
     }
 
-    private final Attributes attributes = new Attributes();
+    private final HashMap<String, String> attributes = new HashMap<>();
 
     public String getAttribute(String key) {
-        return (String) attributes.get(key);
+        return attributes.get(key);
     }
 
     public static MetaFile parse(String str) {
         MetaFile ret = new MetaFile();
-        String[] params = str.split("\r\n");
+        String[] params = str.replace("\r\n", "\n").split("\n");
         Arrays.stream(params).map(KeyValuePair::valueOf).forEach(keyValuePair -> ret.attributes.put(keyValuePair.key, keyValuePair.value));
         return ret;
     }
