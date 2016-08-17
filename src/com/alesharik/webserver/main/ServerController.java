@@ -201,7 +201,7 @@ public final class ServerController {
     //TODO Set to hold and check
     private void initMainServer() {
         try {
-            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
+            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
                     FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         } catch (OutOfMemoryException e) {
@@ -219,7 +219,7 @@ public final class ServerController {
     private void initControlServer() throws ConfigurationException, IOException {
         checkServerDashboard();
         try {
-            mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.HOLD_AND_CHECK,
+            mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.NO_HOLD,
                     FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         } catch (OutOfMemoryException e) {

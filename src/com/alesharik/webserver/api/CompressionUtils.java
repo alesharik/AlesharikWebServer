@@ -77,8 +77,9 @@ public final class CompressionUtils {
                     return BEST_SPEED;
                 case 9:
                     return BEST_COMPRESSION;
+                case -1:
                 default:
-                    return DEFAULT_COMPRESSION; //Includes -1
+                    return DEFAULT_COMPRESSION;
             }
         }
     }

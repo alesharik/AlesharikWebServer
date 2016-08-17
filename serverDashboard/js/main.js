@@ -72,7 +72,7 @@ function loadScreen() {
  * Init timer
  */
 new Timer();
-let dashboard;
+var dashboard;
 
 /**
  * Load all needed

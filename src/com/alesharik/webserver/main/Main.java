@@ -20,8 +20,8 @@ public class Main {
         try {
             initStructure();
             Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
-//            controller = new ServerController();
-//            controller.start();
+            controller = new ServerController();
+            controller.start();
 
 //            WebSocketController controller = new WebSocketController(new URI("ws://" + HOST + ":7000/serverControl"), "admin", "admin");
 //            controller.connect();

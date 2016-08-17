@@ -5,18 +5,22 @@ import com.alesharik.webserver.exceptions.FileFoundException;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import one.nio.mem.OutOfMemoryException;
+import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -111,7 +115,7 @@ public class FileManager {
 
     private void check() {
         if(holdingMode != FileHoldingMode.NO_HOLD) {
-            if(this.rootFolder.length() > (Runtime.getRuntime().freeMemory() - 100 * 1024 * 1024)) {
+            if(FileUtils.sizeOfDirectory(this.rootFolder) > Runtime.getRuntime().freeMemory()) {
                 throw new OutOfMemoryException("Can't allocate memory on file holding!");
             }
         }
@@ -151,6 +155,7 @@ public class FileManager {
     /**
      * Add file to holding if it exist
      */
+    //FIXME
     public void addFile(File file) throws FileNotFoundException {
         if(!file.exists() || !file.getPath().startsWith(rootFolder.getPath())) {
             throw new FileNotFoundException();
@@ -346,7 +351,7 @@ public class FileManager {
                 .filter(file -> !hiddenFilesIgnored || !file.isHidden())
                 .forEach(file -> {
                     FileHolder holder;
-                    if(file.length() > maxFileSize || holdingMode == FileHoldingMode.NO_HOLD) {
+                    if(file.length() > maxFileSize) {
                         Logger.log("File " + file + " is too large!");
                         holder = new FileHolder(file, file.getName(), FileHoldingMode.NO_HOLD);
                     } else {
@@ -408,9 +413,20 @@ public class FileManager {
 
         public void run() {
             try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
-                rootFolder.toPath().register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
-                        StandardWatchEventKinds.ENTRY_DELETE,
-                        StandardWatchEventKinds.ENTRY_MODIFY);
+                SimpleFileVisitor<Path> fileVisitor = new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        dir.register(
+                                watcher,
+                                StandardWatchEventKinds.ENTRY_CREATE,
+                                StandardWatchEventKinds.ENTRY_MODIFY,
+                                StandardWatchEventKinds.ENTRY_DELETE);
+
+                        return FileVisitResult.CONTINUE;
+                    }
+                };
+                Files.walkFileTree(rootFolder.toPath(), fileVisitor);
+
 
                 while(isRunning) {
                     mainLoop(watcher);
@@ -423,10 +439,7 @@ public class FileManager {
         }
 
         private void mainLoop(WatchService watcher) throws InterruptedException {
-            final WatchKey key = watcher.take();
-            if(key != null) {
-                processWatchKey(key);
-            }
+            processWatchKey(watcher.take());
         }
 
         private void processWatchKey(WatchKey key) {
