@@ -4,6 +4,7 @@ import com.alesharik.webserver.api.functions.TripleConsumer;
 import com.alesharik.webserver.api.functions.TripleFunction;
 import com.alesharik.webserver.api.misc.Triple;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,12 +18,15 @@ import java.util.function.Function;
  *
  * @see java.util.HashMap
  */
-public class TripleHashMap<K, V, A> {
+public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     private static final int DEFAULT_CAPACITY = 16;
 
     private static final int MAXIMUM_CAPACITY = 1 << 30;
 
     private Entry[] entries;
+    private int size;
+
+    private int sizeLimit = 32;
 
     public TripleHashMap() {
         entries = new Entry[DEFAULT_CAPACITY];
@@ -38,7 +42,7 @@ public class TripleHashMap<K, V, A> {
     }
 
     public int size() {
-        return entries.length;
+        return size;
     }
 
     public boolean isEmpty() {
@@ -88,6 +92,10 @@ public class TripleHashMap<K, V, A> {
     public boolean containsValue(Object value) {
         boolean contains = false;
         for(Entry entry : entries) {
+            if(entry == null) {
+                continue;
+            }
+
             Entry entry1 = entry;
             do {
                 if(entry1.getValue().equals(value)) {
@@ -105,6 +113,10 @@ public class TripleHashMap<K, V, A> {
     public boolean containsAddition(Object addition) {
         boolean contains = false;
         for(Entry entry : entries) {
+            if(entry == null) {
+                continue;
+            }
+
             Entry entry1 = entry;
             do {
                 if(entry1.getAddition().equals(addition)) {
@@ -122,9 +134,6 @@ public class TripleHashMap<K, V, A> {
     @SuppressWarnings("unchecked")
     public Object put(Object key, Object value, Object addition) {
         int bucket = getBucket(hash(key));
-        if(bucket > entries.length - 1) {
-            resize(bucket - entries.length - 1);
-        }
 
         Entry old = entries[bucket];
         if(old != null) {
@@ -153,13 +162,15 @@ public class TripleHashMap<K, V, A> {
             }
         }
 
+        size++;
+        if(size > sizeLimit) {
+            resize(sizeLimit << 1);
+        }
+
         return oldEntry;
     }
 
     public void putAll(Map m) {
-        if(m.size() > entries.length) {
-            resize(m.size() - entries.length);
-        }
         m.forEach((o, o2) -> put(o, o2, null));
     }
 
@@ -215,7 +226,12 @@ public class TripleHashMap<K, V, A> {
         } else if(prew == null && next == null) {
             entries[bucket] = null;
         }
-        return entry.getValue();
+        if(entry != null) {
+            size--;
+            return entry.getValue();
+        } else {
+            return null;
+        }
     }
 
     public void clear() {
@@ -365,6 +381,10 @@ public class TripleHashMap<K, V, A> {
 
     public void forEach(TripleConsumer action) {
         for(Entry entry : entries) {
+            if(entry == null) {
+                continue;
+            }
+
             Entry entry1 = entry;
             do {
                 action.accept(entry1.getKey(), entry1.getValue(), entry1.getAddition());
@@ -410,11 +430,18 @@ public class TripleHashMap<K, V, A> {
     }
 
     private void resize(int minCapacity) {
-        int newCapacity = powerOfTwoFor(entries.length + minCapacity);
+        int newCapacity = powerOfTwoFor(minCapacity);
+        sizeLimit = newCapacity << 1;
+        size = 0;
         Entry[] old = entries;
         entries = new Entry[newCapacity];
         for(Entry entry : old) {
-            put(entry.getKey(), entry.getValue(), entry.getAddition());
+            if(entry != null) {
+                Entry entry1 = entry;
+                do {
+                    put(entry1.getKey(), entry1.getValue(), entry1.getAddition());
+                } while((entry1 = entry1.next) != null);
+            }
         }
     }
 
@@ -441,16 +468,13 @@ public class TripleHashMap<K, V, A> {
 
 
     private static class Entry<K, V, A> extends Triple<K, V, A> {
-        private K key;
-        private V value;
-        private A addition;
         private int hash;
         private Entry next;
 
         public Entry(K key, V value, A addition, int hash) {
-            this.key = key;
-            this.value = value;
-            this.addition = addition;
+            this.a = key;
+            this.b = value;
+            this.c = addition;
             this.hash = hash;
         }
 
@@ -471,35 +495,35 @@ public class TripleHashMap<K, V, A> {
         }
 
         public K getKey() {
-            return key;
+            return a;
         }
 
         public void setKey(K key) {
-            this.key = key;
+            this.a = key;
         }
 
         public V getValue() {
-            return value;
+            return b;
         }
 
         public void setValue(V value) {
-            this.value = value;
+            this.b = value;
         }
 
         public A getAddition() {
-            return addition;
+            return c;
         }
 
         public void setAddition(A addition) {
-            this.addition = addition;
+            this.c = addition;
         }
 
         @Override
         public String toString() {
             return "Entry{" +
-                    "key=" + key +
-                    ", value=" + value +
-                    ", addition=" + addition +
+                    "key=" + a +
+                    ", value=" + b +
+                    ", addition=" + c +
                     '}';
         }
 
@@ -510,17 +534,17 @@ public class TripleHashMap<K, V, A> {
 
             Entry<?, ?, ?> entry = (Entry<?, ?, ?>) o;
 
-            if(key != null ? !key.equals(entry.key) : entry.key != null) return false;
-            if(value != null ? !value.equals(entry.value) : entry.value != null) return false;
-            return addition != null ? addition.equals(entry.addition) : entry.addition == null;
+            if(a != null ? !a.equals(entry.a) : entry.a != null) return false;
+            if(b != null ? !b.equals(entry.b) : entry.b != null) return false;
+            return c != null ? c.equals(entry.c) : entry.c == null;
 
         }
 
         @Override
         public int hashCode() {
-            int result = key != null ? key.hashCode() : 0;
-            result = 31 * result + (value != null ? value.hashCode() : 0);
-            result = 31 * result + (addition != null ? addition.hashCode() : 0);
+            int result = a != null ? a.hashCode() : 0;
+            result = 31 * result + (b != null ? b.hashCode() : 0);
+            result = 31 * result + (c != null ? c.hashCode() : 0);
             return result;
         }
     }
