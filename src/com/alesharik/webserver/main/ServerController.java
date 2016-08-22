@@ -206,7 +206,7 @@ public final class ServerController {
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         } catch (OutOfMemoryException e) {
             Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
-            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
+            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
                     FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         }
@@ -219,7 +219,7 @@ public final class ServerController {
     private void initControlServer() throws ConfigurationException, IOException {
         checkServerDashboard();
         try {
-            mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.NO_HOLD,
+            mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.HOLD_AND_CHECK,
                     FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         } catch (OutOfMemoryException e) {

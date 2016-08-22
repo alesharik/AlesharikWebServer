@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 @Prefix("[FileManager]")
+//TODO fix NO_HOLD mode
 public class FileManager {
     /**
      * 2 Gb

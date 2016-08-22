@@ -170,6 +170,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
         return oldEntry;
     }
 
+    @SuppressWarnings("unchecked")
     public void putAll(Map m) {
         m.forEach((o, o2) -> put(o, o2, null));
     }
@@ -239,6 +240,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     }
 
 
+    @SuppressWarnings("unchecked")
     public Set keySet() {
         Set<K> set = new HashSet<>();
         forEach((o, o2, o3) -> set.add((K) o));
@@ -246,12 +248,14 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     }
 
 
+    @SuppressWarnings("unchecked")
     public Collection values() {
         ArrayList<V> values = new ArrayList<>();
         forEach((o, o2, o3) -> values.add((V) o2));
         return values;
     }
 
+    @SuppressWarnings("unchecked")
     public Collection additions() {
         ArrayList<A> additions = new ArrayList<>();
         forEach((o, o2, o3) -> additions.add((A) o3));
@@ -330,6 +334,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
      *
      * @return existing value or generated value
      */
+    @SuppressWarnings("unchecked")
     public Object computeIfAbsent(Object key, Function mappingFunction, Function additionalFunction) {
         if(!containsKey(key)) {
             Object value = mappingFunction.apply(key);
@@ -345,6 +350,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
      *
      * @return existing value or null
      */
+    @SuppressWarnings("unchecked")
     public Object computeIfPresent(Object key, TripleFunction remappingFunction, TripleFunction additionalFunction) {
         if(containsKey(key)) {
             Object value = remappingFunction.apply(key, get(key), getAddition(key));
@@ -360,6 +366,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
      *
      * @return value
      */
+    @SuppressWarnings("unchecked")
     public Object compute(Object key, TripleFunction remappingFunction, TripleFunction additionalFunction) {
         Object value = remappingFunction.apply(key, get(key), getAddition(key));
         put(key, value, additionalFunction.apply(key, get(key), getAddition(key)));
@@ -379,6 +386,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void forEach(TripleConsumer action) {
         for(Entry entry : entries) {
             if(entry == null) {

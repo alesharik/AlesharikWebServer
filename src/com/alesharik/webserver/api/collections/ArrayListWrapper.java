@@ -187,7 +187,7 @@ public class ArrayListWrapper<E> extends AbstractList<E>
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        return list.clone();
+        return super.clone();
     }
 
     @Override

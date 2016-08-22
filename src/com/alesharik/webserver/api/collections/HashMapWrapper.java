@@ -1,7 +1,6 @@
 package com.alesharik.webserver.api.collections;
 
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +12,7 @@ import java.util.function.Function;
 /**
  * Extends this class to create {@link Map} with builtin {@link HashMap}
  */
-public class HashMapWrapper<K, V> extends AbstractMap<K, V>
-        implements Map<K, V>, Cloneable, Serializable {
+public class HashMapWrapper<K, V> implements Map<K, V>, Cloneable, Serializable {
     private final HashMap<K, V> hashMap;
 
     public HashMapWrapper() {
@@ -93,11 +91,6 @@ public class HashMapWrapper<K, V> extends AbstractMap<K, V>
     @Override
     public String toString() {
         return hashMap.toString();
-    }
-
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-        return hashMap.clone();
     }
 
     @Override
