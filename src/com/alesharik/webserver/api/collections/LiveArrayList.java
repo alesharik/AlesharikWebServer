@@ -14,26 +14,43 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-/**
- * This list updates only on method call.
- * If method has no lifeTime, it set DEFAULT_LIFE_TIME as lifeTime
- */
-public class CachedArrayList<V> extends ArrayListWrapper<V> {
+public class LiveArrayList<V> extends ArrayListWrapper<V> {
     private static final int DEFAULT_LIFE_TIME = 60 * 1000;
+    private static final long DEFAULT_DELAY = 1000;
+    private static final int DEFAULT_CAPACITY = 16;
 
     private ArrayList<Long> times;
-    private long lastTime;
+    private long delay;
+    private boolean isStarted = false;
 
-    public CachedArrayList() {
-        super();
-        this.times = new ArrayList<>(16);
-        lastTime = System.currentTimeMillis();
+    public LiveArrayList() {
+        this(DEFAULT_DELAY, DEFAULT_CAPACITY);
     }
 
-    public CachedArrayList(int count) {
+    public LiveArrayList(int count) {
+        this(DEFAULT_DELAY, count);
+    }
+
+    public LiveArrayList(long delay) {
+        this(delay, DEFAULT_CAPACITY);
+    }
+
+    public LiveArrayList(long delay, int count) {
+        this(delay, count, true);
+    }
+
+    public LiveArrayList test() {
+        add((V) "test");
+        return this;
+    }
+
+    public LiveArrayList(long delay, int count, boolean autoStart) {
         super(count);
         this.times = new ArrayList<>(count);
-        lastTime = System.currentTimeMillis();
+        this.delay = delay;
+        if(autoStart) {
+            start();
+        }
     }
 
     public boolean add(V v) {
@@ -41,7 +58,7 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
     }
 
     public boolean add(V v, long lifeTime) {
-        int address = super.size() - 1;
+        int address = (super.size() > 0) ? super.size() - 1 : 0;
         super.add(address, v);
         times.add(address, lifeTime);
         return true;
@@ -53,7 +70,6 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
     }
 
     public V set(int index, V element, long lifeTime) {
-        update();
         if(super.get(index) != null) {
             times.set(index, lifeTime);
             return super.set(index, element);
@@ -74,7 +90,6 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public V remove(int index) {
-        update();
         return remove0(index);
     }
 
@@ -89,13 +104,11 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public int indexOf(Object o) {
-        update();
         return super.indexOf(o);
     }
 
     @Override
     public int lastIndexOf(Object o) {
-        update();
         return super.lastIndexOf(o);
     }
 
@@ -117,19 +130,16 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public Iterator<V> iterator() {
-        update();
         return super.iterator();
     }
 
     @Override
     public ListIterator<V> listIterator() {
-        update();
         return super.listIterator();
     }
 
     @Override
     public ListIterator<V> listIterator(int index) {
-        update();
         return super.listIterator(index);
     }
 
@@ -141,32 +151,27 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public List<V> subList(int fromIndex, int toIndex) {
-        update();
         return super.subList(fromIndex, toIndex);
     }
 
     @Override
     public boolean isEmpty() {
-        update();
         return super.isEmpty();
     }
 
     @Override
     public boolean contains(Object o) {
-        update();
         return super.contains(o);
     }
 
     @Override
     public Object[] toArray() {
-        update();
         return super.toArray();
     }
 
     @SuppressWarnings("SuspiciousToArrayCall")
     @Override
     public <C> C[] toArray(C[] a) {
-        update();
         return super.toArray(a);
     }
 
@@ -174,23 +179,20 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
     public boolean remove(Object o) {
         if(contains(o)) {
             int i = 0;
-            for(Object o1 : this) {
+            for(Object object : this) {
                 i++;
-                if(o1.equals(o)) {
-                    times.remove(i);
+                if(object.equals(o)) {
                     super.remove(i);
+                    times.remove(i);
                     return true;
                 }
             }
-            return false;
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        update();
         return super.containsAll(c);
     }
 
@@ -227,7 +229,6 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public String toString() {
-        update();
         StringBuilder sb = new StringBuilder();
         sb.append("CoachedArrayList {");
         forEach((v, aLong) -> {
@@ -244,14 +245,12 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public void replaceAll(UnaryOperator<V> operator) {
-        update();
         for(int i = 0; i < size(); i++) {
             set(i, operator.apply(get(i)));
         }
     }
 
     public void replaceAll(UnaryOperator<V> operator, UnaryOperator<Long> lifeTimeOperator) {
-        update();
         for(int i = 0; i < size(); i++) {
             set(i, operator.apply(get(i)), lifeTimeOperator.apply(getTime(i)));
         }
@@ -272,7 +271,6 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public boolean removeIf(Predicate<? super V> filter) {
-        update();
         for(int i = 0; i < size(); i++) {
             V value = get(i);
             if(filter.test(value) && !remove(value)) {
@@ -284,24 +282,20 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public Stream<V> stream() {
-        update();
         return super.stream();
     }
 
     @Override
     public Stream<V> parallelStream() {
-        update();
         return super.parallelStream();
     }
 
     @Override
     public void forEach(Consumer<? super V> action) {
-        update();
         super.forEach(action);
     }
 
     public void forEach(BiConsumer<? super V, ? super Long> action) {
-        update();
         for(int i = 0; i < size(); i++) {
             action.accept(super.get(i), times.get(i));
         }
@@ -309,20 +303,17 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        update();
-        CachedArrayList list = ((CachedArrayList) super.clone());
+        LiveArrayList list = ((LiveArrayList) super.clone());
         list.times = times;
         return list;
     }
 
     @Override
     public V get(int index) {
-        update();
         return super.get(index);
     }
 
     public Long getTime(int index) {
-        update();
         return getTime0(index);
     }
 
@@ -332,44 +323,49 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     @Override
     public int size() {
-        update();
         return super.size();
     }
 
     @Override
     public boolean equals(Object o) {
-        update();
         if(this == o) return true;
-        if(!(o instanceof CachedArrayList)) return false;
+        if(!(o instanceof LiveArrayList)) return false;
         if(!super.equals(o)) return false;
 
-        CachedArrayList<?> list = (CachedArrayList<?>) o;
+        LiveArrayList<?> list = (LiveArrayList<?>) o;
 
         return times != null ? times.equals(list.times) : list.times == null;
     }
 
     @Override
     public int hashCode() {
-        update();
         int result = super.hashCode();
         result = 31 * result + (times != null ? times.hashCode() : 0);
         return result;
     }
 
-    private void update() {
-        long time = System.currentTimeMillis();
-        updateValues(time - lastTime);
-        lastTime = time;
-    }
-
-    private void updateValues(long delta) {
+    void updateValues(long delta) {
         for(int i = 0; i < size(); i++) {
             long current = getTime0(i) - delta;
             if(current < 0) {
-                remove0(i);
+                remove(i);
             } else {
                 times.set(i, current);
             }
+        }
+    }
+
+    public void start() {
+        if(!isStarted) {
+            TickingPool.addArrayList(this, delay);
+            isStarted = true;
+        }
+    }
+
+    public void stop() {
+        if(isStarted) {
+            TickingPool.removeArrayList(this, delay);
+            isStarted = false;
         }
     }
 }

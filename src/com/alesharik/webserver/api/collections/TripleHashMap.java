@@ -53,6 +53,9 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
         int bucket = getBucket(hash(key));
         Object value = null;
         Entry entry = entries[bucket];
+        if(entry == null) {
+            return null;
+        }
         do {
             if(Integer.compare(entry.getHash(), hash(key)) == 0 && entry.getKey().equals(key)) {
                 value = entry.getValue();

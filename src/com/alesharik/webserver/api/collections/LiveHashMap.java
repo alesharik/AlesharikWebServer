@@ -13,59 +13,66 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-/**
- * This map updates only on method call.
- * If method has no lifeTime, it set DEFAULT_LIFE_TIME as lifeTime
- */
-public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
+public class LiveHashMap<K, V> extends HashMapWrapper<K, V> {
     private static final long DEFAULT_LIFE_TIME = 60 * 1000;
+    private static final long DEFAULT_DELAY = 1000;
+    private static final int DEFAULT_CAPACITY = 16;
 
     private TripleHashMap<K, V, Long> map;
-    private long lastTime;
+    private long delay;
+    private boolean isStarted = false;
 
-    public CachedHashMap() {
-        map = new TripleHashMap<>();
-        lastTime = System.currentTimeMillis();
+    public LiveHashMap() {
+        this(DEFAULT_DELAY, DEFAULT_CAPACITY);
     }
 
-    public CachedHashMap(int count) {
+    public LiveHashMap(int count) {
+        this(DEFAULT_DELAY, count);
+    }
+
+    public LiveHashMap(long delay) {
+        this(delay, DEFAULT_CAPACITY);
+    }
+
+    public LiveHashMap(long delay, int count) {
+        this(delay, count, true);
+    }
+
+    public LiveHashMap(long delay, int count, boolean autoStart) {
         map = new TripleHashMap<>(count);
-        lastTime = System.currentTimeMillis();
+        this.delay = delay;
+        if(autoStart) {
+            start();
+        }
     }
 
     @Override
     public int size() {
-        update();
         return map.size();
     }
 
     @Override
     public boolean isEmpty() {
-        update();
         return map.isEmpty();
     }
 
     @Override
     public boolean containsValue(Object value) {
-        update();
         return map.containsValue(value);
     }
 
     @Override
     public boolean containsKey(Object key) {
-        update();
         return map.containsKey(key);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public V get(Object key) {
-        update();
         return (V) map.get(key);
     }
 
     public long getTime(Object key) {
-        update();
         return (long) map.getAddition(key);
     }
 
@@ -82,7 +89,6 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     public V remove(Object key) {
-        update();
         return (V) map.remove(key);
     }
 
@@ -107,38 +113,32 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     public Set<K> keySet() {
-        update();
         return map.keySet();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Collection<V> values() {
-        update();
         return map.values();
     }
 
     @SuppressWarnings("unchecked")
     public Collection<Long> times() {
-        update();
         return map.additions();
     }
 
     @Override
     public boolean equals(Object o) {
-        update();
         if(this == o) return true;
-        if(!(o instanceof CachedHashMap)) return false;
+        if(!(o instanceof LiveHashMap)) return false;
 
-        CachedHashMap<?, ?> that = (CachedHashMap<?, ?>) o;
+        LiveHashMap<?, ?> that = (LiveHashMap<?, ?>) o;
 
         return map != null ? map.equals(that.map) : that.map == null;
-
     }
 
     @Override
     public int hashCode() {
-        update();
         int result = 0;
         result = 31 * result + (map != null ? map.hashCode() : 0);
         return result;
@@ -146,49 +146,42 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
 
     @Override
     public String toString() {
-        update();
-        return "CachedHashMap{" +
+        return "LiveHashMap{" +
                 "map=" + map +
                 '}';
     }
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
-        update();
-        CachedHashMap map = ((CachedHashMap) super.clone());
+        LiveHashMap map = ((LiveHashMap) super.clone());
         map.map = this.map;
         return map;
     }
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        update();
         Set<Entry<K, V>> entries = new HashSet<>(size());
         forEach((k, v) -> entries.add(new AbstractMap.SimpleEntry<>(k, v)));
         return entries;
     }
 
     public Set<Triple> triple() {
-        update();
         return map.entrySet();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public V getOrDefault(Object key, V defaultValue) {
-        update();
         return (V) map.getOrDefault(key, defaultValue);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void forEach(BiConsumer<? super K, ? super V> action) {
-        update();
         map.forEach((o, o2, o3) -> action.accept((K) o, (V) o2));
     }
 
     public void forEach(TripleConsumer<? extends K, ? extends V, ? super Long> consumer) {
-        update();
         forEach0(consumer);
     }
 
@@ -212,7 +205,6 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
 
     @SuppressWarnings("unchecked")
     public V putIfAbsent(K key, V value, long time) {
-        update();
         return (V) map.putIfAbsent(key, value, true);
     }
 
@@ -223,12 +215,10 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        update();
         return map.replace(key, oldValue, newValue);
     }
 
     public boolean replace(K key, V oldValue, V newValue, long time) {
-        update();
         return replace0(key, oldValue, newValue, time);
     }
 
@@ -238,7 +228,6 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
 
     @Override
     public V replace(K key, V value) {
-        update();
         V old = get(key);
         if(old != null) {
             map.replace(key, old, value);
@@ -251,13 +240,11 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-        update();
         return (V) map.computeIfAbsent(key, mappingFunction, o -> map.getAddition(key));
     }
 
     @SuppressWarnings("unchecked")
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Function additionalFunction) {
-        update();
         return (V) map.computeIfAbsent(key, mappingFunction, additionalFunction);
     }
 
@@ -273,7 +260,6 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
     @SuppressWarnings("unchecked")
     public V computeIfPresent(K key, TripleFunction<? super K, ? super V, ? extends Long, ? extends V> remappingFunction,
                               TripleFunction<? super K, ? super V, ? extends Long, ? extends Long> addition) {
-        update();
         return (V) map.computeIfPresent(key, remappingFunction, addition);
     }
 
@@ -289,7 +275,6 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
     @SuppressWarnings("unchecked")
     public V compute(K key, TripleFunction<? super K, ? super V, ? extends Long, ? extends V> remappingFunction,
                      TripleFunction<? super K, ? super V, ? extends Long, ? extends Long> addition) {
-        update();
         return (V) map.compute(key, remappingFunction, addition);
     }
 
@@ -305,24 +290,31 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
     @SuppressWarnings("unchecked")
     public V merge(K key, K value, Long time, TripleFunction<? extends K, ? extends V, ? extends Long, ? extends V> remappingFunction,
                    TripleFunction<? extends K, ? extends V, ? extends Long, ? extends Long> additionalFunction) {
-        update();
         return (V) map.merge(key, value, time, remappingFunction, additionalFunction);
     }
 
-    private void update() {
-        long current = System.currentTimeMillis();
-        updateMap(current - lastTime);
-        lastTime = current;
-    }
-
-    private void updateMap(long delta) {
+    void updateMap(long period) {
         forEach0((k, v, aLong) -> {
-            long current = aLong - delta;
+            long current = aLong - period;
             if(current < 0) {
                 remove(k);
             } else {
-                replace0(k, v, v, current);
+                replace(k, v, v, current);
             }
         });
+    }
+
+    public void start() {
+        if(!isStarted) {
+            TickingPool.addHashMap(this, delay);
+            isStarted = true;
+        }
+    }
+
+    public void stop() {
+        if(isStarted) {
+            TickingPool.removeHashMap(this, delay);
+            isStarted = false;
+        }
     }
 }
