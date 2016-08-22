@@ -209,12 +209,48 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>one-nio/native/libonenio.so</exclude>
+                    </excludes>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.alesharik.webserver.main.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.alesharik.webserver.main.Main</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <outputDirectory>out/production</outputDirectory>
         <finalName>${project.artifactId}-${project.version}</finalName>
         <testOutputDirectory>out/test</testOutputDirectory>
-        <sourceDirectory>/src</sourceDirectory>
-        <testSourceDirectory>/tests</testSourceDirectory>
+        <sourceDirectory>src</sourceDirectory>
+        <testSourceDirectory>tests</testSourceDirectory>
         <resources>
             <!-- Resources!-->
             <resource>
@@ -264,7 +300,6 @@
                         <inherited>true</inherited>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -304,6 +339,42 @@
                             <source>1.8</source>
                             <target>1.8</target>
                         </configuration>
+                    </plugin>
+                    <!--<plugin>-->
+                    <!--<groupId>org.apache.maven.plugins</groupId>-->
+                    <!--<artifactId>maven-jar-plugin</artifactId>-->
+                    <!--<configuration>-->
+                    <!--<excludes>-->
+                    <!--<exclude>one-nio/native/libonenio.so</exclude>-->
+                    <!--</excludes>-->
+                    <!--<archive>-->
+                    <!--<manifest>-->
+                    <!--<mainClass>com.alesharik.webserver.main.Main</mainClass>-->
+                    <!--</manifest>-->
+                    <!--</archive>-->
+                    <!--</configuration>-->
+                    <!--</plugin>-->
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.alesharik.webserver.main.Main</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make-assembly</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
