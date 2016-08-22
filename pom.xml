@@ -106,9 +106,9 @@
         <dependency>
             <groupId>one-nio</groupId>
             <artifactId>one-nio</artifactId>
-            <version>RELEASE</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/one-nio/one-nio.jar</systemPath>
+            <version>1.0</version>
+            <systemPath>${basedir}/one-nio/one-nio.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -219,7 +219,12 @@
                     <archive>
                         <manifest>
                             <mainClass>com.alesharik.webserver.main.Main</mainClass>
+                            <packageName>com.alesharik.webserver</packageName>
+                            <addClasspath>true</addClasspath>
                         </manifest>
+                        <manifestEntries>
+                            <Class-Path>one-nio/</Class-Path>
+                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
@@ -242,6 +247,60 @@
                         <goals>
                             <goal>single</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.8</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>compile</includeScope>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>${project.artifactId}</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>one-nio</groupId>
+                                    <artifactId>one-nio</artifactId>
+                                    <version>1.0</version>
+                                    <!--<systemPath>${basedir}/one-nio/one-nio.jar</systemPath>-->
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/production</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution><!-- Run our version calculation script -->
+                        <id>one-nio_setup</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${basedir}/setupOneNio.sh</executable>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
