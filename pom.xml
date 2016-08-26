@@ -302,6 +302,16 @@
                             <executable>${basedir}/setupOneNio.sh</executable>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>compileNative</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${basedir}/compileNative.sh</executable>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
@@ -317,6 +327,13 @@
                 <directory>one-nio/native</directory>
                 <includes>
                     <include>libonenio.so</include>
+                </includes>
+            </resource>
+            <resource>
+                <filtering>false</filtering>
+                <directory>out/production</directory>
+                <includes>
+                    <include>libalesharikwebserver.so</include>
                 </includes>
             </resource>
         </resources>

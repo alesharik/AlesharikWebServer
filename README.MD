@@ -1,7 +1,8 @@
 AlesharikWebServer
 ==================
 
-AlesharikWebServer is a web server with unique plugin system
+AlesharikWebServer is a web server with unique plugin system.
+WARNING! This server might not work work on windows/mac!
 
 Build
 =====
