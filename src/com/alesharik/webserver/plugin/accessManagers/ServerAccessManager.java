@@ -1,12 +1,12 @@
 package com.alesharik.webserver.plugin.accessManagers;
 
 import com.alesharik.webserver.api.server.RequestHandler;
-import com.alesharik.webserver.api.server.Server;
+import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 
 public final class ServerAccessManager {
-    Server server;
+    WebServer server;
     ModularErrorPageGenerator errorPageGenerator;
 
     /**
@@ -21,7 +21,7 @@ public final class ServerAccessManager {
      *   // WS application will not be invoked:
      *   //    ws://localhost:8080/foo/echo
      *   //    ws://localhost:8080/echo/some/path
-     *   registerNewWebSocket(=webSocketApplication, "", "/echo");
+     *   registerNewWebSocket(webSocketApplication, "", "/echo");
      *
      *   // WS application will be invoked:
      *   //    ws://localhost:8080/echo

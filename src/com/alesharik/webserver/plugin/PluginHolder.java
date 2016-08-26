@@ -1,5 +1,7 @@
 package com.alesharik.webserver.plugin;
 
+import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
+
 class PluginHolder extends Thread {
     private final PluginCore core;
     private final PluginAccessManager accessManager;

@@ -1,8 +1,5 @@
-package com.alesharik.webserver.plugin;
+package com.alesharik.webserver.plugin.accessManagers;
 
-import com.alesharik.webserver.plugin.accessManagers.BaseAccessManager;
-import com.alesharik.webserver.plugin.accessManagers.ControlAccessManager;
-import com.alesharik.webserver.plugin.accessManagers.ServerAccessManager;
 import org.apache.commons.lang3.ArrayUtils;
 
 public final class PluginAccessManager {

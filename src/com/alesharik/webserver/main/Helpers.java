@@ -1,16 +1,11 @@
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.logger.Logger;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
-import java.net.URL;
 import java.security.SecureRandom;
 import java.text.NumberFormat;
 
@@ -93,28 +88,5 @@ public final class Helpers {
         }
 
         return RandomStringUtils.random(length, true, true);
-    }
-
-    /**
-     * Get real ip of current machine. <br>
-     * WARNING!If machine has no internet or checkip.amazonaws.com banned, this method will wait for response infinite
-     * time
-     *
-     * @return string with ip or 127.0.0.1
-     */
-    public static String getMachineExternalIP() {
-        try {
-            InputStreamReader getIPStreamReader = new InputStreamReader(new URL("http://checkip.amazonaws.com").openStream());
-            BufferedReader inReader = new BufferedReader(getIPStreamReader);
-
-            String ip = inReader.readLine();
-
-            inReader.close();
-            getIPStreamReader.close();
-            return ip;
-        } catch (IOException e) {
-            Logger.log(e);
-            return "127.0.0.1";
-        }
     }
 }

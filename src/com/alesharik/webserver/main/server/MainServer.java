@@ -3,7 +3,7 @@ package com.alesharik.webserver.main.server;
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.RequestHandlerList;
-import com.alesharik.webserver.api.server.Server;
+import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.MainHttpHandler;
 import com.alesharik.webserver.logger.Logger;
@@ -28,14 +28,14 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 
-public final class WebServer extends Server {
+public final class MainServer extends WebServer {
     private final ModularErrorPageGenerator errorPageGenerator;
     private HttpServer httpServer;
     private RequestHandlerList handlerList = new RequestHandlerList();
     private ServerController serverController;
 
 
-    public WebServer(String host, int port, FileManager fileManager, ServerController serverController) {
+    public MainServer(String host, int port, FileManager fileManager, ServerController serverController) {
         this.serverController = serverController;
         errorPageGenerator = new ModularErrorPageGenerator(fileManager);
 

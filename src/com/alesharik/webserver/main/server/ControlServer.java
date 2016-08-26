@@ -2,7 +2,7 @@ package com.alesharik.webserver.main.server;
 
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.server.RequestHandler;
-import com.alesharik.webserver.api.server.Server;
+import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketApplication;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
@@ -22,7 +22,7 @@ import org.glassfish.grizzly.websockets.WebSocketEngine;
 
 import java.io.IOException;
 
-public final class ControlServer extends Server {
+public final class ControlServer extends WebServer {
     private HttpServer httpServer;
     private ControlHttpHandler controlHttpHandler;
     private ModularErrorPageGenerator errorPageGenerator;

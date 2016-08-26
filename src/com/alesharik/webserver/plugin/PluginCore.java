@@ -1,5 +1,7 @@
 package com.alesharik.webserver.plugin;
 
+import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
+
 //TODO write this
 public abstract class PluginCore {
     protected PluginAccessManager pluginAccessManager;

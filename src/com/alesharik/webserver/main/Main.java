@@ -1,5 +1,6 @@
 package com.alesharik.webserver.main;
 
+import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Logger;
 
 import java.io.File;
@@ -7,7 +8,7 @@ import java.util.Date;
 
 //TODO rewrite site as green terminal
 public class Main {
-    public static final String HOST = Helpers.getMachineExternalIP();
+    public static final String HOST = Utils.getExternalIp();
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
     public static final File LOGS_FOLDER = new File(USER_DIR + "/logs");
     public static final File WWW = new File(USER_DIR + "/www");
@@ -20,12 +21,13 @@ public class Main {
         try {
             initStructure();
             Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
-            controller = new ServerController();
-            controller.start();
+//            controller = new ServerController();
+//            controller.start();
 
 //            WebSocketController controller = new WebSocketController(new URI("ws://" + HOST + ":7000/serverControl"), "admin", "admin");
 //            controller.connect();
 //            Logger.log(controller.getComputerInfo());
+            Logger.log(Utils.getExternalIp());
             System.in.read();
         } catch (Throwable e) {
             Logger.log(e);

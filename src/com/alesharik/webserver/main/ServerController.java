@@ -4,11 +4,13 @@ import com.alesharik.webserver.api.KeyHolder;
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.server.Server;
+import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.main.server.ControlServer;
-import com.alesharik.webserver.main.server.WebServer;
+import com.alesharik.webserver.main.server.MainServer;
+import com.alesharik.webserver.microservices.MicroserviceServer;
 import com.alesharik.webserver.plugin.PluginManager;
 import com.alesharik.webserver.plugin.PluginManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.BaseAccessManagerBuilder;
@@ -64,20 +66,31 @@ public final class ServerController {
             loadConfig();
             host = Main.HOST;
             port = configuration.getInt("port");
-
-            if(configuration.getBoolean("isControlServer")) {
-                initControlServer();
-            } else {
-                initMainServer();
+            if(configuration.getBoolean("isMicroserviceServer")) {
+                MicroserviceServer server = new MicroserviceServer();
+                server.start();
             }
-            server.setupServerAccessManagerBuilder(serverAccessManagerBuilder);
-            baseAccessManagerBuilder.setFileManager(mainFileManager);
+            if(configuration.getBoolean("isRouterServer")) {
+
+            }
+            if(!configuration.getBoolean("isMicroserviceServer") && !configuration.getBoolean("isRouterServer")) {
+                if(configuration.getBoolean("isControlServer")) {
+                    initControlServer();
+                } else {
+                    initMainServer();
+                }
+                ((WebServer) server).setupServerAccessManagerBuilder(serverAccessManagerBuilder);
+                baseAccessManagerBuilder.setFileManager(mainFileManager);
+            }
+
             Logger.log("Server successfully initialized");
 
             pluginManager = new PluginManagerBuilder()
                     .setBaseAccessManager(baseAccessManagerBuilder.build())
                     .setControlAccessManager(controlAccessManagerBuilder.build())
                     .setServerAccessManager(serverAccessManagerBuilder.build())
+                    .isMicroserviceServer(configuration.getBoolean("isMicroserviceServer"))
+                    .isRouterServer(configuration.getBoolean("isRouterServer"))
                     .build();
             pluginManager.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
             pluginManager.loadPlugins();
@@ -188,6 +201,15 @@ public final class ServerController {
             if(!configuration.containsKey("password")) {
                 configuration.addProperty("password", StringCipher.encrypt("admin", serverPassword));
             }
+            if(!configuration.containsKey("canHoldMicroservices")) {
+                configuration.addProperty("canHoldMicroservices", true);
+            }
+            if(!configuration.containsKey("isMicroserviceServer")) {
+                configuration.addProperty("isMicroserviceServer", false);
+            }
+            if(!configuration.containsKey("isRouterServer")) {
+                configuration.addProperty("isRouterServer", false);
+            }
 
             Logger.log("Config loaded");
         } catch (ConfigurationException | InvalidKeyException | IllegalBlockSizeException
@@ -211,7 +233,7 @@ public final class ServerController {
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         }
 
-        server = new WebServer(host, port, mainFileManager, this);
+        server = new MainServer(host, port, mainFileManager, this);
         Logger.log("Main server initialized");
     }
 

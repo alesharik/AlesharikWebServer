@@ -2,7 +2,7 @@ package com.alesharik.webserver.main.websockets;
 
 import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.main.Helpers;
-import com.alesharik.webserver.main.server.WebServer;
+import com.alesharik.webserver.main.server.MainServer;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.util.Base64Utils;
 import org.glassfish.grizzly.websockets.Broadcaster;
@@ -15,7 +15,7 @@ import org.glassfish.grizzly.websockets.WebSocketListener;
  */
 public final class ServerControllerWebSocket extends DefaultWebSocket {
     private FileManager fileManager;
-    private WebServer webServer;
+    private MainServer mainServer;
     private boolean isAuthorized = false;
 
     public ServerControllerWebSocket(ProtocolHandler protocolHandler, HttpRequestPacket request, WebSocketListener... listeners) {
@@ -26,8 +26,8 @@ public final class ServerControllerWebSocket extends DefaultWebSocket {
         this.fileManager = fileManager;
     }
 
-    public void setWebServer(WebServer webServer) {
-        this.webServer = webServer;
+    public void setMainServer(MainServer mainServer) {
+        this.mainServer = mainServer;
     }
 
     public void setBroadcaster(Broadcaster broadcaster) {
@@ -39,7 +39,7 @@ public final class ServerControllerWebSocket extends DefaultWebSocket {
         if(message.equals("Hello")) {
             send("Hello");
         } else if(message.startsWith("LogPass=")) {
-            if(webServer.isLogPassValid(message.substring(8))) {
+            if(mainServer.isLogPassValid(message.substring(8))) {
                 isAuthorized = true;
                 send("OK");
             } else {

@@ -2,12 +2,16 @@ package com.alesharik.webserver.plugin;
 
 import com.alesharik.webserver.plugin.accessManagers.BaseAccessManager;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManager;
+import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManager;
 
 public class PluginManagerBuilder {
     private BaseAccessManager baseAccessManager = null;
     private ControlAccessManager controlAccessManager = null;
     private ServerAccessManager serverAccessManager = null;
+
+    private boolean isMicroserviceServer = false;
+    private boolean isRouterServer = false;
 
     public PluginManagerBuilder setBaseAccessManager(BaseAccessManager baseAccessManager) {
         if(baseAccessManager == null) {
@@ -30,6 +34,16 @@ public class PluginManagerBuilder {
             throw new IllegalArgumentException();
         }
         this.serverAccessManager = serverAccessManager;
+        return this;
+    }
+
+    public PluginManagerBuilder isMicroserviceServer(boolean isMicroservieServer) {
+        this.isMicroserviceServer = isMicroservieServer;
+        return this;
+    }
+
+    public PluginManagerBuilder isRouterServer(boolean isRouterServer) {
+        this.isRouterServer = isRouterServer;
         return this;
     }
 

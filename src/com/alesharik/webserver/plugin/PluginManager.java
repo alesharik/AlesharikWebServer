@@ -2,6 +2,7 @@ package com.alesharik.webserver.plugin;
 
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
 
 import java.io.File;
 import java.io.IOException;

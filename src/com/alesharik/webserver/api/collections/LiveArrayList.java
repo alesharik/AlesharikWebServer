@@ -39,11 +39,6 @@ public class LiveArrayList<V> extends ArrayListWrapper<V> {
         this(delay, count, true);
     }
 
-    public LiveArrayList test() {
-        add((V) "test");
-        return this;
-    }
-
     public LiveArrayList(long delay, int count, boolean autoStart) {
         super(count);
         this.times = new ArrayList<>(count);

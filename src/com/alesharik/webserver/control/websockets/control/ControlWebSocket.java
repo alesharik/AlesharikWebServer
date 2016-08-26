@@ -1,6 +1,7 @@
 package com.alesharik.webserver.control.websockets.control;
 
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.main.server.MainServer;
 
 import javax.websocket.ClientEndpoint;
 import javax.websocket.ContainerProvider;
@@ -15,7 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 
 /**
- * This class used for control {@link com.alesharik.webserver.main.server.WebServer} with WebSockets
+ * This class used for control {@link MainServer} with WebSockets
  */
 @ClientEndpoint
 public final class ControlWebSocket {

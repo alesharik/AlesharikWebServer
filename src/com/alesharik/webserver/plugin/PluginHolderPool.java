@@ -1,5 +1,7 @@
 package com.alesharik.webserver.plugin;
 
+import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
+
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
