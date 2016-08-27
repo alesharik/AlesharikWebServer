@@ -9,4 +9,4 @@ Build
 1. Clone repository into folder
 2. Run 'mvn clean install'
 3. Take result in 'out' directory
-4. Install 'libonenio.so'(in 'out/production') and use server
+4. Try to start server. If server not started try to execute "./compileNative" and restart server
