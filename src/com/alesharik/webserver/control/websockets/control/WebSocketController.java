@@ -7,6 +7,7 @@ import com.alesharik.webserver.api.server.control.ControlWebSocketWrapper;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import org.glassfish.grizzly.http.util.Base64Utils;
+import org.glassfish.grizzly.utils.Charsets;
 
 import javax.websocket.DeploymentException;
 import java.io.IOException;
@@ -86,11 +87,11 @@ public final class WebSocketController {
 
     public void requestSerializer(long uid) {
         sendMessage("getSerializer:" + uid);
-        SerialRepository.addSerializedSeriaizer(messageParser.waitMessage());
+        SerialRepository.addSerializedSerializer(messageParser.waitMessage());
     }
 
     public String getComputerInfo() {
-        return new String(Base64Utils.decode(sendMessageAndGetResponse("getComputerInfo")));
+        return new String(Base64Utils.decode(sendMessageAndGetResponse("getComputerInfo")), Charsets.UTF8_CHARSET);
     }
 
 

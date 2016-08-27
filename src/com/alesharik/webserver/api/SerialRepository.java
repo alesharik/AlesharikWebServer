@@ -8,6 +8,7 @@ import one.nio.serial.SerializerNotFoundException;
 import org.glassfish.grizzly.http.util.Base64Utils;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * This class used for serialize and deserialize classes using one-nio method
@@ -41,7 +42,7 @@ public final class SerialRepository {
      * @param object class instance ot serialize
      * @return base64 encoded {@link DataStream} with object
      */
-    public static String serialize(Object object) {
+    public static String serialize(Serializable object) {
         try {
             DataStream stream = new DataStream(256);
             stream.writeObject(object);
@@ -90,7 +91,7 @@ public final class SerialRepository {
      *
      * @param serialized base64 {@link DataStream} with serializer
      */
-    public static void addSerializedSeriaizer(String serialized) {
+    public static void addSerializedSerializer(String serialized) {
         Serializer serializer = deserializeSerializer(serialized);
         if(serializer != null) {
             Repository.provideSerializer(serializer);

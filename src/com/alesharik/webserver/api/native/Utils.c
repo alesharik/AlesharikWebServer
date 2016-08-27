@@ -74,8 +74,6 @@ JNIEXPORT jstring JNICALL Java_com_alesharik_webserver_api_Utils_getExternalIp0 
     if(getIP(ip) == -1) {
         printf("%s\n", "Can't get ip. Returning localhost!");
     }
-    printf("test");
-    printf("\n%s\n", ip);
 
     jstring result;
 

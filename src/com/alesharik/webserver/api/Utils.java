@@ -1,12 +1,10 @@
 package com.alesharik.webserver.api;
 
 import com.alesharik.webserver.logger.Logger;
-import one.nio.os.NativeLibrary;
 import one.nio.util.ByteArrayBuilder;
 import one.nio.util.Hex;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,26 +17,28 @@ public class Utils {
     static {
         try {
 //            System.loadLibrary("libalesharikwebserver.so");
-            InputStream in = NativeLibrary.class.getResourceAsStream("/libalesharikwebserver.so");
-            if(in == null) {
+            InputStream in = Utils.class.getResourceAsStream("/libalesharikwebserver.so");
+
+            if(in != null) {
+                ByteArrayBuilder libData = readStream(in);
+                in.close();
+
+                String tmpDir = System.getProperty("java.io.tmpdir", "/tmp");
+                File dll = new File(tmpDir, "libalesharikwebserver." + crc32(libData) + ".so");
+                if(!dll.exists()) {
+                    try (OutputStream out = new FileOutputStream(dll)) {
+                        out.write(libData.buffer(), 0, libData.length());
+                        out.close();
+                    } catch (IOException e) {
+                        throw e;
+                    }
+                }
+
+                String libraryPath = dll.getAbsolutePath();
+                System.load(libraryPath);
+            } else {
                 Logger.log("Cannot find native IO library");
             }
-
-            ByteArrayBuilder libData = readStream(in);
-            in.close();
-
-            String tmpDir = System.getProperty("java.io.tmpdir", "/tmp");
-            File dll = new File(tmpDir, "libalesharikwebserver." + crc32(libData) + ".so");
-            if(!dll.exists()) {
-                OutputStream out = new FileOutputStream(dll);
-                out.write(libData.buffer(), 0, libData.length());
-                out.close();
-            }
-
-            String libraryPath = dll.getAbsolutePath();
-            System.load(libraryPath);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }

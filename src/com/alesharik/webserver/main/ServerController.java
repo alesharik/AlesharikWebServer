@@ -10,11 +10,13 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.main.server.ControlServer;
 import com.alesharik.webserver.main.server.MainServer;
-import com.alesharik.webserver.microservices.MicroserviceServer;
+import com.alesharik.webserver.microservices.client.MicroserviceClient;
+import com.alesharik.webserver.microservices.server.MicroserviceServer;
 import com.alesharik.webserver.plugin.PluginManager;
 import com.alesharik.webserver.plugin.PluginManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.BaseAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
+import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import one.nio.mem.OutOfMemoryException;
 import org.apache.commons.configuration2.Configuration;
@@ -25,6 +27,7 @@ import org.apache.commons.configuration2.builder.fluent.FileBasedBuilderParamete
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.glassfish.grizzly.utils.Charsets;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -56,6 +59,8 @@ public final class ServerController {
     private final ControlAccessManagerBuilder controlAccessManagerBuilder = new ControlAccessManagerBuilder();
     private final ServerAccessManagerBuilder serverAccessManagerBuilder = new ServerAccessManagerBuilder();
 
+    private MicroserviceAccessManagerBuilder microserviceAccessManagerBuilder = null;
+
     private PluginManager pluginManager;
     /**
      * Init all needed systems
@@ -67,9 +72,17 @@ public final class ServerController {
             host = Main.HOST;
             port = configuration.getInt("port");
             if(configuration.getBoolean("isMicroserviceServer")) {
-                MicroserviceServer server = new MicroserviceServer();
-                server.start();
+                server = new MicroserviceServer(host, port, MicroserviceServer.WorkingMode.ADVANCED);
+                microserviceAccessManagerBuilder = new MicroserviceAccessManagerBuilder(true);
+                ((MicroserviceServer) server).setupMicorserviceAccessManagerBuilder(microserviceAccessManagerBuilder);
             }
+            if(configuration.getBoolean("canHoldMicroservices") && !configuration.getBoolean("isMicroserviceServer")) {
+                microserviceAccessManagerBuilder = new MicroserviceAccessManagerBuilder(false);
+                MicroserviceClient client = new MicroserviceClient(MicroserviceClient.WorkingMode.ADVANCED);
+                client.start();
+                client.setupMicroserviceAccessMangerBuilder(microserviceAccessManagerBuilder);
+            }
+
             if(configuration.getBoolean("isRouterServer")) {
 
             }
@@ -121,14 +134,14 @@ public final class ServerController {
     private String loadPassword(File passwordFile, SecretKey secretKey) throws IOException {
         String password = "";
         try {
-            password = StringCipher.decrypt(new String(Files.readAllBytes(passwordFile.toPath())), null, secretKey);
+            password = StringCipher.decrypt(new String(Files.readAllBytes(passwordFile.toPath()), Charsets.UTF8_CHARSET), null, secretKey);
         } catch (InvalidKeySpecException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | IllegalArgumentException e) {
             Logger.log("Can't decode password!Creating new one...");
         }
         try {
             if(password.isEmpty()) {
                 password = Helpers.getRandomString(24);
-                Files.write(passwordFile.toPath(), StringCipher.encrypt(password, null, secretKey).getBytes());
+                Files.write(passwordFile.toPath(), StringCipher.encrypt(password, null, secretKey).getBytes(Charsets.UTF8_CHARSET));
             }
         } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeySpecException | InvalidKeyException e) {
             Logger.log(e);
