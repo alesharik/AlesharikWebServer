@@ -17,18 +17,34 @@ public class Main {
     private static ServerController controller;
 //    public static final String HOST = "127.0.0.1";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         try {
             initStructure();
             Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
-//            controller = new ServerController();
-//            controller.start();
+            controller = new ServerController();
+            controller.start();
 
 //            WebSocketController controller = new WebSocketController(new URI("ws://" + HOST + ":7000/serverControl"), "admin", "admin");
 //            controller.connect();
 //            Logger.log(controller.getComputerInfo());
-            Logger.log(Utils.getExternalIp());
-            System.in.read();
+//            Logger.log(Utils.getExternalIp());
+
+//            MicroserviceServer server = new MicroserviceServer("127.0.0.1", 7001, MicroserviceServer.WorkingMode.ADVANCED);
+//            server.registerMicroservice("test", new Microservice() {
+//                @Override
+//                public void setup() {
+//                    Logger.log("Yay!");
+//                }
+//
+//                @Override
+//                public void handleEventAsync(MicroserviceEvent message) {
+//                    Logger.log(message.toString());
+//                }
+//            });
+//            server.start();
+//            MicroserviceClient client = new MicroserviceClient(MicroserviceClient.WorkingMode.ADVANCED);
+//            client.send("test", new OneArgMicorserviceEvent<>("test"), "127.0.0.1:7001");
+//            int read = System.in.read();
         } catch (Throwable e) {
             Logger.log(e);
         }
@@ -70,6 +86,37 @@ public class Main {
 //                }
 //            }
 //        }).start();
+        // Executor that will be used to construct new threads for consumers
+//        Executor executor = Executors.newCachedThreadPool();
+//
+//        // Specify the size of the ring buffer, must be power of 2.
+//        int bufferSize = 1024;
+//
+//        // Construct the Disruptor
+//        Disruptor<LongEvent> disruptor = new Disruptor<LongEvent>(() -> new LongEvent(), bufferSize, new ThreadFactory() {
+//            @Override
+//            public Thread newThread(Runnable r) {
+//                Thread thread = new Thread(r);
+//                return thread;
+//            }
+//        });
+//
+//        // Connect the handler
+//        disruptor.handleEventsWith(Main::handleEvent);
+//
+//        // Start the Disruptor, starts all threads running
+//        disruptor.start();
+//
+//        // Get the ring buffer from the Disruptor to be used for publishing.
+//        RingBuffer<LongEvent> ringBuffer = disruptor.getRingBuffer();
+//
+//        ByteBuffer bb = ByteBuffer.allocate(8);
+//        for (long l = 0; true; l++)
+//        {
+//            bb.putLong(0, l);
+//            ringBuffer.publishEvent(Main::translate, bb);
+//            Thread.sleep(1000);
+//        }
     }
 
     public static void shutdown() {
@@ -104,4 +151,26 @@ public class Main {
             }
         }
     }
+
+//
+//
+//    public static void handleEvent(LongEvent event, long sequence, boolean endOfBatch)
+//    {
+//        System.out.println(event);
+//    }
+//
+//    public static void translate(LongEvent event, long sequence, ByteBuffer buffer)
+//    {
+//        event.set(buffer.getLong(0));
+//    }
+//
+//    public static class LongEvent
+//    {
+//        private long value;
+//
+//        public void set(long value)
+//        {
+//            this.value = value;
+//        }
+//    }
 }
