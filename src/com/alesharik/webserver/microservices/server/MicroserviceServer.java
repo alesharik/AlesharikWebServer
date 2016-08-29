@@ -10,6 +10,7 @@ import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Prefix("[MicroserviceServer]")
@@ -63,6 +64,12 @@ public class MicroserviceServer extends Server implements Runnable {
     @Override
     public void run() {
         processor.start();
+    }
+
+    public ArrayList<String> getMicroserviceNames() {
+        ArrayList<String> arrayList = new ArrayList<>();
+        microservices.keySet().forEach(arrayList::add);
+        return arrayList;
     }
 
     public enum WorkingMode {

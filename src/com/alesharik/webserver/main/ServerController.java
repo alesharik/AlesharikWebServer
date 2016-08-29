@@ -3,6 +3,7 @@ package com.alesharik.webserver.main;
 import com.alesharik.webserver.api.KeyHolder;
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.StringCipher;
+import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.server.Server;
 import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
@@ -222,6 +223,9 @@ public final class ServerController {
             }
             if(!configuration.containsKey("isRouterServer")) {
                 configuration.addProperty("isRouterServer", false);
+            }
+            if(!configuration.containsKey("routerServerAddress")) {
+                configuration.addProperty("routerServerAddress", Utils.getExternalIp());
             }
 
             Logger.log("Config loaded");

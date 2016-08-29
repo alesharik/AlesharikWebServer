@@ -9,7 +9,7 @@ import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManagerBu
 
 import java.io.IOException;
 
-@Prefix("[MicroserviceClient}")
+@Prefix("[MicroserviceClient]")
 public class MicroserviceClient {
     private MicroserviceClientExecutorPool pool;
     private MicroserviceServer server;
