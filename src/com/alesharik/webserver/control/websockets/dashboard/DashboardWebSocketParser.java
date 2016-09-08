@@ -2,7 +2,10 @@ package com.alesharik.webserver.control.websockets.dashboard;
 
 import com.alesharik.webserver.control.dashboard.CommandBuilderFactory;
 import com.alesharik.webserver.control.dashboard.PluginDataHolder;
+import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.Prefix;
 
+@Prefix("[DashboardWebSocketParser]")
 final class DashboardWebSocketParser {
     private final DashboardWebSocketApplication application;
     private final PluginDataHolder holder;
@@ -22,6 +25,7 @@ final class DashboardWebSocketParser {
                 parseMenuMessage(parts);
                 break;
             default:
+                Logger.log("Strange message: " + msg);
                 break;
         }
     }

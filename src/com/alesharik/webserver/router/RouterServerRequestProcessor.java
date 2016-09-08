@@ -1,6 +1,7 @@
 package com.alesharik.webserver.router;
 
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.Prefix;
 import one.nio.net.Socket;
 import one.nio.serial.DataStream;
 
@@ -11,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Prefix("[RouterServerRequestProcessor]")
 class RouterServerRequestProcessor extends Thread {
     private final int port;
     private final String host;
@@ -107,6 +109,7 @@ class RouterServerRequestProcessor extends Thread {
                                 .forEachOrdered(arrayListStringEntry -> servers.remove(arrayListStringEntry.getKey()));
                         break;
                     default:
+                        Logger.log("Wat! " + utf);
                         break;
                 }
             } catch (IOException | ClassNotFoundException e) {
