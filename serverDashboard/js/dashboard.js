@@ -28,7 +28,12 @@ class Navigator {
     constructor(contentLoader) {
         this.contentLoader = contentLoader;
         this.items = [];
+        this.hasSearchModeOn = false;
+
         this.navigator = document.querySelector("#navigator");
+        this.searchElement = document.querySelector("#navigatorSearch");
+        this.searchList = this.searchElement.querySelector("ul.list-group");
+
         this.searchElementCode = "<li class=\'sidebar-search\'>" +
             "<div class=\'input-group custom-search-form\'>" +
             "<input type=\'text\' class=\'form-control menuSearchInputElement\' placeholder=\'Search...\' onkeydown=\'handleMenuSearchInput(event)\'>" +
@@ -39,11 +44,19 @@ class Navigator {
             "</span>" +
             "</div>" +
             "</li>";
-        this.hasSearchModeOn = false;
-        this.searchElement = document.querySelector("#navigatorSearch");
-        this.searchList = this.searchElement.querySelector("ul.list-group");
+        this.didNotFindCode = "<div class='text-center'>" +
+            "<strong>Your search did not match any items.</strong>" +
+            "</div>";
+        this.searchItemCode = "<li class='list-group-item'>" +
+            "<a data-contentID='{&contentId}' onclick='handleMenuItemClick(event)' role='button' style='cursor: pointer'>" +
+            "<i class='fa fa-{&fa} fa-fw'></i>" +
+            "{&text}</a>" +
+            "</li>";
     }
 
+    /**
+     * @param {string} jsonString
+     */
     parse(jsonString) {
         let json = JSON.parse(jsonString);
         let items = this.items;
@@ -54,25 +67,32 @@ class Navigator {
         this.renderMenu();
     }
 
+    /**
+     * Clear menu on call!
+     */
     renderMenu() {
         this.navigator.innerHTML = this.searchElementCode;
-        //noinspection JSCheckFunctionSignatures
         this.items.forEach((item) => {
             this.navigator.innerHTML += item.toHTML(0);
         });
 
         $('#navigator').metisMenu();
-
     }
 
+    /**
+     * Search text in elements, switch to search mode and render result
+     * @param {string} text
+     */
     search(text) {
         if (!this.hasSearchModeOn) {
             this.toggleSearchMode();
         }
 
-        document.querySelectorAll("#menuSearchInputElement").forEach((elem) => {
-            elem.value = text;
+        //Set text of all search elements
+        document.querySelectorAll(".menuSearchInputElement").forEach((element) => {
+            element.value = text;
         });
+
         let result = [];
         //noinspection JSCheckFunctionSignatures
         this.items.forEach((item) => {
@@ -88,24 +108,22 @@ class Navigator {
         if (result.length > 0) {
             this.renderSearchList(result);
         } else {
-            this.searchList.innerHTML = "<div class='text-center'>" +
-                "<strong>Your search did not match any items.</strong>" +
-                "</div>";
+            this.searchList.innerHTML = this.didNotFindCode;
         }
     }
 
+    /**
+     * Render search list. Do not enable search mode!
+     * @param list
+     */
     renderSearchList(list) {
-        let pattern = "<li class='list-group-item'>" +
-            "<a data-contentID='{&contentId}' onclick='handleMenuItemClick(event)' role='button' style='cursor: pointer'>" +
-            "<i class='fa fa-{&fa} fa-fw'></i>" +
-            "{&text}</a>" +
-            "</li>";
-        let searchList = this.searchList;
-        searchList.innerHTML = "";
+        let that = this;
+        that.searchList.innerHTML = "";
         list.forEach((item) => {
-            searchList.innerHTML += new Pattern().setPattern(pattern).setParameters(item).build();
+            that.searchList.innerHTML += new Pattern().setPattern(that.searchItemCode).setParameters(item).build();
         });
     }
+
 
     toggleSearchMode() {
         if (!this.hasSearchModeOn) {
@@ -119,7 +137,10 @@ class Navigator {
         }
     }
 
-    //TODO add normal selection on active element
+    /**
+     * Try to load content with ContentLoader and select element
+     * @param {HTMLElement} target
+     */
     showContent(target) {
         if (this.hasSearchModeOn) {
             this.toggleSearchMode();
@@ -135,13 +156,32 @@ class Navigator {
         }
     }
 
+    /**
+     * Remove all elements form menu and render it
+     */
     clear() {
         this.items = [];
         this.renderMenu();
     }
 }
 
+/**
+ * This class is a abstraction on MenuTextItem in backend and used in Navigator.
+ * Better use this class to parse json from backend.
+ * Json sample code:
+ * {
+ *      "type": "item",
+  *     "fa": "dashboard",
+  *     "text": "Dashboard",
+  *     "contentId": "dashboard"
+ * }
+ */
 class MenuItem {
+    /**
+     * @param {string} contentId
+     * @param {string} fa
+     * @param {string} text
+     */
     constructor(contentId, fa, text) {
         this.contentId = contentId;
         this.fa = fa;
@@ -149,10 +189,17 @@ class MenuItem {
         this.type = "item";
     }
 
+    /**
+     * @param {Object} json parsed json
+     * @return {MenuItem}
+     */
     static deserialize(json) {
         return new MenuItem(json.contentId, json.fa, json.text);
     }
 
+    /**
+     * @return {string}
+     */
     toHTML() {
         let pattern = "<li>" +
             "<a data-contentID='{&contentId}' onclick='handleMenuItemClick(event)' role='button'>" +
@@ -163,7 +210,30 @@ class MenuItem {
     }
 }
 
+/**
+ * This class is a abstraction on MenuDropdown in backend and used in Navigator.
+ * Better use this class to parse json from backend.
+ * Sample json code:
+ * {
+ *     "type": "dropdown",
+ *     "fa": "servers",
+ *     "text": "Servers",
+ *     "items": [
+ *          {
+ *              "type": "item",
+ *              "fa": "add",
+ *              "text": "Add server",
+ *              "contentId": "addServer"
+ *          }
+ *     ]
+ * }
+ */
 class MenuDropdown {
+    /**
+     * @param {string} fa
+     * @param {string} text
+     * @param {MenuItem[]} items
+     */
     constructor(fa, text, items) {
         this.type = "dropdown";
         this.fa = fa;
@@ -171,25 +241,36 @@ class MenuDropdown {
         this.items = items;
     }
 
+    /**
+     * @param json parsed json
+     * @return {MenuDropdown}
+     */
     static deserialize(json) {
         let items = [];
-        json.items.forEach((item, i, arr) => {
+        json.items.forEach((item) => {
             item = JSON.parse(item);
             items.push((item.type == "item") ? MenuItem.deserialize(item) : MenuDropdown.deserialize(item))
         });
         return new MenuDropdown(json.fa, json.text, items);
     }
 
+    /**
+     * @param {int} depth
+     * @return {string}
+     */
     toHTML(depth) {
+        //Because max depth is 3 it break on 3 depth(0, 1, 2)
         if (depth > 1) {
-            return;
+            return "";
         }
         depth++;
+
         let pattern = "<li>" +
             "<a href='#'>" +
             "<i class='fa fa-{&fa} fa-fw'></i>" +
             "{&text}<span class='fa arrow'></span></a>" +
             "<ul class='nav " + ((depth == 0) ? "nav-second-level" : "nav-third-level") + "'>";
+
         this.items.forEach((item) => {
             if (item.type == "item") {
                 pattern += item.toHTML();
@@ -197,14 +278,20 @@ class MenuDropdown {
                 pattern += item.toHTML(depth);
             }
         });
+
         pattern += "</ul>" +
             "</li>";
         return new Pattern().setPattern(pattern).setParameters(this).build();
     }
 
+    /**
+     * Search element or dropdown
+     * @param {string} text
+     * @return {Array} search result
+     */
     search(text) {
         let result = [];
-        //noinspection JSCheckFunctionSignatures
+
         this.items.forEach((item) => {
             if (item.type == "item") {
                 if (item.text.indexOf(text) != -1) {
@@ -214,6 +301,7 @@ class MenuDropdown {
                 result = result.concat(item.search(text));
             }
         });
+
         return result;
     }
 }
@@ -221,18 +309,24 @@ class MenuDropdown {
 //====================Side menu end====================\\
 //====================Content loading====================\\
 
+/**
+ * This class used for load content form server to #contentHolder
+ */
 class ContentLoader {
     constructor() {
         this.contentHolder = document.querySelector("#contentHolder");
         this.header = document.querySelector("#contentHeader");
     }
 
+    /**
+     * @param {string} id
+     */
     load(id) {
         let that = this;
 
         let request = new XMLHttpRequest();
         request.open("GET", "/content/" + id);
-        request.onreadystatechange = function () {
+        request.onreadystatechange = () => {
             if (request.readyState == 4) {
                 if (request.status != 200) {
                     ContentLoader.staticLoadError(request.status, that);
@@ -245,25 +339,31 @@ class ContentLoader {
         request.send();
     }
 
+    /**
+     * Load error and display it
+     * @param {int} errorCode
+     * @param {ContentLoader} contentLoader
+     */
     static staticLoadError(errorCode, contentLoader) {
-        let header = contentLoader.header;
-        let holder = contentLoader.contentLoader;
-
         let request = new XMLHttpRequest();
         request.open("GET", "/errors/" + errorCode);
         request.onreadystatechange = function () {
             if (request.readyState == 4) {
                 if (request.status != 200) {
-                    header.innerHTML = request.status;
-                    holder.innerHTML = "Oops! You have network issues or crashed server!";
+                    contentLoader.header.innerHTML = request.status;
+                    contentLoader.contentHolder.innerHTML = "Oops! You have network issues or crashed server!";
                 } else {
-                    header.innerHTML = request.status;
-                    holder.innerHTML = request.responseText;
+                    contentLoader.header.innerHTML = errorCode;
+                    contentLoader.contentHolder.innerHTML = request.responseText;
                 }
             }
         }
     }
 
+    /**
+     * Same as staticLoadError but not need to send contentHolder
+     * @param {int} errorCode
+     */
     loadError(errorCode) {
         ContentLoader.staticLoadError(errorCode, this);
     }
