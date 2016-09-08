@@ -4,6 +4,7 @@ import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.RequestHandlerList;
 import com.alesharik.webserver.api.server.WebServer;
+import com.alesharik.webserver.control.dashboard.PluginDataHolder;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.MainHttpHandler;
 import com.alesharik.webserver.logger.Logger;
@@ -34,8 +35,7 @@ public final class MainServer extends WebServer {
     private RequestHandlerList handlerList = new RequestHandlerList();
     private ServerController serverController;
 
-
-    public MainServer(String host, int port, FileManager fileManager, ServerController serverController) {
+    public MainServer(String host, int port, FileManager fileManager, ServerController serverController, PluginDataHolder holder) {
         this.serverController = serverController;
         errorPageGenerator = new ModularErrorPageGenerator(fileManager);
 

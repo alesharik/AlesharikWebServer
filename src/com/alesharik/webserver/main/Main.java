@@ -4,6 +4,7 @@ import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 
 //TODO rewrite site as green terminal
@@ -28,23 +29,6 @@ public class Main {
 //            controller.connect();
 //            Logger.log(controller.getComputerInfo());
 //            Logger.log(Utils.getExternalIp());
-
-//            MicroserviceServer server = new MicroserviceServer("127.0.0.1", 7001, MicroserviceServer.WorkingMode.ADVANCED);
-//            server.registerMicroservice("test", new Microservice() {
-//                @Override
-//                public void setup() {
-//                    Logger.log("Yay!");
-//                }
-//
-//                @Override
-//                public void handleEventAsync(MicroserviceEvent message) {
-//                    Logger.log(message.toString());
-//                }
-//            });
-//            server.start();
-//            MicroserviceClient client = new MicroserviceClient(MicroserviceClient.WorkingMode.ADVANCED);
-//            client.send("test", new OneArgMicorserviceEvent<>("test"), "127.0.0.1:7001");
-//            int read = System.in.read();
         } catch (Throwable e) {
             Logger.log(e);
         }
@@ -119,7 +103,7 @@ public class Main {
 //        }
     }
 
-    public static void shutdown() {
+    public static void shutdown() throws IOException {
         Logger.log("[MAIN]", "Stopping...");
         controller.shutdown();
         System.exit(0);
@@ -135,19 +119,16 @@ public class Main {
         if(!LOGS_FOLDER.exists()) {
             if(!LOGS_FOLDER.mkdir()) {
                 Logger.log("Can't create logs folder!");
-                shutdown();
             }
         }
         if(!WWW.exists()) {
             if(!WWW.mkdir()) {
                 Logger.log("Can't create www folder!");
-                shutdown();
             }
         }
         if(!SERVER_DASHBOARD.exists()) {
             if(!SERVER_DASHBOARD.mkdir()) {
                 Logger.log("Can't create server dashboard folder!");
-                shutdown();
             }
         }
     }

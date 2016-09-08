@@ -6,6 +6,8 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import one.nio.mem.OutOfMemoryException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.AbstractFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,6 +25,7 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,6 +49,7 @@ public class FileManager {
      * Working folder
      */
     private final File rootFolder;
+    private final ArrayList<FileManagerResourcePlugin> resourcePlugins = new ArrayList<>();
     private File logsFolder = null;
 
     private FileHoldingMode holdingMode;
@@ -153,6 +157,14 @@ public class FileManager {
         }
     }
 
+    public void addFileManagerResourcePlugin(FileManagerResourcePlugin plugin) {
+        resourcePlugins.add(plugin);
+    }
+
+    public void removeFileManagerResourcePlugin(FileManagerResourcePlugin plugin) {
+        resourcePlugins.remove(plugin);
+    }
+
     /**
      * Add file to holding if it exist
      */
@@ -221,6 +233,9 @@ public class FileManager {
      * Read file and return it's content. If file was not found return byte[0]
      */
     public byte[] readFile(String file) {
+        if(hasPluginForAddress(file)) {
+            return getPluginForAddress(file).getData();
+        }
         return getFileFromPath(file).read();
     }
 
@@ -228,14 +243,21 @@ public class FileManager {
      * Write/replace content in file
      */
     public void writeToFile(String file, byte[] data) {
-        FileHolder fileHolder = getFileFromPath(file);
-        fileHolder.write(data);
+        if(hasPluginForAddress(file)) {
+            getPluginForAddress(file).setData(data);
+        } else {
+            FileHolder fileHolder = getFileFromPath(file);
+            fileHolder.write(data);
+        }
     }
 
     /**
      * Return true if file/folder exists in holding
      */
     public boolean exists(String file, boolean isFile) {
+        if(hasPluginForAddress(file)) {
+            return true;
+        }
         if(isFile) {
             return getFileFromPath(file) != null;
         } else {
@@ -404,6 +426,28 @@ public class FileManager {
         return node;
     }
 
+    private boolean hasPluginForAddress(String address) {
+        boolean has = false;
+        for(FileManagerResourcePlugin resourcePlugin : resourcePlugins) {
+            if(resourcePlugin.getAddress().equals(address)) {
+                has = true;
+                break;
+            }
+        }
+        return has;
+    }
+
+    private FileManagerResourcePlugin getPluginForAddress(String address) {
+        FileManagerResourcePlugin plugin = null;
+        for(FileManagerResourcePlugin resourcePlugin : resourcePlugins) {
+            if(resourcePlugin.getAddress().equals(address)) {
+                plugin = resourcePlugin;
+                break;
+            }
+        }
+        return plugin;
+    }
+
     @Prefix("[FileChecker]")
     private class FileChecker extends Thread {
         private boolean isRunning = true;
@@ -445,28 +489,39 @@ public class FileManager {
 
         private void processWatchKey(WatchKey key) {
             key.pollEvents().forEach(watchEvent -> {
-                try {
-                    final WatchEvent.Kind<?> kind = watchEvent.kind();
-                    if(kind == StandardWatchEventKinds.OVERFLOW) {
-                        Logger.log("Oops! We have a problem! Watcher is overflowed!");
-                        return;
-                    }
-
-                    File realFile = new File(FileManager.this.rootFolder + "/" + ((WatchEvent<Path>) watchEvent).context().toFile().getPath());
-                    if(kind == StandardWatchEventKinds.ENTRY_CREATE) {
-                        if(realFile.isDirectory()) {
-                            FileManager.this.addFolderWithFiles(realFile);
-                        } else {
-                            FileManager.this.addFile(realFile);
-                        }
-                    } else if(kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                        FileManager.this.reload(realFile.getPath().substring(FileManager.this.rootFolder.getPath().length()));
-                    } else if(kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                        FileManager.this.removeFileFromHold(realFile.getPath().substring(FileManager.this.rootFolder.getPath().length()), realFile.isFile());
-                    }
-                } catch (FileNotFoundException | FileFoundException e) {
-                    Logger.log(e);
+                final WatchEvent.Kind<?> kind = watchEvent.kind();
+                if(kind == StandardWatchEventKinds.OVERFLOW) {
+                    Logger.log("Oops! We have a problem! Watcher is overflowed!");
+                    return;
                 }
+                String fileName = ((WatchEvent<Path>) watchEvent).context().getFileName().toString();
+                Collection files = FileUtils.listFiles(FileManager.this.rootFolder, new AbstractFileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.getName().equals(fileName);
+                    }
+                }, TrueFileFilter.INSTANCE);
+                files.forEach(file -> {
+                    try {
+                        File realFile = (File) file;
+                        if(!realFile.exists()) {
+                            return;
+                        }
+                        if(kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                            if(realFile.isDirectory()) {
+                                FileManager.this.addFolderWithFiles(realFile);
+                            } else {
+                                FileManager.this.addFile(realFile);
+                            }
+                        } else if(kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                            FileManager.this.reload(realFile.getPath().substring(FileManager.this.rootFolder.getPath().length()));
+                        } else if(kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                            FileManager.this.removeFileFromHold(realFile.getPath().substring(FileManager.this.rootFolder.getPath().length()), realFile.isFile());
+                        }
+                    } catch (IOException | FileFoundException e) {
+                        Logger.log(e);
+                    }
+                });
             });
 
             key.reset();

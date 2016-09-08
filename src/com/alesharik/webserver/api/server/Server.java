@@ -17,5 +17,5 @@ public abstract class Server {
 
     public abstract void start() throws IOException;
 
-    public abstract void shutdown();
+    public abstract void shutdown() throws IOException;
 }

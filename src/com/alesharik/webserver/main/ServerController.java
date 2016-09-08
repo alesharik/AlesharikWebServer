@@ -6,6 +6,7 @@ import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.server.Server;
 import com.alesharik.webserver.api.server.WebServer;
+import com.alesharik.webserver.control.dashboard.PluginDataHolder;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
@@ -19,6 +20,7 @@ import com.alesharik.webserver.plugin.accessManagers.BaseAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
+import com.alesharik.webserver.router.RouterServer;
 import one.nio.mem.OutOfMemoryException;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
@@ -60,7 +62,8 @@ public final class ServerController {
     private final ControlAccessManagerBuilder controlAccessManagerBuilder = new ControlAccessManagerBuilder();
     private final ServerAccessManagerBuilder serverAccessManagerBuilder = new ServerAccessManagerBuilder();
 
-    private MicroserviceAccessManagerBuilder microserviceAccessManagerBuilder = null;
+    private MicroserviceAccessManagerBuilder microserviceAccessManagerBuilder;
+    private PluginDataHolder pluginDataHolder = new PluginDataHolder();
 
     private PluginManager pluginManager;
     /**
@@ -73,19 +76,20 @@ public final class ServerController {
             host = Main.HOST;
             port = configuration.getInt("port");
             if(configuration.getBoolean("isMicroserviceServer")) {
-                server = new MicroserviceServer(host, port, MicroserviceServer.WorkingMode.ADVANCED);
+                //FIXME
+                server = new MicroserviceServer(host, port, MicroserviceServer.WorkingMode.ADVANCED, Utils.getExternalIp(), 5000);
                 microserviceAccessManagerBuilder = new MicroserviceAccessManagerBuilder(true);
                 ((MicroserviceServer) server).setupMicorserviceAccessManagerBuilder(microserviceAccessManagerBuilder);
             }
             if(configuration.getBoolean("canHoldMicroservices") && !configuration.getBoolean("isMicroserviceServer")) {
                 microserviceAccessManagerBuilder = new MicroserviceAccessManagerBuilder(false);
-                MicroserviceClient client = new MicroserviceClient(MicroserviceClient.WorkingMode.ADVANCED);
+                //FIXME
+                MicroserviceClient client = new MicroserviceClient(MicroserviceClient.WorkingMode.ADVANCED, Utils.getExternalIp(), 5000);
                 client.start();
                 client.setupMicroserviceAccessMangerBuilder(microserviceAccessManagerBuilder);
             }
-
             if(configuration.getBoolean("isRouterServer")) {
-
+                server = new RouterServer(port, host, RouterServer.WorkingMode.ADVANCED);
             }
             if(!configuration.getBoolean("isMicroserviceServer") && !configuration.getBoolean("isRouterServer")) {
                 if(configuration.getBoolean("isControlServer")) {
@@ -96,6 +100,8 @@ public final class ServerController {
                 ((WebServer) server).setupServerAccessManagerBuilder(serverAccessManagerBuilder);
                 baseAccessManagerBuilder.setFileManager(mainFileManager);
             }
+
+            baseAccessManagerBuilder.setPluginDataHolder(pluginDataHolder);
 
             Logger.log("Server successfully initialized");
 
@@ -233,28 +239,25 @@ public final class ServerController {
                 | UnsupportedEncodingException | BadPaddingException | InvalidKeySpecException e) {
             Logger.log("Can't initialize config!");
             Logger.log(e);
-            Main.shutdown();
         }
     }
 
-    //TODO Set to hold and check
     private void initMainServer() {
         try {
-            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
+            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
                     FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         } catch (OutOfMemoryException e) {
             Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
-            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
+            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
                     FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         }
 
-        server = new MainServer(host, port, mainFileManager, this);
+        server = new MainServer(host, port, mainFileManager, this, pluginDataHolder);
         Logger.log("Main server initialized");
     }
 
-    //TODO Set to hold and check
     private void initControlServer() throws ConfigurationException, IOException {
         checkServerDashboard();
         try {
@@ -268,7 +271,8 @@ public final class ServerController {
                     FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
         }
 
-        server = new ControlServer(host, port, mainFileManager, new AdminDataHolder(serverPassword));
+
+        server = new ControlServer(host, port, mainFileManager, new AdminDataHolder(serverPassword), pluginDataHolder);
         ((ControlServer) server).setupControlAccessManagerBuilder(controlAccessManagerBuilder);
         Logger.log("Control server initialized");
     }
@@ -276,7 +280,7 @@ public final class ServerController {
     /**
      * Shutdown server
      */
-    public void shutdown() {
+    public void shutdown() throws IOException {
         if(isStarted) {
             server.shutdown();
             Logger.log("Server stopped");

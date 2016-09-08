@@ -15,6 +15,7 @@ public class ServerHolder {
         try {
             read();
         } catch (NullPointerException e) {
+
         }
     }
 

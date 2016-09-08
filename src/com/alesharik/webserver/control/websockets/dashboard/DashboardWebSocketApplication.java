@@ -2,6 +2,7 @@ package com.alesharik.webserver.control.websockets.dashboard;
 
 import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketPlugin;
 import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketWrapper;
+import com.alesharik.webserver.control.dashboard.PluginDataHolder;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.websockets.Broadcaster;
@@ -19,10 +20,11 @@ import java.util.HashMap;
 public final class DashboardWebSocketApplication extends WebSocketApplication {
     private final Broadcaster broadcaster = new OptimizedBroadcaster();
     private final HashMap<String, DashboardWebsocketWrapper> wrappers = new HashMap<>();
-    private final DashboardWebSocketParser parser = new DashboardWebSocketParser(this);
+    private final DashboardWebSocketParser parser;
     private DashboardWebSocket webSocket;
 
-    public DashboardWebSocketApplication() {
+    public DashboardWebSocketApplication(PluginDataHolder holder) {
+        parser = new DashboardWebSocketParser(this, holder);
     }
 
     @Override
@@ -31,10 +33,10 @@ public final class DashboardWebSocketApplication extends WebSocketApplication {
         DashboardWebSocket dashboardWebSocket = new DashboardWebSocket(handler, requestPacket, listeners);
         dashboardWebSocket.setBroadcaster(broadcaster);
         dashboardWebSocket.setParser(parser);
-        if(webSocket != null) {
-            webSocket.send("close");
-            webSocket.close();
-        }
+//        if(webSocket != null) {
+//            webSocket.send("close");
+//            webSocket.close();
+//        }
         webSocket = dashboardWebSocket;
         return dashboardWebSocket;
     }

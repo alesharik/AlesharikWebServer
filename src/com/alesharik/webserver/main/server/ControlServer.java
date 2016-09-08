@@ -3,6 +3,7 @@ package com.alesharik.webserver.main.server;
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.WebServer;
+import com.alesharik.webserver.control.dashboard.PluginDataHolder;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketApplication;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
@@ -28,7 +29,7 @@ public final class ControlServer extends WebServer {
     private ModularErrorPageGenerator errorPageGenerator;
     private DashboardWebSocketApplication dashboardWebSocketApplication;
 
-    public ControlServer(String host, int port, FileManager fileManager, AdminDataHolder adminDataHolder) {
+    public ControlServer(String host, int port, FileManager fileManager, AdminDataHolder adminDataHolder, PluginDataHolder holder) {
         controlHttpHandler = new ControlHttpHandler(fileManager, adminDataHolder);
         final NetworkListener networkListener = new NetworkListener("grizzly", host, port);
         networkListener.getFileCache().setEnabled(true);
@@ -58,7 +59,8 @@ public final class ControlServer extends WebServer {
 
         WebSocketAddOn addOn = new WebSocketAddOn();
         networkListener.registerAddOn(addOn);
-        dashboardWebSocketApplication = new DashboardWebSocketApplication();
+
+        dashboardWebSocketApplication = new DashboardWebSocketApplication(holder);
         registerNewWebSocket(dashboardWebSocketApplication, "", "/dashboard");
     }
 

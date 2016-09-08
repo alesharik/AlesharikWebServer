@@ -2,7 +2,6 @@ package com.alesharik.webserver.logger;
 
 import com.alesharik.webserver.logger.handlers.InfoConsoleHandler;
 import com.alesharik.webserver.logger.handlers.WarningConsoleHandler;
-import com.alesharik.webserver.main.Main;
 import sun.misc.SharedSecrets;
 
 import java.io.File;
@@ -84,7 +83,6 @@ public class Logger {
                 isConfigured = true;
             } catch (SecurityException | IOException e) {
                 e.printStackTrace(System.out);
-                Main.shutdown();
             }
         }
     }

@@ -6,6 +6,7 @@ import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.microservices.api.MicroserviceEvent;
 import com.alesharik.webserver.microservices.server.MicroserviceServer;
 import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManagerBuilder;
+import com.alesharik.webserver.router.Router;
 
 import java.io.IOException;
 
@@ -13,12 +14,15 @@ import java.io.IOException;
 public class MicroserviceClient {
     private MicroserviceClientExecutorPool pool;
     private MicroserviceServer server;
+    private Router router;
 
-    public MicroserviceClient(WorkingMode mode) {
+    public MicroserviceClient(WorkingMode mode, String routerIp, int routerHost) {
         pool = new MicroserviceClientExecutorPool(mode);
+        router = new Router(routerHost, routerIp, server);
 
         if(mode == WorkingMode.ADVANCED) {
-            server = new MicroserviceServer(Utils.getExternalIp(), 6800, MicroserviceServer.WorkingMode.SIMPLE);
+            //FIXME
+            server = new MicroserviceServer(Utils.getExternalIp(), 6800, MicroserviceServer.WorkingMode.SIMPLE, Utils.getExternalIp(), 6000);
         }
         Logger.log("Microservice client successfully initialized!");
     }
@@ -26,12 +30,14 @@ public class MicroserviceClient {
     public void start() throws IOException {
         if(server != null) {
             server.start();
+            router.start();
         }
     }
 
     public void shutdown() {
         if(server != null) {
             server.shutdown();
+            router.shutdown();
         }
     }
 
@@ -41,6 +47,11 @@ public class MicroserviceClient {
         } catch (IOException e) {
             Logger.log(e);
         }
+    }
+
+    public void send(String microserviceName, MicroserviceEvent message) {
+        String address = router.get(microserviceName);
+        send(microserviceName, message, address);
     }
 
     public void setupMicroserviceAccessMangerBuilder(MicroserviceAccessManagerBuilder builder) {

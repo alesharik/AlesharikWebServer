@@ -21,7 +21,7 @@ public class MicroserviceServer extends Server implements Runnable {
     private volatile RingBuffer<Event> ringBuffer;
     private MicroserviceServerRequestProcessor processor;
 
-    public MicroserviceServer(String host, int port, WorkingMode mode) {
+    public MicroserviceServer(String host, int port, WorkingMode mode, String routerIp, int routerHost) {
         //TODO use CPU L3 cache size without 1024
         disruptor = new Disruptor<>(new EventFactoryImpl(), 1024, new DisruptorThreadFactory());
         disruptor.setDefaultExceptionHandler(new DisruptorExceptionHandler<>());
@@ -30,7 +30,7 @@ public class MicroserviceServer extends Server implements Runnable {
         processor = new MicroserviceServerRequestProcessor(null, host, port, mode);
 
         if(mode == WorkingMode.ADVANCED) {
-            client = new MicroserviceClient(MicroserviceClient.WorkingMode.SIMPLE);
+            client = new MicroserviceClient(MicroserviceClient.WorkingMode.SIMPLE, routerIp, routerHost);
         }
         Logger.log("Microservice server successfully initialized!");
     }
