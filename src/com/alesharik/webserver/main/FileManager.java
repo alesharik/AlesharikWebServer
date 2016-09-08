@@ -759,7 +759,7 @@ public class FileManager {
         FileHoldingParams() {
         }
 
-        public FileHoldingParams setValue(Object value) {
+        FileHoldingParams setValue(Object value) {
             this.value = value;
             return this;
         }

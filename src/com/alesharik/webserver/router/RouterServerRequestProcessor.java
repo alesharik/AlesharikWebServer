@@ -106,6 +106,8 @@ class RouterServerRequestProcessor extends Thread {
                                 .filter(arrayListStringEntry -> arrayListStringEntry.getValue().equals(server))
                                 .forEachOrdered(arrayListStringEntry -> servers.remove(arrayListStringEntry.getKey()));
                         break;
+                    default:
+                        break;
                 }
             } catch (IOException | ClassNotFoundException e) {
                 Logger.log(e);

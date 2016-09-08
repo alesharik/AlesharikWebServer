@@ -21,6 +21,8 @@ final class DashboardWebSocketParser {
             case "menu":
                 parseMenuMessage(parts);
                 break;
+            default:
+                break;
         }
     }
 
