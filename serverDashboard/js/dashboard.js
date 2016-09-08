@@ -4,6 +4,11 @@ class Dashboard {
         this.navbarTop = new NavbarTop();
         this.contentLoader = new ContentLoader();
         this.navigator = new Navigator(this.contentLoader);
+        this.webSocketManager = new WebSocketManager(this);
+        this.webSocketManager.updateMenu();
+
+        MenuUtils.setupMenu();
+        this.menuPluginHandler = new MenuPluginHandler();
     }
 
     onMessageClick(event) {
@@ -11,14 +16,22 @@ class Dashboard {
     }
 }
 
+//====================Side menu====================\\
+
+/**
+ * This class used for works with side menu
+ */
 class Navigator {
+    /**
+     * @param {ContentLoader} contentLoader
+     */
     constructor(contentLoader) {
         this.contentLoader = contentLoader;
         this.items = [];
         this.navigator = document.querySelector("#navigator");
-        this.searchElementCode = "<li class=\'sudebar-search\'>" +
+        this.searchElementCode = "<li class=\'sidebar-search\'>" +
             "<div class=\'input-group custom-search-form\'>" +
-            "<input type=\'text\' class=\'form-control\' placeholder=\'Search...\' onkeydown=\'handleMenuSearchInput(event)\'>" +
+            "<input type=\'text\' class=\'form-control menuSearchInputElement\' placeholder=\'Search...\' onkeydown=\'handleMenuSearchInput(event)\'>" +
             "<span class=\'input-group-btn\'>" +
             "<button class=\'btn btn-default\' type=\'button\' onclick=\'searchInMenu(document.querySelectorAll(\".menuSearchInputElement\")[1])\'>" +
             "<i class=\'fa fa-search\'></i>" +
@@ -31,10 +44,13 @@ class Navigator {
         this.searchList = this.searchElement.querySelector("ul.list-group");
     }
 
-    parse(json) {
-        let itemArr = this.items;
-        json.items.forEach((item, i, arr) =>
-            itemArr.push((item.type == "item") ? MenuItem.deserialize(item) : MenuDropdown.deserialize(item)));
+    parse(jsonString) {
+        let json = JSON.parse(jsonString);
+        let items = this.items;
+        json.items.forEach((item) => {
+            item = JSON.parse(item);
+            items.push((item.type == "item") ? MenuItem.deserialize(item) : MenuDropdown.deserialize(item));
+        });
         this.renderMenu();
     }
 
@@ -46,6 +62,7 @@ class Navigator {
         });
 
         $('#navigator').metisMenu();
+
     }
 
     search(text) {
@@ -117,6 +134,11 @@ class Navigator {
             element.classList.add("active");
         }
     }
+
+    clear() {
+        this.items = [];
+        this.renderMenu();
+    }
 }
 
 class MenuItem {
@@ -151,8 +173,10 @@ class MenuDropdown {
 
     static deserialize(json) {
         let items = [];
-        json.items.forEach((item, i, arr) =>
-            items.push((item.type == "item") ? MenuItem.deserialize(item) : MenuDropdown.deserialize(item)));
+        json.items.forEach((item, i, arr) => {
+            item = JSON.parse(item);
+            items.push((item.type == "item") ? MenuItem.deserialize(item) : MenuDropdown.deserialize(item))
+        });
         return new MenuDropdown(json.fa, json.text, items);
     }
 
@@ -193,29 +217,9 @@ class MenuDropdown {
         return result;
     }
 }
-//
-// {
-//     items: [
-//         {
-//             type: "item",
-//             contentId: "menu",
-//             fa: "fw",
-//             text: "Dashboard"
-//         },{
-//             type: "dropdown",
-//             fa: "fw",
-//             text: "text",
-//             items: [
-//                 {
-//                     type: "item",
-//                     contentId: "menu",
-//                     fa: "fw",
-//                     text: "Dashboard"
-//                 }
-//             ]
-//         }
-//     ]
-// }
+
+//====================Side menu end====================\\
+//====================Content loading====================\\
 
 class ContentLoader {
     constructor() {
@@ -265,6 +269,7 @@ class ContentLoader {
     }
 }
 
+//====================Content loading end====================\\
 
 class Holder {
     constructor() {
@@ -392,7 +397,6 @@ class SliderRight {
         this.messageChat = document.querySelector("#messageChat");
         this.messageSenderElement = document.querySelector("#messageSenderName");
         this.chats = [];
-        this.webSocketManager = new WebSocketManager();
 
         this.isMenuOpened = false;
     }
@@ -471,10 +475,11 @@ class SliderRight {
         this.findChat(messageOld).setMessage(messageOld, messageNew);
     }
 
+    //TODO write this
     sendMessage(messageText) {
         let msg = new Message(this.chats[0].receiver, moment().format("YYYYMMDD-hh:mm"), messageText);
         this.addMessage(msg);
-        this.webSocketManager.sendMessage(msg);
+        // this.webSocketManager.sendMessage(msg);
     }
 }
 
@@ -601,34 +606,263 @@ class Message {
     }
 }
 
+//====================Websocket====================\\
+
 class WebSocketManager {
-    construcor(navbarTop) {
+    constructor(dashboard) {
         this.webSocket = new WebSocket("ws" + new RegExp("://.*/").exec(document.location.href) + "dashboard");
-        this.webSocket.onmessage = this.parse;
-        this.navbarTop = navbarTop;
-        this.sliderRight = this.navbarTop.sliderRight;
+        this.webSocketSender = new WebsocketSender(this.webSocket);
+        this.webSocket.onmessage = (event) => {
+            // if (event.data.startsWith("messages:")) {
+            //     let type = event.data.substring(9, event.data.indexOf(":", 10));
+            //     let message = event.data.substring(10 + type.length);
+            //     // switch (type) {
+            //     //     case "addMessage":
+            //     //         msg = Message.deserialize(message);
+            //     //         this.navbarTop.addMessage(msg);
+            //     //         this.sliderRight.addMessage(msg);
+            //     //         break;
+            //     //     case "setMessage":
+            //     //         msg = message.split("");
+            //     //         this.sliderRight.setMessage(Message.deserialize(msg[0]), Message.deserialize(msg[1]));
+            //     //         break;
+            //     // }
+            //     switch (type) {
+            //         case "menu":
+            //             dashboard.navigator.parse(message);
+            //     }
+            // }
+            let parts = event.data.split(":");
+            let type = parts[0];
+            let subType = parts[1];
+            let message = event.data.substring(parts[0].length + 1 + parts[1].length + 1);
+            switch (type) {
+                case "menu":
+                    switch (subType) {
+                        case "set":
+                            dashboard.navigator.parse(message);
+                            break;
+                        case "render":
+                            dashboard.navigator.renderMenu();
+                            break;
+                    }
+                    break;
+            }
+        };
+
+        this.dashboard = dashboard;
     }
 
-    parse(event) {
-        if (event.data.startsWith("messages:")) {
-            let type = event.data.substring(9, event.data.indexOf(":", 10));
-            let message = event.data.substring(10 + type.length);
-            let msg;
-            switch (type) {
-                case "addMessage":
-                    msg = Message.deserialize(message);
-                    this.navbarTop.addMessage(msg);
-                    this.sliderRight.addMessage(msg);
-                    break;
-                case "setMessage":
-                    msg = message.split("");
-                    this.sliderRight.setMessage(Message.deserialize(msg[0]), Message.deserialize(msg[1]));
-                    break;
+    sendMessage(message) {
+        this.webSocketSender.send("messages:sendMessage:" + message.serialize());
+    }
+
+    updateMenu() {
+        this.webSocketSender.send("menu:update");
+    }
+}
+
+class WebsocketSender {
+    constructor(websocket) {
+        this.websocket = websocket;
+        this.startQueue = [];
+        let queue = this.startQueue;
+        let socket = this.websocket;
+        this.websocket.onopen = () => {
+            queue.forEach((message) => {
+                socket.send(message);
+            })
+        };
+    }
+
+    send(message) {
+        if (this.websocket.readyState < 1) {
+            this.startQueue.push(message);
+        } else {
+            this.websocket.send(message);
+        }
+    }
+}
+
+//====================Websocket end====================\\
+//====================Menu plugin====================\\
+
+class MenuUtils {
+    /**
+     * If enabled is true then enable sortable on both elements(#menuPluginsEditor, #menuPlugins). If enabled is false
+     * then disable both elements.
+     * @param {boolean} enabled
+     */
+    static sortable(enabled) {
+        if (enabled) {
+            $("#menuPluginsEditor").sortable({
+                connectWith: ".menuPluginsConnected"
+            }).disableSelection();
+            $("#menuPlugins").sortable({
+                connectWith: ".menuPluginsConnected"
+            }).disableSelection();
+        } else {
+            $("#menuPluginsEditor").sortable("disable");
+            $("#menuPlugins").sortable("disable");
+        }
+    }
+
+    /**
+     * Setup width of top menu
+     */
+    static setupMenu() {
+        let menuPluginsElement = document.querySelector("#menuPlugins");
+        let menu = document.querySelector("#topNavbar");
+
+        let maxWidth = menu.offsetWidth - document.querySelector("#topNavbar > .navbar-header").offsetWidth
+            - document.querySelector("#topNavbar > .navbar-right").offsetWidth;
+        menuPluginsElement.style.width = maxWidth + "px";
+        menuPluginsElement.style.height = menu.offsetHeight - 1 + "px";
+    }
+}
+
+/**
+ * This class used for handle menu plugins editor. If needed element doesn't exists then it do nothing
+ */
+class MenuPluginsEditorHandler {
+    /**
+     * @param {MenuPluginHandler} menuPluginHandler
+     */
+    constructor(menuPluginHandler) {
+        this.menuPluginHandler = menuPluginHandler;
+        this.editorElement = document.querySelector("#menuPluginsEditor");
+        if (this.editorElement == null) {
+            return;
+        }
+
+        this.elementPattern = "<li>" +
+            "<div style='width: {&width} px; height: {&height} px;'>" +
+            "{&source}" +
+            "</div>" +
+            "</li>";
+
+        let that = this;
+        menuPluginHandler.onPluginAdd = (plugin) => {
+            that.draw(plugin);
+        }
+    }
+
+    /**
+     * Redraw all elements
+     */
+    redraw() {
+        let that = this;
+        this.menuPluginHandler.getAllPlugins().forEach((plugin) => {
+            that.draw(plugin);
+        });
+    }
+
+    /**
+     * Draw plugin(Create new element from pattern and push ot into end of the container)
+     * @param {MenuPlugin} plugin
+     */
+    draw(plugin) {
+        this.editorElement.innerHTML += new Pattern().setPattern(this.elementPattern).setParameters({
+            width: plugin.getWidth(),
+            height: document.querySelector("#menuPlugins").offsetHeight,
+            source: plugin.getCode()
+        }).build();
+    }
+
+    /**
+     * Reset #menuPluginsEditor(set innerHTML to "")
+     */
+    reset() {
+        this.editorElement.innerHTML = "";
+    }
+}
+
+/**
+ * This class holds plugins for top menu. Used in MenuEditorHandler.
+ */
+class MenuPluginHandler {
+    constructor() {
+        this.plugins = [];
+        this.onPluginAdd = (plugin, handler) => {
+        };
+    }
+
+    /**
+     * @param {MenuPlugin} plugin
+     */
+    addPlugin(plugin) {
+        this.plugins.push(plugin);
+        if (plugin.isActive()) {
+            this.onPluginAdd(plugin, this);
+        }
+    }
+
+    /**
+     * @return {string[]} names of active plugins
+     */
+    getPluginNames() {
+        let names = [];
+        this.plugins.filter((plugin) => plugin.isActive()).forEach((plugin) => names.push(plugin.getName()));
+        return names;
+    }
+
+    /**
+     * @param {string} name
+     */
+    getPluginForName(name) {
+        for (let plugin in this.plugins) {
+            if (plugin.getName() == name) {
+                return plugin;
             }
         }
     }
 
-    sendMessage(message) {
-        this.webSocket.send("messages:sendMessage:" + message.serialize());
+    /**
+     * @return {MenuPlugin[]} plugins
+     */
+    getAllPlugins() {
+        let plugins = [];
+        this.plugins.filter((plugin) => plugin.isActive()).forEach((plugin) => plugins.push(plugin));
+        return plugins;
     }
 }
+
+//====================Menu plugin end====================\\
+//====================Menu plugin API====================\\
+
+class MenuPlugin {
+    constructor() {
+        this.active = false;
+        this.name = "";
+    }
+
+    /**
+     * @return {boolean} is plugin active
+     */
+    isActive() {
+        return this.active;
+    }
+
+    /**
+     * @return {int} plugin width in pixels
+     */
+    getWidth() {
+
+    }
+
+    /**
+     * @return {string} code
+     */
+    getCode() {
+
+    }
+
+    /**
+     * @return {string} name of plugin
+     */
+    getName() {
+        return this.name;
+    }
+}
+
+//====================Menu plugin API End====================\\

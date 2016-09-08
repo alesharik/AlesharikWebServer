@@ -53,16 +53,16 @@ $(document).ready(function () {
 $(function () {
 
     var data = [{
-        label: "Series 0",
+        label: "Series 1",
         data: 1
     }, {
-        label: "Series 1",
+        label: "Series 3",
         data: 3
     }, {
-        label: "Series 2",
+        label: "Series 4",
         data: 9
     }, {
-        label: "Series 3",
+        label: "Series 5",
         data: 20
     }];
 

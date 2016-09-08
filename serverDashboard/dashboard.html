@@ -7,6 +7,7 @@
     <title>Dashboard</title>
     <link href="styles/bootstrap.css" rel="stylesheet">
     <link href="lib/metisMenu/metisMenu.min.css" rel="stylesheet">
+    <link href="lib/jquery-ui/jquery-ui.min.css" rel="stylesheet">
     <link href="styles/main.css" rel="stylesheet">
     <link href="lib/font-awesome/font-awesome.min.css" rel="stylesheet" type="text/css">
     <script src="lib/moment/moment.min.js"></script>
@@ -36,6 +37,13 @@
             </button>
             <a class="navbar-brand" role="button" onclick="goTo('index')">AlesharikWebServer Dashboard</a>
         </div>
+        <ul id="menuPlugins" class="nav navbar-top-links navbar-left menuPluginsConnected">
+            <li class="ui-state-default">
+                <div>
+                    <p class="fa fa-fw fa-play"></p>
+                </div>
+            </li>
+        </ul>
         <ul class="nav navbar-top-links navbar-right">
             <li class="dropdown">
                 <a class="dropdown-toggle" data-toggle="dropdown" role="button">
@@ -239,7 +247,7 @@
                 </li>
             </ul>
             <div class="tab-content">
-                <div class="tab-pane fade" id="messages">
+                <div class="tab-pane fade active in" id="messages">
                     <ul id="messageNavbar" class="navbar-default sidebar"></ul>
                     <div id="messageWrapper">
                         <div class="navbar-static-top messageWrapperNavbar">
@@ -272,7 +280,30 @@
             <div class="row">
                 <div class="col-lg-12">
                     <h1 class="page-header" id="contentHeader">Blank</h1>
-                    <div id="contentHolder"></div>
+                    <div id="contentHolder">
+                        <ul id="menuPluginsEditor" class="menuPluginsConnected">
+                            <li class="ui-state-default">
+                                <div>
+                                    <p class="fa fa-fw fa-play">1</p>
+                                </div>
+                            </li>
+                            <li class="ui-state-default">
+                                <div>
+                                    <p class="fa fa-fw fa-play">2</p>
+                                </div>
+                            </li>
+                            <li class="ui-state-default">
+                                <div>
+                                    <p class="fa fa-fw fa-play">3</p>
+                                </div>
+                            </li>
+                            <li class="ui-state-default">
+                                <div>
+                                    <p class="fa fa-fw fa-play">4</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <!-- /.col-lg-12 -->
             </div>
@@ -286,6 +317,7 @@
 <!-- /#wrapper -->
 
 <script src="lib/jquery/jquery.min.js"></script>
+<script src="lib/jquery-ui/jquery-ui.min.js"></script>
 <script src="lib/bootstrap/bootstrap.min.js"></script>
 <script src="lib/metisMenu/metisMenu.min.js"></script>
 <script src="js/main.js"></script>

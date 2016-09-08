@@ -67,6 +67,26 @@ a.active[role=button] {
     transition: height 1s ease-in-out;
 }
 
+#menuPlugins > li, #menuPluginsEditor > li {
+    height: 100%;
+    margin: 0;
+    border: 0 solid transparent;
+    background: transparent;
+}
+
+#menuPlugins > li > div {
+    height: 100%;
+    display: flex;
+}
+
+#menuPluginsEditor > li > div {
+    display: flex;
+}
+
+#menuPlugins > li > div *, #menuPluginsEditor > li > div * {
+    margin: auto;
+}
+
 @media (max-width: 700px) {
     body, #background {
         display: none;

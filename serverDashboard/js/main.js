@@ -77,7 +77,7 @@ var dashboard;
 /**
  * Load all needed
  */
-document.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("load", () => {
     dashboard = new Dashboard();
 
     let canvas = document.querySelector("#backgroundCanvas");
@@ -161,5 +161,17 @@ function handleMenuSearchInput(e) {
     let keyCode = e.keyCode || e.width;
     if (keyCode == 13) {
         searchInMenu(target);
+    } else if (keyCode == 27 && dashboard.navigator.hasSearchModeOn) {
+        dashboard.navigator.toggleSearchMode();
     }
 }
+
+//====================Droppable====================\\
+function switchToMenuEdit() {
+
+}
+
+function disableMenuEditing() {
+
+}
+//====================End droppable====================\\
