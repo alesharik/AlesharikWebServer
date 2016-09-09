@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.util.Date;
 
 //TODO rewrite site as green terminal
+//TODO write @Prefixes
+//TODO add more prefixes to java's
 public class Main {
     public static final String HOST = Utils.getExternalIp();
     public static final File USER_DIR = new File(System.getProperty("user.dir"));

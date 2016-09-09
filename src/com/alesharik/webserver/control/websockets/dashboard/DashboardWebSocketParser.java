@@ -24,6 +24,8 @@ final class DashboardWebSocketParser {
             case "menu":
                 parseMenuMessage(parts);
                 break;
+            case "menuPlugins":
+                parseTopPluginsMessage(parts);
             default:
                 Logger.log("Strange message: " + msg);
                 break;
@@ -37,6 +39,12 @@ final class DashboardWebSocketParser {
     private void parseMenuMessage(String[] parts) {
         if(parts[1].equals("update")) {
             application.sendMessage(CommandBuilderFactory.menu().setMenu(holder.getMenu()).build());
+        }
+    }
+
+    private void parseTopPluginsMessage(String[] parts) {
+        if(parts[1].equals("get")) {
+            application.sendMessage("menuPlugins:set:" + holder.getAllMenuPluginsAsJSONArray());
         }
     }
 }

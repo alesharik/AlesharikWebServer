@@ -14,6 +14,60 @@ class Dashboard {
     onMessageClick(event) {
         this.navbarTop.onMessageClick(event);
     }
+
+    /**
+     * Load js file as <script>
+     * @param {string} file local or internet file address
+     * @param {function} onEnded call on load ended. Receive created element.
+     */
+    loadJSFile(file, onEnded = () => {
+    }) {
+        let request = new XMLHttpRequest();
+        request.open("GET", file);
+        request.onreadystatechange = () => {
+            if (request.readyState == 4) {
+                let scriptElement = document.createElement("script");
+                scriptElement.type = "text/javascript";
+                if (request.status != 200) {
+                    scriptElement.src = file;
+                } else {
+                    scriptElement.innerHTML = request.responseText;
+                }
+                onEnded(scriptElement);
+                document.getElementsByTagName("head")[0].appendChild(scriptElement);
+            }
+        };
+        request.send();
+    }
+
+    /**
+     * Load css file as <style> or as <link>
+     * @param file local or internet file address
+     * @param {function} onEnded call on load ended. Receive created element.
+     */
+    loadCSSFile(file, onEnded = () => {
+    }) {
+        let request = new XMLHttpRequest();
+        request.open("GET", file);
+        request.onreadystatechange = () => {
+            if (request.readyState == 4) {
+                if (request.status != 200) {
+                    let link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.type = "text/css";
+                    link.href = file;
+                    onEnded(link);
+                    document.getElementsByTagName("head")[0].appendChild(link);
+                } else {
+                    let style = document.createElement("style");
+                    style.innerHTML = request.responseText;
+                    onEnded(style);
+                    document.getElementsByTagName("head")[0].appendChild(style);
+                }
+            }
+        };
+        request.send();
+    }
 }
 
 //====================Side menu====================\\
@@ -145,6 +199,8 @@ class Navigator {
         if (this.hasSearchModeOn) {
             this.toggleSearchMode();
         }
+        target.parentNode.parentNode.parentNode.querySelectorAll(".active").forEach((element) => element.classList.remove("active"));
+
         this.contentLoader.load(target.getAttribute("data-contentid"));
 
         let parent = target.parentNode.parentNode;
@@ -311,28 +367,65 @@ class MenuDropdown {
 
 /**
  * This class used for load content form server to #contentHolder
+ * To load CSS or JS you need to add <meta type="extension" href="href-to-your-file"> in head of loaded html.
+ * This code load href-to-your-file with dashboard.loadCSSFile() or dashboard.loadJSFile(). All css is auto selected, all
+ * js is auto started!
+ * There is 2 events:
+ * 1. loadingContentEnded - dispatch on loader finish loading data
+ * 2. finalizeContentScript - dispatch on loader remove all resources
  */
 class ContentLoader {
     constructor() {
         this.contentHolder = document.querySelector("#contentHolder");
         this.header = document.querySelector("#contentHeader");
+
+        this.elements = [];
+        this.finalizeContentScriptEvent = new Event("finalizeContentScript");
+        this.loadingContentEndedEvent = new Event("loadingContentEnded");
     }
 
     /**
      * @param {string} id
      */
     load(id) {
+        document.dispatchEvent(this.finalizeContentScriptEvent);
+        this.elements.forEach((element) => {
+            element.parentNode.removeChild(element);
+        });
+        this.elements = [];
+
         let that = this;
 
         let request = new XMLHttpRequest();
-        request.open("GET", "/content/" + id);
+        request.open("GET", "/content/" + id + ".html");
         request.onreadystatechange = () => {
             if (request.readyState == 4) {
                 if (request.status != 200) {
                     ContentLoader.staticLoadError(request.status, that);
                 } else {
-                    that.header.innerHTML = id;
+                    let headers = new RegExp("<title>(.*?)</title>").exec(request.responseText);
+                    if (headers.length >= 2) {
+                        that.header.innerHTML = headers[1];
+                    } else {
+                        that.header.innerHTML = id;
+                    }
                     that.contentHolder.innerHTML = request.responseText;
+
+                    let extensions = new RegExp("<meta type=\"extension\".*>").exec(that.contentHolder.innerHTML);
+                    if (extensions != null) {
+                        extensions.forEach((extension) => {
+                            let href = extension.substring(extension.indexOf("href=\"") + 6, extension.lastIndexOf("\">"));
+                            href.lastIndexOf(".css") == -1 ?
+                                dashboard.loadJSFile(href, (element) => {
+                                    that.elements.push(element);
+                                }) :
+                                dashboard.loadCSSFile(href, (element) => {
+                                    that.elements.push(element);
+                                });
+                        });
+                    }
+
+                    document.dispatchEvent(that.loadingContentEndedEvent);
                 }
             }
         };
@@ -387,7 +480,6 @@ class Holder {
     }
 
     onmessage(message) {
-        //noinspection JSCheckFunctionSignatures
         this.onmessageList.forEach((handler) => {
             handler(message);
         })
@@ -713,25 +805,6 @@ class WebSocketManager {
         this.webSocket = new WebSocket("ws" + new RegExp("://.*/").exec(document.location.href) + "dashboard");
         this.webSocketSender = new WebsocketSender(this.webSocket);
         this.webSocket.onmessage = (event) => {
-            // if (event.data.startsWith("messages:")) {
-            //     let type = event.data.substring(9, event.data.indexOf(":", 10));
-            //     let message = event.data.substring(10 + type.length);
-            //     // switch (type) {
-            //     //     case "addMessage":
-            //     //         msg = Message.deserialize(message);
-            //     //         this.navbarTop.addMessage(msg);
-            //     //         this.sliderRight.addMessage(msg);
-            //     //         break;
-            //     //     case "setMessage":
-            //     //         msg = message.split("");
-            //     //         this.sliderRight.setMessage(Message.deserialize(msg[0]), Message.deserialize(msg[1]));
-            //     //         break;
-            //     // }
-            //     switch (type) {
-            //         case "menu":
-            //             dashboard.navigator.parse(message);
-            //     }
-            // }
             let parts = event.data.split(":");
             let type = parts[0];
             let subType = parts[1];
@@ -747,6 +820,12 @@ class WebSocketManager {
                             break;
                     }
                     break;
+                case "menuPlugins":
+                    switch (subType) {
+                        case "set":
+                            dashboard.menuPluginHandler.parse(message);
+                    }
+                    break;
             }
         };
 
@@ -760,21 +839,35 @@ class WebSocketManager {
     updateMenu() {
         this.webSocketSender.send("menu:update");
     }
+
+    updateMenuPlugins() {
+        this.webSocketSender.send("menuPlugins:get");
+    }
 }
 
+/**
+ * This class used for send requests on WebSocket. If WebSocket is not ready then sender add message to queue and if
+ * WebSocket ready send all messages in queue
+ */
 class WebsocketSender {
+    /**
+     * @param {WebSocket} websocket
+     */
     constructor(websocket) {
         this.websocket = websocket;
         this.startQueue = [];
-        let queue = this.startQueue;
-        let socket = this.websocket;
+
+        let that = this;
         this.websocket.onopen = () => {
-            queue.forEach((message) => {
-                socket.send(message);
+            that.startQueue.forEach((message) => {
+                that.websocket.send(message);
             })
         };
     }
 
+    /**
+     * @param {string} message
+     */
     send(message) {
         if (this.websocket.readyState < 1) {
             this.startQueue.push(message);
@@ -795,15 +888,17 @@ class MenuUtils {
      */
     static sortable(enabled) {
         if (enabled) {
-            $("#menuPluginsEditor").sortable({
-                connectWith: ".menuPluginsConnected"
+            $("#menuPluginsEditor").removeClass("menuPluginsDisabled").sortable({
+                connectWith: ".menuPluginsConnected",
+                cancel: ".menuPluginsDisabled"
             }).disableSelection();
-            $("#menuPlugins").sortable({
-                connectWith: ".menuPluginsConnected"
+            $("#menuPlugins").removeClass("menuPluginsDisabled").sortable({
+                connectWith: ".menuPluginsConnected",
+                cancel: ".menuPluginsDisabled"
             }).disableSelection();
         } else {
-            $("#menuPluginsEditor").sortable("disable");
-            $("#menuPlugins").sortable("disable");
+            $("#menuPluginsEditor").addClass("menuPluginsDisabled");
+            $("#menuPlugins").addClass("menuPluginsDisabled");
         }
     }
 
@@ -875,6 +970,11 @@ class MenuPluginsEditorHandler {
     reset() {
         this.editorElement.innerHTML = "";
     }
+
+    destroy() {
+        this.menuPluginHandler.onPluginAdd = () => {
+        };
+    }
 }
 
 /**
@@ -924,6 +1024,20 @@ class MenuPluginHandler {
         let plugins = [];
         this.plugins.filter((plugin) => plugin.isActive()).forEach((plugin) => plugins.push(plugin));
         return plugins;
+    }
+
+    /**
+     * Clear and set elements form json
+     * @param {string} message
+     */
+    parse(message) {
+        this.plugins = [];
+
+        let array = JSON.parse(message);
+        array.forEach((element) => {
+            let clazz = eval(element);
+            dashboard.menuPluginHandler.addPlugin(clazz);
+        })
     }
 }
 
