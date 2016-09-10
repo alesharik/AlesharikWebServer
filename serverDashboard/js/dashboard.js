@@ -5,7 +5,10 @@ class Dashboard {
         this.contentLoader = new ContentLoader();
         this.navigator = new Navigator(this.contentLoader);
         this.webSocketManager = new WebSocketManager(this);
+        this.sliderRightHandler = new SliderRightHandler();
         this.webSocketManager.updateMenu();
+
+        this.messageHandler = new MessageHandler();
 
         MenuUtils.setupMenu();
         this.menuPluginHandler = new MenuPluginHandler();
@@ -464,37 +467,15 @@ class ContentLoader {
 
 //====================Content loading end====================\\
 
-class Holder {
-    constructor() {
-        this.messages = [];
-        this.onmessageList = [];
-    }
-
-    addMessage(message) {
-        this.messages.push(message);
-        this.onmessage(message)
-    }
-
-    addMessageHandler(handler) {
-        this.onmessageList.push(handler);
-    }
-
-    onmessage(message) {
-        this.onmessageList.forEach((handler) => {
-            handler(message);
-        })
-    }
-}
-
+//TODO rewrite this
 class NavbarTop {
     constructor(holder) {
         this.messagesElement = document.querySelector("#NavbarTopMessages");
         this.count = 0;
-        this.sliderRight = new SliderRight(holder);
         this.holder = holder;
         this.showAllMessagesElement = "<li class='divider'></li>" +
             "<li>" +
-            "<a class='text-center' role='button' onclick='dashboard.navbarTop.sliderRight.openMenu(\"messages\")'>" +
+            "<a class='text-center' role='button' onclick='dashboard.sliderRightHandler.openMenu(\"messages\")'>" +
             "<strong>Read All Messages</strong>" +
             "<i class='fa fa-angle-right'></i>" +
             "</a>" +
@@ -566,68 +547,131 @@ class NavbarTop {
         console.log(event);
     }
 }
+//====================Right Slider====================\\
 
 /**
- * This class used in right menu
+ * This class used for open and close right slider
  */
-class SliderRight {
-    constructor(holder) {
-        this.holder = holder;
+class SliderRightHandler {
+    constructor() {
         this.menu = document.querySelector("#slideMenu");
-        this.menu.style.height = window.innerHeight + "px";
-        document.querySelector("#messageNavbar").style.height = (window.innerHeight - 42) + "px";
-        document.querySelector("#messageElement").style.height = (window.innerHeight - 122) + "px";
-        document.querySelector("#messageChat").style.height = (window.innerHeight - 122) + "px";
-        window.resize = function () {
+        this.pageWrapper = document.querySelector("#page-wrapper");
+        this.isMenuOpened = false;
+        this.disabledTabs = [];
+    }
+
+    showMenu() {
+        if (!this.isMenuOpened) {
+            this.pageWrapper.style.marginRight = "20%";
+            let menu = this.menu;
+            setTimeout(() => {
+                menu.style.width = "20%";
+            }, 500);
+        }
+        this.isMenuOpened = true;
+    }
+
+    /**
+     * @param {string} menu menu id
+     */
+    openMenu(menu) {
+        if (this.disabledTabs.indexOf(menu) == -1) {
+            return;
+        }
+        this.menu.querySelectorAll(".active").forEach((element) => {
+            element.classList.remove("active");
+            element.classList.remove("in");
+        });
+        let elem = this.menu.querySelector("#" + menu);
+        if (elem != null) {
+            elem.classList.add("active");
+            elem.classList.add("in");
+        }
+        this.showMenu();
+    }
+
+    closeMenu() {
+        if (this.isMenuOpened) {
+            this.menu.style.width = "0";
+            let pageWrapper = this.pageWrapper;
+            setTimeout(() => {
+                pageWrapper.style.marginRight = "0";
+            }, 5);
+        }
+        this.isMenuOpened = false;
+    }
+
+    /**
+     * @param {string} tabName
+     */
+    disableTab(tabName) {
+        this.disabledTabs.push(tabName);
+    }
+
+    /**
+     * @param {string} tabName
+     */
+    enableTab(tabName) {
+        this.disabledTabs.splice(this.disabledTabs.indexOf(tabName), 1);
+    }
+}
+
+
+//====================Right Slider End====================\\
+//====================Messages====================\\
+
+class MessageHandler {
+    constructor() {
+        this.messageNavbar = document.querySelector("#messageNavbar");
+        this.messageChat = document.querySelector("#messageChat");
+        this.messageSenderElement = document.querySelector("#messageSenderName");
+
+        function setupHeight() {
             document.querySelector("#slideMenu").style.height = window.innerHeight + "px";
             document.querySelector("#messageNavbar").style.height = (window.innerHeight - 42) + "px";
             document.querySelector("#messageElement").style.height = (window.innerHeight - 122) + "px";
             document.querySelector("#messageChat").style.height = (window.innerHeight - 122) + "px";
-        };
-        this.pageWrapper = document.querySelector("#page-wrapper");
-        this.messageNavbar = document.querySelector("#messageNavbar");
-        this.messageChat = document.querySelector("#messageChat");
-        this.messageSenderElement = document.querySelector("#messageSenderName");
-        this.chats = [];
+        }
 
-        this.isMenuOpened = false;
+        window.addEventListener("resize", setupHeight);
+        setupHeight();
+
+        this.chats = [];
     }
 
+    static disable() {
+        document.querySelector("#slideMenu > div > ul a[href='#messages']").parentNode.classList.add("disabled");
+        dashboard.sliderRightHandler.disableTab("messages");
+        updateDisabled();
+    }
+
+    static enable() {
+        document.querySelector("#slideMenu > div > ul a[href='#messages']").parentNode.classList.remove("disabled");
+        dashboard.sliderRightHandler.enableTab("messages");
+        updateDisabled();
+    }
+
+    /**
+     * @param {Message} message
+     */
     showMessage(message) {
         this.showUser(message.sender);
     }
 
+    /**
+     * @param {string} username
+     */
     showUser(username) {
-        this.openMenu("message");
+        dashboard.sliderRightHandler.openMenu("messages");
         if (this.messageSenderElement.innerHTML != username) {
             this.findChatFromUsername(username).redrawElement();
             this.messageSenderElement.innerHTML = username;
         }
     }
 
-    showMenu() {
-        this.isMenuOpened = true;
-        this.pageWrapper.style.marginRight = "20%";
-        let menu = this.menu;
-        setTimeout(function () {
-            menu.style.width = "20%";
-        }, 500);
-    }
-
-    openMenu(menuName) {
-        this.showMenu();
-    }
-
-    hideMenu() {
-        this.isMenuOpened = false;
-        let menu = this.menu;
-        menu.style.width = "0";
-        let pageWrapper = this.pageWrapper;
-        setTimeout(function () {
-            pageWrapper.style.marginRight = "0";
-        }, 5);
-    }
-
+    /**
+     * @param {User} user
+     */
     addUser(user) {
         let pattern = "<li class='user'>" +
             "<div>" +
@@ -640,49 +684,73 @@ class SliderRight {
         this.messageNavbar.innerHTML = new Pattern().setPattern(pattern).setParameters(user).build() + this.messageNavbar.innerHTML;
     }
 
+    /**
+     * @param {Chat} chat
+     */
     addChat(chat) {
         chat.element = this.messageChat;
         this.chats.push(chat);
     }
 
+    /**
+     * @param {Message} message
+     */
     addMessage(message) {
-        debugger;
-        this.findChat(message).addMessage(message);
+        this.findChatFromMessage(message).addMessage(message);
         this.showMessage(message);
     }
 
-    findChat(message) {
+    /**
+     * @param {Message} message
+     * @return {Chat}
+     */
+    findChatFromMessage(message) {
         return this.findChatFromUsername(message.sender)
     }
 
+    /**
+     * @param {string} username
+     * @return {Chat}
+     */
     findChatFromUsername(username) {
         for (let chat of this.chats) {
-            if (chat.sender.name == username) {
+            if (chat.sender.name == username || chat.receiver.name == username) {
                 return chat;
             }
         }
     }
 
+    /**
+     * @param {Message} messageOld
+     * @param {Message} messageNew
+     */
     setMessage(messageOld, messageNew) {
-        this.findChat(messageOld).setMessage(messageOld, messageNew);
+        this.findChatFromMessage(messageOld).setMessage(messageOld, messageNew);
     }
 
-    //TODO write this
+    /**
+     * @param {string} messageText
+     */
     sendMessage(messageText) {
         let msg = new Message(this.chats[0].receiver, moment().format("YYYYMMDD-hh:mm"), messageText);
         this.addMessage(msg);
-        // this.webSocketManager.sendMessage(msg);
+        this.webSocketManager.sendMessage(msg);
     }
 }
 
+/**
+ * This class used for hold and works with messages.
+ * This class also used for works with element(add, set messages)
+ */
 class Chat {
     /**
-     * @param sender User
-     * @param receiver User
+     * @param {User} sender
+     * @param {User} receiver
      */
     constructor(sender, receiver) {
         this.sender = sender;
         this.receiver = receiver;
+
         this.messagePatternRight = "<li class='right clearfix'>" +
             "<span class='chat-img pull-right'>" +
             "<img src='{&avatarUrl}' alt='User avatar' class='img-circle'>" +
@@ -713,23 +781,31 @@ class Chat {
             "<p style='word-break: break-all'>{&message}</p>" +
             "</div>" +
             "</li>";
+
         this.messages = [];
+        this.element = undefined;
     }
 
+    /**
+     * @param {Message} message
+     */
+    //FIXME
     addMessage(message) {
         this.messages.push(message);
-        this.element.innerHTML += this.getBuildedMessage(message);
+        this.element.innerHTML += this.bakeHTMLMessage(message);
     }
 
+    /**
+     * @param {Message} messageOld
+     * @param {Message} messageNew
+     */
     setMessage(messageOld, messageNew) {
         let replaceIndex = this.messages.lastIndexOf(messageOld);
-        if (replaceIndex != -1) {
-            this.messages[replaceIndex] = messageNew;
-        } else {
+        if (replaceIndex == -1) {
             return;
         }
-
-        let searchString = this.getBuildedMessage(messageOld);
+        this.messages[replaceIndex] = messageNew;
+        let searchString = this.bakeHTMLMessage(messageOld);
         if (this.element.innerHTML.lastIndexOf(searchString) > 0) {
             this.element.innerHTML = this.element.innerHTML.substring(0, this.element.innerHTML.lastIndexOf(searchString));
             this.addMessage(messageNew)
@@ -745,13 +821,17 @@ class Chat {
         this.element.innerHTML = "";
     }
 
-    getBuildedMessage(message) {
+    /**
+     * @param {Message} message
+     * @return {string}
+     */
+    bakeHTMLMessage(message) {
         let parameters = {};
         let pattern;
         if (message.sender == this.sender.name) {
             parameters.avatarUrl = this.sender.avatarUrl;
             pattern = this.messagePatternLeft;
-        } else if (message.sender = this.receiver.name) {
+        } else if (message.sender == this.receiver.name) {
             parameters.avatarUrl = this.receiver.avatarUrl;
             pattern = this.messagePatternRight;
         } else {
@@ -765,39 +845,69 @@ class Chat {
     }
 }
 
+/**
+ * This class is abstraction of user
+ */
 class User {
+    /**
+     * @param {string} name
+     * @param {string} avatarUrl url to avatar(image 16x16 px)
+     */
     constructor(name, avatarUrl) {
         this.name = name;
         this.avatarUrl = avatarUrl;
     }
 
+    /**
+     * @return {string}
+     */
     serialize() {
         return JSON.stringify({name: this.name, avatarUrl: this.avatarUrl});
     }
 
+    /**
+     * @param {string} json json string
+     * @return {User}
+     */
     static deserialize(json) {
         let parsed = JSON.parse(json);
         return new User(parsed.name, parsed.avatarUrl);
     }
 }
 
+/**
+ * This class is abstraction of message
+ */
 class Message {
+    /**
+     * @param {User} sender
+     * @param {string} date
+     * @param {string} message
+     */
     constructor(sender, date, message) {
         this.sender = sender;
         this.date = date;
         this.message = message;
     }
 
-    static deserialize(string) {
-        let parsed = JSON.parse(string);
+    /**
+     * @param {string} json json string
+     * @return {Message}
+     */
+    static deserialize(json) {
+        let parsed = JSON.parse(json);
         return new Message(parsed.sender, parsed.date, parsed.message);
     }
 
+    /**
+     * @return {string}
+     */
     serialize() {
         return JSON.stringify({sender: this.sender, date: this.date, message: this.message});
     }
 }
 
+//====================Messages End====================\\
 //====================Websocket====================\\
 
 class WebSocketManager {
@@ -832,6 +942,10 @@ class WebSocketManager {
         this.dashboard = dashboard;
     }
 
+    /**
+     * @param {Message} message
+     */
+    //TODO write backend
     sendMessage(message) {
         this.webSocketSender.send("messages:sendMessage:" + message.serialize());
     }
@@ -1036,6 +1150,7 @@ class MenuPluginHandler {
         let array = JSON.parse(message);
         array.forEach((element) => {
             let clazz = eval(element);
+            //noinspection JSCheckFunctionSignatures
             dashboard.menuPluginHandler.addPlugin(clazz);
         })
     }

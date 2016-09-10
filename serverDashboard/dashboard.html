@@ -237,12 +237,15 @@
     </nav>
 
     <div id="slideMenu" class="navbar-right" data-state="closed" style="height: 617px">
-        <ul class="nav navbar-nav" style="width: 100%;">
+        <div class="nav navbar-nav" style="width: 100%;">
             <ul class="nav nav-tabs">
-                <li class="active col-xs-6" style="padding-left: 0; padding-right: 0;">
+                <li class="col-xs-4 active" style="padding-left: 0; padding-right: 0;">
                     <a href="#messages" data-toggle="tab" aria-expanded="true" class="col-xs-12">Messages</a>
                 </li>
-                <li class="col-xs-6" style="padding-right: 0; padding-left: 0;">
+                <li class="col-xs-4" style="padding-right: 0; padding-left: 0;">
+                    <a href="#chat" data-toggle="tab" aria-expanded="true" class="col-xs-12">Chat</a>
+                </li>
+                <li class="col-xs-4" style="padding-right: 0; padding-left: 0;">
                     <a href="#tasks" data-toggle="tab" aria-expanded="true" class="col-xs-12">Tasks</a>
                 </li>
             </ul>
@@ -267,11 +270,14 @@
                         </div>
                     </div>
                 </div>
+                <div class="tab-pane fade" id="chat">
+
+                </div>
                 <div class="tab-pane fade" id="tasks">
                     Tasks
                 </div>
             </div>
-        </ul>
+        </div>
     </div>
 
     <!-- Page Content -->
