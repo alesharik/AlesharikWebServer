@@ -3,6 +3,7 @@ package com.alesharik.webserver.plugin;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
+import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,7 +82,7 @@ public class PluginManager {
 
     private MetaFile loadMetaFile(File file) throws IOException {
         final byte[] fileBytes = Files.readAllBytes(new File(file.getPath() + "/MAIN.META").toPath());
-        return MetaFile.parse(new String(fileBytes));
+        return MetaFile.parse(new String(fileBytes, Charsets.UTF8_CHARSET));
     }
 
     private void loadPlugin(File pluginFolder) {

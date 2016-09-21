@@ -18,6 +18,7 @@ import java.util.function.Function;
  *
  * @see java.util.HashMap
  */
+//TODO generify
 public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     private static final int DEFAULT_CAPACITY = 16;
 
@@ -49,10 +50,10 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
         return entries.length < 1;
     }
 
-    public Object get(Object key) {
+    public V get(Object key) {
         int bucket = getBucket(hash(key));
-        Object value = null;
-        Entry entry = entries[bucket];
+        V value = null;
+        Entry<K, V, A> entry = entries[bucket];
         if(entry == null) {
             return null;
         }
@@ -65,13 +66,13 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
         return value;
     }
 
-    public Object getAddition(Object key) {
+    public A getAddition(Object key) {
         int bucket = getBucket(hash(key));
-        Object addition = null;
-        Entry entry = entries[bucket];
+        A addition = null;
+        Entry<K, V, A> entry = entries[bucket];
         do {
             if(Integer.compare(entry.getHash(), hash(key)) == 0 && entry.getKey().equals(key)) {
-                addition = entry.getAddition();
+                addition = (A) entry.getAddition();
                 break;
             }
         } while((entry = entry.next) != null);
@@ -390,13 +391,13 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEach(TripleConsumer action) {
+    public void forEach(TripleConsumer<K, V, A> action) {
         for(Entry entry : entries) {
             if(entry == null) {
                 continue;
             }
 
-            Entry entry1 = entry;
+            Entry<K, V, A> entry1 = entry;
             do {
                 action.accept(entry1.getKey(), entry1.getValue(), entry1.getAddition());
             } while((entry1 = entry1.next) != null);

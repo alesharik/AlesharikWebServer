@@ -1,6 +1,6 @@
 package com.alesharik.webserver.control.dashboard;
 
-import com.alesharik.webserver.control.dashboard.elements.Menu;
+import com.alesharik.webserver.control.dashboard.elements.menu.Menu;
 
 public class MenuCommandBuilder {
     private StringBuilder stringBuilder = new StringBuilder();

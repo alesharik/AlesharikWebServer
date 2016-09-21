@@ -1,5 +1,6 @@
 body {
     overflow-x: hidden;
+    color: #00f800;
 }
 
 input[type="text"], input[type="text"]:focus, input[type="text"]:hover {
@@ -72,6 +73,7 @@ a.active[role=button] {
     margin: 0;
     border: 0 solid transparent;
     background: transparent;
+    list-style: none;
 }
 
 #menuPlugins > li > div {

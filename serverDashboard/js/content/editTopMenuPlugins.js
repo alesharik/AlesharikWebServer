@@ -1,12 +1,11 @@
 'use strict';
-console.log(dashboard.menuPluginHandler);
 var menuPluginsEditorHandler = new MenuPluginsEditorHandler(dashboard.menuPluginHandler);
-document.addEventListener("loadingContentEnded", () => {
+events.addEventListener("loadingContentEnded", () => {
     MenuUtils.sortable(true);
     menuPluginsEditorHandler.redraw();
 });
-document.addEventListener("finalizeContentScript", () => {
+events.addEventListener("finalizeContent", () => {
     MenuUtils.sortable(false);
     menuPluginsEditorHandler.destroy();
-    document.removeEventListener("finalizeContentScript", this);
+    events.removeEventListener("finalizeContentScript", this);
 });

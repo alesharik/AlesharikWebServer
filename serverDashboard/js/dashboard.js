@@ -7,6 +7,7 @@ class Dashboard {
         this.webSocketManager = new WebSocketManager(this);
         this.sliderRightHandler = new SliderRightHandler();
         this.webSocketManager.updateMenu();
+        this.webSocketManager.updateMenuPlugins();
 
         this.messageHandler = new MessageHandler();
 
@@ -377,21 +378,23 @@ class MenuDropdown {
  * 1. loadingContentEnded - dispatch on loader finish loading data
  * 2. finalizeContentScript - dispatch on loader remove all resources
  */
+//TODO fix events
 class ContentLoader {
     constructor() {
         this.contentHolder = document.querySelector("#contentHolder");
         this.header = document.querySelector("#contentHeader");
 
         this.elements = [];
-        this.finalizeContentScriptEvent = new Event("finalizeContentScript");
-        this.loadingContentEndedEvent = new Event("loadingContentEnded");
+
+        events.newEvent("finalizeContent");
+        events.newEvent("loadingContentEnded");
     }
 
     /**
      * @param {string} id
      */
     load(id) {
-        document.dispatchEvent(this.finalizeContentScriptEvent);
+        events.sendEvent("finalizeContent");
         this.elements.forEach((element) => {
             element.parentNode.removeChild(element);
         });
@@ -426,9 +429,18 @@ class ContentLoader {
                                     that.elements.push(element);
                                 });
                         });
-                    }
 
-                    document.dispatchEvent(that.loadingContentEndedEvent);
+                        let checker = () => {
+                            if (extensions.length == that.elements.length) {
+                                events.sendEvent("loadingContentEnded");
+                            } else {
+                                setTimeout(checker, 1);
+                            }
+                        };
+                        setTimeout(checker, 1);
+                    } else {
+                        events.sendEvent("loadingContentEnded");
+                    }
                 }
             }
         };
@@ -1044,7 +1056,7 @@ class MenuPluginsEditorHandler {
             return;
         }
 
-        this.elementPattern = "<li>" +
+        this.elementPattern = "<li data-name='{&name}'>" +
             "<div style='width: {&width} px; height: {&height} px;'>" +
             "{&source}" +
             "</div>" +
@@ -1053,7 +1065,20 @@ class MenuPluginsEditorHandler {
         let that = this;
         menuPluginHandler.onPluginAdd = (plugin) => {
             that.draw(plugin);
-        }
+        };
+
+        $("#menuPluginsEditor").on("receive", (event, ui) => {
+            let elements = document.querySelector("#menuPluginsEditor").querySelectorAll("li[data-name=" + ui.item.data("name") + "]");
+            if (elements.length > 1) {
+                elements.forEach((element, i) => {
+                    if (i > 0) {
+                        element.parentNode.removeChild(element);
+                    }
+                })
+            }
+        }).on("remove", (event, ui) => {
+            that.draw(menuPluginHandler.getPluginFromName(ui.item.data("name")));
+        });
     }
 
     /**
@@ -1074,7 +1099,8 @@ class MenuPluginsEditorHandler {
         this.editorElement.innerHTML += new Pattern().setPattern(this.elementPattern).setParameters({
             width: plugin.getWidth(),
             height: document.querySelector("#menuPlugins").offsetHeight,
-            source: plugin.getCode()
+            source: plugin.getCode(),
+            name: plugin.getName()
         }).build();
     }
 
@@ -1123,7 +1149,7 @@ class MenuPluginHandler {
     /**
      * @param {string} name
      */
-    getPluginForName(name) {
+    getPluginFromName(name) {
         for (let plugin in this.plugins) {
             if (plugin.getName() == name) {
                 return plugin;

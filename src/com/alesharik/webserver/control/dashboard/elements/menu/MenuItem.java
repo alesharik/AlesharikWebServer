@@ -1,4 +1,4 @@
-package com.alesharik.webserver.control.dashboard.elements;
+package com.alesharik.webserver.control.dashboard.elements.menu;
 
 import org.json.simple.JSONObject;
 
