@@ -1,16 +1,17 @@
 package com.alesharik.webserver.control.dashboard;
 
-import com.alesharik.webserver.control.dashboard.elements.Menu;
-import com.alesharik.webserver.control.dashboard.elements.MenuDropdown;
-import com.alesharik.webserver.control.dashboard.elements.MenuItem;
-import com.alesharik.webserver.control.dashboard.elements.MenuTextItem;
+import com.alesharik.webserver.control.dashboard.elements.menu.Menu;
+import com.alesharik.webserver.control.dashboard.elements.menu.MenuDropdown;
+import com.alesharik.webserver.control.dashboard.elements.menu.MenuItem;
+import com.alesharik.webserver.control.dashboard.elements.menu.MenuPlugin;
+import com.alesharik.webserver.control.dashboard.elements.menu.MenuTextItem;
 import org.json.simple.JSONArray;
 
 import java.util.ArrayList;
 
 public class PluginDataHolder {
     private Menu menu;
-    private ArrayList<String> menuPlugins = new ArrayList<>();
+    private ArrayList<MenuPlugin> menuPlugins = new ArrayList<>();
 
     public PluginDataHolder() {
         menu = new Menu()
@@ -20,6 +21,7 @@ public class PluginDataHolder {
                 .addItem(new MenuDropdown("wrench", "Settings")
                         .addItem(new MenuTextItem("sliders", "Main settings").setContentId("settings/mainSettings"))
                         .addItem(new MenuTextItem("edit", "Edit top menu plugins").setContentId("settings/editTopMenuPlugins")));
+
     }
 
     public Menu getMenu() {
@@ -44,20 +46,20 @@ public class PluginDataHolder {
     /**
      * Add a js class to hold
      *
-     * @param clazz js class as string. This class should extends MenuPlugin
+     * @param menuPlugin js class as string. This class should extends MenuPlugin
      * @return index of element
      */
-    public int addPluginItemClass(String clazz) {
-        menuPlugins.add(clazz);
-        return menuPlugins.indexOf(clazz);
+    public int addPluginItemClass(MenuPlugin menuPlugin) {
+        menuPlugins.add(menuPlugin);
+        return menuPlugins.indexOf(menuPlugin);
     }
 
     public void remove(int index) {
         menuPlugins.remove(index);
     }
 
-    public ArrayList<String> allMenuPluginClasses() {
-        return (ArrayList<String>) menuPlugins.clone();
+    public ArrayList<MenuPlugin> allMenuPluginClasses() {
+        return (ArrayList<MenuPlugin>) menuPlugins.clone();
     }
 
     public String getAllMenuPluginsAsJSONArray() {

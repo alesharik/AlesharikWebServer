@@ -5,7 +5,7 @@ import com.alesharik.webserver.microservices.api.MicroserviceEvent;
 import com.alesharik.webserver.microservices.client.MicroserviceClient;
 import com.alesharik.webserver.microservices.server.MicroserviceServer;
 
-public class MicroserviceAccessManager {
+public final class MicroserviceAccessManager {
     MicroserviceClient client;
     MicroserviceServer server;
     private boolean isServer;

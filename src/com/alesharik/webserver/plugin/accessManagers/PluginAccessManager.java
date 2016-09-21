@@ -6,17 +6,24 @@ public final class PluginAccessManager {
     private final BaseAccessManager baseAccessManager;
     private final ControlAccessManager controlAccessManager;
     private final ServerAccessManager serverAccessManager;
+    private final MicroserviceAccessManager microserviceAccessManager;
 
-    public PluginAccessManager(BaseAccessManager baseAccessManager, ControlAccessManager controlAccessManager, ServerAccessManager serverAccessManager) {
+    /**
+     * Because i can't normally set final fields :(
+     */
+    PluginAccessManager(BaseAccessManager baseAccessManager, ControlAccessManager controlAccessManager,
+                        ServerAccessManager serverAccessManager, MicroserviceAccessManager microserviceAccessManager) {
         this.baseAccessManager = baseAccessManager;
         this.controlAccessManager = controlAccessManager;
         this.serverAccessManager = serverAccessManager;
+        this.microserviceAccessManager = microserviceAccessManager;
     }
 
     public PluginAccessManager fromTemplate(String template) {
         BaseAccessManager baseAccessManager = null;
         ControlAccessManager controlAccessManager = null;
         ServerAccessManager serverAccessManager = null;
+        MicroserviceAccessManager microserviceAccessManager = null;
         String[] parts = template.replace(" ", "").split(",");
         if(ArrayUtils.contains(parts, AccessTypes.BASE)) {
             baseAccessManager = this.baseAccessManager;
@@ -27,7 +34,10 @@ public final class PluginAccessManager {
         if(ArrayUtils.contains(parts, AccessTypes.SERVER)) {
             serverAccessManager = this.serverAccessManager;
         }
-        return new PluginAccessManager(baseAccessManager, controlAccessManager, serverAccessManager);
+        if(ArrayUtils.contains(parts, AccessTypes.MICROSERVICE)) {
+            microserviceAccessManager = this.microserviceAccessManager;
+        }
+        return new PluginAccessManager(baseAccessManager, controlAccessManager, serverAccessManager, microserviceAccessManager);
     }
 
     public BaseAccessManager getBaseAccessManager() {
@@ -42,10 +52,15 @@ public final class PluginAccessManager {
         return serverAccessManager;
     }
 
-    public enum AccessTypes {
+    public MicroserviceAccessManager getMicroserviceAccessManager() {
+        return microserviceAccessManager;
+    }
+
+    private enum AccessTypes {
         BASE("base"),
         SERVER("server"),
-        CONTROL("control");
+        CONTROL("control"),
+        MICROSERVICE("microservice");
 
         private final String name;
 

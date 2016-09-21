@@ -13,13 +13,19 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * This class used for load and works with plugins. For work need {@link PluginAccessManager}, which used for plugin
+ * interact with server
+ */
 @Prefix("[PluginManager]")
 public class PluginManager {
     private final PluginAccessManager accessManager;
+
     private final ArrayList<File> packages = new ArrayList<>();
     private final HashMap<File, MetaFile> packageMetaFiles = new HashMap<>();
     private final ArrayList<Class<?>> cores = new ArrayList<>();
     private final HashMap<String, MetaFile> metaFiles = new HashMap<>();
+
     private PluginHolderPool pluginHolderPool;
     private boolean isLoaded = false;
 
@@ -43,6 +49,9 @@ public class PluginManager {
     }
 
     public void start() {
+        if(!isLoaded) {
+            throw new IllegalStateException("Can't run manager without loading plugins!");
+        }
         this.pluginHolderPool = new PluginHolderPool(accessManager);
 
         ArrayList<PluginCore> cores = new ArrayList<>();
@@ -50,12 +59,29 @@ public class PluginManager {
         cores.forEach(core -> pluginHolderPool.addPlugin(core, metaFiles.get(core.getName())));
     }
 
-    private void tryInitCore(ArrayList<PluginCore> cores, Class<?> core) {
+    private void loadConfigFiles() {
+        packages.forEach(file -> {
+            File config = new File(file.getPath() + "/MAIN.META");
+            if(!config.exists()) {
+                Logger.log("Meta file of plugin  " + file.getName() + " not exists. Skipping...");
+            } else {
+                tryLoadMetaFile(file);
+            }
+        });
+    }
+
+    private void tryLoadMetaFile(File file) {
         try {
-            cores.add((PluginCore) core.newInstance());
-        } catch (InstantiationException | IllegalAccessException e) {
+            packageMetaFiles.put(file, loadMetaFile(file));
+        } catch (IOException e) {
+            Logger.log("can't load plugin " + file.getName() + ". Skipping...");
             Logger.log(e);
         }
+    }
+
+    private MetaFile loadMetaFile(File file) throws IOException {
+        final byte[] fileBytes = Files.readAllBytes(new File(file.getPath() + "/MAIN.META").toPath());
+        return MetaFile.parse(new String(fileBytes));
     }
 
     private void loadPlugin(File pluginFolder) {
@@ -72,6 +98,14 @@ public class PluginManager {
             }
         } catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             Logger.log("can't load plugin " + pluginFolder.getName() + ". Skipping...");
+            Logger.log(e);
+        }
+    }
+
+    private void tryInitCore(ArrayList<PluginCore> cores, Class<?> core) {
+        try {
+            cores.add((PluginCore) core.newInstance());
+        } catch (InstantiationException | IllegalAccessException e) {
             Logger.log(e);
         }
     }
@@ -101,30 +135,5 @@ public class PluginManager {
         } catch (ClassNotFoundException e) {
             Logger.log(e);
         }
-    }
-
-    private void loadConfigFiles() {
-        packages.forEach(file -> {
-            File config = new File(file.getPath() + "/MAIN.META");
-            if(!config.exists()) {
-                Logger.log("Meta file of plugin  " + file.getName() + " not exists. Skipping...");
-            } else {
-                tryLoadMetaFile(file);
-            }
-        });
-    }
-
-    private void tryLoadMetaFile(File file) {
-        try {
-            packageMetaFiles.put(file, loadMetaFile(file));
-        } catch (IOException e) {
-            Logger.log("can't load plugin " + file.getName() + ". Skipping...");
-            Logger.log(e);
-        }
-    }
-
-    private MetaFile loadMetaFile(File file) throws IOException {
-        final byte[] fileBytes = Files.readAllBytes(new File(file.getPath() + "/MAIN.META").toPath());
-        return MetaFile.parse(new String(fileBytes));
     }
 }

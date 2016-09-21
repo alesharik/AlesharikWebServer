@@ -2,13 +2,18 @@ package com.alesharik.webserver.plugin;
 
 import com.alesharik.webserver.plugin.accessManagers.BaseAccessManager;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManager;
-import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
+import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManager;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManager;
+import com.alesharik.webserver.plugin.accessManagers.UltimatePluginAccessManagerBuilder;
 
+/**
+ * This class used for build {@link PluginManager}. Used only in AlesharikWebServer. DO NOT TRY USE IT!
+ */
 public class PluginManagerBuilder {
     private BaseAccessManager baseAccessManager = null;
     private ControlAccessManager controlAccessManager = null;
     private ServerAccessManager serverAccessManager = null;
+    private MicroserviceAccessManager microserviceAccessManager = null;
 
     private boolean isMicroserviceServer = false;
     private boolean isRouterServer = false;
@@ -37,8 +42,8 @@ public class PluginManagerBuilder {
         return this;
     }
 
-    public PluginManagerBuilder isMicroserviceServer(boolean isMicroservieServer) {
-        this.isMicroserviceServer = isMicroservieServer;
+    public PluginManagerBuilder isMicroserviceServer(boolean isMicroserviceServer) {
+        this.isMicroserviceServer = isMicroserviceServer;
         return this;
     }
 
@@ -47,10 +52,25 @@ public class PluginManagerBuilder {
         return this;
     }
 
+    /**
+     * @return PluginManager or null
+     */
     public PluginManager build() {
+        if(isRouterServer) {
+            return null;
+        }
+
+        if(isMicroserviceServer && microserviceAccessManager == null) {
+            throw new IllegalArgumentException();
+        }
         if(baseAccessManager == null || controlAccessManager == null || serverAccessManager == null) {
             throw new IllegalArgumentException();
         }
-        return new PluginManager(new PluginAccessManager(baseAccessManager, controlAccessManager, serverAccessManager));
+        return new PluginManager(new UltimatePluginAccessManagerBuilder()
+                .setBaseAccessManager(baseAccessManager)
+                .setControlAccessManager(controlAccessManager)
+                .setServerAccessManager(serverAccessManager)
+                .setMicroserviceAccessManager(microserviceAccessManager)
+                .build());
     }
 }
