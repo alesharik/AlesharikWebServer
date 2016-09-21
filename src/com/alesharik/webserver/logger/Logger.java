@@ -25,7 +25,7 @@ public class Logger {
      * @param i number of {@link StackTraceElement}
      * @return [ + file name + : + line number + ]
      */
-    public static String getPrefixLocation(int i) {
+    private static String getPrefixLocation(int i) {
         StackTraceElement element = SharedSecrets.getJavaLangAccess().getStackTraceElement(new Exception(), i);
         return "[" + element.getFileName() + ":" + element.getLineNumber() + "]";
     }
@@ -53,11 +53,11 @@ public class Logger {
 
     //WARNING! Don't works in JDK9
     public static void log(String message) {
-        String prefix = getPrefixFromClass(new CallingClass().getCallingClasses()[2]);
-        if(prefix.isEmpty()) {
+        String[] prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
+        if(prefix.length == 0) {
             log(getPrefixLocation(2), message);
         } else {
-            log(prefix, message);
+            log(message, prefix);
         }
     }
 
@@ -87,12 +87,17 @@ public class Logger {
         }
     }
 
-    private static String getPrefixFromClass(Class<?> clazz) {
+    private static String[] getPrefixFromClass(Class<?> clazz) {
+        Prefixes prefixes = clazz.getAnnotation(Prefixes.class);
+        if(prefixes != null) {
+            return prefixes.value();
+        }
+
         Prefix prefix = clazz.getAnnotation(Prefix.class);
         if(prefix != null) {
-            return prefix.value();
+            return new String[]{prefix.value()};
         } else {
-            return "";
+            return new String[0];
         }
     }
 
