@@ -38,7 +38,10 @@ class TickingPool {
         CopyOnWriteArrayList<WeakReference<?>> list = collections.get(tick);
         for(WeakReference<?> weakReference : list) {
             Object reference = weakReference.get();
-            if(reference != null && reference.equals(map)) {
+            if(reference == null) {
+                continue;
+            }
+            if(reference.equals(map)) {
                 weakReference.clear();
                 weakReference.enqueue();
                 list.remove(weakReference);
@@ -56,7 +59,10 @@ class TickingPool {
         CopyOnWriteArrayList<WeakReference<?>> list = collections.get(tick);
         for(WeakReference<?> weakReference : list) {
             Object reference = weakReference.get();
-            if(reference != null && reference.equals(arrayList)) {
+            if(reference == null) {
+                continue;
+            }
+            if(reference.equals(arrayList)) {
                 list.remove(weakReference);
                 weakReference.clear();
                 weakReference.enqueue();
