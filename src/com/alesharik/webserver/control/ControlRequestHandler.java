@@ -4,6 +4,8 @@ import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.collections.LiveArrayList;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
+import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.main.FileManager;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
@@ -14,6 +16,7 @@ import org.glassfish.grizzly.http.util.HttpStatus;
 import java.io.IOException;
 import java.util.UUID;
 
+@Prefix("[ServerControl]")
 public class ControlRequestHandler implements RequestHandler {
     private final LiveArrayList<UUID> sessions = new LiveArrayList<>();
     private final AdminDataHolder holder;
@@ -36,6 +39,9 @@ public class ControlRequestHandler implements RequestHandler {
         switch (command) {
             case "/login":
                 handleLoginCommand(request, response);
+                break;
+            default:
+                Logger.log("Oops! We have unexpected request!" + command);
                 break;
         }
     }

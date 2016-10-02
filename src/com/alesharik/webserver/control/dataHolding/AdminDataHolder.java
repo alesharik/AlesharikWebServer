@@ -3,6 +3,7 @@ package com.alesharik.webserver.control.dataHolding;
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.main.Main;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
@@ -20,8 +21,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 /**
- * This class used for hold data of admin
+ * This class used for hold data admin login, password and data in encrypted state
  */
+@Prefixes(value = {"[ServerControl]", "[AdminDataHolder]"})
 public final class AdminDataHolder {
     private static final String ADMIN_DATA_FILE = "adminData.dat";
     private static final byte[] SALT = Base64Utils.decodeFast("D0FT7kTsc858gx595E04m1fB6ByyGCSSFpBv01wicz8=");
@@ -35,7 +37,10 @@ public final class AdminDataHolder {
     public AdminDataHolder(String key) throws ConfigurationException, IOException {
         File adminDadaFile = new File(Main.USER_DIR + "/" + ADMIN_DATA_FILE);
         if(!adminDadaFile.exists()) {
-            adminDadaFile.createNewFile();
+            if(!adminDadaFile.createNewFile()) {
+                Logger.log("Oops! Problem with creating holder file: " + adminDadaFile);
+                throw new IOException("Can't create file: " + adminDadaFile);
+            }
         }
 
         PropertiesBuilderParameters properties = new Parameters().properties();
@@ -50,6 +55,7 @@ public final class AdminDataHolder {
         configuration = fileBasedConfigurationBuilder.getConfiguration();
 
         initBaseConfiguration();
+        Logger.log("AdminDataHolder successfully initialized!");
     }
 
     private void initBaseConfiguration() {
@@ -85,6 +91,7 @@ public final class AdminDataHolder {
         if(check(oldLogin, oldPassword)) {
             setPassword(LoginPasswordCoder.encode(newLogin, newPassword));
         }
+        Logger.log("Login and password updated!");
     }
 
     private void setPassword(String logPass) {
