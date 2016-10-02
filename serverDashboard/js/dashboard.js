@@ -7,12 +7,13 @@ class Dashboard {
         this.webSocketManager = new WebSocketManager(this);
         this.sliderRightHandler = new SliderRightHandler();
         this.webSocketManager.updateMenu();
-        this.webSocketManager.updateMenuPlugins();
 
         this.messageHandler = new MessageHandler();
 
         MenuUtils.setupMenu();
         this.menuPluginHandler = new MenuPluginHandler();
+
+        this.webSocketManager.updateMenuPlugins();
     }
 
     onMessageClick(event) {
@@ -1062,12 +1063,11 @@ class MenuPluginsEditorHandler {
             "</div>" +
             "</li>";
 
-        let that = this;
         menuPluginHandler.onPluginAdd = (plugin) => {
-            that.draw(plugin);
+            this.draw(plugin);
         };
 
-        $("#menuPluginsEditor").on("receive", (event, ui) => {
+        $("#menuPluginsEditor").on("sortreceive", (event, ui) => {
             let elements = document.querySelector("#menuPluginsEditor").querySelectorAll("li[data-name=" + ui.item.data("name") + "]");
             if (elements.length > 1) {
                 elements.forEach((element, i) => {
@@ -1076,8 +1076,8 @@ class MenuPluginsEditorHandler {
                     }
                 })
             }
-        }).on("remove", (event, ui) => {
-            that.draw(menuPluginHandler.getPluginFromName(ui.item.data("name")));
+        }).on("sortremove", (event, ui) => {
+            this.draw(menuPluginHandler.getPluginFromName(ui.item.data("name")));
         });
     }
 
@@ -1085,9 +1085,8 @@ class MenuPluginsEditorHandler {
      * Redraw all elements
      */
     redraw() {
-        let that = this;
         this.menuPluginHandler.getAllPlugins().forEach((plugin) => {
-            that.draw(plugin);
+            this.draw(plugin);
         });
     }
 
@@ -1141,16 +1140,14 @@ class MenuPluginHandler {
      * @return {string[]} names of active plugins
      */
     getPluginNames() {
-        let names = [];
-        this.plugins.filter((plugin) => plugin.isActive()).forEach((plugin) => names.push(plugin.getName()));
-        return names;
+        return this.plugins.filter((plugin) => plugin.isActive()).map((plugin) => plugin.getName());
     }
 
     /**
      * @param {string} name
      */
     getPluginFromName(name) {
-        for (let plugin in this.plugins) {
+        for (let plugin of this.plugins) {
             if (plugin.getName() == name) {
                 return plugin;
             }
@@ -1175,9 +1172,9 @@ class MenuPluginHandler {
 
         let array = JSON.parse(message);
         array.forEach((element) => {
-            let clazz = eval(element);
+            let clazz = eval(element.value);
             //noinspection JSCheckFunctionSignatures
-            dashboard.menuPluginHandler.addPlugin(clazz);
+            dashboard.menuPluginHandler.addPlugin(new clazz());
         })
     }
 }
@@ -1189,6 +1186,7 @@ class MenuPlugin {
     constructor() {
         this.active = false;
         this.name = "";
+        this.parameters = {};
     }
 
     /**
@@ -1217,6 +1215,41 @@ class MenuPlugin {
      */
     getName() {
         return this.name;
+    }
+
+    /**
+     * Set parameter of MenuPlugin. Parameters used in plugin code for add settings to plugin
+     * @param {string} name
+     * @param parameter
+     */
+    setParameter(name, parameter) {
+        this.parameters[name] = parameter;
+    }
+
+    /**
+     * Return default parameters map. Used for generate settings screen
+     * @return {object}
+     */
+    getDefaultParameters() {
+        return {};
+    }
+
+    /**
+     * @return {string}
+     */
+    serialize() {
+        return JSON.stringify(this);
+    }
+
+    /**
+     * @param {string} string
+     * @return {MenuPlugin}
+     */
+    deserialize(string) {
+        let object = JSON.parse(string);
+        this.active = object.active;
+        this.name = object.name;
+        this.parameters = object.parameters;
     }
 }
 

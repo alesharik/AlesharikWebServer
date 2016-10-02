@@ -81,9 +81,9 @@ class TickingPool {
                         collections.get(tick).remove(weakReference);
                     } else {
                         if(weakReference.get() instanceof LiveArrayList) {
-                            ((LiveArrayList) weakReference.get()).updateValues(tick);
+                            ((LiveArrayList) weakReference.get()).updateValues(1);
                         } else {
-                            ((LiveHashMap) weakReference.get()).updateMap(tick);
+                            ((LiveHashMap) weakReference.get()).updateMap(1);
                         }
                     }
                 });

@@ -7,6 +7,7 @@ class Pattern {
     }
 
     setParameters(parameters) {
+        console.log(parameters);
         this.parameters = parameters;
         return this;
     }
@@ -17,7 +18,7 @@ class Pattern {
     }
 
     build() {
-        let line = "";
+        let line;
         while ((line = this.regexp.exec(this.pattern)) != null) {
             let value = this.parameters[line[0].substring(2, line[0].length - 1)];
             this.pattern = this.pattern.replace(this.regexp, value);

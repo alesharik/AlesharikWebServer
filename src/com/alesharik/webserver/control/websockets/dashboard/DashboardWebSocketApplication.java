@@ -2,9 +2,11 @@ package com.alesharik.webserver.control.websockets.dashboard;
 
 import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketPlugin;
 import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketWrapper;
+import com.alesharik.webserver.control.ControlRequestHandler;
 import com.alesharik.webserver.control.dashboard.PluginDataHolder;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.websockets.Broadcaster;
 import org.glassfish.grizzly.websockets.OptimizedBroadcaster;
 import org.glassfish.grizzly.websockets.ProtocolHandler;
@@ -13,30 +15,41 @@ import org.glassfish.grizzly.websockets.WebSocketApplication;
 import org.glassfish.grizzly.websockets.WebSocketListener;
 
 import java.util.HashMap;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This application used for manage {@link DashboardWebSocket}s
  */
 public final class DashboardWebSocketApplication extends WebSocketApplication {
+    private static final Pattern uuidPattern = Pattern.compile("UUID=(.*(?=,)|.*$)");
+
     private final Broadcaster broadcaster = new OptimizedBroadcaster();
     private final HashMap<String, DashboardWebsocketWrapper> wrappers = new HashMap<>();
     private final DashboardWebSocketParser parser;
+    private final ControlRequestHandler requestHandler;
     private DashboardWebSocket webSocket;
 
-    public DashboardWebSocketApplication(PluginDataHolder holder) {
+    public DashboardWebSocketApplication(PluginDataHolder holder, ControlRequestHandler requestHandler) {
         parser = new DashboardWebSocketParser(this, holder);
+        this.requestHandler = requestHandler;
     }
 
     @Override
-    //TODO write auth with requestPacket
     public WebSocket createSocket(ProtocolHandler handler, HttpRequestPacket requestPacket, WebSocketListener... listeners) {
         DashboardWebSocket dashboardWebSocket = new DashboardWebSocket(handler, requestPacket, listeners);
         dashboardWebSocket.setBroadcaster(broadcaster);
         dashboardWebSocket.setParser(parser);
-//        if(webSocket != null) {
-//            webSocket.send("close");
-//            webSocket.close();
-//        }
+        String cookies = requestPacket.getHeader(Header.Cookie);
+        Matcher matcher = uuidPattern.matcher(cookies);
+        try {
+            if(!requestHandler.isSessionValid(UUID.fromString(matcher.group()))) {
+                dashboardWebSocket.close();
+            }
+        } catch (IllegalStateException e) {
+            dashboardWebSocket.close();
+        }
         webSocket = dashboardWebSocket;
         return dashboardWebSocket;
     }

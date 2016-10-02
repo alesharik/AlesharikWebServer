@@ -62,9 +62,15 @@ public final class AdminDataHolder {
      * Check is login and password are correct
      */
     public boolean check(String login, String password) {
+        return check(LoginPasswordCoder.encode(login, password));
+    }
+
+    /**
+     * Check is login and password are correct
+     */
+    public boolean check(String logpass) {
         try {
-            String logPass = LoginPasswordCoder.encode(login, password);
-            String base64HashedLogPass = Base64Utils.encodeToString(StringCipher.hashString(logPass, SALT, 2, 256), false);
+            String base64HashedLogPass = Base64Utils.encodeToString(StringCipher.hashString(logpass, SALT, 2, 256), false);
             return configuration.getString("hashedPass").equals(base64HashedLogPass);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             Logger.log(e);

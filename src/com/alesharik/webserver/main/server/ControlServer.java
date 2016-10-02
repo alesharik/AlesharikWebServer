@@ -60,7 +60,7 @@ public final class ControlServer extends WebServer {
         WebSocketAddOn addOn = new WebSocketAddOn();
         networkListener.registerAddOn(addOn);
 
-        dashboardWebSocketApplication = new DashboardWebSocketApplication(holder);
+        dashboardWebSocketApplication = new DashboardWebSocketApplication(holder, controlHttpHandler.getControlRequestHandler());
         registerNewWebSocket(dashboardWebSocketApplication, "", "/dashboard");
     }
 

@@ -186,7 +186,7 @@ public class LiveHashMap<K, V> extends HashMapWrapper<K, V> {
     }
 
     private void forEach0(TripleConsumer<? extends K, ? extends V, ? super Long> consumer) {
-        map.forEach(consumer);
+        map.forEach((TripleConsumer<K, V, Long>) consumer);
     }
 
     @Override

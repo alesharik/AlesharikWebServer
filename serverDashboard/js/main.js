@@ -87,6 +87,11 @@ var dashboard;
  * Load all needed
  */
 window.addEventListener("load", () => {
+    let logpass = getCookie("Logpass");
+    if (logpass != undefined) {
+        localStorage.setItem("logpass", logpass);
+    }
+
     dashboard = new Dashboard();
 
     let canvas = document.querySelector("#backgroundCanvas");
@@ -173,6 +178,18 @@ function handleMenuSearchInput(e) {
     } else if (keyCode == 27 && dashboard.navigator.hasSearchModeOn) {
         dashboard.navigator.toggleSearchMode();
     }
+}
+
+/**
+ * This function used for get specific cookie form name
+ * @param {string} name
+ * @return {*} can be undefined!
+ */
+function getCookie(name) {
+    var matches = document.cookie.match(new RegExp(
+        "(?:^|; )" + name.replace(/([.$?*|{}()\[\]\\\/+^])/g, '\\$1') + "=([^;]*)"
+    ));
+    return matches ? decodeURIComponent(matches[1]) : undefined;
 }
 
 // //====================Droppable====================\\

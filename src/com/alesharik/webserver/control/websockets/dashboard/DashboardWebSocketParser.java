@@ -26,6 +26,7 @@ final class DashboardWebSocketParser {
                 break;
             case "menuPlugins":
                 parseTopPluginsMessage(parts);
+                break;
             default:
                 Logger.log("Strange message: " + msg);
                 break;

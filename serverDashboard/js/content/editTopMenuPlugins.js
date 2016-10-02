@@ -6,6 +6,7 @@ events.addEventListener("loadingContentEnded", () => {
 });
 events.addEventListener("finalizeContent", () => {
     MenuUtils.sortable(false);
+    menuPluginsEditorHandler.reset();
     menuPluginsEditorHandler.destroy();
-    events.removeEventListener("finalizeContentScript", this);
+    events.removeEventListener("finalizeContent", this);
 });

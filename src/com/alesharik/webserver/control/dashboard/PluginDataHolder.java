@@ -4,8 +4,11 @@ import com.alesharik.webserver.control.dashboard.elements.menu.Menu;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuDropdown;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuItem;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuPlugin;
+import com.alesharik.webserver.control.dashboard.elements.menu.MenuPluginBuilder;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuTextItem;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.jsoup.Jsoup;
 
 import java.util.ArrayList;
 
@@ -21,7 +24,10 @@ public class PluginDataHolder {
                 .addItem(new MenuDropdown("wrench", "Settings")
                         .addItem(new MenuTextItem("sliders", "Main settings").setContentId("settings/mainSettings"))
                         .addItem(new MenuTextItem("edit", "Edit top menu plugins").setContentId("settings/editTopMenuPlugins")));
-
+        menuPlugins.add(new MenuPluginBuilder("Time")
+                .setWidth(60)
+                .setHTMLElement(Jsoup.parse("<p data-clock=\"true\"></p>"))
+                .build());
     }
 
     public Menu getMenu() {
@@ -62,9 +68,14 @@ public class PluginDataHolder {
         return (ArrayList<MenuPlugin>) menuPlugins.clone();
     }
 
+    //TODO send minimized code
     public String getAllMenuPluginsAsJSONArray() {
         JSONArray array = new JSONArray();
-        menuPlugins.forEach(array::add);
+        menuPlugins.forEach(menuPlugin -> {
+            JSONObject object = new JSONObject();
+            object.put("value", menuPlugin.getCode());
+            array.add(object);
+        });
         return array.toJSONString();
     }
 }
