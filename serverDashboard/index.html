@@ -17,7 +17,7 @@
                 logpass = "";
             }
             document.querySelector("input[name='logpass']").value = logpass;
-            if (logpass != "") {
+            if (logpass != "" && window.location.href.indexOf("incorrect=true") == -1) {
                 document.querySelector("form").submit();
             }
 

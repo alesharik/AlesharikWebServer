@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.zip.CRC32;
 
 public class Utils {
@@ -85,5 +86,18 @@ public class Utils {
             }
         }
         return null;
+    }
+
+    /**
+     * Check if string is null or empty
+     *
+     * @throws NullPointerException     if string is <code>null</code>
+     * @throws IllegalArgumentException if string is empty
+     */
+    public static void requireNotNullOrEmpty(String string) {
+        Objects.requireNonNull(string);
+        if(string.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
     }
 }

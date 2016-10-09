@@ -3,8 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <title>Main settings</title>
+    <meta type="extension" href="js/content/mainSettings.js">
 </head>
 <body>
-
+<div class="input-group container">
+    <h3 class="page-header text-center">Change login/password</h3>
+    <div class="row">
+        <div class="col-xs-6">
+            <label for="oldLogin">Old login</label>
+            <input class="form-control round-border-radius" id="oldLogin" type="text">
+        </div>
+        <div class="col-xs-6">
+            <label for="oldPassword">Old password</label>
+            <input class="form-control round-border-radius" id="oldPassword" type="password">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-6">
+            <label for="newLogin">New login</label>
+            <input class="form-control round-border-radius" id="newLogin" type="text">
+        </div>
+        <div class="col-xs-6">
+            <label for="newPassword">New password</label>
+            <input class="form-control round-border-radius" id="newPassword" type="password">
+        </div>
+    </div>
+    <div class="row" style="padding-top: 20px">
+        <button class="form-control btn btn-default center-block col-xs-4 round-border-radius" id="changePassword"
+                onclick="mainSettings.changeLoginPassword.trySendChanges()">Change
+        </button>
+    </div>
+    <div class="modal fade" id="loginPasswordChangeModal" tabindex="-1" role="dialog"
+         aria-labelledby="loginPasswordChangeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="loginPasswordChangeModalLabel">Change your login and password?</h4>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Dismiss</button>
+                    <button type="button" class="btn btn-default"
+                            onclick="mainSettings.changeLoginPassword.sendChanges()" data-dismiss="modal">Change
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="loginPasswordChangeErrorModal" tabindex="-1" role="dialog"
+         aria-labelledby="loginPasswordChangeErrorModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="loginPasswordChangeErrorModalLabel">Oops!</h4>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="loginPasswordChangeOkModal" tabindex="-1" role="dialog"
+         aria-labelledby="loginPasswordChangeOkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="loginPasswordChangeOkModalLabel">Login and password changed!</h4>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

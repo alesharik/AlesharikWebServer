@@ -1,6 +1,7 @@
 package com.alesharik.webserver.control;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
+import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.collections.LiveArrayList;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
@@ -30,7 +31,7 @@ public class ControlRequestHandler implements RequestHandler {
     @Override
     public boolean canHandleRequest(Request request) throws IOException {
         String command = request.getDecodedRequestURI();
-        return command.equals("/login");
+        return command.equals("/login") || command.equals("/changeLoginPassword");
     }
 
     @Override
@@ -40,6 +41,9 @@ public class ControlRequestHandler implements RequestHandler {
             case "/login":
                 handleLoginCommand(request, response);
                 break;
+            case "/changeLoginPassword":
+                handleLoginPasswordChangeCommand(request, response);
+                break;
             default:
                 Logger.log("Oops! We have unexpected request!" + command);
                 break;
@@ -48,6 +52,28 @@ public class ControlRequestHandler implements RequestHandler {
 
     public boolean isSessionValid(UUID sessionID) {
         return sessions.contains(sessionID);
+    }
+
+    private void handleLoginPasswordChangeCommand(Request request, Response response) throws IOException {
+        Cookie uuidCookie = Utils.getCookieForName("UUID", request.getCookies());
+        if(uuidCookie == null || !isSessionValid(UUID.fromString(uuidCookie.getValue()))) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            return;
+        }
+        if(holder.check(request.getParameter("oldLogin"), request.getParameter("oldPassword"))) {
+            holder.updateLoginPassword(request.getParameter("oldLogin"), request.getParameter("oldPassword"),
+                    request.getParameter("newLogin"), request.getParameter("newPassword"));
+
+            response.setStatus(HttpStatus.OK_200);
+            response.setContentType("text/plain");
+            response.setContentLength("ok".length());
+            response.getWriter().write("ok");
+        } else {
+            response.setStatus(HttpStatus.OK_200);
+            response.setContentType("text/plain");
+            response.setContentLength("oldLogPassError".length());
+            response.getWriter().write("oldLogPassError");
+        }
     }
 
     private void handleLoginCommand(Request request, Response response) {

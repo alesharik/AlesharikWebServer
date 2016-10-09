@@ -143,7 +143,7 @@ public final class ServerController {
         try {
             password = StringCipher.decrypt(new String(Files.readAllBytes(passwordFile.toPath()), Charsets.UTF8_CHARSET), null, secretKey);
         } catch (InvalidKeySpecException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | IllegalArgumentException e) {
-            Logger.log("Can't decode password!Creating new one...");
+            Logger.log("Can't decode password! Creating new one...");
         }
         try {
             if(password.isEmpty()) {

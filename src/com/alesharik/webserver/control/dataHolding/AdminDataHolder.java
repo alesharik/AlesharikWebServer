@@ -23,6 +23,7 @@ import java.security.spec.InvalidKeySpecException;
 /**
  * This class used for hold data admin login, password and data in encrypted state
  */
+//TODO fix update password with test/test cannot decrypt file!
 @Prefixes(value = {"[ServerControl]", "[AdminDataHolder]"})
 public final class AdminDataHolder {
     private static final String ADMIN_DATA_FILE = "adminData.dat";
@@ -35,11 +36,11 @@ public final class AdminDataHolder {
      * @param key encryption key. Length of key must be equals 24!
      */
     public AdminDataHolder(String key) throws ConfigurationException, IOException {
-        File adminDadaFile = new File(Main.USER_DIR + "/" + ADMIN_DATA_FILE);
-        if(!adminDadaFile.exists()) {
-            if(!adminDadaFile.createNewFile()) {
-                Logger.log("Oops! Problem with creating holder file: " + adminDadaFile);
-                throw new IOException("Can't create file: " + adminDadaFile);
+        File adminDataFile = new File(Main.USER_DIR + "/" + ADMIN_DATA_FILE);
+        if(!adminDataFile.exists()) {
+            if(!adminDataFile.createNewFile()) {
+                Logger.log("Oops! Problem with creating holder file: " + adminDataFile);
+                throw new IOException("Can't create file: " + adminDataFile);
             }
         }
 
@@ -76,8 +77,8 @@ public final class AdminDataHolder {
      */
     public boolean check(String logpass) {
         try {
-            String base64HashedLogPass = Base64Utils.encodeToString(StringCipher.hashString(logpass, SALT, 2, 256), false);
-            return configuration.getString("hashedPass").equals(base64HashedLogPass);
+            byte[] base64HashedLogPass = StringCipher.hashString(logpass, SALT, 50, 256);
+            return configuration.getArray(Byte.class, "hashedPass").equals(base64HashedLogPass);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             Logger.log(e);
         }
@@ -96,7 +97,7 @@ public final class AdminDataHolder {
 
     private void setPassword(String logPass) {
         try {
-            configuration.setProperty("hashedPass", Base64Utils.encodeToString(StringCipher.hashString(logPass, SALT, 2, 256), false));
+            configuration.setProperty("hashedPass", StringCipher.hashString(logPass, SALT, 50, 256));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             Logger.log(e);
         }

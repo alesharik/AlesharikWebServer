@@ -2,6 +2,7 @@ package com.alesharik.webserver.api;
 
 import com.alesharik.webserver.logger.Logger;
 import org.glassfish.grizzly.http.util.Base64Utils;
+import org.glassfish.grizzly.utils.Charsets;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -67,7 +68,7 @@ public final class StringCipher {
     public static String decrypt(String base64, String key, SecretKey... keys) throws InvalidKeySpecException, InvalidKeyException, UnsupportedEncodingException, BadPaddingException, IllegalBlockSizeException {
         SecretKey secretKey = getSecretKey(key, keys);
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
-        return new String(cipher.doFinal(Base64Utils.decodeFast(base64)));
+        return new String(cipher.doFinal(Base64Utils.decodeFast(base64)), Charsets.UTF8_CHARSET);
     }
 
     private static SecretKey getSecretKey(String key, SecretKey[] keys) throws InvalidKeySpecException, InvalidKeyException, UnsupportedEncodingException {

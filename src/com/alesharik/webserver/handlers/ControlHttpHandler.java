@@ -63,7 +63,13 @@ public final class ControlHttpHandler extends org.glassfish.grizzly.http.server.
                     && !file.equals("/styles/main.css") && !file.equals("/lib/jquery/jquery.min.js") && !file.equals("/lib/bootstrap/bootstrap.min.js")
                     && !file.equals("/lib/jquery/jquery.min.map") && !file.equals("/lib/bootstrap/fonts.css") && !file.equals("/lib/bootstrap/fonts/CWB0XYA8bzo0kSThX0UTuA.woff2")) {
                 Cookie uuid = Utils.getCookieForName("UUID", request.getCookies());
-                if(uuid == null || !requestHandler.isSessionValid(UUID.fromString(uuid.getValue()))) {
+                UUID uuid1;
+                try {
+                    uuid1 = UUID.fromString(uuid.getValue());
+                } catch (IllegalArgumentException | NullPointerException e) {
+                    uuid1 = null;
+                }
+                if(uuid == null || !requestHandler.isSessionValid(uuid1)) {
                     if(!response.isCommitted()) {
                         response.reset();
                         response.setStatus(HttpStatus.FOUND_302);

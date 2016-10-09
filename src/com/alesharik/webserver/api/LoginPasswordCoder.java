@@ -38,6 +38,9 @@ public final class LoginPasswordCoder {
             return sb.toString();
         } else {
             for(; i < Math.max(log.length, pass.length); i++) {
+                if(chars.length >= i) {
+                    break;
+                }
                 sb.append(chars[i]);
             }
         }
