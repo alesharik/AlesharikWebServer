@@ -20,19 +20,19 @@ public class Main {
 //    public static final String HOST = "127.0.0.1";
 
     public static void main(String[] args) throws InterruptedException {
-//        try {
-//            initStructure();
+        try {
+            initStructure();
         Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
-//            controller = new ServerController();
-//            controller.start();
+            controller = new ServerController();
+            controller.start();
 //
 ////            WebSocketController controller = new WebSocketController(new URI("ws://" + HOST + ":7000/serverControl"), "admin", "admin");
 ////            controller.connect();
 ////            Logger.log(controller.getComputerInfo());
 ////            Logger.log(Utils.getExternalIp());
-//        } catch (Throwable e) {
-//            Logger.log(e);
-//        }
+        } catch (Throwable e) {
+            Logger.log(e);
+        }
 //        try {
 //            FileManager manager = new FileManager(USER_DIR, FileManager.FileHoldingMode.HOLD_AND_CHECK, FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES);
 //            System.out.println(new String(manager.readFile("/log.log")));
@@ -136,10 +136,6 @@ public class Main {
 
 //
 //
-//    public static void handleEvent(LongEvent event, long sequence, boolean endOfBatch)
-//    {
-//        System.out.println(event);
-//    }
 //
 //    public static void translate(LongEvent event, long sequence, ByteBuffer buffer)
 //    {
