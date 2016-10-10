@@ -79,7 +79,7 @@ public class ControlRequestHandler implements RequestHandler {
     private void handleLoginCommand(Request request, Response response) {
         String logpass = request.getParameter("logpass");
         boolean remember = Boolean.parseBoolean(request.getParameter("remember"));
-        if(logpass != null) {
+        if(logpass != null && !logpass.isEmpty()) {
             if(holder.check(logpass)) {
                 loginSuccess(response, remember, logpass);
                 return;
