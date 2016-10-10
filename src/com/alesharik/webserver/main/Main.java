@@ -22,7 +22,7 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         try {
             initStructure();
-        Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
+            Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
             controller = new ServerController();
             controller.start();
 //
@@ -32,6 +32,7 @@ public class Main {
 ////            Logger.log(Utils.getExternalIp());
         } catch (Throwable e) {
             Logger.log(e);
+            System.exit(0);
         }
 //        try {
 //            FileManager manager = new FileManager(USER_DIR, FileManager.FileHoldingMode.HOLD_AND_CHECK, FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES);
@@ -133,22 +134,4 @@ public class Main {
             }
         }
     }
-
-//
-//
-//
-//    public static void translate(LongEvent event, long sequence, ByteBuffer buffer)
-//    {
-//        event.set(buffer.getLong(0));
-//    }
-//
-//    public static class LongEvent
-//    {
-//        private long value;
-//
-//        public void set(long value)
-//        {
-//            this.value = value;
-//        }
-//    }
 }

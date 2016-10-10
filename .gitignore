@@ -43,3 +43,4 @@ truststore_client
 www/
 
 *.mp3
+adminKey.key
