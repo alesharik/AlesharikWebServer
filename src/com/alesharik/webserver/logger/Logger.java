@@ -6,22 +6,39 @@ import com.alesharik.webserver.logger.configuration.LoggerConfigurationPrefix;
 import com.alesharik.webserver.logger.handlers.InfoConsoleHandler;
 import com.alesharik.webserver.logger.handlers.WarningConsoleHandler;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.mutable.Mutable;
+import org.apache.commons.lang3.mutable.MutableObject;
 import sun.misc.SharedSecrets;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
 /**
- * This class used for log messages in AlesharikWebServer.
- * Configuration:
- * Base package: *.
+ * This class used for log messages in AlesharikWebServer.<br>
+ * You can set prefix by:<ul>
+ *     <li>{@link Prefix} - used for setup one prefix</li>
+ *     <li>{@link Prefixes} - used for setup multiple prefixes</li>
+ *     <li>Configuration - used for setup prefixes</li>
+ * </ul>
+ * Configuration:<br>
+ * To create configuration you need to mark class with @{@link LoggerConfiguration}.
+ * The class must have a public no-args constructor!<br>
+ * The config value is public static final string, annotated with @{@link LoggerConfigurationPrefix}.<br>
+ * The config can have a base package({@link LoggerConfigurationBasePackage}). This package need to not write it all the time.
+ * In config must be 1 base package annotation! Base package symbol is *.:<br>
+ * basePackage = "test"<br>
+ * mainPackage = "*.main" = "test.main"<br>
  */
 @Prefix("[LOGGER]")
 public class Logger {
@@ -29,9 +46,10 @@ public class Logger {
     private static boolean isConfigured = false;
 
     /**
-     * Class : Prefix
+     * Class : Prefixes
      */
-    private static final HashMap<String, String> configuredPrefixes = new HashMap<>();
+    private static final HashMap<String, ArrayList<String>> configuredPrefixes = new HashMap<>();
+    private static final ArrayList<WeakReference<ClassLoader>> classLoaders = new ArrayList<>();
 
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
@@ -72,7 +90,7 @@ public class Logger {
         if(prefix.isEmpty()) {
             log(getPrefixLocation(2), message);
         } else {
-            log(message, prefix);
+            log(prefix, message);
         }
     }
 
@@ -94,7 +112,7 @@ public class Logger {
                 LOGGER.addHandler(new InfoConsoleHandler());
                 LOGGER.addHandler(new WarningConsoleHandler());
 
-                loadConfigurations();
+                loadConfigurations(ClassLoader.getSystemClassLoader());
                 log("Logger successfully setup!");
                 isConfigured = true;
             } catch (SecurityException | IOException e) {
@@ -104,45 +122,106 @@ public class Logger {
     }
 
     @SneakyThrows
-    private static void loadConfigurations() {
-        Class<?> classLoader = ClassLoader.getSystemClassLoader().getClass();
-        Field fldClasses = classLoader.getDeclaredField("classes");
+    private static void loadConfigurations(ClassLoader classLoader) {
+        Class<?> classLoaderClass = ClassLoader.class;
+        Field fldClasses = classLoaderClass.getDeclaredField("classes");
         fldClasses.setAccessible(true);
-        Vector<Class<?>> classes = (Vector<Class<?>>) fldClasses.get(ClassLoader.getSystemClassLoader());
-        classes.stream().filter(aClass -> aClass.isAnnotationPresent(LoggerConfiguration.class)).forEach(Logger::parseConfigurationClass);
+        Vector<Class<?>> classes = (Vector<Class<?>>) fldClasses.get(classLoader);
+        ((Vector<Class<?>>) classes.clone()).stream()
+                .filter(aClass -> aClass.isAnnotationPresent(LoggerConfiguration.class))
+                .forEach(Logger::parseConfiguration);
+        classLoaders.add(new WeakReference<>(classLoader));
     }
 
     @SneakyThrows
-    private static void parseConfigurationClass(Class<?> clazz) {
-        Object configurationInstance = clazz.newInstance();
-
+    private static void parseConfiguration(Class<?> clazz) {
         if(clazz.isInterface() || clazz.isEnum() || clazz.isAnnotation()) {
             log("Can't use class " + clazz.getCanonicalName() + " as configuration! This class must not be interface, enum or annotation!");
+            return;
         }
-        String basePackage = "";
+        try {
+            parseConfigurationClass(clazz);
+        } catch (InstantiationException e) {
+            log("Can't create instance of class" + clazz.getCanonicalName() + "!");
+        }
+    }
+
+    private static void parseConfigurationClass(Class<?> clazz) throws InstantiationException, IllegalAccessException, NoSuchFieldException {
+        Mutable<String> basePackage = new MutableObject<>("");
+        Object configurationInstance = clazz.newInstance();
+
         for(Field field : clazz.getFields()) {
             field.setAccessible(true);
 
             LoggerConfigurationPrefix configurationPrefix = field.getAnnotation(LoggerConfigurationPrefix.class);
+            String prefix = (String) field.get(configurationInstance);
             if(configurationPrefix != null && field.getType().isAssignableFrom(String.class)) {
                 String value = configurationPrefix.value();
                 if(value.isEmpty()) {
                     Logger.log("Class " + clazz.getCanonicalName() + " has annotation on field field: " + field.getName() + ". The value of annotation must not be empty!");
                 }
-                String configurationValueWithBasePackage = parseConfigurationValueWithBasePackage((String) field.get(configurationInstance), basePackage);
-//                if(!configurationValueWithBasePackage.endsWith(".class"))
-                configuredPrefixes.put(value, configurationValueWithBasePackage);
+                String configurationValueWithBasePackage = parseConfigurationValueWithBasePackage(configurationPrefix.value(), basePackage.getValue());
+                ClassLoader classLoader = clazz.getClassLoader();
+                try {
+                    classLoader.loadClass(configurationValueWithBasePackage);
+                    addPrefix(configurationValueWithBasePackage, prefix);
+                } catch (ClassNotFoundException e) {
+                    URL url = classLoader.getResource(configurationValueWithBasePackage.replace(".", "/"));
+                    if(url == null) {
+                        continue;
+                    }
+                    File dir = new File(url.getFile());
+                    List<Class<?>> classes = new ArrayList<>();
+                    File[] files = dir.listFiles();
+                    if(files == null) {
+                        continue;
+                    }
+                    for(File file : files) {
+                        classes.addAll(findClassesFromFile(file, configurationValueWithBasePackage, classLoader));
+                    }
+                    classes.forEach(aClass -> addPrefix(aClass.getCanonicalName(), prefix));
+                }
                 continue;
             }
 
             LoggerConfigurationBasePackage basePackageAnnotation = field.getAnnotation(LoggerConfigurationBasePackage.class);
             if(basePackageAnnotation != null && field.getType().isAssignableFrom(String.class)) {
-                if(basePackage.isEmpty()) {
-                    basePackage = (String) field.get(configurationInstance);
+                if(basePackage.getValue().isEmpty()) {
+                    basePackage.setValue(prefix);
                 } else {
-                    Logger.log("Class " + clazz.getCanonicalName() + " have more than 1 base package annotation!");
+                    log("Class " + clazz.getCanonicalName() + " have more than 1 base package annotation!");
                 }
             }
+        }
+    }
+
+    @SneakyThrows
+    private static List<Class<?>> findClassesFromFile(File file, String scannedPackage, ClassLoader classLoader) {
+        List<Class<?>> classes = new ArrayList<>();
+
+        String resource = scannedPackage + "." + file.getName();
+        if(file.isDirectory()) {
+            File[] files = file.listFiles();
+            if(files != null) {
+                for(File child : files) {
+                    classes.addAll(findClassesFromFile(child, resource, classLoader));
+                }
+            }
+        } else if(resource.endsWith(".class")) {
+            int endIndex = resource.length() - ".class".length();
+            String className = resource.substring(0, endIndex);
+            classes.add(classLoader.loadClass(className));
+        }
+        return classes;
+    }
+
+    private static void addPrefix(String className, String prefix) {
+        if(configuredPrefixes.containsKey(className)) {
+            configuredPrefixes.get(className).add(prefix);
+        } else {
+            ArrayList<String> prefixes = new ArrayList<>();
+            prefixes.add(prefix);
+            configuredPrefixes.put(className, prefixes);
         }
     }
 
@@ -169,13 +248,20 @@ public class Logger {
         if(prefix != null) {
             return configuredPrefixes.concat(prefix.value());
         } else {
-            return "";
+            return configuredPrefixes;
         }
     }
 
     private static String getConfiguredPrefixes(Class<?> clazz) {
-        log(clazz.getCanonicalName());
-        return "";
+        ClassLoader classLoader = clazz.getClassLoader();
+        if(!classLoaders.stream().anyMatch(classLoaderWeakReference -> classLoader.equals(classLoaderWeakReference.get()))) {
+            loadConfigurations(classLoader);
+        }
+        if(configuredPrefixes.containsKey(clazz.getCanonicalName())) {
+            return configuredPrefixes.get(clazz.getCanonicalName()).stream().reduce("", String::concat);
+        } else {
+            return "";
+        }
     }
 
     private static class CallingClass extends SecurityManager {

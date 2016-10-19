@@ -10,6 +10,9 @@ import java.util.Date;
 //TODO rewrite site as green terminal
 //TODO add more prefixes to java's
 public class Main {
+    @SuppressWarnings("unused")
+    public static final MainLoggerConfiguration MAIN_LOGGER_CONFIGURATION = new MainLoggerConfiguration();
+
     public static final String HOST = Utils.getExternalIp();
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
     public static final File LOGS_FOLDER = new File(USER_DIR + "/logs");
@@ -23,6 +26,7 @@ public class Main {
         try {
             initStructure();
             Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
+            Logger.log("Test");
             controller = new ServerController();
             controller.start();
 //
