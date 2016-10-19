@@ -159,6 +159,11 @@
             <version>1.16.10</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+            <version>3.0.0</version>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -202,7 +207,6 @@
         <evosuiteVersion>1.0.3</evosuiteVersion>
     </properties>
 
-
     <build>
         <directory>out</directory>
         <plugins>
@@ -213,6 +217,10 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <annotationProcessors>
+                        <annotationProcessor>lombok.launch.AnnotationProcessorHider$AnnotationProcessor
+                        </annotationProcessor>
+                    </annotationProcessors>
                 </configuration>
             </plugin>
             <plugin>

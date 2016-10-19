@@ -50,6 +50,7 @@ public class Logger {
      */
     private static final HashMap<String, ArrayList<String>> configuredPrefixes = new HashMap<>();
     private static final ArrayList<WeakReference<ClassLoader>> classLoaders = new ArrayList<>();
+    static final HashMap<String, WeakReference<NamedLogger>> loggers = new HashMap<>();
 
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
@@ -58,7 +59,7 @@ public class Logger {
      * @param i number of {@link StackTraceElement}
      * @return [ + file name + : + line number + ]
      */
-    private static String getPrefixLocation(int i) {
+    static String getPrefixLocation(int i) {
         StackTraceElement element = SharedSecrets.getJavaLangAccess().getStackTraceElement(new Exception(), i);
         return "[" + element.getFileName() + ":" + element.getLineNumber() + "]";
     }
@@ -121,6 +122,16 @@ public class Logger {
         }
     }
 
+    public static NamedLogger createNewNamedLogger(String name, File file) {
+        if(loggers.containsKey(name) && !loggers.get(name).isEnqueued()) {
+            return loggers.get(name).get();
+        } else {
+            NamedLogger namedLogger = new NamedLogger(name, file);
+            loggers.put(name, new WeakReference<>(namedLogger));
+            return namedLogger;
+        }
+    }
+
     @SneakyThrows
     private static void loadConfigurations(ClassLoader classLoader) {
         Class<?> classLoaderClass = ClassLoader.class;
@@ -146,6 +157,7 @@ public class Logger {
         }
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("UC_USELESS_OBJECT")
     private static void parseConfigurationClass(Class<?> clazz) throws InstantiationException, IllegalAccessException, NoSuchFieldException {
         Mutable<String> basePackage = new MutableObject<>("");
         Object configurationInstance = clazz.newInstance();
