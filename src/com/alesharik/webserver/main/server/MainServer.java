@@ -67,7 +67,7 @@ public final class MainServer extends WebServer {
 
         WebSocketAddOn addOn = new WebSocketAddOn();
         networkListener.registerAddOn(addOn);
-        registerNewWebSocket(new ServerControllerWebSocketApplication(fileManager, this), "", "/serverControl");
+        registerNewWebSocket(new ServerControllerWebSocketApplication(this), "", "/serverControl");
     }
 
     @Override

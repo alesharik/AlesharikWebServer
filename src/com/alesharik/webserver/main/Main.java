@@ -30,6 +30,7 @@ public class Main {
 ////            controller.connect();
 ////            Logger.log(controller.getComputerInfo());
 ////            Logger.log(Utils.getExternalIp());
+
         } catch (Throwable e) {
             Logger.log(e);
             System.exit(0);

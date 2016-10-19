@@ -11,6 +11,7 @@ import org.glassfish.grizzly.utils.Charsets;
 
 import javax.websocket.DeploymentException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.HashMap;
 
@@ -73,8 +74,8 @@ public final class WebSocketController {
         sendMessage("plugin:" + pluginName + ":" + message);
     }
 
-    public void sendObjectFromPlugin(Object object, String pluginName) {
-        sendMessage("plugin:" + pluginName + ":object:" + object);
+    public <T extends Object & Serializable> void sendObjectFromPlugin(T object, String pluginName) {
+        sendMessage("plugin:" + pluginName + ":object:" + SerialRepository.serialize(object));
     }
 
     public void onMessage(String plugin, Object object) {

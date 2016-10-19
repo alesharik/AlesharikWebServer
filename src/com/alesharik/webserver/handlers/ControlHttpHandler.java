@@ -1,13 +1,13 @@
 package com.alesharik.webserver.handlers;
 
 import com.alesharik.webserver.api.MIMETypes;
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.RequestHandlerList;
 import com.alesharik.webserver.control.ControlRequestHandler;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.main.FileManager;
+import com.alesharik.webserver.main.Helpers;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
@@ -62,7 +62,7 @@ public final class ControlHttpHandler extends org.glassfish.grizzly.http.server.
             if(!file.equals("/index.html") && !file.equals("/lib/font-awesome/font-awesome.min.css") && !file.equals("/styles/bootstrap.css")
                     && !file.equals("/styles/main.css") && !file.equals("/lib/jquery/jquery.min.js") && !file.equals("/lib/bootstrap/bootstrap.min.js")
                     && !file.equals("/lib/jquery/jquery.min.map") && !file.equals("/lib/bootstrap/fonts.css") && !file.equals("/lib/bootstrap/fonts/CWB0XYA8bzo0kSThX0UTuA.woff2")) {
-                Cookie uuid = Utils.getCookieForName("UUID", request.getCookies());
+                Cookie uuid = Helpers.getCookieForName("UUID", request.getCookies());
                 UUID uuid1;
                 try {
                     uuid1 = UUID.fromString(uuid.getValue());

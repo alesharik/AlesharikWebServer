@@ -1,6 +1,7 @@
 package com.alesharik.webserver.main;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.glassfish.grizzly.http.Cookie;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -88,5 +89,19 @@ public final class Helpers {
         }
 
         return RandomStringUtils.random(length, true, true);
+    }
+
+    /**
+     * Get cookie for name of list of cookies
+     *
+     * @return {@link Cookie} or <code>null</code>
+     */
+    public static Cookie getCookieForName(String name, Cookie[] cookies) {
+        for(Cookie cookie : cookies) {
+            if(cookie.getName().equals(name)) {
+                return cookie;
+            }
+        }
+        return null;
     }
 }

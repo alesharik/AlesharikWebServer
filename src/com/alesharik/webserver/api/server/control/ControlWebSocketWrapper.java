@@ -2,6 +2,8 @@ package com.alesharik.webserver.api.server.control;
 
 import com.alesharik.webserver.control.websockets.control.WebSocketController;
 
+import java.io.Serializable;
+
 public class ControlWebSocketWrapper {
     private final WebSocketController webSocketController;
     private final ControlWebSocketPlugin plugin;
@@ -19,7 +21,7 @@ public class ControlWebSocketWrapper {
         webSocketController.sendMessageFromPlugin(message, getName());
     }
 
-    public void send(Object object) {
+    public <T extends Object & Serializable> void send(T object) {
         webSocketController.sendObjectFromPlugin(object, getName());
     }
 

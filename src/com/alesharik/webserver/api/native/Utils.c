@@ -9,8 +9,17 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
+#include <sys/sysinfo.h>
 
 #define BUFFER_SIZE 1024
+
+char* concat(const char *s1, const char *s2)
+{
+    char *result = malloc(strlen(s1)+strlen(s2)+1);
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
+}
 
 int getIP(char *ip) {
     int on = 1;
@@ -68,6 +77,59 @@ int getIP(char *ip) {
     return 0;
 }
 
+int getCoresCount() {
+    return (int) sysconf(_SC_NPROCESSORS_ONLN);
+}
+
+void *getCpuLoad(int cpu, long *ret) {
+    FILE *fp;
+    fp= fopen("/proc/stat", "r");
+    if(fp == NULL){
+
+    } else{
+        long user;
+        long nice;
+        long system;
+        long idle;
+        long iowait;
+        long irq;
+        long softirq;
+
+        char *str;
+        char fuckingCpuCast[4];
+        sprintf(fuckingCpuCast, "%d", cpu);
+        str = concat(concat("cpu", fuckingCpuCast), " %li %li %li %li %li %li %li");
+
+        size_t length = 0;
+        char *buf;
+        for (int j = 0; j <= (cpu + 1); j++) {
+            getline(&buf, &length, fp);
+            sscanf(buf, str, &user, &nice, &system, &idle, &iowait, &irq, &softirq);
+        }
+        fclose(fp);
+
+        ret[0] = user;
+        ret[1] = nice;
+        ret[2] = system;
+        ret[3] = idle;
+        ret[4] = iowait;
+        ret[5] = irq;
+        ret[6] = softirq;
+    }
+}
+
+void getRAMInfo(long *ret) {
+    struct sysinfo info;
+    sysinfo(&info);
+
+    ret[0] = info.totalram;
+    ret[1] = info.freeram;
+    ret[2] = info.sharedram;
+    ret[3] = info.bufferram;
+    ret[4] = info.totalswap;
+    ret[5] = info.freeswap;
+}
+
 JNIEXPORT jstring JNICALL Java_com_alesharik_webserver_api_Utils_getExternalIp0 (JNIEnv *env, jobject object) {
     char *ip = malloc(100);
     strcpy(ip, "127.0.0.1");
@@ -81,3 +143,31 @@ JNIEXPORT jstring JNICALL Java_com_alesharik_webserver_api_Utils_getExternalIp0 
     result = (*env)->NewStringUTF(env,ip);
     return result;
 }
+
+JNIEXPORT jint JNICALL Java_com_alesharik_webserver_api_Utils_getCoresCount (JNIEnv *env, jclass clazz) {
+    return getCoresCount();
+}
+
+JNIEXPORT jlongArray JNICALL Java_com_alesharik_webserver_api_Utils_getCoreInfo (JNIEnv *env, jclass clazz, jint cpu) {
+    long result[7];
+    getCpuLoad(cpu, result);
+
+    jsize len = 7;
+    jlongArray jArray = (*env)->NewLongArray(env, len);
+    if (jArray != NULL) {
+        (*env)->SetLongArrayRegion(env, jArray, 0, len, result);
+    }
+    return jArray;
+}
+
+JNIEXPORT jlongArray JNICALL Java_com_alesharik_webserver_api_Utils_getRAMInfo (JNIEnv *env, jclass clazz) {
+    long result[6];
+    getRAMInfo(result);
+
+    jsize len = 6;
+    jlongArray jArray = (*env)->NewLongArray(env, len);
+    if (jArray != NULL) {
+        (*env)->SetLongArrayRegion(env, jArray, 0, len, result);
+    }
+    return jArray;
+};

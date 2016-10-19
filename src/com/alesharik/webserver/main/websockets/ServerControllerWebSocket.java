@@ -1,6 +1,5 @@
 package com.alesharik.webserver.main.websockets;
 
-import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.main.Helpers;
 import com.alesharik.webserver.main.server.MainServer;
 import org.glassfish.grizzly.http.HttpRequestPacket;
@@ -14,16 +13,12 @@ import org.glassfish.grizzly.websockets.WebSocketListener;
  * This class represent WebSocket, which control the server
  */
 public final class ServerControllerWebSocket extends DefaultWebSocket {
-    private FileManager fileManager;
+    private ServerControllerWebSocketApplication application;
     private MainServer mainServer;
     private boolean isAuthorized = false;
 
     public ServerControllerWebSocket(ProtocolHandler protocolHandler, HttpRequestPacket request, WebSocketListener... listeners) {
         super(protocolHandler, request, listeners);
-    }
-
-    public void setFileManager(FileManager fileManager) {
-        this.fileManager = fileManager;
     }
 
     public void setMainServer(MainServer mainServer) {
@@ -32,6 +27,10 @@ public final class ServerControllerWebSocket extends DefaultWebSocket {
 
     public void setBroadcaster(Broadcaster broadcaster) {
         this.broadcaster = broadcaster;
+    }
+
+    public void setApplication(ServerControllerWebSocketApplication application) {
+        this.application = application;
     }
 
     @Override
@@ -61,10 +60,20 @@ public final class ServerControllerWebSocket extends DefaultWebSocket {
     }
 
     private void processAuthorizedMessage(String message) {
-        switch (message) {
+        String[] parts = message.split(":");
+        switch (parts[0]) {
             case "getComputerInfo":
                 send(Base64Utils.encodeToString(Helpers.getCompInfo().getBytes(), false));
                 break;
+            case "plugin":
+                processPluginMessage(parts);
+                break;
+            case "system":
+
         }
+    }
+
+    private void processPluginMessage(String[] parts) {
+        application.directMessage(parts[1], parts[2]);
     }
 }

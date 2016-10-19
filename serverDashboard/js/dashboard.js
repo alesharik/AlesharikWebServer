@@ -14,6 +14,9 @@ class Dashboard {
         this.menuPluginHandler = new MenuPluginHandler();
 
         this.webSocketManager.updateMenuPlugins();
+
+        this.currentCompInfo = new ComputerInfo();
+        this.webSocketManager.enableCurrentComputerInfo();
     }
 
     onMessageClick(event) {
@@ -74,6 +77,61 @@ class Dashboard {
         request.send();
     }
 }
+
+//====================Computer info====================\\
+
+class ComputerInfo {
+    constructor() {
+        this.cpuCount = 0;
+        this.cpuLoad = [];
+        this.ram = [];
+    }
+
+    /**
+     * @param {string} string
+     */
+    parse(string) {
+        let json = JSON.parse(string);
+        this.cpuCount = json.cpuCount;
+        for (let i = 0; i < this.cpuCount; i++) {
+            this.cpuLoad[i] = json["cpu" + i];
+        }
+        this.ram = json.ram;
+    }
+
+    /**
+     * @param {int} cpu
+     * @param {string} type:
+     * user: normal processes executing in user mode
+     * nice: nice processes executing in user mode
+     * system: processes executing in kernel mode
+     * idle: twiddling thumbs
+     * iowait: waiting for I/O to complete
+     * irq: servicing interrupts
+     * softirq: servicing softirqs
+     */
+    getCoreLoad(cpu, type) {
+        switch (type) {
+            case "user":
+                return this.cpuLoad[cpu][0][0];
+            case "nice":
+                return this.cpuLoad[cpu][0][1];
+            case "system":
+                return this.cpuLoad[cpu][0][2];
+            case "idle":
+                return this.cpuLoad[cpu][0][3];
+            case "iowait":
+                return this.cpuLoad[cpu][0][4];
+            case "irq":
+                return this.cpuLoad[cpu][0][5];
+            case "softirq":
+                return this.cpuLoad[cpu][0][6];
+        }
+    }
+
+}
+
+//====================Computer info end====================\\
 
 //====================Side menu====================\\
 
@@ -379,7 +437,6 @@ class MenuDropdown {
  * 1. loadingContentEnded - dispatch on loader finish loading data
  * 2. finalizeContentScript - dispatch on loader remove all resources
  */
-//TODO fix events
 class ContentLoader {
     constructor() {
         this.contentHolder = document.querySelector("#contentHolder");
@@ -416,21 +473,39 @@ class ContentLoader {
                     } else {
                         that.header.innerHTML = id;
                     }
-                    that.contentHolder.innerHTML = request.responseText;
+                    that.contentHolder.innerHTML = request.responseText.replace("<link rel=\"stylesheet\".*>", "");
 
-                    let extensions = new RegExp("<meta type=\"extension\".*>").exec(that.contentHolder.innerHTML);
+                    let extensions = [];
+                    let ext;
+                    let text = that.contentHolder.innerHTML;
+                    while ((ext = new RegExp("<meta type=\"extension\".*>").exec(text)) != null) {
+                        extensions.push(ext[0]);
+                        text = text.replace(ext[0], "");
+                    }
                     if (extensions != null) {
+                        let stepExtensions = [];
                         extensions.forEach((extension) => {
                             let href = extension.substring(extension.indexOf("href=\"") + 6, extension.lastIndexOf("\">"));
+                            let step = extension.indexOf("steploading=\"true\"") != -1;
                             href.lastIndexOf(".css") == -1 ?
-                                dashboard.loadJSFile(href, (element) => {
+                                step ? stepExtensions.push(href) : dashboard.loadJSFile(href, (element) => {
                                     that.elements.push(element);
                                 }) :
                                 dashboard.loadCSSFile(href, (element) => {
                                     that.elements.push(element);
                                 });
                         });
-
+                        let step = 0;
+                        let stepLoader = (element) => {
+                            that.elements.push(element);
+                            step++;
+                            if (stepExtensions[step] != undefined) {
+                                dashboard.loadJSFile(stepExtensions[step], stepLoader);
+                            }
+                        };
+                        if (stepExtensions.length > 0) {
+                            dashboard.loadJSFile(stepExtensions[step], stepLoader);
+                        }
                         let checker = () => {
                             if (extensions.length == that.elements.length) {
                                 events.sendEvent("loadingContentEnded");
@@ -944,15 +1019,21 @@ class WebSocketManager {
                     }
                     break;
                 case "menuPlugins":
-                    switch (subType) {
-                        case "set":
-                            dashboard.menuPluginHandler.parse(message);
+                    if (subType == "set") {
+                        dashboard.menuPluginHandler.parse(message);
+                    }
+                    break;
+                case "currentCompInfo":
+                    if (subType == "set") {
+                        dashboard.currentCompInfo.parse(message);
                     }
                     break;
             }
         };
 
         this.dashboard = dashboard;
+
+        this.isGetCurrentComputerInfoEnabled = false;
     }
 
     /**
@@ -969,6 +1050,20 @@ class WebSocketManager {
 
     updateMenuPlugins() {
         this.webSocketSender.send("menuPlugins:get");
+    }
+
+    disableCurrentComputerInfo() {
+        if (this.isGetCurrentComputerInfoEnabled) {
+            this.webSocketSender.send("currentCompInfo:stop");
+            this.isGetCurrentComputerInfoEnabled = false;
+        }
+    }
+
+    enableCurrentComputerInfo() {
+        if (!this.isGetCurrentComputerInfoEnabled) {
+            this.webSocketSender.send("currentCompInfo:start");
+            this.isGetCurrentComputerInfoEnabled = true;
+        }
     }
 }
 

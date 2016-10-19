@@ -3,7 +3,6 @@ package com.alesharik.webserver.api;
 import com.alesharik.webserver.logger.Logger;
 import one.nio.util.ByteArrayBuilder;
 import one.nio.util.Hex;
-import org.glassfish.grizzly.http.Cookie;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -75,20 +74,6 @@ public class Utils {
     }
 
     /**
-     * Get cookie for name of list of cookies
-     *
-     * @return {@link Cookie} or <code>null</code>
-     */
-    public static Cookie getCookieForName(String name, Cookie[] cookies) {
-        for(Cookie cookie : cookies) {
-            if(cookie.getName().equals(name)) {
-                return cookie;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Check if string is null or empty
      *
      * @throws NullPointerException     if string is <code>null</code>
@@ -100,4 +85,10 @@ public class Utils {
             throw new IllegalArgumentException();
         }
     }
+
+    public static native int getCoresCount();
+
+    static native long[] getCoreInfo(int core);
+
+    static native long[] getRAMInfo();
 }

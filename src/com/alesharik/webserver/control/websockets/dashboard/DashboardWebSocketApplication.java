@@ -4,6 +4,7 @@ import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketPlugin;
 import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketWrapper;
 import com.alesharik.webserver.control.ControlRequestHandler;
 import com.alesharik.webserver.control.dashboard.PluginDataHolder;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.util.Header;
@@ -22,6 +23,7 @@ import java.util.regex.Pattern;
 /**
  * This application used for manage {@link DashboardWebSocket}s
  */
+@Prefixes({"[ServerControl]", "[DashboardWebSocket]", "[DashboardWebSocketApplication]"})
 public final class DashboardWebSocketApplication extends WebSocketApplication {
     private static final Pattern uuidPattern = Pattern.compile("UUID=(.*(?=,)|.*$)");
 
@@ -68,7 +70,13 @@ public final class DashboardWebSocketApplication extends WebSocketApplication {
      * Send message in websocket
      */
     public void sendMessage(String message) {
-        webSocket.send(message);
+        if(webSocket != null) {
+            try {
+                webSocket.send(message);
+            } catch (RuntimeException e) {
+                //Do nothing
+            }
+        }
     }
 
     /**
