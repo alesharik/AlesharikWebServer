@@ -11,6 +11,10 @@ public final class ServerAccessManager {
     @Getter
     ModularErrorPageGenerator errorPageGenerator;
 
+    ServerAccessManager() {
+
+    }
+
     /**
      * Register a WebSocketApplication to a specific context path and url pattern.
      * If you wish to associate this application with the root context, use an
