@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 class TickingPool {
+    private static final Object lock = new Object();
     private static final ConcurrentHashMap<Long, Timer> timers = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Long, CopyOnWriteArrayList<WeakReference<?>>> collections = new ConcurrentHashMap<>();
 
@@ -14,7 +15,10 @@ class TickingPool {
         CopyOnWriteArrayList<WeakReference<?>> list = collections.get(tick);
         if(list == null) {
             list = new CopyOnWriteArrayList<>();
-            collections.put(tick, list);
+
+            synchronized (lock) {
+                collections.put(tick, list);
+            }
         }
         if(!timers.containsKey(tick)) {
             initTimer(tick);
@@ -23,15 +27,20 @@ class TickingPool {
     }
 
     public synchronized static void addArrayList(LiveArrayList arrayList, long tick) {
-        if(!timers.containsKey(tick)) {
-            initTimer(tick);
+        synchronized (lock) {
+            if(!timers.containsKey(tick)) {
+                initTimer(tick);
+            }
+            CopyOnWriteArrayList<WeakReference<?>> list = collections.get(tick);
+            if(list == null) {
+                list = new CopyOnWriteArrayList<>();
+
+                synchronized (lock) {
+                    collections.put(tick, list);
+                }
+            }
+            list.add(new WeakReference<>(arrayList));
         }
-        CopyOnWriteArrayList<WeakReference<?>> list = collections.get(tick);
-        if(list == null) {
-            list = new CopyOnWriteArrayList<>();
-            collections.put(tick, list);
-        }
-        list.add(new WeakReference<>(arrayList));
     }
 
     public synchronized static void removeHashMap(LiveHashMap map, long tick) {

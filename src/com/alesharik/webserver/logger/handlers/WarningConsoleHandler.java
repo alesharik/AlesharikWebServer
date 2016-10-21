@@ -5,7 +5,7 @@ import java.util.logging.Level;
 /**
  * This class used for process warnings
  */
-public class WarningConsoleHandler extends ConsoleHandler {
+public class WarningConsoleHandler extends SimpleConsoleHandler {
 
     public WarningConsoleHandler() {
         super();

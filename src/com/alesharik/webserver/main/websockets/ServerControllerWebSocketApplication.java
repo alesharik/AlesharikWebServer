@@ -4,6 +4,7 @@ import com.alesharik.webserver.api.SerialRepository;
 import com.alesharik.webserver.api.server.control.ControlWebSocketWrapper;
 import com.alesharik.webserver.main.server.MainServer;
 import org.glassfish.grizzly.http.HttpRequestPacket;
+import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.websockets.Broadcaster;
 import org.glassfish.grizzly.websockets.DataFrame;
 import org.glassfish.grizzly.websockets.OptimizedBroadcaster;
@@ -45,7 +46,7 @@ public final class ServerControllerWebSocketApplication extends WebSocketApplica
 
     @Override
     public void onMessage(WebSocket socket, byte[] bytes) {
-        socket.onMessage(new String(bytes));
+        socket.onMessage(new String(bytes, Charsets.UTF8_CHARSET));
     }
 
     @Override

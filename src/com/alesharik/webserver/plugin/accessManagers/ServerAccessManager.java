@@ -3,10 +3,12 @@ package com.alesharik.webserver.plugin.accessManagers;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
+import lombok.Getter;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 
 public final class ServerAccessManager {
     WebServer server;
+    @Getter
     ModularErrorPageGenerator errorPageGenerator;
 
     /**

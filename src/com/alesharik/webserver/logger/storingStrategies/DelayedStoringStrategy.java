@@ -14,7 +14,6 @@ import java.util.TimerTask;
 public class DelayedStoringStrategy extends StoringStrategy {
     private final Timer timer = new Timer("DelayedStoringStrategyTimer");
     private TimerTask timerTask;
-    private long delay; // 1 sec
     private StringBuffer stringBuffer;
 
     protected DelayedStoringStrategy(File file) {
@@ -23,7 +22,6 @@ public class DelayedStoringStrategy extends StoringStrategy {
     }
 
     public void setDelay(long delay) {
-        this.delay = delay;
         if(timerTask != null) {
             timerTask.cancel();
         }

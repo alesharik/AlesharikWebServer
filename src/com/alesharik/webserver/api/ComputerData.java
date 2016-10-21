@@ -1,14 +1,15 @@
 package com.alesharik.webserver.api;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * This class used for collect data about computer. It automatically updates every second. It use ComputerDataGatherer timer.
+ */
 public final class ComputerData {
     public static final ComputerData INSTANCE = new ComputerData();
 
-    private final Timer timer;
     private final int coreCount;
     private final long[][] coreLoad;
     private final long[] ram;
@@ -18,39 +19,55 @@ public final class ComputerData {
         this.coreLoad = new long[coreCount][7];
         this.ram = new long[6];
 
-        timer = new Timer("ComputerDataGatherer", true);
+        Timer timer = new Timer("ComputerDataGatherer", true);
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 for(int i = 0; i < coreCount; i++) {
                     coreLoad[i] = Utils.getCoreInfo(i);
                 }
-                updateRam();
+                System.arraycopy(Utils.getRAMInfo(), 0, ram, 0, 6);
             }
         }, 0, 1000);
     }
 
+    /**
+     * Return number of online cores(not processors!) in system
+     */
     public int getCoreCount() {
         return coreCount;
     }
 
-    private long getCoreLoad(int core, CoreLoadType type) {
-        if(core >= coreLoad.length) {
-            throw new IllegalArgumentException();
+    /**
+     * @param core number of core(min = 0, max = count - 1)
+     * @param type load type
+     * @return core time
+     */
+    private long getCoreTime(int core, CoreLoadType type) {
+        if(core < 0 || core >= coreLoad.length) {
+            throw new IllegalArgumentException("Core id must be positive and less than online core count!");
         }
-        Objects.requireNonNull(type);
 
-        return coreLoad[core][type.id];
-    }
-
-    private void updateRam() {
-        System.arraycopy(Utils.getRAMInfo(), 0, ram, 0, 6);
+        return coreLoad[core][type.ordinal()]; //Throw NullPointerException on type.ordinal()
     }
 
     public long getRam(RamType type) {
-        return ram[Objects.requireNonNull(type.id)];
+        return ram[type.ordinal()]; //Throw NullPointerException on type.ordinal()
     }
 
+    /**
+     * Return JSON string, what contains all data.
+     * String: <code>
+     * {
+     * cpuCount: (cpuCount),
+     * cpu0: [(cpuData)],
+     * cpu1: [(cpuData)],
+     * ...
+     * cpu(cpuCount - 1): [(cpuData)],
+     * ram: [(ram)]
+     * }
+     * </code>
+     */
     public String stringify() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append('{');
@@ -59,9 +76,8 @@ public final class ComputerData {
         for(int i = 0; i < coreCount; i++) {
             stringBuilder.append(", \"cpu");
             stringBuilder.append(i);
-            stringBuilder.append("\": [");
+            stringBuilder.append("\": ");
             stringBuilder.append(Arrays.toString(coreLoad[i]));
-            stringBuilder.append("]");
         }
 
         stringBuilder.append(",\"ram\": ");
@@ -72,54 +88,42 @@ public final class ComputerData {
     }
 
     public enum RamType {
-        TOTAL(0),
-        FREE(1),
-        SHARED(2),
-        BUFFER(3),
-        TOTAL_SWAP(4),
-        FREE_SWAP(5);
-
-        int id;
-
-        RamType(int id) {
-            this.id = id;
-        }
+        TOTAL,
+        FREE,
+        SHARED,
+        BUFFER,
+        TOTAL_SWAP,
+        FREE_SWAP
     }
 
     public enum CoreLoadType {
         /**
          * Normal processes executing in user mode
          */
-        USER(0),
+        USER,
         /**
          * Nice processes executing in user mode
          */
-        NICE(1),
+        NICE,
         /**
          * Processes executing in kernel mode
          */
-        SYSTEM(2),
+        SYSTEM,
         /**
          * Twiddling thumbs
          */
-        IDLE(3),
+        IDLE,
         /**
          * Waiting for I/O to complete
          */
-        IOWAIT(4),
+        IOWAIT,
         /**
          * Servicing interrupts
          */
-        IRQ(5),
+        IRQ,
         /**
-         * servicing softirqs
+         * Servicing softirqs
          */
-        SOFTIRQ(6);
-
-        int id;
-
-        CoreLoadType(int id) {
-            this.id = id;
-        }
+        SOFTIRQ;
     }
 }

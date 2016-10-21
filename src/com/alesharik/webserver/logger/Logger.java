@@ -160,13 +160,12 @@ public class Logger {
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("UC_USELESS_OBJECT")
     private static void parseConfigurationClass(Class<?> clazz) throws InstantiationException, IllegalAccessException, NoSuchFieldException {
         Mutable<String> basePackage = new MutableObject<>("");
-        Object configurationInstance = clazz.newInstance();
 
         for(Field field : clazz.getFields()) {
             field.setAccessible(true);
 
             LoggerConfigurationPrefix configurationPrefix = field.getAnnotation(LoggerConfigurationPrefix.class);
-            String prefix = (String) field.get(configurationInstance);
+            String prefix = (String) field.get(clazz.newInstance());
             if(configurationPrefix != null && field.getType().isAssignableFrom(String.class)) {
                 String value = configurationPrefix.value();
                 if(value.isEmpty()) {

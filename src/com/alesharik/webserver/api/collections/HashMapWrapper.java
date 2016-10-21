@@ -23,6 +23,10 @@ public class HashMapWrapper<K, V> implements Map<K, V>, Cloneable, Serializable 
         hashMap = new HashMap<>(count);
     }
 
+    public HashMapWrapper(HashMap<K, V> map) {
+        hashMap = (HashMap<K, V>) map.clone();
+    }
+
     @Override
     public int size() {
         return hashMap.size();
@@ -151,5 +155,10 @@ public class HashMapWrapper<K, V> implements Map<K, V>, Cloneable, Serializable 
     @Override
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         return hashMap.merge(key, value, remappingFunction);
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return new HashMapWrapper<>(hashMap);
     }
 }

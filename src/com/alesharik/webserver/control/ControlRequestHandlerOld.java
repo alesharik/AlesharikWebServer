@@ -6,6 +6,7 @@ import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.control.websockets.control.WebSocketController;
 import com.alesharik.webserver.main.FileManager;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * This {@link RequestHandler} used for handle specific requests in control mode
  */
+@SuppressFBWarnings("UWF_UNWRITTEN_FIELD")
 public final class ControlRequestHandlerOld implements RequestHandler {
     private final LiveArrayList<UUID> sessions = new LiveArrayList<>();
     private final FileManager fileManager;

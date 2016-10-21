@@ -479,7 +479,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     }
 
 
-    private static class Entry<K, V, A> extends Triple<K, V, A> {
+    private static class Entry<K, V, A> extends Triple<K, V, A> implements Serializable {
         private int hash;
         private Entry next;
 

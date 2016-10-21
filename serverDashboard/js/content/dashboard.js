@@ -16,8 +16,8 @@ events.addEventListener("loadingContentEnded", () => {
             return (a > b) ? a - b : 0
         }
 
-        let usertime = load[cpu][0][0], nicetime = load[cpu][0][1], systemtime = load[cpu][0][2], idletime = load[cpu][0][3];
-        let ioWait = load[cpu][0][4], irq = load[cpu][0][5], softIrq = load[cpu][0][6];
+        let usertime = load[cpu][0], nicetime = load[cpu][1], systemtime = load[cpu][2], idletime = load[cpu][3];
+        let ioWait = load[cpu][4], irq = load[cpu][5], softIrq = load[cpu][6];
         let totaltime = usertime + nicetime + systemtime + irq + softIrq + idletime + ioWait;
 
         let neww = [];

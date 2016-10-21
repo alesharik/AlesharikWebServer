@@ -5,7 +5,7 @@ import java.util.logging.Level;
 /**
  * This class used for process Level.INFO
  */
-public class InfoConsoleHandler extends ConsoleHandler {
+public class InfoConsoleHandler extends SimpleConsoleHandler {
 
     public InfoConsoleHandler() {
         super();

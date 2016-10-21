@@ -42,6 +42,15 @@ public class PluginManagerBuilder {
         return this;
     }
 
+    public PluginManagerBuilder setMicroserviceAccessManager(MicroserviceAccessManager microserviceAccessManager) {
+        if(microserviceAccessManager == null) {
+            throw new IllegalArgumentException();
+        }
+        this.microserviceAccessManager = microserviceAccessManager;
+        return this;
+    }
+
+
     public PluginManagerBuilder isMicroserviceServer(boolean isMicroserviceServer) {
         this.isMicroserviceServer = isMicroserviceServer;
         return this;

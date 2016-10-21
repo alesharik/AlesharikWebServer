@@ -1,6 +1,7 @@
 package com.alesharik.webserver.logger.handlers;
 
 import com.alesharik.webserver.logger.LoggerFormatter;
+import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,10 +12,10 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-class ConsoleHandler extends java.util.logging.ConsoleHandler {
+class SimpleConsoleHandler extends java.util.logging.ConsoleHandler {
     protected OutputStreamWriter writer;
 
-    public ConsoleHandler() {
+    public SimpleConsoleHandler() {
         configure();
         setOutputStream(System.err);
     }
@@ -71,7 +72,7 @@ class ConsoleHandler extends java.util.logging.ConsoleHandler {
                 reportError(null, e, ErrorManager.CLOSE_FAILURE);
             }
         }
-        this.writer = new OutputStreamWriter(out);
+        this.writer = new OutputStreamWriter(out, Charsets.UTF8_CHARSET);
         super.setOutputStream(out);
     }
 

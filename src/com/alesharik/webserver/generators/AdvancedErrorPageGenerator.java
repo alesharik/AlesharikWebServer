@@ -4,6 +4,7 @@ import com.alesharik.webserver.main.FileManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.glassfish.grizzly.http.server.ErrorPageGenerator;
 import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.utils.Charsets;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -26,7 +27,7 @@ public final class AdvancedErrorPageGenerator implements ErrorPageGenerator {
     @Override
     public String generate(Request request, int status, String reasonPhrase, String description, Throwable exception) {
         if(fileManager.exists("/errors/" + status + ".html", true)) {
-            String file = new String(fileManager.readFile("/errors/" + status + ".html"));
+            String file = new String(fileManager.readFile("/errors/" + status + ".html"), Charsets.UTF8_CHARSET);
             String content = "";
             if(description != null && !description.isEmpty()) {
                 content += description;
