@@ -27,16 +27,16 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
         try {
-//            initStructure();
-//            Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
-//            Logger.log("Test");
-//            controller = new ServerController();
-////            controller.start();
+            initStructure();
+            Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
+            Logger.log("Test");
+            controller = new ServerController();
+//            controller.start();
 //            Class<?> clazz = Class.class;
 //            Runnable runnable = () -> {new NullPointerException();};
 //            runnable.run();
 //            SharedStorageManagerFactory.INSTANCE.newInstance(new Testt());
-            new Testt().run();
+//            new Testt().run();
 //
 ////            WebSocketController controller = new WebSocketController(new URI("ws://" + HOST + ":7000/serverControl"), "admin", "admin");
 ////            controller.connect();

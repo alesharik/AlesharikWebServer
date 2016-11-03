@@ -1,5 +1,6 @@
 package com.alesharik.webserver.api;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -7,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@SuppressFBWarnings("UC_USELESS_OBJECT")
 public class ConcurrentCompletableFutureTest {
     @Test
     public void cancel() throws Exception {
