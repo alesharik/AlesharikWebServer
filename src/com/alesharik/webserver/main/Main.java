@@ -1,6 +1,9 @@
 package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueGetter;
+import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueSetter;
+import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.logger.Logger;
 
 import java.io.File;
@@ -13,22 +16,27 @@ public class Main {
     @SuppressWarnings("unused")
     public static final MainLoggerConfiguration MAIN_LOGGER_CONFIGURATION = new MainLoggerConfiguration();
 
-    public static final String HOST = Utils.getExternalIp();
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
     public static final File LOGS_FOLDER = new File(USER_DIR + "/logs");
     public static final File WWW = new File(USER_DIR + "/www");
     public static final File SERVER_DASHBOARD = new File(USER_DIR + "/serverDashboard");
+    public static final String HOST = Utils.getExternalIp();
 
     private static ServerController controller;
 //    public static final String HOST = "127.0.0.1";
 
     public static void main(String[] args) throws InterruptedException {
         try {
-            initStructure();
-            Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
-            Logger.log("Test");
-            controller = new ServerController();
-            controller.start();
+//            initStructure();
+//            Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
+//            Logger.log("Test");
+//            controller = new ServerController();
+////            controller.start();
+//            Class<?> clazz = Class.class;
+//            Runnable runnable = () -> {new NullPointerException();};
+//            runnable.run();
+//            SharedStorageManagerFactory.INSTANCE.newInstance(new Testt());
+            new Testt().run();
 //
 ////            WebSocketController controller = new WebSocketController(new URI("ws://" + HOST + ":7000/serverControl"), "admin", "admin");
 ////            controller.connect();
@@ -36,7 +44,8 @@ public class Main {
 ////            Logger.log(Utils.getExternalIp());
 
         } catch (Throwable e) {
-            Logger.log(e);
+//            Logger.log(e);
+            System.out.println(e);
             System.exit(0);
         }
 //        try {
@@ -137,6 +146,26 @@ public class Main {
             if(!SERVER_DASHBOARD.mkdir()) {
                 Logger.log("Can't create server dashboard folder!");
             }
+        }
+    }
+
+    @UseSharedStorage("asd")
+    public static class Testt implements Runnable {
+        @SharedValueGetter("test")
+        public String get() {
+            return null;
+        }
+
+        @SharedValueSetter("test")
+        public void set(String var) {
+
+        }
+
+        @Override
+        public void run() {
+            System.out.println("asd");
+            set("asd");
+            System.out.println(get());
         }
     }
 }

@@ -38,9 +38,9 @@ serverPassword.key
 
 test.txt
 test/
-tests/
 truststore_client
 www/
 
 *.mp3
 adminKey.key
+/AlesharikWebServer.jar

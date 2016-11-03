@@ -4,20 +4,24 @@ import com.alesharik.webserver.logger.Logger;
 import one.nio.util.ByteArrayBuilder;
 import one.nio.util.Hex;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.Objects;
 import java.util.zip.CRC32;
 
-public class Utils {
+public final class Utils {
     private static final Utils INSTANCE = new Utils();
+
+    private Utils() {
+    }
 
     static {
         try {
-//            System.loadLibrary("libalesharikwebserver.so");
             InputStream in = Utils.class.getResourceAsStream("/libalesharikwebserver.so");
 
             if(in != null) {
@@ -30,15 +34,13 @@ public class Utils {
                     try (OutputStream out = new FileOutputStream(dll)) {
                         out.write(libData.buffer(), 0, libData.length());
                         out.close();
-                    } catch (IOException e) {
-                        throw e;
                     }
                 }
 
                 String libraryPath = dll.getAbsolutePath();
                 System.load(libraryPath);
             } else {
-                Logger.log("Cannot find native IO library");
+                System.out.println("Cannot find native IO library");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -91,4 +93,36 @@ public class Utils {
     static native long[] getCoreInfo(int core);
 
     static native long[] getRAMInfo();
+
+    public static byte[] getURLAsByteArray(URL url) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        InputStream is;
+        try {
+            is = url.openStream();
+            byte[] byteChunk = new byte[4096];
+            int n;
+
+            while((n = is.read(byteChunk)) > 0) {
+                byteArrayOutputStream.write(byteChunk, 0, n);
+            }
+            is.close();
+        } catch (IOException e) {
+            Logger.log(e);
+        }
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    /**
+     * Check if string null or empty
+     *
+     * @param str string to check
+     * @return good string
+     */
+    public static String notNullAndEmpty(String str) {
+        Objects.requireNonNull(str);
+        if(str.isEmpty()) {
+            throw new IllegalArgumentException("String can't be empty");
+        }
+        return str;
+    }
 }
