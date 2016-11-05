@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 public class SharedStorageManagerTest {
     @BeforeClass
     public static void setup() {
-        SharedStorageManager.registerNewSharedStorage("denied", (AccessFilter) (clazz, type) -> false);
+        SharedStorageManager.registerNewSharedStorage("denied", (AccessFilter) (clazz, type, field) -> false);
     }
 
     @Test
@@ -35,7 +35,7 @@ public class SharedStorageManagerTest {
         try {
             SharedStorageManager.unregisterSharedStorage("denied");
 
-            SharedStorageManager.registerNewSharedStorage("denied", (AccessFilter) (clazz, type) -> false);
+            SharedStorageManager.registerNewSharedStorage("denied", (AccessFilter) (clazz, type, filed) -> false);
             fail();
         } catch (IllegalAccessException e) {
             //Do nothing
@@ -45,9 +45,9 @@ public class SharedStorageManagerTest {
     @Test
     public void addAccessFilter() throws Exception {
         SharedStorageManager.registerNewSharedStorage("test1");
-        SharedStorageManager.addAccessFilter("test1", (clazz, type) -> true);
+        SharedStorageManager.addAccessFilter("test1", (clazz, type, field) -> true);
         try {
-            SharedStorageManager.addAccessFilter("denied", (clazz, type) -> false);
+            SharedStorageManager.addAccessFilter("denied", (clazz, type, field) -> false);
             fail();
         } catch (IllegalAccessException e) {
             //Do nothing

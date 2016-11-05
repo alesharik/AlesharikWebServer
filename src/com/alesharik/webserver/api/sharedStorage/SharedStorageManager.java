@@ -15,7 +15,6 @@ import java.util.HashMap;
  * The getter defined by {@link com.alesharik.webserver.api.sharedStorage.annotations.SharedValueGetter} and the setter
  * defined by {@link com.alesharik.webserver.api.sharedStorage.annotations.SharedValueSetter}.
  */
-//TODO write tests for shared storage
 public final class SharedStorageManager {
     static final HashMap<String, SharedStorage> sharedStorageMap = new HashMap<>();
 

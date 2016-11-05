@@ -17,25 +17,25 @@ final class SharedStorage {
         objects = new CopyOnWriteArrayList<>();
     }
 
-    private void checkAccess(AccessFilter.Type type) throws IllegalAccessException {
+    private void checkAccess(AccessFilter.Type type, String field) throws IllegalAccessException {
         Class<?> clazz = CallingClass.INSTANCE.getCallingClasses()[3];
         for(AccessFilter filter : filters) {
-            if(!filter.canAccess(clazz, type)) {
+            if(!filter.canAccess(clazz, type, field)) {
                 throw new IllegalAccessException("Access denied!");
             }
         }
     }
 
     public void addFilter(AccessFilter accessFilter) throws IllegalAccessException {
-        checkAccess(AccessFilter.Type.ADD_FILTER);
+        checkAccess(AccessFilter.Type.ADD_FILTER, null);
         filters.add(accessFilter);
     }
 
     public void setObject(String name, Object o, boolean external) throws IllegalAccessException {
         if(external) {
-            checkAccess(AccessFilter.Type.SET_EXTERNAL);
+            checkAccess(AccessFilter.Type.SET_EXTERNAL, name);
         } else {
-            checkAccess(AccessFilter.Type.SET);
+            checkAccess(AccessFilter.Type.SET, name);
         }
 
         if(o == null) {
@@ -53,9 +53,9 @@ final class SharedStorage {
 
     public Object getObject(String name, boolean external) throws IllegalAccessException {
         if(external) {
-            checkAccess(AccessFilter.Type.GET_EXTERNAL);
+            checkAccess(AccessFilter.Type.GET_EXTERNAL, name);
         } else {
-            checkAccess(AccessFilter.Type.GET);
+            checkAccess(AccessFilter.Type.GET, name);
         }
 
         int index = names.indexOf(name);
@@ -67,7 +67,7 @@ final class SharedStorage {
     }
 
     void clear() throws IllegalAccessException {
-        checkAccess(AccessFilter.Type.CLEAR);
+        checkAccess(AccessFilter.Type.CLEAR, null);
         filters.clear();
         names.clear();
         objects.clear();

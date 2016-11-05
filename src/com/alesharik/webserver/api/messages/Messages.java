@@ -35,7 +35,6 @@ import java.util.concurrent.Executors;
  * @see MessageTranslator
  * @see MessageListener
  * @see MessageHandler
- * @see com.alesharik.webserver.api.serviceThreads.ServiceThreadsManager
  */
 public final class Messages {
     private static final ConcurrentHashMap<String, ConcurrentHashMap<String, Holder>> factories = new ConcurrentHashMap<>();

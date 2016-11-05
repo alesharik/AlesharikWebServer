@@ -46,7 +46,7 @@ final class SharedStorageClassVisitor extends ClassAdapter {
             if(id.isEmpty()) {
                 registerId(storageName.get());
             }
-            return new MethodReplacer(super.visitMethod(access, name, desc, signature, exceptions), id, desc);
+            return new MethodReplacer(super.visitMethod(access, name, desc, signature, exceptions), id, desc, desc.substring(desc.indexOf('(') + 1, desc.indexOf(')')).split(";").length);
         }
         return super.visitMethod(access, name, desc, signature, exceptions);
     }
@@ -92,12 +92,14 @@ final class SharedStorageClassVisitor extends ClassAdapter {
         private String id;
         private ConcurrentCompletableFuture<String> result;
         private int type = -1; //0 - setter, 1 - getter, -1 - ops
+        private int argCount;
 
-        public MethodReplacer(MethodVisitor mv, String id, String ret) {
+        public MethodReplacer(MethodVisitor mv, String id, String ret, int agrCount) {
             super(mv);
             this.id = id;
             this.result = new ConcurrentCompletableFuture<>();
             this.ret = ret;
+            this.argCount = agrCount;
         }
 
         public MethodReplacer(MethodVisitor mv) {
@@ -133,10 +135,16 @@ final class SharedStorageClassVisitor extends ClassAdapter {
                         mv.visitMaxs(2, 1);
                         mv.visitEnd();
                     } else if(type == 0) { // Is a set method
+                        if(argCount <= 0) {
+                            System.out.println("Can't transform method! Setter must have args > 0!");
+                            mv.visitEnd();
+                            return;
+                        }
+
                         mv.visitCode();
                         mv.visitLdcInsn(id); // First parameter - id
                         mv.visitLdcInsn(result.get()); // Second parameter - field name
-                        mv.visitVarInsn(ALOAD, 1); // add space to stack
+                        mv.visitVarInsn(ALOAD, 1); // load var
                         mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "set", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"); // Set method
                         mv.visitInsn(RETURN); // Return
                         mv.visitMaxs(3, 2);

@@ -326,6 +326,16 @@
                             <executable>${basedir}/compileNative.sh</executable>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>copyAgent</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${basedir}/copyAgent.sh</executable>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
@@ -413,12 +423,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>2.17</version>
                         <configuration>
-                            <properties>
-                                <property>
-                                    <name>listener</name>
-                                    <value>org.evosuite.runtime.InitializingListener</value>
-                                </property>
-                            </properties>
+                            <argLine>-javaagent:AlesharikWebServer.jar</argLine>
                         </configuration>
                     </plugin>
                     <plugin>
