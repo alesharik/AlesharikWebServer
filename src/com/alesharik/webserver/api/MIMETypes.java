@@ -709,13 +709,13 @@ public final class MIMETypes {
      * Add type to MIME types list
      *
      * @param fileExtension extension of file(example - .txt)
-     * @param mimetype      MIME tyoe of this extension
+     * @param mimeType      MIME type of this extension
      */
-    public static void addType(String fileExtension, String mimetype) {
+    public static void addType(String fileExtension, String mimeType) {
         if(contains(fileExtension)) {
             throw new KeyAlreadyExistsException();
         }
-        types.put(fileExtension, mimetype);
+        types.put(fileExtension, mimeType);
     }
 
     /**

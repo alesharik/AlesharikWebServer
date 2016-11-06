@@ -30,6 +30,7 @@ public final class ControlServer extends WebServer {
     private DashboardWebSocketApplication dashboardWebSocketApplication;
 
     public ControlServer(String host, int port, FileManager fileManager, AdminDataHolder adminDataHolder, PluginDataHolder holder) {
+        super(host, port);
         controlHttpHandler = new ControlHttpHandler(fileManager, adminDataHolder);
         final NetworkListener networkListener = new NetworkListener("grizzly", host, port);
         networkListener.getFileCache().setEnabled(true);

@@ -6,22 +6,25 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Objects;
 
 /**
- * This class used for store keys at disk
+ * This class used for store keys in files. This class simply save and load the key, not secure it!
  */
-public final class KeyHolder {
-    private KeyHolder() {
+public final class KeySaver {
+    private KeySaver() {
     }
 
     /**
-     * Save key to passed file <br>
-     * WARNING! If file doesn't exists, this throw an exception!
-     *
+     * Save key to passed file. This method throw exception on file missing!
      * @param key  key to save
-     * @param file file, who exists
+     * @param file the file
+     * @throws FileNotFoundException then method can't find file
      */
     public static void saveKeyToFile(SecretKey key, File file) throws IOException {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(file);
+
         if(!file.exists() || file.isDirectory()) {
             throw new FileNotFoundException();
         }
@@ -29,14 +32,16 @@ public final class KeyHolder {
     }
 
     /**
-     * Load key from file
-     * WARNING! If file doesn't exists, this throw an exception!
-     *
-     * @param file      file, who exists
+     * Load key from file. This function throw exception on file missing!
+     * @param file      the file
      * @param algorithm algorithm of saved key
      * @return saved key
+     * @throws FileNotFoundException then method can't find file
      */
     public static SecretKey loadKeyFromFile(File file, String algorithm) throws IOException {
+        Utils.notNullAndEmpty(algorithm);
+        Objects.requireNonNull(file);
+
         if(!file.exists() || file.isDirectory()) {
             throw new FileNotFoundException();
         }

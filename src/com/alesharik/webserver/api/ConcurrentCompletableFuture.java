@@ -18,10 +18,13 @@ import java.util.concurrent.locks.LockSupport;
  *
  * @param <V>
  */
-public class ConcurrentCompletableFuture<V> implements Future<V> {
+public final class ConcurrentCompletableFuture<V> implements Future<V> {
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
     private final AtomicBoolean isDone = new AtomicBoolean(false);
     private volatile V value = null;
+
+    public ConcurrentCompletableFuture() {
+    }
 
     /**
      * @param mayInterruptIfRunning don't used

@@ -12,6 +12,10 @@ public abstract class WebServer extends Server {
 
     }
 
+    protected WebServer(String host, int port) {
+        super(host, port);
+    }
+
     protected WebServer() {
 
     }

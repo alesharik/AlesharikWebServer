@@ -12,6 +12,7 @@ public class RouterServer extends Server {
     private final RouterServerRequestProcessor processor;
 
     public RouterServer(int port, String host, RouterServer.WorkingMode mode) {
+        super(host, port);
         processor = new RouterServerRequestProcessor(port, host, mode, servers);
     }
 

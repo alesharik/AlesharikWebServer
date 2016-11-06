@@ -29,9 +29,8 @@ public class Main {
         try {
             initStructure();
             Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
-            Logger.log("Test");
             controller = new ServerController();
-//            controller.start();
+            controller.start();
 //            Class<?> clazz = Class.class;
 //            Runnable runnable = () -> {new NullPointerException();};
 //            runnable.run();

@@ -36,6 +36,7 @@ public final class MainServer extends WebServer {
     private ServerController serverController;
 
     public MainServer(String host, int port, FileManager fileManager, ServerController serverController, PluginDataHolder holder) {
+        super(host, port);
         this.serverController = serverController;
         errorPageGenerator = new ModularErrorPageGenerator(fileManager);
 

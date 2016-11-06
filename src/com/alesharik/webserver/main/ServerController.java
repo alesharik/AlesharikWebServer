@@ -1,6 +1,6 @@
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.api.KeyHolder;
+import com.alesharik.webserver.api.KeySaver;
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.Utils;
@@ -50,22 +50,34 @@ import static com.alesharik.webserver.main.Main.USER_DIR;
  */
 @Prefix("[ServerController]")
 public final class ServerController {
-    private Configuration configuration;
-    private String serverPassword;
-    private Server server;
-    private FileManager mainFileManager;
-    private String host;
-    private int port;
-    private boolean isStarted = false;
 
     private final BaseAccessManagerBuilder baseAccessManagerBuilder = new BaseAccessManagerBuilder();
     private final ControlAccessManagerBuilder controlAccessManagerBuilder = new ControlAccessManagerBuilder();
     private final ServerAccessManagerBuilder serverAccessManagerBuilder = new ServerAccessManagerBuilder();
 
     private MicroserviceAccessManagerBuilder microserviceAccessManagerBuilder;
-    private PluginDataHolder pluginDataHolder = new PluginDataHolder();
 
     private PluginManager pluginManager;
+
+    private Configuration configuration;
+    private String serverPassword;
+
+    private FileManager mainFileManager;
+    private Server server;
+    private int config = 0;
+    private PluginDataHolder pluginDataHolder = new PluginDataHolder();
+    private boolean isStarted = false;
+
+    private static final int IS_CONTROL_SERVER_FLAG = 1;
+    private static final int MICROSERVICE_CLIENT = 2;
+    private static final int MICROSERVICE_SERVER = 4;
+    private static final int ROUTER_SERVER = 8;
+    private static final int WEB_SERVER = 16;
+
+    private MicroserviceClient microserviceClient = null;
+    private MicroserviceServer microserviceServer = null;
+    private RouterServer routerServer = null;
+
     /**
      * Init all needed systems
      */
@@ -73,34 +85,15 @@ public final class ServerController {
         try {
             loadServerPassword();
             loadConfig();
-            host = Main.HOST;
-            port = configuration.getInt("port");
-            if(configuration.getBoolean("isMicroserviceServer")) {
-                //FIXME
-                server = new MicroserviceServer(host, port, MicroserviceServer.WorkingMode.ADVANCED, Utils.getExternalIp(), 5000);
-                microserviceAccessManagerBuilder = new MicroserviceAccessManagerBuilder(true);
-                ((MicroserviceServer) server).setupMicorserviceAccessManagerBuilder(microserviceAccessManagerBuilder);
-            }
-            if(configuration.getBoolean("canHoldMicroservices") && !configuration.getBoolean("isMicroserviceServer")) {
-                microserviceAccessManagerBuilder = new MicroserviceAccessManagerBuilder(false);
-                //FIXME
-                MicroserviceClient client = new MicroserviceClient(MicroserviceClient.WorkingMode.ADVANCED, Utils.getExternalIp(), 5000);
-                client.start();
-                client.setupMicroserviceAccessMangerBuilder(microserviceAccessManagerBuilder);
-            }
-            if(configuration.getBoolean("isRouterServer")) {
-                server = new RouterServer(port, host, RouterServer.WorkingMode.ADVANCED);
-            }
-            if(!configuration.getBoolean("isMicroserviceServer") && !configuration.getBoolean("isRouterServer")) {
-                if(configuration.getBoolean("isControlServer")) {
-                    initControlServer();
-                } else {
-                    initMainServer();
-                }
-                ((WebServer) server).setupServerAccessManagerBuilder(serverAccessManagerBuilder);
-                baseAccessManagerBuilder.setFileManager(mainFileManager);
-            }
+            Logger.log("Config loaded!");
+            initFileManager();
+            Logger.log("FileManager created!");
 
+            initWebServer();
+            initMicroserviceClient();
+            initMicroserviceServer();
+            initRouterServer();
+            baseAccessManagerBuilder.setFileManager(mainFileManager);
             baseAccessManagerBuilder.setPluginDataHolder(pluginDataHolder);
 
             Logger.log("Server successfully initialized");
@@ -109,8 +102,8 @@ public final class ServerController {
                     .setBaseAccessManager(baseAccessManagerBuilder.build())
                     .setControlAccessManager(controlAccessManagerBuilder.build())
                     .setServerAccessManager(serverAccessManagerBuilder.build())
-                    .isMicroserviceServer(configuration.getBoolean("isMicroserviceServer"))
-                    .isRouterServer(configuration.getBoolean("isRouterServer"))
+//                    .isMicroserviceServer(false)
+//                    .isRouterServer(configuration.getBoolean("isRouterServer"))
                     .build();
             pluginManager.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
             pluginManager.loadPlugins();
@@ -119,6 +112,71 @@ public final class ServerController {
             Logger.log(e);
         }
     }
+
+    private void initRouterServer() {
+        if(isEnabled(ROUTER_SERVER)) {
+            routerServer = new RouterServer(configuration.getInt("routerServer.port"), configuration.getString("routerServer.host"), RouterServer.WorkingMode.ADVANCED);
+            Logger.log("Router server loaded!");
+        }
+    }
+
+    private void initMicroserviceServer() {
+        if(isEnabled(MICROSERVICE_SERVER)) {
+            microserviceServer = new MicroserviceServer(configuration.getString("microserviceServer.host"), configuration.getInt("microserviceServer.port"), MicroserviceServer.WorkingMode.ADVANCED, configuration.getString("microserviceServer.routerHost"), configuration.getInt("microserviceServer.routerPort"));
+//            microserviceAccessManagerBuilder.setServer(microserviceServer);
+            Logger.log("Microservice server loaded!");
+        }
+    }
+
+    private void initMicroserviceClient() {
+        if(isEnabled(MICROSERVICE_CLIENT)) {
+            microserviceClient = new MicroserviceClient(MicroserviceClient.WorkingMode.ADVANCED, configuration.getString("microserviceClient.routerHost"), configuration.getInt("microserviceClient.routerPort"));
+//            microserviceAccessManagerBuilder.setClient(microserviceClient);
+            Logger.log("Microservice client loaded!");
+        }
+    }
+
+    private void initFileManager() {
+        if(isEnabled(IS_CONTROL_SERVER_FLAG)) {
+            checkServerDashboard();
+            try {
+                mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.HOLD_AND_CHECK,
+                        FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+                        FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+            } catch (OutOfMemoryException e) {
+                Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
+                mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.NO_HOLD,
+                        FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+                        FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+            }
+        } else {
+            try {
+                mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
+                        FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+                        FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+            } catch (OutOfMemoryException e) {
+                Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
+                mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
+                        FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
+                        FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+            }
+        }
+    }
+
+    private void initWebServer() throws IOException, ConfigurationException {
+        if(isEnabled(WEB_SERVER)) {
+            if(isEnabled(IS_CONTROL_SERVER_FLAG)) {
+                server = new ControlServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, new AdminDataHolder(serverPassword), pluginDataHolder);
+            } else {
+                server = new MainServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, this, pluginDataHolder);
+
+            }
+            ((WebServer) server).setupServerAccessManagerBuilder(serverAccessManagerBuilder);
+            Logger.log("WebServer loaded!");
+        }
+    }
+
+
 
     private void loadServerPassword() throws IOException {
         File keyFile = new File(USER_DIR + "/serverPassword.key");
@@ -159,7 +217,7 @@ public final class ServerController {
     private SecretKey loadSecretKey(File keyFile) throws IOException {
         SecretKey secretKey = null;
         try {
-            secretKey = KeyHolder.loadKeyFromFile(keyFile, StringCipher.DESEDE_ENCRYPTION_SCHEME);
+            secretKey = KeySaver.loadKeyFromFile(keyFile, StringCipher.DESEDE_ENCRYPTION_SCHEME);
         } catch (IOException | IllegalArgumentException e) {
             Logger.log("Can't load key from file " + keyFile + "! Creating new one...");
         }
@@ -170,7 +228,7 @@ public final class ServerController {
             } catch (InvalidKeySpecException | InvalidKeyException e) {
                 Logger.log(e);
             }
-            KeyHolder.saveKeyToFile(secretKey, keyFile);
+            KeySaver.saveKeyToFile(secretKey, keyFile);
         }
         return secretKey;
     }
@@ -197,7 +255,8 @@ public final class ServerController {
                         .setThrowExceptionOnMissing(true)
                         .setListDelimiterHandler(new DefaultListDelimiterHandler(';')));
         fileBasedConfigurationBuilder.setAutoSave(true);
-        tryLoadConfig(fileBasedConfigurationBuilder);
+        setupConfig(fileBasedConfigurationBuilder);
+        loadConfigVars();
     }
 
     /**
@@ -205,76 +264,75 @@ public final class ServerController {
      *
      * @param fileBasedConfigurationBuilder builder with config
      */
-    private void tryLoadConfig(FileBasedConfigurationBuilder<FileBasedConfiguration> fileBasedConfigurationBuilder) {
+    private void setupConfig(FileBasedConfigurationBuilder<FileBasedConfiguration> fileBasedConfigurationBuilder) {
         try {
             this.configuration = fileBasedConfigurationBuilder.getConfiguration();
+            checkProperty("webServer.enabled", true, configuration);
+            checkProperty("webServer.port", 8080, configuration);
+            checkProperty("webServer.host", "default", configuration);
+            checkProperty("webServer.login", StringCipher.encrypt("admin", serverPassword), configuration);
+            checkProperty("webServer.password", StringCipher.encrypt("admin", serverPassword), configuration);
+            checkProperty("webServer.isControlServer", false, configuration);
 
-            if(!configuration.containsKey("port")) {
-                configuration.addProperty("port", 7000);
-            }
-            if(!configuration.containsKey("isControlServer")) {
-                configuration.addProperty("isControlServer", false);
-            }
-            if(!configuration.containsKey("login")) {
-                configuration.addProperty("login", StringCipher.encrypt("admin", serverPassword));
-            }
-            if(!configuration.containsKey("password")) {
-                configuration.addProperty("password", StringCipher.encrypt("admin", serverPassword));
-            }
-            if(!configuration.containsKey("canHoldMicroservices")) {
-                configuration.addProperty("canHoldMicroservices", true);
-            }
-            if(!configuration.containsKey("isMicroserviceServer")) {
-                configuration.addProperty("isMicroserviceServer", false);
-            }
-            if(!configuration.containsKey("isRouterServer")) {
-                configuration.addProperty("isRouterServer", false);
-            }
-            if(!configuration.containsKey("routerServerAddress")) {
-                configuration.addProperty("routerServerAddress", Utils.getExternalIp());
-            }
+            checkProperty("microserviceClient.enabled", true, configuration);
+            checkProperty("microserviceClient.port", 4000, configuration);
+            checkProperty("microserviceClient.routerHost", "default", configuration);
+            checkProperty("microserviceClient.routerPort", 4001, configuration);
 
-            Logger.log("Config loaded");
-        } catch (ConfigurationException | InvalidKeyException | IllegalBlockSizeException
-                | UnsupportedEncodingException | BadPaddingException | InvalidKeySpecException e) {
+            checkProperty("microserviceServer.enabled", true, configuration);
+            checkProperty("microserviceServer.port", 4000, configuration);
+            checkProperty("microserviceServer.host", "default", configuration);
+            checkProperty("microserviceServer.routerHost", "default", configuration);
+            checkProperty("microserviceServer.routerPort", 4001, configuration);
+
+            checkProperty("routerServer.enabled", true, configuration);
+            checkProperty("routerServer.host", "default", configuration);
+            checkProperty("routerServer.port", 4001, configuration);
+
+            String externalIp = Utils.getExternalIp();
+            loadDefault("webServer.host", externalIp, configuration);
+            loadDefault("microserviceClient.routerHost", externalIp, configuration);
+            loadDefault("microserviceServer.host", externalIp, configuration);
+            loadDefault("microserviceServer.routerHost", externalIp, configuration);
+            loadDefault("routerServer.host", externalIp, configuration);
+        } catch (ConfigurationException | InvalidKeyException | IllegalBlockSizeException | UnsupportedEncodingException | BadPaddingException | InvalidKeySpecException e) {
             Logger.log("Can't initialize config!");
             Logger.log(e);
         }
     }
 
-    private void initMainServer() {
-        try {
-            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
-                    FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                    FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
-        } catch (OutOfMemoryException e) {
-            Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
-            mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
-                    FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                    FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+    private void checkProperty(String name, Object defaultValue, Configuration configuration) {
+        if(!configuration.containsKey(name)) {
+            configuration.addProperty(name, defaultValue);
         }
-
-        server = new MainServer(host, port, mainFileManager, this, pluginDataHolder);
-        Logger.log("Main server initialized");
     }
 
-    private void initControlServer() throws ConfigurationException, IOException {
-        checkServerDashboard();
-        try {
-            mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.HOLD_AND_CHECK,
-                    FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                    FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
-        } catch (OutOfMemoryException e) {
-            Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
-            mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.NO_HOLD,
-                    FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                    FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
+    private void loadDefault(String name, Object defaultValue, Configuration configuration) {
+        if(configuration.getProperty(name).equals("default")) {
+            configuration.setProperty(name, defaultValue);
         }
+    }
 
+    private void loadConfigVars() {
+        if(configuration.getBoolean("webServer.isControlServer")) {
+            config |= IS_CONTROL_SERVER_FLAG;
+        }
+        if(configuration.getBoolean("microserviceClient.enabled")) {
+            config |= MICROSERVICE_CLIENT;
+        }
+        if(configuration.getBoolean("microserviceServer.enabled")) {
+            config |= MICROSERVICE_SERVER;
+        }
+        if(configuration.getBoolean("routerServer.enabled")) {
+            config |= ROUTER_SERVER;
+        }
+        if(configuration.getBoolean("webServer.enabled")) {
+            config |= WEB_SERVER;
+        }
+    }
 
-        server = new ControlServer(host, port, mainFileManager, new AdminDataHolder(serverPassword), pluginDataHolder);
-        ((ControlServer) server).setupControlAccessManagerBuilder(controlAccessManagerBuilder);
-        Logger.log("Control server initialized");
+    private boolean isEnabled(int flag) {
+        return (config & flag) == flag;
     }
 
     /**
@@ -282,8 +340,23 @@ public final class ServerController {
      */
     public void shutdown() throws IOException {
         if(isStarted) {
-            server.shutdown();
-            Logger.log("Server stopped");
+            if(isEnabled(WEB_SERVER)) {
+                server.shutdown();
+                Logger.log("Web server stopped");
+            }
+            if(isEnabled(MICROSERVICE_SERVER)) {
+                microserviceServer.shutdown();
+                Logger.log("Microservice server stopped");
+            }
+            if(isEnabled(MICROSERVICE_CLIENT)) {
+                microserviceClient.shutdown();
+                Logger.log("Microservice client stopped");
+            }
+            if(isEnabled(ROUTER_SERVER)) {
+                routerServer.shutdown();
+                Logger.log("Router server stopped");
+            }
+            isStarted = false;
         }
     }
 
@@ -292,16 +365,39 @@ public final class ServerController {
      */
     public void start() throws IOException {
         if(!isStarted) {
-            server.start();
-            Logger.log("Server started at " + host + ":" + port);
+            if(isEnabled(WEB_SERVER)) {
+                server.start();
+                Logger.log("Web server started at " + server.getHost() + ":" + server.getPort());
+            }
+            if(isEnabled(MICROSERVICE_SERVER)) {
+                microserviceServer.start();
+                Logger.log("Microservice server started at " + microserviceServer.getHost() + ":" + microserviceServer.getPort());
+            }
+            if(isEnabled(MICROSERVICE_CLIENT)) {
+                microserviceClient.start();
+                Logger.log("Microservice client started");
+            }
+            if(isEnabled(ROUTER_SERVER)) {
+                routerServer.start();
+                Logger.log("Router server started at " + routerServer.getHost() + ":" + routerServer.getPort());
+            }
             isStarted = true;
         }
     }
 
     public boolean isLogPassValid(String logPass) throws IllegalBlockSizeException, BadPaddingException,
             InvalidKeySpecException, InvalidKeyException, UnsupportedEncodingException {
-        return LoginPasswordCoder.isEquals(StringCipher.decrypt(configuration.getString("login"), serverPassword),
-                StringCipher.decrypt(configuration.getString("password"), serverPassword), logPass);
+        return LoginPasswordCoder.isEquals(StringCipher.decrypt(configuration.getString("webServer.login"), serverPassword),
+                StringCipher.decrypt(configuration.getString("webServer.password"), serverPassword), logPass);
+    }
+
+    public void setLoginPassword(String old, String newLogin, String newPassword) throws InvalidKeyException, BadPaddingException, InvalidKeySpecException, IllegalBlockSizeException, UnsupportedEncodingException {
+        if(isLogPassValid(old)) {
+            configuration.setProperty("webServer.login", StringCipher.encrypt(newLogin, serverPassword));
+            configuration.setProperty("webServer.password", StringCipher.encrypt(newPassword, serverPassword));
+        } else {
+            throw new SecurityException();
+        }
     }
 
     //TODO write this
