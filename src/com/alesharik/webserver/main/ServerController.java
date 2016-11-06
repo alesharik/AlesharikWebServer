@@ -225,10 +225,10 @@ public final class ServerController {
             try {
                 String randomString = Helpers.getRandomString(24);
                 secretKey = StringCipher.generateKey(randomString);
+                KeySaver.saveKeyToFile(secretKey, keyFile);
             } catch (InvalidKeySpecException | InvalidKeyException e) {
                 Logger.log(e);
             }
-            KeySaver.saveKeyToFile(secretKey, keyFile);
         }
         return secretKey;
     }

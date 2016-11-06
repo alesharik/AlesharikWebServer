@@ -18,7 +18,7 @@ public class Triple<A, B, C> {
         this.c = c;
     }
 
-    public static <A, B, C> Triple immutable(A a, B b, C c) {
+    public static <A, B, C> Triple<A, B, C> immutable(A a, B b, C c) {
         return new Triple<>(a, b, c);
     }
 

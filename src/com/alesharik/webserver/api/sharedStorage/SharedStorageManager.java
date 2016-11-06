@@ -1,7 +1,6 @@
 package com.alesharik.webserver.api.sharedStorage;
 
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
-import com.sun.istack.internal.NotNull;
 
 import java.lang.instrument.UnmodifiableClassException;
 import java.util.HashMap;
@@ -28,7 +27,7 @@ public final class SharedStorageManager {
      * @param filters filters
      * @throws IllegalStateException then shared storage already exists
      */
-    public static synchronized void registerNewSharedStorage(@NotNull String name, @NotNull AccessFilter... filters) {
+    public static synchronized void registerNewSharedStorage(String name, AccessFilter... filters) {
         if(sharedStorageMap.containsKey(name)) {
             throw new IllegalStateException("The shared storage with name " + name + " already exists!");
         } else {
@@ -44,7 +43,7 @@ public final class SharedStorageManager {
      * @throws IllegalAccessException if filters block this
      * @throws IllegalStateException  if shared storage not exists
      */
-    public static synchronized void unregisterSharedStorage(@NotNull String name) throws IllegalAccessException {
+    public static synchronized void unregisterSharedStorage(String name) throws IllegalAccessException {
         if(sharedStorageMap.containsKey(name)) {
             sharedStorageMap.get(name).clear();
             sharedStorageMap.remove(name);
@@ -61,7 +60,7 @@ public final class SharedStorageManager {
      * @throws IllegalAccessException if filters block this
      * @throws IllegalStateException  if shared storage not exists
      */
-    public static synchronized void addAccessFilter(@NotNull String name, @NotNull AccessFilter accessFilter) throws IllegalAccessException {
+    public static synchronized void addAccessFilter(String name, AccessFilter accessFilter) throws IllegalAccessException {
         if(sharedStorageMap.containsKey(name)) {
             sharedStorageMap.get(name).addFilter(accessFilter);
         } else {
@@ -78,7 +77,7 @@ public final class SharedStorageManager {
      * @throws IllegalAccessException if filters block this
      * @throws IllegalStateException  if shared storage not exists
      */
-    public static synchronized void setField(@NotNull String storageName, @NotNull String fieldName, @NotNull Object o) throws IllegalAccessException {
+    public static synchronized void setField(String storageName, String fieldName, Object o) throws IllegalAccessException {
         if(sharedStorageMap.containsKey(storageName)) {
             sharedStorageMap.get(storageName).setObject(fieldName, o, true);
         } else {
@@ -95,7 +94,7 @@ public final class SharedStorageManager {
      * @throws IllegalAccessException if filters block this
      * @throws IllegalStateException  if shared storage not exists
      */
-    public static synchronized Object getField(@NotNull String storageName, @NotNull String fieldName) throws IllegalAccessException {
+    public static synchronized Object getField(String storageName, String fieldName) throws IllegalAccessException {
         if(sharedStorageMap.containsKey(storageName)) {
             return sharedStorageMap.get(storageName).getObject(fieldName, true);
         } else {

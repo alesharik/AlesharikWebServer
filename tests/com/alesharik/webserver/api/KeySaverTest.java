@@ -17,7 +17,9 @@ public class KeySaverTest {
     public void saveKeyToFile() throws Exception {
         File file = File.createTempFile("AWSPrefix", null);
         if(!file.exists()) {
-            file.createNewFile();
+            if(!file.createNewFile()) {
+                throw new IOException();
+            }
         }
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
         keyGen.init(256); // for example
