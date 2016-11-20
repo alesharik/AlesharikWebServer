@@ -125,11 +125,11 @@ final class SharedStorageClassVisitor extends ClassAdapter {
             try {
                 if(type > -1) {
                     super.visitCode();
-                    if(type == 1) {// Is a get method
+                    if(type == 1) {// Is a getIpForMicroservice method
                         mv.visitCode();
                         mv.visitLdcInsn(id); // First parameter - id
                         mv.visitLdcInsn(result.get()); // Second parameter - field name
-                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "get", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;"); // Invoke method
+                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "getIpForMicroservice", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;"); // Invoke method
                         mv.visitTypeInsn(CHECKCAST, ret.substring(ret.indexOf("()") + 3, ret.lastIndexOf(";"))); // Cast to return var
                         mv.visitInsn(ARETURN); //Return
                         mv.visitMaxs(2, 1);

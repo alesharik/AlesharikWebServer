@@ -9,6 +9,7 @@ import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManagerBu
 import com.alesharik.webserver.router.Router;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 @Prefix("[MicroserviceClient]")
 public class MicroserviceClient {
@@ -18,7 +19,7 @@ public class MicroserviceClient {
 
     public MicroserviceClient(WorkingMode mode, String routerIp, int routerHost) {
         pool = new MicroserviceClientExecutorPool(mode);
-        router = new Router(routerHost, routerIp, server);
+        router = new Router(routerHost, routerIp);
 
         if(mode == WorkingMode.ADVANCED) {
             //FIXME
@@ -49,8 +50,14 @@ public class MicroserviceClient {
         }
     }
 
+    //TODO rewrite this
     public void send(String microserviceName, MicroserviceEvent message) {
-        String address = router.get(microserviceName);
+        String address = null;
+        try {
+            address = router.getIpForMicroservice(microserviceName).get();
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
         send(microserviceName, message, address);
     }
 

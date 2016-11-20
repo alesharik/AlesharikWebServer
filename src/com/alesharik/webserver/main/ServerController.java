@@ -2,6 +2,7 @@ package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.api.KeySaver;
 import com.alesharik.webserver.api.LoginPasswordCoder;
+import com.alesharik.webserver.api.SerialRepository;
 import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.server.Server;
@@ -21,6 +22,7 @@ import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder
 import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import com.alesharik.webserver.router.RouterServer;
+import lombok.SneakyThrows;
 import one.nio.mem.OutOfMemoryException;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
@@ -115,7 +117,7 @@ public final class ServerController {
 
     private void initRouterServer() {
         if(isEnabled(ROUTER_SERVER)) {
-            routerServer = new RouterServer(configuration.getInt("routerServer.port"), configuration.getString("routerServer.host"), RouterServer.WorkingMode.ADVANCED);
+            routerServer = new RouterServer(configuration.getInt("routerServer.port"), configuration.getString("routerServer.host"), configuration.getInt("routerServer.threadCount"));
             Logger.log("Router server loaded!");
         }
     }
@@ -267,6 +269,11 @@ public final class ServerController {
     private void setupConfig(FileBasedConfigurationBuilder<FileBasedConfiguration> fileBasedConfigurationBuilder) {
         try {
             this.configuration = fileBasedConfigurationBuilder.getConfiguration();
+
+            checkProperty("main.isRepositorySnapshotEnabled", true, configuration);
+            checkProperty("main.repositorySnapshotFile", "./repository.snapshot", configuration);
+            checkProperty("main.repositorySnapshotDelay", 1000, configuration);
+
             checkProperty("webServer.enabled", true, configuration);
             checkProperty("webServer.port", 8080, configuration);
             checkProperty("webServer.host", "default", configuration);
@@ -284,10 +291,12 @@ public final class ServerController {
             checkProperty("microserviceServer.host", "default", configuration);
             checkProperty("microserviceServer.routerHost", "default", configuration);
             checkProperty("microserviceServer.routerPort", 4001, configuration);
+            checkProperty("microserviceServer.routerThreadCount", 5, configuration);
 
             checkProperty("routerServer.enabled", true, configuration);
             checkProperty("routerServer.host", "default", configuration);
             checkProperty("routerServer.port", 4001, configuration);
+            checkProperty("routerServer.threadCount", 20, configuration);
 
             String externalIp = Utils.getExternalIp();
             loadDefault("webServer.host", externalIp, configuration);
@@ -313,6 +322,7 @@ public final class ServerController {
         }
     }
 
+    @SneakyThrows
     private void loadConfigVars() {
         if(configuration.getBoolean("webServer.isControlServer")) {
             config |= IS_CONTROL_SERVER_FLAG;
@@ -329,6 +339,25 @@ public final class ServerController {
         if(configuration.getBoolean("webServer.enabled")) {
             config |= WEB_SERVER;
         }
+
+        SerialRepository.snapsotEnabled(configuration.getBoolean("main.isRepositorySnapshotEnabled"));
+        SerialRepository.setUpdateTime(configuration.getLong("main.repositorySnapshotDelay"));
+        String snapshotFileString = configuration.getString("main.repositorySnapshotFile");
+        if(snapshotFileString.startsWith("./")) {
+            snapshotFileString = snapshotFileString.replace("./", Main.USER_DIR.getPath());
+        }
+        File snapshotFile = new File(snapshotFileString);
+        if(snapshotFile.isDirectory() || !snapshotFile.canRead() || !snapshotFile.canWrite()) {
+            Logger.log("Snapshot file " + snapshotFileString + " can't be used! Disabling snapshot...");
+            SerialRepository.snapsotEnabled(false);
+        }
+        if(!snapshotFile.exists()) {
+            if(!snapshotFile.createNewFile()) {
+                Logger.log("Can't create " + snapshotFileString + "! Disabling snapshot...");
+                SerialRepository.snapsotEnabled(false);
+            }
+        }
+        SerialRepository.setSnapshotFile(snapshotFile);
     }
 
     private boolean isEnabled(int flag) {

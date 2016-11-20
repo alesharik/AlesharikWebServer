@@ -58,7 +58,7 @@ final class DashboardWebSocketParser {
     }
 
     private void parseTopPluginsMessage(String[] parts) {
-        if(parts[1].equals("get")) {
+        if(parts[1].equals("getIpForMicroservice")) {
             application.sendMessage("menuPlugins:set:" + holder.getAllMenuPluginsAsJSONArray());
         }
     }

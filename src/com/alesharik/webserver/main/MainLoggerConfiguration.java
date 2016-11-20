@@ -17,4 +17,7 @@ public final class MainLoggerConfiguration {
 
     @LoggerConfigurationPrefix("*.microservices")
     public static final String microservicePackage = "[Microservices]";
+
+    @LoggerConfigurationPrefix("*.router")
+    public static final String routerPackage = "[Router]";
 }

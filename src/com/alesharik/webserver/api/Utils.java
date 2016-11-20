@@ -66,7 +66,7 @@ public final class Utils {
 
     /**
      * This function return external ip of first work network(network, in with program can connect to google server).
-     * You can get this ip by <code>ping www.google.com</code> in first line. If function can't receive response as long
+     * You can getIpForMicroservice this ip by <code>ping www.google.com</code> in first line. If function can't receive response as long
      * of 30 seconds, it will return 127.0.0.1
      *
      * @return dot-splitted ip address

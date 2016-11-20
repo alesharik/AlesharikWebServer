@@ -1,9 +1,6 @@
 package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.api.Utils;
-import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueGetter;
-import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueSetter;
-import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.logger.Logger;
 
 import java.io.File;
@@ -145,26 +142,6 @@ public class Main {
             if(!SERVER_DASHBOARD.mkdir()) {
                 Logger.log("Can't create server dashboard folder!");
             }
-        }
-    }
-
-    @UseSharedStorage("asd")
-    public static class Testt implements Runnable {
-        @SharedValueGetter("test")
-        public String get() {
-            return null;
-        }
-
-        @SharedValueSetter("test")
-        public void set(String var) {
-
-        }
-
-        @Override
-        public void run() {
-            System.out.println("asd");
-            set("asd");
-            System.out.println(get());
         }
     }
 }

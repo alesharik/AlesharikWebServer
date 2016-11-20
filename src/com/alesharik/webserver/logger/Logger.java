@@ -54,7 +54,7 @@ public class Logger {
 
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
-     * Use {@link sun.misc.SharedSecrets} for get {@link StackTraceElement}
+     * Use {@link sun.misc.SharedSecrets} for getIpForMicroservice {@link StackTraceElement}
      *
      * @param i number of {@link StackTraceElement}
      * @return [ + file name + : + line number + ]
@@ -133,6 +133,7 @@ public class Logger {
     }
 
     @SneakyThrows
+    //TODO write asm loader
     private static void loadConfigurations(ClassLoader classLoader) {
         Class<?> classLoaderClass = ClassLoader.class;
         Field fldClasses = classLoaderClass.getDeclaredField("classes");

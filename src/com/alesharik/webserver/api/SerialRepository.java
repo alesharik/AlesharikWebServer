@@ -1,20 +1,70 @@
 package com.alesharik.webserver.api;
 
 import com.alesharik.webserver.logger.Logger;
+import lombok.SneakyThrows;
 import one.nio.serial.DataStream;
 import one.nio.serial.Repository;
 import one.nio.serial.Serializer;
 import one.nio.serial.SerializerNotFoundException;
 import org.glassfish.grizzly.http.util.Base64Utils;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class used for serialize and deserialize classes using one-nio method
  */
 public final class SerialRepository {
+    private static final ReentrantLock snapshotLock = new ReentrantLock();
+    private volatile static File snapshotFile = null;
+    private volatile static long updateTime = 1000;
+    private static final AtomicBoolean isSnapshotEnabled = new AtomicBoolean(true);
+
+    static {
+        snapshotLock.lock();
+        SnapshotThread snapshotThread = new SnapshotThread();
+        snapshotThread.start();
+    }
+
     private SerialRepository() {
+    }
+
+    /**
+     * DO NOT USE IT
+     */
+    public static void setSnapshotFile(File file) {
+        snapshotFile = file;
+        snapshotLock.unlock();
+    }
+
+    /**
+     * DO NOT USE IT
+     */
+    public static void setUpdateTime(long time) {
+        updateTime = time;
+    }
+
+    /**
+     * DO NOT USE IT
+     */
+    public static void loadSnapshotFile(File file) {
+        try {
+            Repository.loadSnapshot(Files.readAllBytes(file.toPath()));
+        } catch (IOException | ClassNotFoundException e) {
+            Logger.log(e);
+        }
+    }
+
+    /**
+     * DO NOT USE IT
+     */
+    public static void snapsotEnabled(boolean is) {
+        isSnapshotEnabled.set(is);
     }
 
     /**
@@ -95,6 +145,33 @@ public final class SerialRepository {
         Serializer serializer = deserializeSerializer(serialized);
         if(serializer != null) {
             Repository.provideSerializer(serializer);
+        }
+    }
+
+    private static final class SnapshotThread extends Thread {
+        public SnapshotThread() {
+            setName("SerializerRepositorySnapshotThread");
+        }
+
+        @Override
+        @SneakyThrows
+        public void run() {
+            snapshotLock.lock();
+            while(true) {
+                if(!isSnapshotEnabled.get()) {
+                    break;
+                }
+                if(snapshotFile == null) {
+                    Logger.log("Snapshot file not selected!");
+                    break;
+                } else {
+                    try (FileOutputStream fileOutputStream = new FileOutputStream(snapshotFile)) {
+                        fileOutputStream.write(Repository.saveSnapshot());
+                    }
+                }
+                Thread.sleep(updateTime);
+            }
+            snapshotLock.unlock();
         }
     }
 }
