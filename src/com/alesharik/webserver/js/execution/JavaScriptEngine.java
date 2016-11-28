@@ -1,0 +1,161 @@
+package com.alesharik.webserver.js.execution;
+
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import lombok.SneakyThrows;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Objects;
+import java.util.Scanner;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+ * This is the JavaScript nashorn-based engine.
+ * Used for execute JavaScript and use Thread api
+ * Also as terminal JavaScript utility
+ */
+public final class JavaScriptEngine {
+    private static final NashornScriptEngineFactory ENGINE_FACTORY = new NashornScriptEngineFactory();
+
+    private final ScriptEngine engine;
+    private final CopyOnWriteArrayList<JavaScriptInputListener> inputListeners = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<JavaScriptOutputListener> outputListeners = new CopyOnWriteArrayList<>();
+    private JavaScriptExceptionHandler exceptionHandler = (e) -> {
+    };
+
+    /**
+     * Create new nashorn engine with -strict option
+     *
+     * @param noJava        if it is true, disable all Java api (and Thread api)
+     * @param loadThreadApi enable Thread api. Need java enabled!
+     */
+    public JavaScriptEngine(boolean noJava, boolean loadThreadApi) {
+        if(noJava) {
+            engine = ENGINE_FACTORY.getScriptEngine("-strict", "--no-java");
+        } else {
+            engine = ENGINE_FACTORY.getScriptEngine("-strict");
+            if(loadThreadApi) {
+                loadThreadApi();
+            }
+        }
+        engine.getContext().setWriter(new Writer() {
+            private StringBuilder stringBuilder = new StringBuilder();
+
+            @Override
+            public void write(char[] cbuf, int off, int len) throws IOException {
+                stringBuilder.append(cbuf, off, len);
+            }
+
+            @Override
+            public void flush() throws IOException {
+                outputListeners.forEach(javaScriptOutputListener -> javaScriptOutputListener.listen(stringBuilder.toString()));
+                stringBuilder.delete(0, stringBuilder.length());
+            }
+
+            @Override
+            public void close() throws IOException {
+                //Okay
+            }
+        });
+    }
+
+    @SneakyThrows //Because this lines can't throw any exception
+    private void loadThreadApi() {
+        engine.eval("var Thread = com.alesharik.webserver.js.execution.javaScript.JSThread;");
+        engine.eval("var Mutex = com.alesharik.webserver.js.execution.javaScript.Mutex;");
+    }
+
+    /**
+     * Load and execute JavaScript file
+     *
+     * @param file the file
+     * @throws FileNotFoundException if file not found
+     * @throws ScriptException       if there are any errors along script execution
+     * @throws IOException           if anything happens
+     */
+    public void load(File file) throws IOException, ScriptException {
+        try {
+            Objects.requireNonNull(file);
+            FileReader reader = new FileReader(file);
+            engine.eval(reader);
+            reader.close();
+            inputListeners.forEach(inputListener -> inputListener.listenFile(file));
+        } catch (ScriptException e) {
+            exceptionHandler.handle(e);
+        }
+    }
+
+    /**
+     * Execute line(or lines) of code
+     *
+     * @param code the code
+     * @throws ScriptException if there are any errors along script execution
+     */
+    public void execute(String code) throws ScriptException {
+        try {
+            Objects.requireNonNull(code);
+            engine.eval(code);
+            inputListeners.forEach(inputListener -> inputListener.listen(code));
+        } catch (ScriptException e) {
+            exceptionHandler.handle(e);
+        }
+    }
+
+    //====================Listeners and Exception Handler====================\\
+
+    public void addInputListener(JavaScriptInputListener inputListener) {
+        inputListeners.add(inputListener);
+    }
+
+    public void removeInputListener(JavaScriptInputListener listener) {
+        inputListeners.remove(listener);
+    }
+
+    public boolean containsInputListener(JavaScriptInputListener inputListener) {
+        return inputListeners.contains(inputListener);
+    }
+
+    public void addOutputListener(JavaScriptOutputListener inputListener) {
+        outputListeners.add(inputListener);
+    }
+
+    public void removeOutputListener(JavaScriptOutputListener listener) {
+        outputListeners.remove(listener);
+    }
+
+    public boolean containsOutputListener(JavaScriptOutputListener inputListener) {
+        return outputListeners.contains(inputListener);
+    }
+
+    public JavaScriptExceptionHandler getExceptionHandler() {
+        return exceptionHandler;
+    }
+
+    public void setExceptionHandler(JavaScriptExceptionHandler exceptionHandler) {
+        this.exceptionHandler = exceptionHandler;
+    }
+
+    /**
+     * Start simple JavaScript code executor
+     */
+    public static void main(String[] args) {
+        System.out.println("Started! Use exit to exit");
+        JavaScriptEngine javaScriptEngine = new JavaScriptEngine(false, true);
+        Scanner scanner = new Scanner(System.in);
+        String line;
+        while(!(line = scanner.nextLine()).equals("exit")) {
+            try {
+                javaScriptEngine.execute(line);
+            } catch (ScriptException e) {
+                System.out.println("OOPS!");
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Stopped");
+    }
+}
