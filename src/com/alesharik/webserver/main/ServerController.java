@@ -43,6 +43,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Date;
 
 import static com.alesharik.webserver.main.Main.USER_DIR;
 
@@ -167,10 +168,23 @@ public final class ServerController {
 
     private void initWebServer() throws IOException, ConfigurationException {
         if(isEnabled(WEB_SERVER)) {
+            boolean logRequests = configuration.getBoolean("webServer.logRequests");
+            File logFile = null;
+            if(logRequests) {
+                Date date = new Date();
+                date.setTime(System.currentTimeMillis());
+                logFile = new File(configuration.getString("webServer.logFile").replace("./", Main.USER_DIR.getPath() + "/").replace("{$time}", date.toString().replace(" ", "_")));
+                if(!logFile.exists()) {
+                    if(!logFile.createNewFile()) {
+                        Logger.log("Can't create new request log file! Disabling request logging...");
+                        logRequests = false;
+                    }
+                }
+            }
             if(isEnabled(IS_CONTROL_SERVER_FLAG)) {
-                server = new ControlServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, new AdminDataHolder(serverPassword), pluginDataHolder);
+                server = new ControlServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, new AdminDataHolder(serverPassword), pluginDataHolder, logRequests, logFile);
             } else {
-                server = new MainServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, this, pluginDataHolder);
+                server = new MainServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, this, pluginDataHolder, logRequests, logFile);
 
             }
             ((WebServer) server).setupServerAccessManagerBuilder(serverAccessManagerBuilder);
@@ -256,7 +270,7 @@ public final class ServerController {
                         .setFileName("config.properties")
                         .setThrowExceptionOnMissing(true)
                         .setListDelimiterHandler(new DefaultListDelimiterHandler(';')));
-        fileBasedConfigurationBuilder.setAutoSave(true);
+        fileBasedConfigurationBuilder.setAutoSave(false);
         setupConfig(fileBasedConfigurationBuilder);
         loadConfigVars();
     }
@@ -280,6 +294,9 @@ public final class ServerController {
             checkProperty("webServer.login", StringCipher.encrypt("admin", serverPassword), configuration);
             checkProperty("webServer.password", StringCipher.encrypt("admin", serverPassword), configuration);
             checkProperty("webServer.isControlServer", false, configuration);
+            checkProperty("webServer.logRequests", true, configuration);
+            checkProperty("webServer.logFile", "./logs/requestLog-{$time}", configuration); // {$time} replaced by current time TODO write custom formats
+
 
             checkProperty("microserviceClient.enabled", true, configuration);
             checkProperty("microserviceClient.port", 4000, configuration);
@@ -297,6 +314,7 @@ public final class ServerController {
             checkProperty("routerServer.host", "default", configuration);
             checkProperty("routerServer.port", 4001, configuration);
             checkProperty("routerServer.threadCount", 20, configuration);
+            fileBasedConfigurationBuilder.save();
 
             String externalIp = Utils.getExternalIp();
             loadDefault("webServer.host", externalIp, configuration);
@@ -344,7 +362,7 @@ public final class ServerController {
         SerialRepository.setUpdateTime(configuration.getLong("main.repositorySnapshotDelay"));
         String snapshotFileString = configuration.getString("main.repositorySnapshotFile");
         if(snapshotFileString.startsWith("./")) {
-            snapshotFileString = snapshotFileString.replace("./", Main.USER_DIR.getPath());
+            snapshotFileString = snapshotFileString.replace("./", Main.USER_DIR.getPath() + "/");
         }
         File snapshotFile = new File(snapshotFileString);
         if(snapshotFile.isDirectory() || !snapshotFile.canRead() || !snapshotFile.canWrite()) {
@@ -422,8 +440,22 @@ public final class ServerController {
 
     public void setLoginPassword(String old, String newLogin, String newPassword) throws InvalidKeyException, BadPaddingException, InvalidKeySpecException, IllegalBlockSizeException, UnsupportedEncodingException {
         if(isLogPassValid(old)) {
-            configuration.setProperty("webServer.login", StringCipher.encrypt(newLogin, serverPassword));
-            configuration.setProperty("webServer.password", StringCipher.encrypt(newPassword, serverPassword));
+            FileBasedBuilderParameters properties = new Parameters().fileBased();
+            FileBasedConfigurationBuilder<FileBasedConfiguration> fileBasedConfigurationBuilder
+                    = new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class)
+                    .configure(properties
+                            .setFileName("config.properties")
+                            .setThrowExceptionOnMissing(true)
+                            .setListDelimiterHandler(new DefaultListDelimiterHandler(';')));
+            fileBasedConfigurationBuilder.setAutoSave(true);
+            try {
+                Configuration config = fileBasedConfigurationBuilder.getConfiguration();
+                config.setProperty("webServer.login", StringCipher.encrypt(newLogin, serverPassword));
+                config.setProperty("webServer.password", StringCipher.encrypt(newPassword, serverPassword));
+            } catch (ConfigurationException e) {
+                Logger.log("Can't set new password and login!");
+                Logger.log(e);
+            }
         } else {
             throw new SecurityException();
         }

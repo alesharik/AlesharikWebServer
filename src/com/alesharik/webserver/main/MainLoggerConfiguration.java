@@ -20,4 +20,7 @@ public final class MainLoggerConfiguration {
 
     @LoggerConfigurationPrefix("*.router")
     public static final String routerPackage = "[Router]";
+
+    @LoggerConfigurationPrefix("*.serverless")
+    public static final String serverless = "[Serverless]";
 }

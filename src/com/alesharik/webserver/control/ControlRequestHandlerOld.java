@@ -1,7 +1,7 @@
 package com.alesharik.webserver.control;
 
 import com.alesharik.webserver.api.MIMETypes;
-import com.alesharik.webserver.api.collections.LiveArrayList;
+import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.control.websockets.control.WebSocketController;
@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @SuppressFBWarnings("UWF_UNWRITTEN_FIELD")
 public final class ControlRequestHandlerOld implements RequestHandler {
-    private final LiveArrayList<UUID> sessions = new LiveArrayList<>();
+    private final ConcurrentLiveArrayList<UUID> sessions = new ConcurrentLiveArrayList<>();
     private final FileManager fileManager;
     private final AdminDataHolder adminDataHolder;
     private final ConcurrentHashMap<String, WebSocketController> servers = new ConcurrentHashMap<>();

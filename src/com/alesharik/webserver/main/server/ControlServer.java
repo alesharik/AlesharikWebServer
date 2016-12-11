@@ -21,6 +21,7 @@ import org.glassfish.grizzly.websockets.WebSocketAddOn;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
 
+import java.io.File;
 import java.io.IOException;
 
 public final class ControlServer extends WebServer {
@@ -29,9 +30,9 @@ public final class ControlServer extends WebServer {
     private ModularErrorPageGenerator errorPageGenerator;
     private DashboardWebSocketApplication dashboardWebSocketApplication;
 
-    public ControlServer(String host, int port, FileManager fileManager, AdminDataHolder adminDataHolder, PluginDataHolder holder) {
+    public ControlServer(String host, int port, FileManager fileManager, AdminDataHolder adminDataHolder, PluginDataHolder holder, boolean logRequests, File logFile) {
         super(host, port);
-        controlHttpHandler = new ControlHttpHandler(fileManager, adminDataHolder);
+        controlHttpHandler = new ControlHttpHandler(fileManager, adminDataHolder, logRequests, logFile);
         final NetworkListener networkListener = new NetworkListener("grizzly", host, port);
         networkListener.getFileCache().setEnabled(true);
         networkListener.getCompressionConfig().setCompressionMode(CompressionConfig.CompressionMode.ON);

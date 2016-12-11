@@ -24,6 +24,7 @@ import org.glassfish.grizzly.websockets.WebSocketEngine;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
@@ -35,7 +36,7 @@ public final class MainServer extends WebServer {
     private RequestHandlerList handlerList = new RequestHandlerList();
     private ServerController serverController;
 
-    public MainServer(String host, int port, FileManager fileManager, ServerController serverController, PluginDataHolder holder) {
+    public MainServer(String host, int port, FileManager fileManager, ServerController serverController, PluginDataHolder holder, boolean logRequests, File logFile) {
         super(host, port);
         this.serverController = serverController;
         errorPageGenerator = new ModularErrorPageGenerator(fileManager);
@@ -55,7 +56,7 @@ public final class MainServer extends WebServer {
         httpServer = new HttpServer();
         httpServer.addListener(networkListener);
         ServerConfiguration serverConfiguration = httpServer.getServerConfiguration();
-        serverConfiguration.addHttpHandler(new MainHttpHandler(handlerList, fileManager), "/");
+        serverConfiguration.addHttpHandler(new MainHttpHandler(handlerList, fileManager, logRequests, logFile), "/");
 
         TCPNIOTransportBuilder transportBuilder = TCPNIOTransportBuilder.newInstance();
         transportBuilder.setIOStrategy(networkListener.getTransport().getIOStrategy());

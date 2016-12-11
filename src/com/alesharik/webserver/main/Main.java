@@ -83,7 +83,7 @@ public class Main {
 //            }
 //        }).start();
         // Executor that will be used to construct new threads for consumers
-//        Executor executor = Executors.newCachedThreadPool();
+//        Executor execution = Executors.newCachedThreadPool();
 //
 //        // Specify the size of the ring buffer, must be power of 2.
 //        int bufferSize = 1024;

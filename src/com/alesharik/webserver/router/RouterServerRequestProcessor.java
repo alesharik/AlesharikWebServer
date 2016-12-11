@@ -101,6 +101,9 @@ class RouterServerRequestProcessor extends Thread {
                         break;
                     case "get":
                         getServer(parts[1]);
+                        break;
+                    default:
+                        socket.close();
                 }
 
             } catch (IOException e) {

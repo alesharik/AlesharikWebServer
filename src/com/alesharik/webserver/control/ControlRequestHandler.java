@@ -1,7 +1,7 @@
 package com.alesharik.webserver.control;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
-import com.alesharik.webserver.api.collections.LiveArrayList;
+import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.logger.Logger;
@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Prefix("[ServerControl]")
 public class ControlRequestHandler implements RequestHandler {
-    private final LiveArrayList<UUID> sessions = new LiveArrayList<>();
+    private final ConcurrentLiveArrayList<UUID> sessions = new ConcurrentLiveArrayList<>();
     private final AdminDataHolder holder;
     private final FileManager fileManager;
 

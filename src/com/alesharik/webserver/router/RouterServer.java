@@ -1,11 +1,12 @@
 package com.alesharik.webserver.router;
 
 import com.alesharik.webserver.api.server.Server;
+import com.alesharik.webserver.logger.Prefix;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 //TODO use Linux asyncronous socket
 
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <li>remove - return 200 if server removed, 404 if server not found, 5oo - internal error</li>
  * </ol>
  */
+@Prefix("[RouterServer]")
 public final class RouterServer extends Server {
     static final String OK = "200";
     static final String NOT_FOUND = "404";
@@ -75,15 +77,17 @@ public final class RouterServer extends Server {
                     }).forEach(stringArrayListEntry -> servers.remove(stringArrayListEntry.getKey()));
         }
 
-        //TODO Optimize
         public boolean containsServer(String server) {
-            AtomicBoolean atomicBoolean = new AtomicBoolean(false);
-            servers.forEachValue(1, strings -> strings.forEach(s -> {
-                if(s.equals(server)) {
-                    atomicBoolean.set(true);
+            Enumeration<ArrayList<String>> enumeration = servers.elements();
+            while(enumeration.hasMoreElements()) {
+                ArrayList<String> arrayList = enumeration.nextElement();
+                for(String server1 : arrayList) {
+                    if(server1.equals(server)) {
+                        return true;
+                    }
                 }
-            }));
-            return atomicBoolean.get();
+            }
+            return false;
         }
 
         public String[] getServers(String microservice) {

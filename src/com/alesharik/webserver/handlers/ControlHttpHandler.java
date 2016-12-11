@@ -6,29 +6,46 @@ import com.alesharik.webserver.api.server.RequestHandlerList;
 import com.alesharik.webserver.control.ControlRequestHandler;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.NamedLogger;
+import com.alesharik.webserver.logger.storingStrategies.WriteOnLogStoringStrategy;
 import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.main.Helpers;
 import org.glassfish.grizzly.http.Cookie;
+import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.server.util.HtmlHelper;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
 /**
  * This class used for handle http requests in control mode
  */
-public final class ControlHttpHandler extends org.glassfish.grizzly.http.server.HttpHandler {
-    private ControlRequestHandler requestHandler;
-    private FileManager fileManager;
-    private RequestHandlerList requestHandlerList = new RequestHandlerList();
+public final class ControlHttpHandler extends HttpHandler {
+    private final ControlRequestHandler requestHandler;
+    private final FileManager fileManager;
+    private final RequestHandlerList requestHandlerList;
 
-    public ControlHttpHandler(FileManager fileManager, AdminDataHolder adminDataHolder) {
-        requestHandler = new ControlRequestHandler(fileManager, adminDataHolder);
+    private final boolean logRequests;
+    private NamedLogger logger;
+
+    /**
+     * @param logFile can be null
+     */
+    public ControlHttpHandler(FileManager fileManager, AdminDataHolder adminDataHolder, boolean logRequests, File logFile) {
+        this.logRequests = logRequests;
+        this.requestHandler = new ControlRequestHandler(fileManager, adminDataHolder);
         this.fileManager = fileManager;
+        this.requestHandlerList = new RequestHandlerList();
+
+        if(this.logRequests) {
+            logger = Logger.createNewNamedLogger("ControlHttpHandler", logFile);
+            logger.setStoringStrategyFactory(WriteOnLogStoringStrategy::new);
+        }
     }
 
     public ControlRequestHandler getControlRequestHandler() {
@@ -41,8 +58,16 @@ public final class ControlHttpHandler extends org.glassfish.grizzly.http.server.
             requestHandler.handleRequest(request, response);
         } else if(requestHandlerList.canHandleRequest(request)) {
             requestHandlerList.handleRequest(request, response);
+            String uri = request.getDecodedRequestURI();
+            if(this.logRequests) {
+                logger.log(request.getRemoteAddr() + ":" + request.getRemotePort() + ": " + uri, "[Request]", "[" + response.getStatus() + "]");
+            }
         } else {
             handleRequest(request, response);
+            String uri = request.getDecodedRequestURI();
+            if(this.logRequests) {
+                logger.log(request.getRemoteAddr() + ":" + request.getRemotePort() + ": " + uri, "[Request]", "[" + response.getStatus() + "]");
+            }
         }
     }
 
@@ -56,7 +81,6 @@ public final class ControlHttpHandler extends org.glassfish.grizzly.http.server.
 
     private void handleRequest(Request request, Response response) throws IOException {
         String uri = request.getDecodedRequestURI();
-        Logger.log(uri);
         String file = uri.equals("/") ? "/index.html" : uri;
         if(fileManager.exists(file, true)) {
             if(!file.equals("/index.html") && !file.equals("/lib/font-awesome/font-awesome.min.css") && !file.equals("/styles/bootstrap.css")
