@@ -28,7 +28,6 @@ public class ConcurrentCompletableFutureTest {
     public void set() throws Exception {
         ConcurrentCompletableFuture<Object> future = new ConcurrentCompletableFuture<>();
         future.set(new Object());
-        future.set(null);
     }
 
     @Test

@@ -11,7 +11,40 @@
 #include <netinet/tcp.h>
 #include <sys/sysinfo.h>
 
+#include <blkid/blkid.h>
+#include <err.h>
+#include <dirent.h>
+
 #define BUFFER_SIZE 1024
+
+struct partition {
+    char *address; //Name
+    const char *label; //Partition
+    const char *type;
+};
+
+struct partitions {
+    struct partition *partitionArray;
+    int count;
+};
+
+int startsWith(const char *str, const char *pre) {
+    size_t lenpre = strlen(pre),
+            lenstr = strlen(str);
+    return lenstr < lenpre ? 0 : strncmp(pre, str, lenpre) == 0;
+}
+
+int isReal(const char *devname) {
+    int ret = 1;
+
+    blkid_probe pr = blkid_new_probe_from_filename(devname);
+    if(!pr) {
+        ret = 0;
+    } else {
+        blkid_free_probe(pr);
+    }
+    return ret;
+}
 
 char* concat(const char *s1, const char *s2)
 {
@@ -130,6 +163,71 @@ void getRAMInfo(long *ret) {
     ret[5] = info.freeswap;
 }
 
+/**
+ * WARNING! You need to clear all resources!
+ * @param name name of device
+ * @param parts partitions to write
+ * @return 0 - 0k, 2 - can't open probe, 3 - device don't have partitions
+ */
+int getPartitionsInDevice(char *name, struct partitions *parts) {
+    blkid_probe probe = blkid_new_probe_from_filename(name);
+    if(!probe) {
+        return 2;
+    }
+
+    blkid_partlist partList = blkid_probe_get_partitions(probe);
+    int partsCount = blkid_partlist_numof_partitions(partList);
+
+    if(partsCount <= 0) {
+        return 3;
+    }
+
+    blkid_free_probe(probe);
+
+    struct partition *partitions = malloc(sizeof(struct partition) * partsCount);
+
+    int count = 0;
+    int realCount = 0;
+    for (int i = 0;count < partsCount; i++) {
+        char *dev_name = malloc(sizeof(char) * 50); // 50 chars
+
+        const char *label = NULL;
+        const char *type = NULL;
+
+        sprintf(dev_name, "%s%d", name, (i+1));
+
+        probe = blkid_new_probe_from_filename(dev_name);
+        blkid_do_probe(probe);
+        if(probe == NULL) {
+            continue;
+        }
+        blkid_probe_lookup_value(probe, "LABEL", &label, NULL);
+
+        blkid_probe_lookup_value(probe, "TYPE", &type, NULL);
+
+        count++;
+
+        if(type == NULL || strcmp(type, "swap") == 0) {
+            continue;
+        }
+        if(label == NULL || label == (const char *) 0x1) {
+            label = "none";
+        }
+
+        printf("Name=%s, LABEL=%s, TYPE=%s\n", dev_name, label, type);
+        struct partition part;
+        part.address = strdup(dev_name);
+        part.label = strdup(label);
+        part.type = strdup(type);
+        partitions[realCount] = part;
+        realCount++;
+        blkid_free_probe(probe);
+    }
+    parts->partitionArray = partitions;
+    parts->count = realCount;
+    return 0;
+}
+
 JNIEXPORT jstring JNICALL Java_com_alesharik_webserver_api_Utils_getExternalIp0 (JNIEnv *env, jobject object) {
     char *ip = malloc(100);
     strcpy(ip, "127.0.0.1");
@@ -171,3 +269,51 @@ JNIEXPORT jlongArray JNICALL Java_com_alesharik_webserver_api_Utils_getRAMInfo (
     }
     return jArray;
 };
+
+JNIEXPORT jobjectArray JNICALL Java_com_alesharik_webserver_api_Utils_getPartitions (JNIEnv *env, jclass clazz) {
+    DIR *dir = opendir("/sys/block");
+    struct dirent *entry;
+
+    if(dir != NULL) {
+        struct partitions retPartitions;
+        retPartitions.count = 0;
+        while ((entry = readdir (dir)) != NULL) {
+            if(startsWith(entry->d_name, "s") && isReal(concat("/dev/", entry->d_name))) { //Is a holding device
+                struct partitions parts;
+                int retCode = getPartitionsInDevice(concat("/dev/", entry->d_name), &parts);
+                if(retCode == 2) {
+                    jclass IOException = (*env)->FindClass(env, "java/io/IOException");
+                    (*env)->ThrowNew(env, IOException, "Can't open new probe");
+                    break;
+                } else if(retCode == 1) {
+                    continue;
+                }
+//                for (int i = 0; i < parts.count; ++i) {
+//                    printf("%s %s %s", parts.partitionArray[i].type, parts.partitionArray[i].label, parts.partitionArray[i].address);
+//                }
+                int oldRetParts = retPartitions.count;
+                struct partition *oldArr = retPartitions.partitionArray;
+                retPartitions.count += parts.count;
+                retPartitions.partitionArray = malloc(sizeof(struct partition) * retPartitions.count);
+                for(int i = 0; i < oldRetParts; i++) {
+                    retPartitions.partitionArray[i] = oldArr[i];
+                }
+                for(int i = oldRetParts, j = 0; i < retPartitions.count; i++, j++) {
+                    retPartitions.partitionArray[i] = parts.partitionArray[j];
+                }
+            }
+        }
+        jclass PartitionClass = (*env)->FindClass(env, "com/alesharik/webserver/api/Utils$Partition");
+        jmethodID PartitionConstructor = (*env)->GetMethodID(env, PartitionClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+        jobjectArray ret = (*env)->NewObjectArray(env, retPartitions.count, PartitionClass, NULL);
+        for(int i = 0; i < retPartitions.count; i++) {
+            jobject obj = (*env)->NewObject(env, PartitionClass, PartitionConstructor, (*env)->NewStringUTF(env, retPartitions.partitionArray[i].address), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].label), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].type));
+            (*env)->SetObjectArrayElement(env, ret, i, obj);
+        }
+        closedir(dir);
+        return ret;
+    }
+    jclass IOException = (*env)->FindClass(env, "java/io/IOException");
+    (*env)->ThrowNew(env, IOException, "Can't open directory /sys/block");
+    return NULL;
+}

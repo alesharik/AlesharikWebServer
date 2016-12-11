@@ -128,7 +128,13 @@ public final class Utils {
 
     private static native Partition[] getPartitions() throws IOException;
 
-    public static Partition[] getParts() throws IOException {
+    /**
+     * Return ALL(mounted and not) partitions, which is currently installed
+     *
+     * @return Partition
+     * @throws IOException then bad things happens
+     */
+    public static Partition[] getComputerPartitions() throws IOException {
         return getPartitions();
     }
 
@@ -137,7 +143,7 @@ public final class Utils {
         private String address;
         private String type;
 
-        public Partition(String name, String address, String type) {
+        Partition(String name, String address, String type) {
             this.name = name;
             this.address = address;
             this.type = type;

@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutionException;
 
 public class Test {
     public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
-        Utils.Partition[] partitions = Utils.getParts();
+        Utils.Partition[] partitions = Utils.getComputerPartitions();
         Arrays.asList(partitions);
 //        Thread.currentThread().setUncaughtExceptionHandler(LoggerUncaughtExceptionHandler.INSTANCE);
 //        RouterServer routerServer = new RouterServer(9982, "localhost", 5);
