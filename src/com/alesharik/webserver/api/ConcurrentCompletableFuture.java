@@ -1,10 +1,10 @@
 package com.alesharik.webserver.api;
 
 import com.alesharik.webserver.logger.Logger;
-import com.sun.istack.internal.NotNull;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
@@ -59,6 +59,7 @@ public final class ConcurrentCompletableFuture<V> implements Future<V> {
 
     @Override
     public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        Objects.requireNonNull(unit);
         if(Thread.interrupted()) {
             return null;
         }
@@ -85,7 +86,8 @@ public final class ConcurrentCompletableFuture<V> implements Future<V> {
     /**
      * Set value and complete future
      */
-    public void set(@NotNull V value) {
+    public void set(V value) {
+        Objects.requireNonNull(value);
         this.value = value;
         isDone.set(true);
     }

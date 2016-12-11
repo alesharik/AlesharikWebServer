@@ -1,7 +1,7 @@
 package com.alesharik.webserver.api.sharedStorage;
 
-import com.sun.xml.internal.ws.org.objectweb.asm.ClassReader;
-import com.sun.xml.internal.ws.org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;

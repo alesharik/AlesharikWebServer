@@ -8,10 +8,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-public class WriteOnLogStoringStrategy extends StoringStrategy {
+public final class WriteOnLogStoringStrategy extends StoringStrategy {
     private BufferedWriter writer;
 
-    protected WriteOnLogStoringStrategy(File file) {
+    public WriteOnLogStoringStrategy(File file) {
         super(file);
     }
 
@@ -24,7 +24,7 @@ public class WriteOnLogStoringStrategy extends StoringStrategy {
     @Override
     public void publish(String prefix, String message) {
         try {
-            writer.write(prefix + ": " + message);
+            writer.write(prefix + ": " + message + "\n");
             writer.flush();
         } catch (IOException e) {
             Logger.log(e);

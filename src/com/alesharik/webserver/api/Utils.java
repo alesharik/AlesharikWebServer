@@ -125,4 +125,63 @@ public final class Utils {
         }
         return str;
     }
+
+    private static native Partition[] getPartitions() throws IOException;
+
+    public static Partition[] getParts() throws IOException {
+        return getPartitions();
+    }
+
+    public static final class Partition {
+        private String name;
+        private String address;
+        private String type;
+
+        public Partition(String name, String address, String type) {
+            this.name = name;
+            this.address = address;
+            this.type = type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getAddress() {
+            return address;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(this == o) return true;
+            if(!(o instanceof Partition)) return false;
+
+            Partition partition = (Partition) o;
+
+            if(name != null ? !name.equals(partition.name) : partition.name != null) return false;
+            if(address != null ? !address.equals(partition.address) : partition.address != null) return false;
+            return type != null ? type.equals(partition.type) : partition.type == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name != null ? name.hashCode() : 0;
+            result = 31 * result + (address != null ? address.hashCode() : 0);
+            result = 31 * result + (type != null ? type.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Partition{" +
+                    "name='" + name + '\'' +
+                    ", address='" + address + '\'' +
+                    ", type='" + type + '\'' +
+                    '}';
+        }
+    }
 }

@@ -1,7 +1,5 @@
 package com.alesharik.webserver.api.sharedStorage;
 
-import com.sun.istack.internal.Nullable;
-
 /**
  * This interface used for filter shared storage access
  */
@@ -12,7 +10,7 @@ public interface AccessFilter {
      * @param filedName the name of field code tries to access to. Can be <code>null</code>
      * @return true if access granted
      */
-    boolean canAccess(Class<?> clazz, Type type, @Nullable String filedName);
+    boolean canAccess(Class<?> clazz, Type type, String filedName);
 
     enum Type {
         /**

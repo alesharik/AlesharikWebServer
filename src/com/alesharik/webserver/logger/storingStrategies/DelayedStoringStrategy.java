@@ -11,12 +11,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class DelayedStoringStrategy extends StoringStrategy {
+public final class DelayedStoringStrategy extends StoringStrategy {
     private final Timer timer = new Timer("DelayedStoringStrategyTimer");
     private TimerTask timerTask;
     private StringBuffer stringBuffer;
 
-    protected DelayedStoringStrategy(File file) {
+    public DelayedStoringStrategy(File file) {
         super(file);
         setDelay(1000);
     }

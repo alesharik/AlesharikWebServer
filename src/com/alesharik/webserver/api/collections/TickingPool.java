@@ -26,7 +26,7 @@ class TickingPool {
         rwLock.unlock();
     }
 
-    public static void addArrayList(LiveArrayList arrayList, long tick) {
+    public static void addArrayList(ConcurrentLiveArrayList arrayList, long tick) {
         rwLock.lock();
         if(!timers.containsKey(tick)) {
             initTimer(tick);
@@ -63,7 +63,7 @@ class TickingPool {
         rwLock.unlock();
     }
 
-    public static void removeArrayList(LiveArrayList arrayList, long tick) {
+    public static void removeArrayList(ConcurrentLiveArrayList arrayList, long tick) {
         rwLock.lock();
         CopyOnWriteArrayList<WeakReference<?>> list = collections.get(tick);
         for(WeakReference<?> weakReference : list) {
@@ -98,8 +98,8 @@ class TickingPool {
                         weakReference.clear();
                         collections.get(tick).remove(weakReference);
                     } else {
-                        if(weakReference.get() instanceof LiveArrayList) {
-                            ((LiveArrayList) weakReference.get()).updateValues(1);
+                        if(weakReference.get() instanceof ConcurrentLiveArrayList) {
+                            ((ConcurrentLiveArrayList) weakReference.get()).updateValues(1);
                         } else {
                             ((LiveHashMap) weakReference.get()).updateMap(1);
                         }

@@ -78,7 +78,9 @@ public final class NamedLogger {
         checkIfClosed();
 
         String prefixx = "[Logger][" + name + "]" + prefix;
-        storingStrategy.publish(prefixx, message);
+        if(storingStrategy != null) {
+            storingStrategy.publish(prefixx, message);
+        }
         Logger.log(prefixx, message);
     }
 
@@ -95,7 +97,9 @@ public final class NamedLogger {
             stringBuilder.append(stackTraceElement.toString());
             stringBuilder.append("\n");
         });
-        storingStrategy.publish(prefix, stringBuilder.toString());
+        if(storingStrategy != null) {
+            storingStrategy.publish(prefix, stringBuilder.toString());
+        }
         Logger.log(stringBuilder.toString());
     }
 

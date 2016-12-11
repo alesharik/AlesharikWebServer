@@ -1,17 +1,17 @@
 package com.alesharik.webserver.api.sharedStorage;
 
 import com.alesharik.webserver.api.ConcurrentCompletableFuture;
-import com.sun.xml.internal.ws.org.objectweb.asm.AnnotationVisitor;
-import com.sun.xml.internal.ws.org.objectweb.asm.ClassAdapter;
-import com.sun.xml.internal.ws.org.objectweb.asm.ClassVisitor;
-import com.sun.xml.internal.ws.org.objectweb.asm.MethodAdapter;
-import com.sun.xml.internal.ws.org.objectweb.asm.MethodVisitor;
 import lombok.SneakyThrows;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassAdapter;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodAdapter;
+import org.objectweb.asm.MethodVisitor;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.*;
 
 final class SharedStorageClassVisitor extends ClassAdapter {
     private boolean transform = false;
