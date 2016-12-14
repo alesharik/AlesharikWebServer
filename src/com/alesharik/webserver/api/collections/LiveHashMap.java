@@ -38,7 +38,19 @@ public class LiveHashMap<K, V> extends HashMapWrapper<K, V> {
         this(delay, count, true);
     }
 
+    /**
+     * @param delay
+     * @param count
+     * @param autoStart
+     */
     public LiveHashMap(long delay, int count, boolean autoStart) {
+        if(delay < 1) {
+            throw new IllegalArgumentException("Delay can't be < 1!");
+        }
+        if(count < 0) {
+            throw new IllegalArgumentException("Count cn't be < 0!");
+        }
+
         map = new TripleHashMap<>(count);
         this.delay = delay;
         if(autoStart) {
