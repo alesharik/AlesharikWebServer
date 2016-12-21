@@ -44,5 +44,5 @@ www/
 *.mp3
 adminKey.key
 /AlesharikWebServer.jar
-/src/com/alesharik/webserver/api/native/cmake-build-debug/
-/src/com/alesharik/webserver/api/native/.idea/
+/com/alesharik/webserver/api/native/cmake-build-debug/
+/com/alesharik/webserver/api/native/.idea/

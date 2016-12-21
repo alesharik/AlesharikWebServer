@@ -1190,6 +1190,9 @@ class MenuPluginsEditorHandler {
      * @param {MenuPlugin} plugin
      */
     draw(plugin) {
+        if (plugin == undefined) {
+            return;
+        }
         this.editorElement.innerHTML += new Pattern().setPattern(this.elementPattern).setParameters({
             width: plugin.getWidth(),
             height: document.querySelector("#menuPlugins").offsetHeight,

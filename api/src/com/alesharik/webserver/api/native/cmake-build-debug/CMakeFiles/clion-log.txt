@@ -1,0 +1,11 @@
+/home/alexey/Programs/clion-2016.2/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/alexey/Programs/IdeaProjects/AlesharikWebServer/src/com/alesharik/webserver/api/native
+CMake Error at CMakeLists.txt:12 (add_executable):
+  add_executable cannot create target "alesharikwebserver" because another
+  target with the same name already exists.  The existing target is a shared
+  library created in source directory
+  "/home/alexey/Programs/IdeaProjects/AlesharikWebServer/src/com/alesharik/webserver/api/native".
+  See documentation for policy CMP0002 for more details.
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/alexey/Programs/IdeaProjects/AlesharikWebServer/src/com/alesharik/webserver/api/native/cmake-build-debug/CMakeFiles/CMakeOutput.log".
