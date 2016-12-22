@@ -11,7 +11,7 @@
     <artifactId>alesharikwebserver-main</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <name>AlesharikWebServer-api</name>
+    <name>AlesharikWebServer-main</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,7 +23,7 @@
             <artifactId>one-nio</artifactId>
             <scope>system</scope>
             <version>1.0</version>
-            <systemPath>${basedir}/../one-nio/one-nio.jar</systemPath>
+            <systemPath>${basedir}/../api/one-nio/one-nio.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.alesharik</groupId>

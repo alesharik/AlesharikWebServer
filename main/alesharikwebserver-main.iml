@@ -14,7 +14,7 @@
     <orderEntry type="module-library">
       <library name="Maven: one-nio:one-nio:1.0">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../one-nio/one-nio.jar!/" />
+          <root url="jar://$MODULE_DIR$/../api/one-nio/one-nio.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

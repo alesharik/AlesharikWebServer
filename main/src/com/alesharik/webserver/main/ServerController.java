@@ -7,6 +7,7 @@ import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.server.Server;
 import com.alesharik.webserver.api.server.WebServer;
+import com.alesharik.webserver.api.sharedStorage.SharedStorageManager;
 import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueSetter;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.control.dashboard.PluginDataHolder;
@@ -89,6 +90,22 @@ public final class ServerController {
      */
     public ServerController() {
         try {
+            SharedStorageManager.addAccessFilter("serverFolders", (clazz, type, fieldName) -> {
+                switch (type) {
+                    case SET:
+                        return ServerController.class.equals(clazz);
+                    case SET_EXTERNAL:
+                    case ADD_FILTER:
+                    case CLEAR:
+                        return false;
+                    case GET:
+                    case GET_EXTERNAL:
+                        return true;
+                    default:
+                        return false;
+                }
+            });
+
             loadServerPassword();
             loadConfig();
             Logger.log("Config loaded!");
@@ -114,7 +131,7 @@ public final class ServerController {
             pluginManager.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
             pluginManager.loadPlugins();
             pluginManager.start();
-        } catch (IOException | ConfigurationException e) {
+        } catch (IOException | ConfigurationException | IllegalAccessException e) {
             Logger.log(e);
         }
     }

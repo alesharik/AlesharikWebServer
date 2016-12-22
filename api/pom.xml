@@ -23,7 +23,8 @@
             <artifactId>one-nio</artifactId>
             <scope>system</scope>
             <version>1.0</version>
-            <systemPath>${basedir}/../one-nio/one-nio.jar</systemPath>
+            <systemPath>${basedir}/one-nio/one-nio.jar</systemPath>
+            <type>jar</type>
         </dependency>
     </dependencies>
 
@@ -80,16 +81,16 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
-                    <execution><!-- Run our version calculation script -->
-                        <id>one-nio_setup</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>${basedir}/setupOneNio.sh</executable>
-                        </configuration>
-                    </execution>
+                    <!--<execution>&lt;!&ndash; Run our version calculation script &ndash;&gt;-->
+                    <!--<id>one-nio_setup</id>-->
+                    <!--<phase>generate-sources</phase>-->
+                    <!--<goals>-->
+                    <!--<goal>exec</goal>-->
+                    <!--</goals>-->
+                    <!--<configuration>-->
+                    <!--<executable>${basedir}/setupOneNio.sh</executable>-->
+                    <!--</configuration>-->
+                    <!--</execution>-->
                     <execution>
                         <id>compileNative</id>
                         <phase>package</phase>
@@ -102,7 +103,7 @@
                     </execution>
                     <execution>
                         <id>copyAgent</id>
-                        <phase>package</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -112,6 +113,41 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <outputDirectory>./out/artifact/</outputDirectory>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Premain-Class>com.alesharik.webserver.api.sharedStorage.ClassTransformerAgent
+                            </Premain-Class>
+                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 </project>

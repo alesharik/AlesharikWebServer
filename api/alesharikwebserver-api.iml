@@ -7,6 +7,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/out/production" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/one-nio/native" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/one-nio" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/out/production" />
       <excludeFolder url="file://$MODULE_DIR$/out/test" />
     </content>
@@ -15,7 +17,7 @@
     <orderEntry type="module-library">
       <library name="Maven: one-nio:one-nio:1.0">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../one-nio/one-nio.jar!/" />
+          <root url="jar://$MODULE_DIR$/one-nio/one-nio.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

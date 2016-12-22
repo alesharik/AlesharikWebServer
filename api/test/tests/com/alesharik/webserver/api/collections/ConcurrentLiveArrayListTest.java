@@ -87,7 +87,7 @@ public class ConcurrentLiveArrayListTest {
 
     @Test
     public void remove() throws Exception {
-        assertTrue(Integer.compare(wr.remove(302), 303) == 0);
+        assertTrue(wr.remove(302) != null);
     }
 
     @Test

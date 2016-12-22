@@ -129,7 +129,7 @@
             <artifactId>one-nio</artifactId>
             <scope>system</scope>
             <version>1.0</version>
-            <systemPath>${basedir}/one-nio/one-nio.jar</systemPath>
+            <systemPath>${basedir}/api/one-nio/one-nio.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -284,28 +284,28 @@
                     </archive>
                 </configuration>
             </plugin>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.alesharik.webserver.main.Main</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+            <!--<artifactId>maven-assembly-plugin</artifactId>-->
+            <!--<configuration>-->
+            <!--<archive>-->
+            <!--<manifest>-->
+            <!--<mainClass>com.alesharik.webserver.main.Main</mainClass>-->
+            <!--</manifest>-->
+            <!--</archive>-->
+            <!--<descriptorRefs>-->
+            <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
+            <!--</descriptorRefs>-->
+            <!--</configuration>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>make-assembly</id>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+            <!--<goal>single</goal>-->
+            <!--</goals>-->
+            <!--</execution>-->
+            <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -348,36 +348,36 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
-                    <execution><!-- Run our version calculation script -->
-                        <id>one-nio_setup</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>${basedir}/setupOneNio.sh</executable>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>compileNative</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>${basedir}/compileNative.sh</executable>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copyAgent</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>${basedir}/copyAgent.sh</executable>
-                        </configuration>
-                    </execution>
+                    <!--<execution>&lt;!&ndash; Run our version calculation script &ndash;&gt;-->
+                    <!--<id>one-nio_setup</id>-->
+                    <!--<phase>generate-sources</phase>-->
+                    <!--<goals>-->
+                    <!--<goal>exec</goal>-->
+                    <!--</goals>-->
+                    <!--<configuration>-->
+                    <!--<executable>${basedir}/setupOneNio.sh</executable>-->
+                    <!--</configuration>-->
+                    <!--</execution>-->
+                    <!--<execution>-->
+                    <!--<id>compileNative</id>-->
+                    <!--<phase>package</phase>-->
+                    <!--<goals>-->
+                    <!--<goal>exec</goal>-->
+                    <!--</goals>-->
+                    <!--<configuration>-->
+                    <!--<executable>${basedir}/compileNative.sh</executable>-->
+                    <!--</configuration>-->
+                    <!--</execution>-->
+                    <!--<execution>-->
+                    <!--<id>copyAgent</id>-->
+                    <!--<phase>package</phase>-->
+                    <!--<goals>-->
+                    <!--<goal>exec</goal>-->
+                    <!--</goals>-->
+                    <!--<configuration>-->
+                    <!--<executable>${basedir}/copyAgent.sh</executable>-->
+                    <!--</configuration>-->
+                    <!--</execution>-->
                 </executions>
             </plugin>
         </plugins>

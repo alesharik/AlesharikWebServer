@@ -1,7 +1,6 @@
 package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.api.Utils;
-import com.alesharik.webserver.api.sharedStorage.SharedStorageManager;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.logger.Logger;
 
@@ -10,6 +9,7 @@ import java.io.IOException;
 
 //TODO rewrite site as green terminal
 //TODO add more prefixes to java
+
 @UseSharedStorage("serverFolders")
 public class Main {
     @SuppressWarnings("unused")
@@ -27,21 +27,6 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         try {
 //            initStructure();
-            SharedStorageManager.addAccessFilter("serverFolders", (clazz, type, fieldName) -> {
-                switch (type) {
-                    case SET:
-                        return ServerController.class.equals(clazz);
-                    case SET_EXTERNAL:
-                    case ADD_FILTER:
-                    case CLEAR:
-                        return false;
-                    case GET:
-                    case GET_EXTERNAL:
-                        return true;
-                    default:
-                        return false;
-                }
-            });
 //            Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
             controller = new ServerController();
             controller.start();

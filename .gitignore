@@ -37,12 +37,13 @@ serverPassword
 serverPassword.key
 
 test.txt
-./test/
+/test
 truststore_client
-www/
+/www/
 
 *.mp3
 adminKey.key
 /AlesharikWebServer.jar
 /com/alesharik/webserver/api/native/cmake-build-debug/
 /com/alesharik/webserver/api/native/.idea/
+/alesharikwebserver-api-1.0-SNAPSHOT.jar
