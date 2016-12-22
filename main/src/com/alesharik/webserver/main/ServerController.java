@@ -310,7 +310,6 @@ public final class ServerController {
             checkProperty("microserviceServer.host", "default", configuration);
             checkProperty("microserviceServer.routerHost", "default", configuration);
             checkProperty("microserviceServer.routerPort", 4001, configuration);
-            checkProperty("microserviceServer.routerThreadCount", 5, configuration);
 
             checkProperty("routerServer.enabled", true, configuration);
             checkProperty("routerServer.host", "default", configuration);

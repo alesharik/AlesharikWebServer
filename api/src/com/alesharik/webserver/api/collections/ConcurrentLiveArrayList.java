@@ -107,11 +107,13 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
 
     public void add(int index, V element, long lifeTime) {
         try {
-            lock.lockWrite();
+            lock.lockRead();
+            lock.upgrade();
             super.add(index, element);
             times.add(index, lifeTime);
         } finally {
-            lock.unlockWrite();
+            lock.downgrade();
+            lock.unlockRead();
         }
     }
 
@@ -178,8 +180,14 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
         return addAll(index, c, DEFAULT_LIFE_TIME);
     }
 
-    public boolean addAll(int index, Collection<? extends V> c, long lifeTime) {
-        c.forEach(o -> add(size() - 1 + index, o, lifeTime));
+    public <T extends V> boolean addAll(int index, Collection<T> c, long lifeTime) {
+        int index1 = size() - 1 + index;
+        if(index1 < 0) {
+            index1 = 0;
+        }
+        for(T elem : c) {
+            add(index1, elem, lifeTime);
+        }
         return true;
     }
 
@@ -312,14 +320,16 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
     private boolean removeNonSync(Object o) {
         int i = 0;
         boolean ret = false;
-        for(Object object : this) {
-            i++;
-            if(object.equals(o)) {
+        Iterator<V> iterator = super.iterator();
+        while(iterator.hasNext()) {
+            V next = iterator.next();
+            if(o.equals(next)) {
                 super.remove(i);
                 times.remove(i);
                 ret = true;
                 break;
             }
+            i++;
         }
         return ret;
     }
@@ -359,7 +369,9 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
     @Override
     public boolean retainAll(Collection<?> c) {
         clear();
-        return addAll((Collection<? extends V>) c);
+        return c.stream()
+                .map(o -> add((V) o))
+                .allMatch(Boolean::booleanValue);
     }
 
     public boolean retainAll(Collection<? extends V> c, long lifeTime) {
@@ -399,7 +411,7 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
     /**
      * This method not used due specific of time holding
      */
-    //TODO write this :)
+    //TODO write this
     @Override
     public void sort(Comparator<? super V> c) {
         throw new UnsupportedOperationException();
