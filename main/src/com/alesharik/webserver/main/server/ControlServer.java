@@ -11,7 +11,7 @@ import com.alesharik.webserver.handlers.ControlHttpHandler;
 import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
-import org.glassfish.grizzly.http.CompressionConfig;
+import org.glassfish.grizzly.http.server.CompressionLevel;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
@@ -32,25 +32,25 @@ public final class ControlServer extends WebServer {
 
     public ControlServer(String host, int port, FileManager fileManager, AdminDataHolder adminDataHolder, PluginDataHolder holder, boolean logRequests, File logFile) {
         super(host, port);
-        controlHttpHandler = new ControlHttpHandler(fileManager, adminDataHolder, logRequests, logFile);
+        errorPageGenerator = new ModularErrorPageGenerator(fileManager);
+        controlHttpHandler = new ControlHttpHandler(fileManager, adminDataHolder, logRequests, logFile, errorPageGenerator);
         final NetworkListener networkListener = new NetworkListener("grizzly", host, port);
         networkListener.getFileCache().setEnabled(true);
-        networkListener.getCompressionConfig().setCompressionMode(CompressionConfig.CompressionMode.ON);
-        networkListener.getCompressionConfig().setCompressableMimeTypes(
-                MIMETypes.findType(".html"),
-                MIMETypes.findType(".jpg"),
-                MIMETypes.findType(".png"),
-                MIMETypes.findType(".css"),
-                MIMETypes.findType(".js")
-        );
-        errorPageGenerator = new ModularErrorPageGenerator(fileManager);
-        networkListener.setDefaultErrorPageGenerator(errorPageGenerator);
-
+        networkListener.setCompression(String.valueOf(CompressionLevel.ON));
+        String compressedMimeTypes = MIMETypes.findType(".html") +
+                ',' +
+                MIMETypes.findType(".jpg") +
+                ',' +
+                MIMETypes.findType(".png") +
+                ',' +
+                MIMETypes.findType(".css") +
+                ',' +
+                MIMETypes.findType(".js");
+        networkListener.setCompressableMimeTypes(compressedMimeTypes);
         httpServer = new HttpServer();
         httpServer.addListener(networkListener);
         ServerConfiguration serverConfiguration = httpServer.getServerConfiguration();
         serverConfiguration.addHttpHandler(controlHttpHandler, "/");
-
         TCPNIOTransportBuilder transportBuilder = TCPNIOTransportBuilder.newInstance();
         ThreadPoolConfig config = ThreadPoolConfig.defaultConfig();
         config.setCorePoolSize(10)
@@ -83,7 +83,7 @@ public final class ControlServer extends WebServer {
 
     @Override
     public synchronized void shutdown() {
-        httpServer.shutdown();
+        httpServer.stop();
     }
 
     @Override

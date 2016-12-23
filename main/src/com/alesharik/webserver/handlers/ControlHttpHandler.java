@@ -5,6 +5,7 @@ import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.RequestHandlerList;
 import com.alesharik.webserver.control.ControlRequestHandler;
 import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
+import com.alesharik.webserver.generators.ErrorPageGenerator;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.NamedLogger;
 import com.alesharik.webserver.logger.storingStrategies.WriteOnLogStoringStrategy;
@@ -14,9 +15,8 @@ import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.server.util.HtmlHelper;
-import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +29,7 @@ public final class ControlHttpHandler extends HttpHandler {
     private final ControlRequestHandler requestHandler;
     private final FileManager fileManager;
     private final RequestHandlerList requestHandlerList;
+    private final ErrorPageGenerator errorPageGenerator;
 
     private final boolean logRequests;
     private NamedLogger logger;
@@ -36,7 +37,8 @@ public final class ControlHttpHandler extends HttpHandler {
     /**
      * @param logFile can be null
      */
-    public ControlHttpHandler(FileManager fileManager, AdminDataHolder adminDataHolder, boolean logRequests, File logFile) {
+    public ControlHttpHandler(FileManager fileManager, AdminDataHolder adminDataHolder, boolean logRequests, File logFile, ErrorPageGenerator errorPageGenerator) {
+        this.errorPageGenerator = errorPageGenerator;
         this.logRequests = logRequests;
         this.requestHandler = new ControlRequestHandler(fileManager, adminDataHolder);
         this.fileManager = fileManager;
@@ -54,20 +56,25 @@ public final class ControlHttpHandler extends HttpHandler {
 
     @Override
     public void service(Request request, Response response) throws Exception {
-        if(requestHandler.canHandleRequest(request)) {
-            requestHandler.handleRequest(request, response);
-        } else if(requestHandlerList.canHandleRequest(request)) {
-            requestHandlerList.handleRequest(request, response);
-            String uri = request.getDecodedRequestURI();
-            if(this.logRequests) {
-                logger.log(request.getRemoteAddr() + ":" + request.getRemotePort() + ": " + uri, "[Request]", "[" + response.getStatus() + "]");
+        try {
+            if(requestHandler.canHandleRequest(request)) {
+                requestHandler.handleRequest(request, response);
+            } else if(requestHandlerList.canHandleRequest(request)) {
+                requestHandlerList.handleRequest(request, response);
+                String uri = request.getDecodedRequestURI();
+                if(this.logRequests) {
+                    logger.log(request.getRemoteAddr() + ":" + request.getRemotePort() + ": " + uri, "[Request]", "[" + response.getStatus() + "]");
+                }
+            } else {
+                handleRequest(request, response);
+                String uri = request.getDecodedRequestURI();
+                if(this.logRequests) {
+                    logger.log(request.getRemoteAddr() + ":" + request.getRemotePort() + ": " + uri, "[Request]", "[" + response.getStatus() + "]");
+                }
             }
-        } else {
-            handleRequest(request, response);
-            String uri = request.getDecodedRequestURI();
-            if(this.logRequests) {
-                logger.log(request.getRemoteAddr() + ":" + request.getRemotePort() + ": " + uri, "[Request]", "[" + response.getStatus() + "]");
-            }
+            response.finish();
+        } catch (Exception e) {
+            writeInfernalServerErrorResponse(request, response, e, errorPageGenerator);
         }
     }
 
@@ -96,8 +103,7 @@ public final class ControlHttpHandler extends HttpHandler {
                 if(uuid == null || !requestHandler.isSessionValid(uuid1)) {
                     if(!response.isCommitted()) {
                         response.reset();
-                        response.setStatus(HttpStatus.FOUND_302);
-                        response.setHeader(Header.Location, "/index.html");
+                        response.sendRedirect("/index.html");
                     }
                     return;
                 }
@@ -109,15 +115,28 @@ public final class ControlHttpHandler extends HttpHandler {
             response.setContentLength(bytes.length);
             response.getOutputStream().write(bytes);
         } else {
-            if(!response.isCommitted()) {
-                response.reset();
-                HtmlHelper.setErrorAndSendErrorPage(
-                        request, response,
-                        response.getErrorPageGenerator(),
-                        404, HttpStatus.NOT_FOUND_404.getReasonPhrase(),
-                        null,
-                        null);
-            }
+            writeNotFoundResponse(request, response, errorPageGenerator);
+        }
+    }
+
+    static void writeNotFoundResponse(Request request, Response response, ErrorPageGenerator errorPageGenerator) throws IOException {
+        if(!response.isCommitted()) {
+            response.reset();
+            response.setContentType("text/html");
+            String responseText = errorPageGenerator.generate(request, 404, new String(HttpStatus.NOT_FOUND_404.getReasonPhraseBytes(), Charsets.ASCII_CHARSET), null, null);
+            response.setContentLength(responseText.length());
+            response.getWriter().append(responseText);
+        }
+    }
+
+    static void writeInfernalServerErrorResponse(Request request, Response response, Exception e, ErrorPageGenerator errorPageGenerator) throws IOException {
+        if(!response.isCommitted()) {
+            response.reset();
+
+            response.setContentType("text/html");
+            String responseText = errorPageGenerator.generate(request, 500, new String(HttpStatus.INTERNAL_SERVER_ERROR_500.getReasonPhraseBytes(), Charsets.ASCII_CHARSET), null, e);
+            response.setContentLength(responseText.length());
+            response.getWriter().append(responseText);
         }
     }
 }

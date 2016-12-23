@@ -42,8 +42,8 @@ public class Main {
 ////            Logger.log(Utils.getExternalIp());
 
         } catch (Throwable e) {
-//            Logger.log(e);
-            System.out.println(e);
+            Logger.log(e);
+//            e.printStackTrace();
             System.exit(0);
         }
 //        try {

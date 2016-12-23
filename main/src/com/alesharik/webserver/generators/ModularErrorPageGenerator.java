@@ -3,7 +3,6 @@ package com.alesharik.webserver.generators;
 import com.alesharik.webserver.exceptions.KeyExistsException;
 import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
-import org.glassfish.grizzly.http.server.ErrorPageGenerator;
 import org.glassfish.grizzly.http.server.Request;
 
 import java.util.HashMap;

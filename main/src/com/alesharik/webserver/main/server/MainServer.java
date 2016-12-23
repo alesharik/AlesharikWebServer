@@ -12,7 +12,7 @@ import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.main.ServerController;
 import com.alesharik.webserver.main.websockets.ServerControllerWebSocketApplication;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
-import org.glassfish.grizzly.http.CompressionConfig;
+import org.glassfish.grizzly.http.server.CompressionLevel;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
@@ -43,20 +43,22 @@ public final class MainServer extends WebServer {
 
         NetworkListener networkListener = new NetworkListener("grizzly", host, port);
         networkListener.getFileCache().setEnabled(true);
-        networkListener.getCompressionConfig().setCompressionMode(CompressionConfig.CompressionMode.ON);
-        networkListener.getCompressionConfig().setCompressableMimeTypes(
-                MIMETypes.findType(".html"),
-                MIMETypes.findType(".jpg"),
-                MIMETypes.findType(".png"),
-                MIMETypes.findType(".css"),
-                MIMETypes.findType(".js")
-        );
-        networkListener.setDefaultErrorPageGenerator(errorPageGenerator);
+        networkListener.setCompression(String.valueOf(CompressionLevel.ON));
+        String compressedMimeTypes = MIMETypes.findType(".html") +
+                ',' +
+                MIMETypes.findType(".jpg") +
+                ',' +
+                MIMETypes.findType(".png") +
+                ',' +
+                MIMETypes.findType(".css") +
+                ',' +
+                MIMETypes.findType(".js");
+        networkListener.setCompressableMimeTypes(compressedMimeTypes);
 
         httpServer = new HttpServer();
         httpServer.addListener(networkListener);
         ServerConfiguration serverConfiguration = httpServer.getServerConfiguration();
-        serverConfiguration.addHttpHandler(new MainHttpHandler(handlerList, fileManager, logRequests, logFile), "/");
+        serverConfiguration.addHttpHandler(new MainHttpHandler(handlerList, fileManager, logRequests, logFile, errorPageGenerator), "/");
 
         TCPNIOTransportBuilder transportBuilder = TCPNIOTransportBuilder.newInstance();
         transportBuilder.setIOStrategy(networkListener.getTransport().getIOStrategy());
@@ -98,7 +100,7 @@ public final class MainServer extends WebServer {
 
     @Override
     public synchronized void shutdown() {
-        httpServer.shutdown();
+        httpServer.stop();
     }
 
     public synchronized void registerNewWebSocket(WebSocketApplication application, String contextPath, String urlPattern) {

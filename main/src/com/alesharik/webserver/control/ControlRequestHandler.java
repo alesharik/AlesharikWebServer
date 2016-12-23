@@ -11,7 +11,6 @@ import com.alesharik.webserver.main.Helpers;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
 
 import java.io.IOException;
@@ -76,7 +75,7 @@ public class ControlRequestHandler implements RequestHandler {
         }
     }
 
-    private void handleLoginCommand(Request request, Response response) {
+    private void handleLoginCommand(Request request, Response response) throws IOException {
         String logpass = request.getParameter("logpass");
         boolean remember = Boolean.parseBoolean(request.getParameter("remember"));
         if(logpass != null && !logpass.isEmpty()) {
@@ -100,9 +99,9 @@ public class ControlRequestHandler implements RequestHandler {
         }
     }
 
-    private void loginSuccess(Response response, boolean remember, String logpass) {
-        response.setStatus(HttpStatus.FOUND_302);
-        response.addHeader(Header.Location, "/dashboard.html");
+    private void loginSuccess(Response response, boolean remember, String logpass) throws IOException {
+//        response.setStatus(HttpStatus.FOUND_302);
+//        response.addHeader(Header.Location, "/dashboard.html");
         UUID uuid = UUID.randomUUID();
         Cookie uuidCookie = new Cookie("UUID", uuid.toString());
         uuidCookie.setHttpOnly(true);
@@ -110,6 +109,7 @@ public class ControlRequestHandler implements RequestHandler {
         uuidCookie.setMaxAge(3600);
         sessions.add(uuid, 3600L);
         response.addCookie(uuidCookie);
+        response.sendRedirect("/dashboard.html");
         if(remember) {
             Cookie logpassCookie = new Cookie("Logpass", logpass);
             logpassCookie.setHttpOnly(false);
@@ -119,8 +119,7 @@ public class ControlRequestHandler implements RequestHandler {
         }
     }
 
-    private void loginFailed(Response response) {
-        response.setStatus(HttpStatus.FOUND_302);
-        response.addHeader(Header.Location, "/index.html?incorrect=true");
+    private void loginFailed(Response response) throws IOException {
+        response.sendRedirect("/index.html?incorrect=true");
     }
 }

@@ -2,7 +2,6 @@ package com.alesharik.webserver.generators;
 
 import com.alesharik.webserver.main.FileManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.glassfish.grizzly.http.server.ErrorPageGenerator;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.utils.Charsets;
 import org.jsoup.Jsoup;
@@ -15,7 +14,7 @@ import org.jsoup.select.Elements;
  * Custom error page must be named as error code, which customize error page<br>
  * For use error pages with description in custom error page file must be element with <code>id="description"</code>
  */
-public final class AdvancedErrorPageGenerator implements ErrorPageGenerator {
+public final class AdvancedErrorPageGenerator {
     private static final BasicErrorPageGenerator BASIC_ERROR_PAGE_GENERATOR = new BasicErrorPageGenerator();
 
     private final FileManager fileManager;
@@ -24,7 +23,7 @@ public final class AdvancedErrorPageGenerator implements ErrorPageGenerator {
         this.fileManager = fileManager;
     }
 
-    @Override
+    //    @Override
     public String generate(Request request, int status, String reasonPhrase, String description, Throwable exception) {
         if(fileManager.exists("/errors/" + status + ".html", true)) {
             String file = new String(fileManager.readFile("/errors/" + status + ".html"), Charsets.UTF8_CHARSET);

@@ -1,14 +1,13 @@
 package com.alesharik.webserver.generators;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.glassfish.grizzly.http.server.ErrorPageGenerator;
 import org.glassfish.grizzly.http.server.Request;
 
 /**
  * Generate basic error pages
  */
-public final class BasicErrorPageGenerator implements ErrorPageGenerator {
-    @Override
+public final class BasicErrorPageGenerator {
+    //    @Override
     public String generate(Request request, int status, String reasonPhrase, String description, Throwable exception) {
         String content = "";
         if(description != null && !description.isEmpty()) {

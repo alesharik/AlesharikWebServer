@@ -2,13 +2,13 @@ package com.alesharik.webserver.handlers;
 
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.server.RequestHandler;
+import com.alesharik.webserver.generators.ErrorPageGenerator;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.NamedLogger;
 import com.alesharik.webserver.logger.storingStrategies.WriteOnLogStoringStrategy;
 import com.alesharik.webserver.main.FileManager;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.server.util.HtmlHelper;
 import org.glassfish.grizzly.http.util.HttpStatus;
 
 import java.io.CharConversionException;
@@ -17,13 +17,15 @@ import java.io.IOException;
 
 //TODO add error pages and checks
 public class MainHttpHandler extends org.glassfish.grizzly.http.server.HttpHandler {
-    private RequestHandler requestHandler;
-    private FileManager fileManager;
+    private final RequestHandler requestHandler;
+    private final FileManager fileManager;
+    private final ErrorPageGenerator errorPageGenerator;
 
     private final boolean logRequests;
     private NamedLogger logger;
 
-    public MainHttpHandler(RequestHandler requestHandler, FileManager fileManager, boolean logRequests, File logFile) {
+    public MainHttpHandler(RequestHandler requestHandler, FileManager fileManager, boolean logRequests, File logFile, ErrorPageGenerator errorPageGenerator) {
+        this.errorPageGenerator = errorPageGenerator;
         this.logRequests = logRequests;
         this.requestHandler = requestHandler;
         this.fileManager = fileManager;
@@ -37,23 +39,32 @@ public class MainHttpHandler extends org.glassfish.grizzly.http.server.HttpHandl
     @Override
     public void service(Request request, Response response) {
         try {
-            if(requestHandler.canHandleRequest(request)) {
-                requestHandler.handleRequest(request, response);
-            } else {
-                handleRequest(request, response);
+            try {
+                if(requestHandler.canHandleRequest(request)) {
+                    requestHandler.handleRequest(request, response);
+                } else {
+                    handleRequest(request, response);
+                }
+            } catch (Exception e) {
+                response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+                Logger.log(e);
+            }
+            try {
+                String uri = request.getDecodedRequestURI();
+                if(this.logRequests) {
+                    logger.log(request.getRemoteAddr() + ":" + request.getRemotePort() + ": " + uri, "[Request]", "[" + response.getStatus() + "]");
+                }
+            } catch (CharConversionException e) {
+                Logger.log(e);
             }
         } catch (Exception e) {
-            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
-            Logger.log(e);
-        }
-        try {
-            String uri = request.getDecodedRequestURI();
-            if(this.logRequests) {
-                logger.log(request.getRemoteAddr() + ":" + request.getRemotePort() + ": " + uri, "[Request]", "[" + response.getStatus() + "]");
+            try {
+                ControlHttpHandler.writeInfernalServerErrorResponse(request, response, e, errorPageGenerator);
+            } catch (IOException e1) {
+                Logger.log(e1);
             }
-        } catch (CharConversionException e) {
-            Logger.log(e);
         }
+        response.finish();
     }
 
     @SuppressWarnings("Duplicates")
@@ -68,15 +79,7 @@ public class MainHttpHandler extends org.glassfish.grizzly.http.server.HttpHandl
             response.setContentLength(bytes.length);
             response.getOutputStream().write(bytes);
         } else {
-            if(!response.isCommitted()) {
-                response.reset();
-                HtmlHelper.setErrorAndSendErrorPage(
-                        request, response,
-                        response.getErrorPageGenerator(),
-                        404, HttpStatus.NOT_FOUND_404.getReasonPhrase(),
-                        null,
-                        null);
-            }
+            ControlHttpHandler.writeNotFoundResponse(request, response, errorPageGenerator);
         }
     }
 }
