@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
-    <meta type="extension" stepLoading="true" href="lib/flot/jquery.flot.js">
-    <meta type="extension" stepLoading="true" href="lib/flot/jquery.flot.stack.js">
-    <meta type="extension" stepLoading="true" href="lib/flot/jquery.flot.pie.js">
-    <meta type="extension" href="js/content/dashboard.js">
+    <meta type="extension" stepLoading="true" href="lib/chart/chart.min.js">
+    <meta type="extension" stepLoading="true" href="lib/datatables/datatables.min.css">
+    <meta type="extension" stepLoading="true" href="lib/datatables/datatables.min.js">
+    <meta type="extension" stepLoading="true" href="js/content/dashboard.js">
     <style>
         #swapProgressBar * {
             color: #9b9b9b;
@@ -20,7 +20,9 @@
             <div class="panel-heading">CPU</div>
             <div class="panel-body">
                 <div id="CPUPlotContainer" style="height: 450px; width: 100%">
-                    <div id="CPUPlot" style="width: 100%; height: 100%;"></div>
+                    <div style="width: 100%; height: 100%;">
+                        <canvas id="CPUPlot"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -30,7 +32,9 @@
             <div class="panel-heading">Memory</div>
             <div class="panel-body">
                 <div id="MemoryPlotContainer" style="height: 410px; width: 100%">
-                    <div id="MemoryPlot" style="width: 100%; height: 100%;"></div>
+                    <div style="width: 100%; height: 100%;">
+                        <canvas id="MemoryPlot"></canvas>
+                    </div>
                 </div>
                 <div class="progress" style="margin: 10px 0; width: 100%;" id="swapProgressBar">
                     <div class="progress-bar progress-bar-danger" role="progressbar" id="swapProgressBarUsed"
@@ -47,7 +51,18 @@
         <div class="panel panel-default">
             <div class="panel-heading">Disks</div>
             <div class="panel-body">
-                <table id="diskDatatable" cellspacing="0" style="width: 100%;"></table>
+                <table id="diskDatatable" cellspacing="0" style="width: 100%;">
+                    <thead>
+                    <tr>
+                        <th>Partition</th>
+                        <th>Address</th>
+                        <th>Type</th>
+                        <th>Maximum(GB)</th>
+                        <th>Free(GB)</th>
+                        <th>Used(GB)</th>
+                    </tr>
+                    </thead>
+                </table>
             </div>
         </div>
     </div>

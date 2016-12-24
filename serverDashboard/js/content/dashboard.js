@@ -1,7 +1,9 @@
 'use strict';
 var dashboardCPUPlotIntervalId;
 var diskUpdateIntervalId;
+var cpuUpdateIntervalId;
 events.addEventListener("loadingContentEnded", () => {
+    console.log("asd");
     function generateData(cpu, last) {
         if (last == undefined) {
             last = [];
@@ -40,68 +42,301 @@ events.addEventListener("loadingContentEnded", () => {
 
     let diskDatatable = $('#diskDatatable').dataTable().api();
 
-    let main = () => {
-        let cpuData = [];
+    let memoryChart = new Chart(document.querySelector("#MemoryPlot").getContext("2d"), {
+        type: "doughnut",
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        },
+        data: {
+            labels: [
+                "Free",
+                "Shared",
+                "Buffer",
+                "Used"
+            ]
+        }
+    });
+
+
+    let cpuLabels = [];
+    for (let i = 0; i < dashboard.currentCompInfo.cpuCount; i++) {
+        cpuLabels[i] = "Cpu " + i;
+    }
+    let cpuChart = new Chart(document.querySelector("#CPUPlot").getContext("2d"), {
+        type: "bar",
+        data: {
+            labels: cpuLabels
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [
+                    {
+                        stacked: true
+                    }
+                ],
+                yAxes: [
+                    {
+                        stacked: true,
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }
+                ]
+            }
+        }
+        // datasets: [
+        //     {
+        //         label: "User time",
+        //         data: cpuData[0],
+        //         backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        //         borderColor: 'rgba(255,99,132,1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "Nice time",
+        //         data: cpuData[1],
+        //         backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        //         borderColor: 'rgba(54, 162, 235, 1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "System time",
+        //         data: cpuData[2],
+        //         backgroundColor: 'rgba(255, 206, 86, 0.2)',
+        //         borderColor: 'rgba(255, 206, 86, 1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "IO Wait",
+        //         data: cpuData[3],
+        //         backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        //         borderColor: 'rgba(75, 192, 192, 1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "IRQ",
+        //         data: cpuData[4],
+        //         backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        //         borderColor: 'rgba(153, 102, 255, 1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "Soft IRQ",
+        //         data: cpuData[5],
+        //         backgroundColor: 'rgba(255, 159, 64, 0.2)',
+        //         borderColor: 'rgba(255, 159, 64, 1)',
+        //         borderWidth: 1
+        //     }
+        // ]
+    });
+
+
+    let cpuData = [];
+    let updateCpu = () => {
         for (let j = 0; j < dashboard.currentCompInfo.cpuCount; j++) {
             cpuData[j] = generateData(j, last[j]);
         }
+    };
+    cpuUpdateIntervalId = setInterval(updateCpu, 1000);
+    updateCpu();
 
-        let data = [];
+    cpuChart.data.datasets = [
+        // {
+        //     data: [],
+        //     backgroundColor: [
+        //         "rgba(255, 99, 132, 0.2)",
+        //         "rgba(54, 162, 235, 0.2)",
+        //         "rgba(255, 206, 86, 0.2)",
+        //         "rgba(75, 192, 192, 0.2)",
+        //         "rgba(153, 102, 255, 0.2)",
+        //         "rgba(255, 159, 64, 0.2)"
+        //     ],
+        //     borderColor: [
+        //         "rgba(255,99,132,1)",
+        //         "rgba(54, 162, 235, 1)",
+        //         "rgba(255, 206, 86, 1)",
+        //         "rgba(75, 192, 192, 1)",
+        //         "rgba(153, 102, 255, 1)",
+        //         "rgba(255, 159, 64, 1)"
+        //     ],
+        //     borderWidth: 1
+        // }
+        {
+            label: "User time",
+            data: cpuData[0],
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255,99,132,1)',
+            borderWidth: 1
+        },
+        {
+            label: "Nice time",
+            data: cpuData[1],
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        },
+        {
+            label: "System time",
+            data: cpuData[2],
+            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+            borderColor: 'rgba(255, 206, 86, 1)',
+            borderWidth: 1
+        },
+        {
+            label: "IO Wait",
+            data: cpuData[4],
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+        },
+        {
+            label: "IRQ",
+            data: cpuData[5],
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 1
+        },
+        {
+            label: "Soft IRQ",
+            data: cpuData[6],
+            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+            borderColor: 'rgba(255, 159, 64, 1)',
+            borderWidth: 1
+        }
+    ];
 
+    // cpuChart.data.datasets = [
+
+    // ];
+
+    let ram = dashboard.currentCompInfo.ram;
+    memoryChart.data.datasets = [
+        {
+            data: [Math.round(ram[1] / (1024 * 1024)), Math.round(ram[2] / (1024 * 1024)), Math.round(ram[3] / (1024 * 1024)), Math.round((ram[0] - (ram[1] + ram[2] + ram[3])) / (1024 * 1024))],
+            backgroundColor: [
+                "rgba(255, 99, 132, 0.2)",
+                "rgba(54, 162, 235, 0.2)",
+                "rgba(255, 206, 86, 0.2)",
+                "rgba(75, 192, 192, 0.2)"
+            ],
+            borderColor: [
+                "rgba(255,99,132,1)",
+                "rgba(54, 162, 235, 1)",
+                "rgba(255, 206, 86, 1)",
+                "rgba(75, 192, 192, 1)"
+            ],
+            borderWidth: 1
+        }
+    ];
+
+    let main = () => {
+
+
+
+        // let data = [];
+        // let cpuCounter = 0;
+        // for (let i = 0; i < 7; i++) {
+        //     if (i == 3) {
+        //         continue;
+        //     }
+        //     let dat = [];
+        //     for (let j = 1; j <= dashboard.currentCompInfo.cpuCount; j++) {
+        //         let cpuLoad = cpuData[j - 1];
+        //         let total = cpuLoad[7] == 0 ? 1 : cpuLoad[7];
+        //         dat.push([j, cpuLoad[i] / total * 100]);
+        //     }
+        //     cpuData.push(dat);
+        //     // data.push(dat);
+        // }
+        // cpuChart.data.datasets = [
+        //     {
+        //         label: "User time",
+        //         data: cpuData[0],
+        //         backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        //         borderColor: 'rgba(255,99,132,1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "Nice time",
+        //         data: cpuData[1],
+        //         backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        //         borderColor: 'rgba(54, 162, 235, 1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "System time",
+        //         data: cpuData[2],
+        //         backgroundColor: 'rgba(255, 206, 86, 0.2)',
+        //         borderColor: 'rgba(255, 206, 86, 1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "IO Wait",
+        //         data: cpuData[4],
+        //         backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        //         borderColor: 'rgba(75, 192, 192, 1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "IRQ",
+        //         data: cpuData[5],
+        //         backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        //         borderColor: 'rgba(153, 102, 255, 1)',
+        //         borderWidth: 1
+        //     },
+        //     {
+        //         label: "Soft IRQ",
+        //         data: cpuData[6],
+        //         backgroundColor: 'rgba(255, 159, 64, 0.2)',
+        //         borderColor: 'rgba(255, 159, 64, 1)',
+        //         borderWidth: 1
+        //     }
+        // ];
+
+        let counter0 = 0;
         for (let i = 0; i < 7; i++) {
             if (i == 3) {
                 continue;
             }
-            let dat = [];
-            for (let j = 1; j <= dashboard.currentCompInfo.cpuCount; j++) {
-                let cpuLoad = cpuData[j - 1];
-                let total = cpuLoad[7] == 0 ? 1 : cpuLoad[7];
-                dat.push([j, cpuLoad[i] / total * 100]);
+            let arr = [];
+            for (let j = 0; j < dashboard.currentCompInfo.cpuCount; j++) {
+                arr.push(Math.floor(cpuData[j][i] / cpuData[j][7] * 1000) / 10);
             }
-            data.push(dat);
+            cpuChart.data.datasets[counter0].data = arr;
+            counter0++;
         }
-        $.plot("#CPUPlot", data, {
-            series: {
-                stack: true,
-                bars: {
-                    show: true,
-                    barWidth: 0.6
-                }
-            }
-        });
+        cpuChart.update();
+        // $.plot("#CPUPlot", data, {
+        //     series: {
+        //         stack: true,
+        //         bars: {
+        //             show: true,
+        //             barWidth: 0.6
+        //         }
+        //     }
+        // });
         last = cpuData;
 
-        let memoryData = [];
         let ram = dashboard.currentCompInfo.ram;
-        memoryData.push({
-            label: "Free " + (Math.round(ram[1] / (1024 * 1024 * 1024) * 100) / 100) + "G",
-            data: Math.round(ram[1] / (1024 * 1024))
-        });
-        memoryData.push({
-            label: "Shared " + (Math.round(ram[2] / (1024 * 1024 * 1024) * 100) / 100) + "G",
-            data: Math.round(ram[2] / (1024 * 1024))
-        });
-        memoryData.push({
-            label: "Buffer " + (Math.round(ram[3] / (1024 * 1024 * 1024) * 100) / 100) + "G",
-            data: Math.round(ram[3] / (1024 * 1024))
-        });
-        memoryData.push({
-            label: "Used " + (Math.round((ram[0] - (ram[1] + ram[2] + ram[3])) / (1024 * 1024 * 1024) * 100) / 100) + "G",
-            data: Math.round((ram[0] - (ram[1] + ram[2] + ram[3])) / (1024 * 1024))
-        });
-        $.plot("#MemoryPlot", memoryData, {
-            series: {
-                pie: {
-                    show: true,
-                    radius: 1,
-                    innerRadius: 0.5,
-                }
-            },
-            legend: {
-                show: true
-            }
-        });
+        memoryChart.data.datasets[0].data = [Math.round(ram[1] / (1024 * 1024)), Math.round(ram[2] / (1024 * 1024)), Math.round(ram[3] / (1024 * 1024)), Math.round((ram[0] - (ram[1] + ram[2] + ram[3])) / (1024 * 1024))];
 
+        // $.plot("#MemoryPlot", memoryData, {
+        //     series: {
+        //         pie: {
+        //             show: true,
+        //             radius: 1,
+        //             innerRadius: 0.5,
+        //         }
+        //     },
+        //     legend: {
+        //         show: true
+        //     }
+        // });
+        // memoryChart.data.datasets = memoryData;
+        memoryChart.update();
         let maxSpace = Math.round(ram[4] / (1024 * 1024 * 1024) * 100) / 100;
         let usedPercent = ((ram[4] - ram[5]) / ram[4] * 100);
         let freePercent = (ram[5] / ram[4] * 100);
@@ -120,10 +355,10 @@ events.addEventListener("loadingContentEnded", () => {
 
     let diskUpdate = () => {
         diskDatatable.clear();
-        diskDatatable.rows.add(newDataArray);
+        // diskDatatable.rows.add(newDataArray);
         diskDatatable.draw();
     };
-    dashboardCPUPlotIntervalId = setInterval(main, 1000);
+    dashboardCPUPlotIntervalId = setInterval(main, 2000);
     diskUpdateIntervalId = setInterval(diskUpdate, 10 * 1000);
     main();
     events.removeEventListener("loadingContentEnded", this);
@@ -131,6 +366,7 @@ events.addEventListener("loadingContentEnded", () => {
 events.addEventListener("finalizeContent", () => {
     clearInterval(dashboardCPUPlotIntervalId);
     clearInterval(diskUpdateIntervalId);
+    clearInterval(cpuUpdateIntervalId);
     events.removeEventListener("finalizeContent", this);
 });
 

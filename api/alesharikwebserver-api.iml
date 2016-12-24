@@ -46,7 +46,7 @@
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.3" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-rcm:2.3.3" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.3" level="project" />
-    <orderEntry type="library" name="Maven: javax.servlet:servlet-api:3.0-alpha-1" level="project" />
+    <orderEntry type="library" name="Maven: javax.servlet:javax.servlet-api:3.1.0" level="project" />
     <orderEntry type="library" name="Maven: org.openjdk.jmh:jmh-core:1.17" level="project" />
     <orderEntry type="library" name="Maven: org.openjdk.jmh:jmh-generator-annprocess:1.17" level="project" />
     <orderEntry type="library" name="Maven: asm:asm:3.3" level="project" />
