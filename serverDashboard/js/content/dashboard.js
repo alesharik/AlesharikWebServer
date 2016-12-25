@@ -87,50 +87,6 @@ events.addEventListener("loadingContentEnded", () => {
                 ]
             }
         }
-        // datasets: [
-        //     {
-        //         label: "User time",
-        //         data: cpuData[0],
-        //         backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        //         borderColor: 'rgba(255,99,132,1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "Nice time",
-        //         data: cpuData[1],
-        //         backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        //         borderColor: 'rgba(54, 162, 235, 1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "System time",
-        //         data: cpuData[2],
-        //         backgroundColor: 'rgba(255, 206, 86, 0.2)',
-        //         borderColor: 'rgba(255, 206, 86, 1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "IO Wait",
-        //         data: cpuData[3],
-        //         backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        //         borderColor: 'rgba(75, 192, 192, 1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "IRQ",
-        //         data: cpuData[4],
-        //         backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        //         borderColor: 'rgba(153, 102, 255, 1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "Soft IRQ",
-        //         data: cpuData[5],
-        //         backgroundColor: 'rgba(255, 159, 64, 0.2)',
-        //         borderColor: 'rgba(255, 159, 64, 1)',
-        //         borderWidth: 1
-        //     }
-        // ]
     });
 
 
@@ -144,26 +100,6 @@ events.addEventListener("loadingContentEnded", () => {
     updateCpu();
 
     cpuChart.data.datasets = [
-        // {
-        //     data: [],
-        //     backgroundColor: [
-        //         "rgba(255, 99, 132, 0.2)",
-        //         "rgba(54, 162, 235, 0.2)",
-        //         "rgba(255, 206, 86, 0.2)",
-        //         "rgba(75, 192, 192, 0.2)",
-        //         "rgba(153, 102, 255, 0.2)",
-        //         "rgba(255, 159, 64, 0.2)"
-        //     ],
-        //     borderColor: [
-        //         "rgba(255,99,132,1)",
-        //         "rgba(54, 162, 235, 1)",
-        //         "rgba(255, 206, 86, 1)",
-        //         "rgba(75, 192, 192, 1)",
-        //         "rgba(153, 102, 255, 1)",
-        //         "rgba(255, 159, 64, 1)"
-        //     ],
-        //     borderWidth: 1
-        // }
         {
             label: "User time",
             data: cpuData[0],
@@ -233,69 +169,6 @@ events.addEventListener("loadingContentEnded", () => {
     ];
 
     let main = () => {
-
-
-
-        // let data = [];
-        // let cpuCounter = 0;
-        // for (let i = 0; i < 7; i++) {
-        //     if (i == 3) {
-        //         continue;
-        //     }
-        //     let dat = [];
-        //     for (let j = 1; j <= dashboard.currentCompInfo.cpuCount; j++) {
-        //         let cpuLoad = cpuData[j - 1];
-        //         let total = cpuLoad[7] == 0 ? 1 : cpuLoad[7];
-        //         dat.push([j, cpuLoad[i] / total * 100]);
-        //     }
-        //     cpuData.push(dat);
-        //     // data.push(dat);
-        // }
-        // cpuChart.data.datasets = [
-        //     {
-        //         label: "User time",
-        //         data: cpuData[0],
-        //         backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        //         borderColor: 'rgba(255,99,132,1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "Nice time",
-        //         data: cpuData[1],
-        //         backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        //         borderColor: 'rgba(54, 162, 235, 1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "System time",
-        //         data: cpuData[2],
-        //         backgroundColor: 'rgba(255, 206, 86, 0.2)',
-        //         borderColor: 'rgba(255, 206, 86, 1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "IO Wait",
-        //         data: cpuData[4],
-        //         backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        //         borderColor: 'rgba(75, 192, 192, 1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "IRQ",
-        //         data: cpuData[5],
-        //         backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        //         borderColor: 'rgba(153, 102, 255, 1)',
-        //         borderWidth: 1
-        //     },
-        //     {
-        //         label: "Soft IRQ",
-        //         data: cpuData[6],
-        //         backgroundColor: 'rgba(255, 159, 64, 0.2)',
-        //         borderColor: 'rgba(255, 159, 64, 1)',
-        //         borderWidth: 1
-        //     }
-        // ];
-
         let counter0 = 0;
         for (let i = 0; i < 7; i++) {
             if (i == 3) {
@@ -309,44 +182,20 @@ events.addEventListener("loadingContentEnded", () => {
             counter0++;
         }
         cpuChart.update();
-        // $.plot("#CPUPlot", data, {
-        //     series: {
-        //         stack: true,
-        //         bars: {
-        //             show: true,
-        //             barWidth: 0.6
-        //         }
-        //     }
-        // });
         last = cpuData;
 
         let ram = dashboard.currentCompInfo.ram;
         memoryChart.data.datasets[0].data = [Math.round(ram[1] / (1024 * 1024)), Math.round(ram[2] / (1024 * 1024)), Math.round(ram[3] / (1024 * 1024)), Math.round((ram[0] - (ram[1] + ram[2] + ram[3])) / (1024 * 1024))];
 
-        // $.plot("#MemoryPlot", memoryData, {
-        //     series: {
-        //         pie: {
-        //             show: true,
-        //             radius: 1,
-        //             innerRadius: 0.5,
-        //         }
-        //     },
-        //     legend: {
-        //         show: true
-        //     }
-        // });
-        // memoryChart.data.datasets = memoryData;
         memoryChart.update();
         let maxSpace = Math.round(ram[4] / (1024 * 1024 * 1024) * 100) / 100;
         let usedPercent = ((ram[4] - ram[5]) / ram[4] * 100);
         let freePercent = (ram[5] / ram[4] * 100);
 
-        //noinspection JSJQueryEfficiency
         $("#swapProgressBarUsed").css("width", usedPercent + "%");
         if (usedPercent > 10) {
             $("#swapProgressBarUsed").text("Used space: " + Math.round((ram[4] - ram[5]) / (1024 * 1024 * 1024) * 100) / 100 + "G/" + maxSpace + "G");
         }
-        //noinspection JSJQueryEfficiency
         $("#swapProgressBarFree").css("width", freePercent + "%");
         if (freePercent) {
             $("#swapProgressBarFree").text("Free space: " + Math.round(ram[5] / (1024 * 1024 * 1024) * 100) / 100 + "G/" + maxSpace + "G");

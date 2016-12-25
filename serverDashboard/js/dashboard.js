@@ -85,6 +85,7 @@ class ComputerInfo {
         this.cpuCount = 0;
         this.cpuLoad = [];
         this.ram = [];
+        this.disks = [];
     }
 
     /**
@@ -128,6 +129,19 @@ class ComputerInfo {
                 return this.cpuLoad[cpu][0][6];
         }
     }
+}
+
+class Disk {
+    constructor() {
+        this.partitions = [];
+    }
+
+    static parse(json) {
+
+    }
+}
+
+class DiskPartition {
 
 }
 
