@@ -83,18 +83,19 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
                 <executions>
-                    <execution><!-- Run our version calculation script -->
-                        <id>one-nio_setup</id>
-                        <phase>generate-sources</phase>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
                         <goals>
-                            <goal>exec</goal>
+                            <goal>single</goal>
                         </goals>
-                        <configuration>
-                            <executable>${basedir}/setupOneNio.sh</executable>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
