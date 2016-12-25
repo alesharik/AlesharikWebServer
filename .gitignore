@@ -2,6 +2,7 @@
 .idea/
 
 *.mp3
+*.iml
 
 /ServerControl/
 /benchmarks/
@@ -14,10 +15,6 @@
 /out
 /api/out
 /main/out
-
-/AlesharikWebServer.iml
-/api/alesharikwebserver-api.iml
-/main/alesharikwebserver-main.iml
 
 /AlesharikWebServer.jar
 /alesharikwebserver-api-1.0-SNAPSHOT.jar

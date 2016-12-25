@@ -60,26 +60,6 @@
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>${project.artifactId}</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>one-nio</groupId>
-                                    <artifactId>one-nio</artifactId>
-                                    <version>1.0</version>
-                                    <!--<systemPath>${basedir}/one-nio/one-nio.jar</systemPath>-->
-                                    <type>jar</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/production</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>
