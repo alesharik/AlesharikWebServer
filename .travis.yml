@@ -6,5 +6,5 @@ jdk:
 addons:
     apt:
       sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7', 'kalakris-cmake']
-      packages: ['clang-3.7', 'cmake', 'util-linux']
+      packages: ['clang-3.7', 'cmake', 'util-linux', 'libblkid1', 'libblkid-dev']
 env: COMPILER=clang++-3.7
