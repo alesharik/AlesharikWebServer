@@ -11,6 +11,7 @@
 /modules/
 /plugins/
 
+/out
 /api/out
 /main/out
 
