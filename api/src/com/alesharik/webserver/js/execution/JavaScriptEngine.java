@@ -38,9 +38,11 @@ public final class JavaScriptEngine {
      */
     public JavaScriptEngine(boolean noJava, boolean loadThreadApi) {
         if(noJava) {
-            engine = ENGINE_FACTORY.getScriptEngine("-strict", "--no-java");
+            String[] config = {"-strict", "--no-java"};
+            engine = ENGINE_FACTORY.getScriptEngine(config);
         } else {
-            engine = ENGINE_FACTORY.getScriptEngine("-strict");
+            String[] config = {"-strict"};
+            engine = ENGINE_FACTORY.getScriptEngine(config);
             if(loadThreadApi) {
                 loadThreadApi();
             }
