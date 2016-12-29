@@ -1,7 +1,9 @@
 package com.alesharik.webserver.api;
 
+import com.alesharik.webserver.logger.Logger;
 import one.nio.lock.RWLock;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Timer;
@@ -111,11 +113,46 @@ public final class ComputerData {
             stringBuilder.append(",\"ram\": ");
             stringBuilder.append(Arrays.toString(ram));
 
+            stringBuilder.append(",\"partitions\": ");
+
+            Utils.Partition[] computerPartitions = Utils.getComputerPartitions();
+            stringBuilder.append('[');
+            for(int i = 0; i < computerPartitions.length; i++) {
+                stringBuilder.append(serializePartition(computerPartitions[i]));
+                if(i == computerPartitions.length - 1) {
+                    stringBuilder.append(']');
+                } else {
+                    stringBuilder.append(',');
+                }
+            }
             stringBuilder.append('}');
             return stringBuilder.toString();
+        } catch (IOException e) {
+            Logger.log(e);
+            return "";
         } finally {
             lock.unlockRead();
         }
+    }
+
+    private String serializePartition(Utils.Partition partition) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{\"name\": \"");
+        stringBuilder.append(partition.getName());
+        stringBuilder.append("\", \"addr\": \"");
+        stringBuilder.append(partition.getAddress());
+        stringBuilder.append("\", \"type\": \"");
+        stringBuilder.append(partition.getType());
+        stringBuilder.append("\", \"max\": ");
+        stringBuilder.append(partition.getMax());
+        stringBuilder.append(", \"free\": ");
+        stringBuilder.append(partition.getFree());
+        stringBuilder.append(", \"inodes\": ");
+        stringBuilder.append(partition.getInodeMax());
+        stringBuilder.append(", \"inodesFree\": ");
+        stringBuilder.append(partition.getInodeFree());
+        stringBuilder.append("}");
+        return stringBuilder.toString();
     }
 
     public enum RamType {

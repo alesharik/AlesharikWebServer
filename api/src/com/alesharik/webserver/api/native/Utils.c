@@ -14,6 +14,7 @@
 #include <blkid/blkid.h>
 #include <err.h>
 #include <dirent.h>
+#include <sys/statvfs.h>
 
 #define BUFFER_SIZE 1024
 
@@ -21,6 +22,11 @@ struct partition {
     char *address; //Name
     const char *label; //Partition
     const char *type;
+
+    long max;
+    long used;
+    long inodes;
+    long inodesFree;
 };
 
 struct partitions {
@@ -214,11 +220,23 @@ int getPartitionsInDevice(char *name, struct partitions *parts) {
             label = "none";
         }
 
-        printf("Name=%s, LABEL=%s, TYPE=%s\n", dev_name, label, type);
         struct partition part;
         part.address = strdup(dev_name);
         part.label = strdup(label);
         part.type = strdup(type);
+        part.max = blkid_probe_get_size(probe);
+
+        struct statvfs stat;
+        if(statvfs(name, &stat) != 0) {
+            part.used = -1;
+            part.inodes = -1;
+            part.inodesFree = -1;
+        } else {
+            part.used = stat.f_bfree * stat.f_bsize;
+            part.inodes = stat.f_files;
+            part.inodesFree = stat.f_ffree;
+        }
+
         partitions[realCount] = part;
         realCount++;
         blkid_free_probe(probe);
@@ -304,10 +322,10 @@ JNIEXPORT jobjectArray JNICALL Java_com_alesharik_webserver_api_Utils_getPartiti
             }
         }
         jclass PartitionClass = (*env)->FindClass(env, "com/alesharik/webserver/api/Utils$Partition");
-        jmethodID PartitionConstructor = (*env)->GetMethodID(env, PartitionClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+        jmethodID PartitionConstructor = (*env)->GetMethodID(env, PartitionClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
         jobjectArray ret = (*env)->NewObjectArray(env, retPartitions.count, PartitionClass, NULL);
         for(int i = 0; i < retPartitions.count; i++) {
-            jobject obj = (*env)->NewObject(env, PartitionClass, PartitionConstructor, (*env)->NewStringUTF(env, retPartitions.partitionArray[i].address), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].label), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].type));
+            jobject obj = (*env)->NewObject(env, PartitionClass, PartitionConstructor, (*env)->NewStringUTF(env, retPartitions.partitionArray[i].address), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].label), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].type), retPartitions.partitionArray[i].max, retPartitions.partitionArray[i].used, retPartitions.partitionArray[i].inodes, retPartitions.partitionArray[i].inodesFree);
             (*env)->SetObjectArrayElement(env, ret, i, obj);
         }
         closedir(dir);

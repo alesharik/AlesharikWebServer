@@ -85,7 +85,7 @@ class ComputerInfo {
         this.cpuCount = 0;
         this.cpuLoad = [];
         this.ram = [];
-        this.disks = [];
+        this.partitions = [];
     }
 
     /**
@@ -98,6 +98,10 @@ class ComputerInfo {
             this.cpuLoad[i] = json["cpu" + i];
         }
         this.ram = json.ram;
+        this.partitions = [];
+        json.partitions.forEach((part) => {
+            this.partitions.push(Partition.parse(part));
+        });
     }
 
     /**
@@ -133,18 +137,25 @@ class ComputerInfo {
     }
 }
 
-class Disk {
-    constructor() {
-        this.partitions = [];
+class Partition {
+    constructor(name, addr, type, max, free, inodes, inodesFree) {
+        this.name = name;
+        this.address = addr;
+        this.type = type;
+        this.maxSize = max;
+        this.usedSize = max - free;
+        this.freeSize = free;
+        this.inodes = inodes;
+        this.inodesFree = inodesFree;
     }
 
+    /**
+     * @param {object} json
+     * @return {Partition}
+     */
     static parse(json) {
-
+        return new Partition(json.name, json.addr, json.type, json.max, json.free, json.inodes, json.inodesFree);
     }
-}
-
-class DiskPartition {
-
 }
 
 //====================Computer info end====================\\

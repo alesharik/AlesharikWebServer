@@ -222,9 +222,25 @@ events.addEventListener("loadingContentEnded", () => {
 
     let diskUpdate = () => {
         diskDatatable.clear();
-        // diskDatatable.rows.add(newDataArray);
+        let array = [];
+        for (let i = 0; i < dashboard.currentCompInfo.partitions.length; i++) {
+            let partition = dashboard.currentCompInfo.partitions[i];
+            array.push([
+                partition.name,
+                partition.address,
+                partition.type,
+                Math.floor(partition.maxSize / (1024 * 1024 * 1024) * 100) / 100,
+                Math.floor(partition.usedSize / (1024 * 1024 * 1024) * 100) / 100,
+                Math.floor(partition.freeSize / (1024 * 1024 * 1024) * 100) / 100,
+                partition.inodes,
+                partition.inodesFree
+            ]);
+        }
+        diskDatatable.rows.add(array);
         diskDatatable.draw();
+        // diskDatatable.rows.add(newDataArray);
     };
+    diskUpdate();
     dashboardCPUPlotIntervalId = setInterval(main, 2000);
     diskUpdateIntervalId = setInterval(diskUpdate, 10 * 1000);
     main();

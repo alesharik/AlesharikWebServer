@@ -4,6 +4,7 @@ import com.alesharik.webserver.logger.Logger;
 import one.nio.util.ByteArrayBuilder;
 import one.nio.util.Hex;
 
+import javax.annotation.concurrent.Immutable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -138,15 +139,24 @@ public final class Utils {
         return getPartitions();
     }
 
+    @Immutable
     public static final class Partition {
-        private String name;
-        private String address;
-        private String type;
+        private final String name;
+        private final String address;
+        private final String type;
+        private final long max;
+        private final long free;
+        private final long inode;
+        private final long inodeFree;
 
-        Partition(String name, String address, String type) {
+        Partition(String address, String name, String type, long max, long free, long inode, long inodeFree) {
             this.name = name;
             this.address = address;
             this.type = type;
+            this.max = max;
+            this.free = free;
+            this.inode = inode;
+            this.inodeFree = inodeFree;
         }
 
         public String getName() {
@@ -161,6 +171,22 @@ public final class Utils {
             return type;
         }
 
+        public long getMax() {
+            return max;
+        }
+
+        public long getFree() {
+            return free;
+        }
+
+        public long getInodeMax() {
+            return inode;
+        }
+
+        public long getInodeFree() {
+            return inodeFree;
+        }
+
         @Override
         public boolean equals(Object o) {
             if(this == o) return true;
@@ -168,16 +194,25 @@ public final class Utils {
 
             Partition partition = (Partition) o;
 
-            if(name != null ? !name.equals(partition.name) : partition.name != null) return false;
-            if(address != null ? !address.equals(partition.address) : partition.address != null) return false;
-            return type != null ? type.equals(partition.type) : partition.type == null;
+            if(getMax() != partition.getMax()) return false;
+            if(getFree() != partition.getFree()) return false;
+            if(inode != partition.inode) return false;
+            if(getInodeFree() != partition.getInodeFree()) return false;
+            if(getName() != null ? !getName().equals(partition.getName()) : partition.getName() != null) return false;
+            if(getAddress() != null ? !getAddress().equals(partition.getAddress()) : partition.getAddress() != null)
+                return false;
+            return getType() != null ? getType().equals(partition.getType()) : partition.getType() == null;
         }
 
         @Override
         public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (address != null ? address.hashCode() : 0);
-            result = 31 * result + (type != null ? type.hashCode() : 0);
+            int result = getName() != null ? getName().hashCode() : 0;
+            result = 31 * result + (getAddress() != null ? getAddress().hashCode() : 0);
+            result = 31 * result + (getType() != null ? getType().hashCode() : 0);
+            result = 31 * result + (int) (getMax() ^ (getMax() >>> 32));
+            result = 31 * result + (int) (getFree() ^ (getFree() >>> 32));
+            result = 31 * result + (int) (inode ^ (inode >>> 32));
+            result = 31 * result + (int) (getInodeFree() ^ (getInodeFree() >>> 32));
             return result;
         }
 
@@ -187,8 +222,11 @@ public final class Utils {
                     "name='" + name + '\'' +
                     ", address='" + address + '\'' +
                     ", type='" + type + '\'' +
+                    ", max=" + max +
+                    ", free=" + free +
+                    ", inode=" + inode +
+                    ", inodeFree=" + inodeFree +
                     '}';
         }
-
     }
 }
