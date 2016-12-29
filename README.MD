@@ -1,6 +1,8 @@
 AlesharikWebServer
 ==================
 
+![Travis-ci](https://api.travis-ci.org/alesharik/AlesharikWebServer.svg?branch=master)
+
 AlesharikWebServer is a web server with unique plugin system.
 WARNING! This server might not work work on windows/mac!
 
