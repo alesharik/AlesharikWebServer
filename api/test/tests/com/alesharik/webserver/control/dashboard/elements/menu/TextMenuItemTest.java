@@ -5,7 +5,7 @@ import com.alesharik.webserver.control.dashboard.elements.menu.TextMenuItem;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -20,8 +20,8 @@ public class TextMenuItemTest {
     private static TextMenuItem read;
     private static TextMenuItem sameAsRead;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void setUp() throws Exception {
         menuItem = new TextMenuItem(FA, TEXT);
         read = new TextMenuItem(FA, TEXT);
         sameAsRead = new TextMenuItem(FA, TEXT);
