@@ -61,7 +61,7 @@ public class Main {
 //        controllerServer.initMainServer();
 //        System.in.read();
 //        server.shutdown();
-//        AdminDataHolder holder = new AdminDataHolder(new File(System.getProperty("user.dir")), "test", "test");
+//        AdminDataStorageImpl holder = new AdminDataStorageImpl(new File(System.getProperty("user.dir")), "test", "test");
 //        holder.check("admin", "admin");
 //        AsyncHttpClientConfig cfg = new DefaultAsyncHttpClientConfig.Builder().build();
 //        AsyncHttpClient client = new DefaultAsyncHttpClient(cfg);

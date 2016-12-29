@@ -1,4 +1,4 @@
-package com.alesharik.webserver.control.dataHolding;
+package com.alesharik.webserver.control.dataStorage;
 
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.convert.ListDelimiterHandler;

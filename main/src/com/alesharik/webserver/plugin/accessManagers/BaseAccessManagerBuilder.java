@@ -1,24 +1,24 @@
 package com.alesharik.webserver.plugin.accessManagers;
 
-import com.alesharik.webserver.control.dashboard.PluginDataHolder;
+import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.main.FileManager;
 
 public class BaseAccessManagerBuilder {
     private FileManager fileManager;
-    private PluginDataHolder pluginDataHolder;
+    private DashboardDataHolder dashboardDataHolder;
 
     public void setFileManager(FileManager fileManager) {
         this.fileManager = fileManager;
     }
 
-    public void setPluginDataHolder(PluginDataHolder pluginDataHolder) {
-        this.pluginDataHolder = pluginDataHolder;
+    public void setDashboardDataHolder(DashboardDataHolder dashboardDataHolder) {
+        this.dashboardDataHolder = dashboardDataHolder;
     }
 
     public BaseAccessManager build() {
         BaseAccessManager manager = new BaseAccessManager();
         manager.fileManager = fileManager;
-        manager.pluginDataHolder = pluginDataHolder;
+        manager.dashboardDataHolder = dashboardDataHolder;
         return manager;
     }
 }

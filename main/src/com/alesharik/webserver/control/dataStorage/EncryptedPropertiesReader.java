@@ -1,4 +1,4 @@
-package com.alesharik.webserver.control.dataHolding;
+package com.alesharik.webserver.control.dataStorage;
 
 import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.logger.Logger;

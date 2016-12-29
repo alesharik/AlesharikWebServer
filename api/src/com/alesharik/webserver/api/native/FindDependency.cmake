@@ -41,7 +41,7 @@ function(find_dependency)
             set(${FIND_DEPENDENCY_NAME}_LIBRARIES "" PARENT_SCOPE)
         endif()
 
-        # Get the library name
+        # Get the library text
         get_filename_component(${FIND_DEPENDENCY_NAME}_LIBRARY_DIRS ${${FIND_DEPENDENCY_NAME}_LIBRARY} PATH)
         set(${FIND_DEPENDENCY_NAME_LIBRARY} ${${FIND_DEPENDENCY_NAME_LIBRARY}} PARENT_SCOPE)
 

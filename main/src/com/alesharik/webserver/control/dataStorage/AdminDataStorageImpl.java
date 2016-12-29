@@ -1,7 +1,8 @@
-package com.alesharik.webserver.control.dataHolding;
+package com.alesharik.webserver.control.dataStorage;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.StringCipher;
+import com.alesharik.webserver.control.AdminDataStorage;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.main.Main;
@@ -29,11 +30,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.List;
 
 /**
- * This class used for hold data admin login, password and data in encrypted state
+ * This class used ONLY in AlesharikWebServer. Do not use it!
  */
-//TODO fix update password with test/test cannot decrypt file!
-@Prefixes(value = {"[ServerControl]", "[AdminDataHolder]"})
-public final class AdminDataHolder {
+@Prefixes(value = {"[ServerControl]", "[AdminDataStorage]"})
+public final class AdminDataStorageImpl implements AdminDataStorage {
     private static final String ADMIN_DATA_FILE = "adminData.dat";
     private static final String ADMIN_KEY_FILE = "adminKey.key";
     private byte[] salt = new byte[32];
@@ -44,11 +44,11 @@ public final class AdminDataHolder {
     private File adminKeyFile;
 
     /**
-     * Initialize new {@link AdminDataHolder}
+     * Initialize new {@link AdminDataStorageImpl}
      *
      * @param key encryption key. Length of key must be equals 24!
      */
-    public AdminDataHolder(String key) throws ConfigurationException, IOException {
+    public AdminDataStorageImpl(String key) throws ConfigurationException, IOException {
         serverKey = key;
 
         File adminDataFile = new File(Main.USER_DIR + "/" + ADMIN_DATA_FILE);
@@ -84,7 +84,7 @@ public final class AdminDataHolder {
         fileBasedConfigurationBuilder.setAutoSave(true);
         configuration = fileBasedConfigurationBuilder.getConfiguration();
 
-        Logger.log("AdminDataHolder successfully initialized!");
+        Logger.log("AdminDataStorageImpl successfully initialized!");
     }
 
     /**
@@ -138,23 +138,14 @@ public final class AdminDataHolder {
         return salt;
     }
 
-    /**
-     * Check is login and password are correct
-     */
     public boolean check(String login, String password) {
         return check(LoginPasswordCoder.encode(login, password));
     }
 
-    /**
-     * Check is login and password are correct
-     */
     public boolean check(String logpass) {
         return adminKey.equals(generateAdminKey(logpass));
     }
 
-    /**
-     * Update login and password
-     */
     public void updateLoginPassword(String oldLogin, String oldPassword, String newLogin, String newPassword) {
         if(check(oldLogin, oldPassword)) {
             try {
@@ -182,24 +173,19 @@ public final class AdminDataHolder {
         return "";
     }
 
-    /**
-     * Put or set property
-     */
     public void put(String key, Object value) {
         configuration.setProperty(key, value);
     }
 
-    /**
-     * Get property
-     */
     public Object get(String key) {
         return configuration.getProperty(key);
     }
 
-    /**
-     * Remove property
-     */
     public void remove(String key) {
         configuration.clearProperty(key);
+    }
+
+    public boolean contains(String key) {
+        return configuration.containsKey(key);
     }
 }

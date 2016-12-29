@@ -1,16 +1,16 @@
 package com.alesharik.webserver.control;
 
-import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
+import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ServerHolder {
-    private AdminDataHolder holder;
+    private AdminDataStorageImpl holder;
     private ArrayList<String> servers = new ArrayList<>();
     private ArrayList<ServerController> controllers = new ArrayList<>();
 
-    public ServerHolder(AdminDataHolder holder) {
+    public ServerHolder(AdminDataStorageImpl holder) {
         this.holder = holder;
         try {
             read();

@@ -1,22 +1,24 @@
 'use strict';
 var dashboardCPUPlotIntervalId;
 var diskUpdateIntervalId;
-var cpuUpdateIntervalId;
+// var cpuUpdateIntervalId;
 events.addEventListener("loadingContentEnded", () => {
+    function warpSubtract(a, b) {
+        return (a > b) ? a - b : 0
+    }
+
     console.log("asd");
     function generateData(cpu, last) {
         if (last == undefined) {
             last = [];
             for (let j = 0; j < dashboard.currentCompInfo.cpuCount; j++) {
-                last[j] = generateData(j, [0, 0, 0, 0, 0, 0, 0, 0]);
+                last[j] = generateData(j, [0, 0, 0, 0, 0, 0, 0, 0, 0]);
             }
         }
 
         let load = dashboard.currentCompInfo.cpuLoad;
 
-        function warpSubtract(a, b) {
-            return (a > b) ? a - b : 0
-        }
+
 
         let usertime = load[cpu][0], nicetime = load[cpu][1], systemtime = load[cpu][2], idletime = load[cpu][3];
         let ioWait = load[cpu][4], irq = load[cpu][5], softIrq = load[cpu][6];
@@ -31,13 +33,13 @@ events.addEventListener("loadingContentEnded", () => {
         neww[5] = warpSubtract(irq, last[5]);
         neww[6] = warpSubtract(softIrq, last[6]);
         neww[7] = warpSubtract(totaltime, last[7]);
-
+        // neww[7] = neww[0] + neww[1] + neww[2] + neww[3] + neww[4] + neww[5] + neww[6];
         return neww;
     }
 
     let last = [];
     for (let j = 0; j < dashboard.currentCompInfo.cpuCount; j++) {
-        last[j] = generateData(j, [0, 0, 0, 0, 0, 0, 0, 0]);
+        last[j] = generateData(j, [0, 0, 0, 0, 0, 0, 0, 0, 0]);
     }
 
     let diskDatatable = $('#diskDatatable').dataTable().api();
@@ -96,8 +98,8 @@ events.addEventListener("loadingContentEnded", () => {
             cpuData[j] = generateData(j, last[j]);
         }
     };
-    cpuUpdateIntervalId = setInterval(updateCpu, 1000);
-    updateCpu();
+    // cpuUpdateIntervalId = setInterval(updateCpu, 1000);
+    // updateCpu();
 
     cpuChart.data.datasets = [
         {
@@ -169,18 +171,32 @@ events.addEventListener("loadingContentEnded", () => {
     ];
 
     let main = () => {
+        updateCpu();
         let counter0 = 0;
         for (let i = 0; i < 7; i++) {
             if (i == 3) {
                 continue;
             }
+
+            let elem = cpuChart.data.datasets[counter0];
             let arr = [];
             for (let j = 0; j < dashboard.currentCompInfo.cpuCount; j++) {
                 arr.push(Math.floor(cpuData[j][i] / cpuData[j][7] * 1000) / 10);
             }
-            cpuChart.data.datasets[counter0].data = arr;
+            elem.data = arr;
+
             counter0++;
+
+            // console.table(cpuChart.data.datasets);
         }
+
+        // let dataa = [];
+        // let datasetsCopy = cpuChart.data.datasets;
+        // datasetsCopy.forEach(elem => {
+        //     dataa.push(elem.data);
+        // });
+        // console.table(dataa);
+
         cpuChart.update();
         last = cpuData;
 
@@ -200,6 +216,8 @@ events.addEventListener("loadingContentEnded", () => {
         if (freePercent) {
             $("#swapProgressBarFree").text("Free space: " + Math.round(ram[5] / (1024 * 1024 * 1024) * 100) / 100 + "G/" + maxSpace + "G");
         }
+
+        updateCpu();
     };
 
     let diskUpdate = () => {
@@ -215,7 +233,7 @@ events.addEventListener("loadingContentEnded", () => {
 events.addEventListener("finalizeContent", () => {
     clearInterval(dashboardCPUPlotIntervalId);
     clearInterval(diskUpdateIntervalId);
-    clearInterval(cpuUpdateIntervalId);
+    // clearInterval(cpuUpdateIntervalId);
     events.removeEventListener("finalizeContent", this);
 });
 

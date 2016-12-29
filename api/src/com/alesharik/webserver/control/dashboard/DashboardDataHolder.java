@@ -5,25 +5,26 @@ import com.alesharik.webserver.control.dashboard.elements.menu.MenuDropdown;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuItem;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuPlugin;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuPluginBuilder;
-import com.alesharik.webserver.control.dashboard.elements.menu.MenuTextItem;
+import com.alesharik.webserver.control.dashboard.elements.menu.TextMenuItem;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.jsoup.Jsoup;
 
 import java.util.ArrayList;
 
-public class PluginDataHolder {
-    private Menu menu;
-    private ArrayList<MenuPlugin> menuPlugins = new ArrayList<>();
+public final class DashboardDataHolder {
+    private final Menu menu;
+    private final ArrayList<MenuPlugin> menuPlugins;
 
-    public PluginDataHolder() {
+    public DashboardDataHolder() {
         menu = new Menu()
-                .addItem(new MenuTextItem("dashboard", "Dashboard").setContentId("dashboard"))
-                .addItem(new MenuDropdown("sitemap", "Servers").addItem(new MenuTextItem("plus", "Add server").setContentId("addServer")))
+                .addItem(new TextMenuItem("dashboard", "Dashboard").setContentId("dashboard"))
+                .addItem(new MenuDropdown("sitemap", "Servers").addItem(new TextMenuItem("plus", "Add server").setContentId("addServer")))
                 .addItem(new MenuDropdown("plus", "Plugins"))
                 .addItem(new MenuDropdown("wrench", "Settings")
-                        .addItem(new MenuTextItem("sliders", "Main settings").setContentId("settings/mainSettings"))
-                        .addItem(new MenuTextItem("edit", "Edit top menu plugins").setContentId("settings/editTopMenuPlugins")));
+                        .addItem(new TextMenuItem("sliders", "Main settings").setContentId("settings/mainSettings"))
+                        .addItem(new TextMenuItem("edit", "Edit top menu plugins").setContentId("settings/editTopMenuPlugins")));
+        menuPlugins = new ArrayList<>();
         menuPlugins.add(new MenuPluginBuilder("Time")
                 .setWidth(60)
                 .setHTMLElement(Jsoup.parse("<p data-clock=\"true\"></p>"))
@@ -42,9 +43,9 @@ public class PluginDataHolder {
      * Warning! Plugin item must have name, which equals plugin name
      */
     public void addPluginItem(String pluginName, MenuItem item) {
-        if(pluginName.equals(item.getName())) {
-            menu.list().stream()
-                    .filter(menuItem -> menuItem.getName().equals("plugins"))
+        if(pluginName.equals(item.getText())) {
+            menu.menuItemList().stream()
+                    .filter(menuItem -> menuItem.getText().equals("plugins"))
                     .forEach(menuItem -> ((MenuDropdown) menuItem).addItem(item));
         }
     }

@@ -1,5 +1,6 @@
 package com.alesharik.webserver.control.dashboard;
 
+import com.alesharik.webserver.api.GsonUtils;
 import com.alesharik.webserver.control.dashboard.elements.menu.Menu;
 
 public class MenuCommandBuilder {
@@ -10,7 +11,7 @@ public class MenuCommandBuilder {
 
     public MenuCommandBuilder setMenu(Menu menu) {
         stringBuilder.append("menu:set:");
-        stringBuilder.append(menu.serialize());
+        stringBuilder.append(GsonUtils.getGson().toJson(menu));
         stringBuilder.append("\n");
         return this;
     }

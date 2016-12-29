@@ -146,8 +146,9 @@ function handleMessageInput(e) {
 /**
  * Called if menu item pressed. Load content form event and reset search if it needed
  */
-function handleMenuItemClick(e) {
-    dashboard.navigator.showContent(e.target || e.srcElement)
+function handleMenuItemClick(e, type) {
+    // dashboard.navigator.showContent(e.target || e.srcElement);
+    MenuItemManager.getItemForType(type).handleClick(e);
 }
 
 /**

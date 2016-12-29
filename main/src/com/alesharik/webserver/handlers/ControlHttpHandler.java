@@ -4,7 +4,7 @@ import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.RequestHandlerList;
 import com.alesharik.webserver.control.ControlRequestHandler;
-import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
+import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.generators.ErrorPageGenerator;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.NamedLogger;
@@ -37,10 +37,10 @@ public final class ControlHttpHandler extends HttpHandler {
     /**
      * @param logFile can be null
      */
-    public ControlHttpHandler(FileManager fileManager, AdminDataHolder adminDataHolder, boolean logRequests, File logFile, ErrorPageGenerator errorPageGenerator) {
+    public ControlHttpHandler(FileManager fileManager, AdminDataStorageImpl adminDataStorageImpl, boolean logRequests, File logFile, ErrorPageGenerator errorPageGenerator) {
         this.errorPageGenerator = errorPageGenerator;
         this.logRequests = logRequests;
-        this.requestHandler = new ControlRequestHandler(fileManager, adminDataHolder);
+        this.requestHandler = new ControlRequestHandler(fileManager, adminDataStorageImpl);
         this.fileManager = fileManager;
         this.requestHandlerList = new RequestHandlerList();
 

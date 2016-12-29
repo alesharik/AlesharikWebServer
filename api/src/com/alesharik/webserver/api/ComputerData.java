@@ -1,6 +1,9 @@
 package com.alesharik.webserver.api;
 
+import one.nio.lock.RWLock;
+
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -13,20 +16,30 @@ public final class ComputerData {
     private final int coreCount;
     private final long[][] coreLoad;
     private final long[] ram;
+    private final RWLock lock;
 
     private ComputerData() {
+        this.lock = new RWLock();
         this.coreCount = Utils.getCoresCount();
-        this.coreLoad = new long[coreCount][7];
+        this.coreLoad = new long[coreCount][8];
         this.ram = new long[6];
 
         Timer timer = new Timer("ComputerDataGatherer", true);
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                for(int i = 0; i < coreCount; i++) {
-                    coreLoad[i] = Utils.getCoreInfo(i);
+                try {
+                    lock.lockWrite();
+                    for(int i = 0; i < coreCount; i++) {
+                        long[] coreInfo = Utils.getCoreInfo(i);
+                        System.arraycopy(coreInfo, 0, coreLoad[i], 0, 7);
+                        long sum = coreInfo[0] + coreInfo[1] + coreInfo[2] + coreInfo[3] + coreInfo[4] + coreInfo[5] + coreInfo[6];
+                        coreLoad[i][7] = sum;
+                    }
+                    System.arraycopy(Utils.getRAMInfo(), 0, ram, 0, 6);
+                } finally {
+                    lock.unlockWrite();
                 }
-                System.arraycopy(Utils.getRAMInfo(), 0, ram, 0, 6);
             }
         }, 0, 1000);
     }
@@ -47,12 +60,25 @@ public final class ComputerData {
         if(core < 0 || core >= coreLoad.length) {
             throw new IllegalArgumentException("Core id must be positive and less than online core count!");
         }
+        Objects.requireNonNull(type);
 
-        return coreLoad[core][type.ordinal()]; //Throw NullPointerException on type.ordinal()
+        try {
+            lock.lockRead();
+            return coreLoad[core][type.ordinal()];
+        } finally {
+            lock.unlockRead();
+        }
     }
 
     public long getRam(RamType type) {
-        return ram[type.ordinal()]; //Throw NullPointerException on type.ordinal()
+        Objects.requireNonNull(type);
+
+        try {
+            lock.lockRead();
+            return ram[type.ordinal()];
+        } finally {
+            lock.unlockRead();
+        }
     }
 
     /**
@@ -69,22 +95,27 @@ public final class ComputerData {
      * </code>
      */
     public String stringify() {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append('{');
-        stringBuilder.append("\"cpuCount\": ");
-        stringBuilder.append(coreCount);
-        for(int i = 0; i < coreCount; i++) {
-            stringBuilder.append(", \"cpu");
-            stringBuilder.append(i);
-            stringBuilder.append("\": ");
-            stringBuilder.append(Arrays.toString(coreLoad[i]));
+        try {
+            lock.lockRead();
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append('{');
+            stringBuilder.append("\"cpuCount\": ");
+            stringBuilder.append(coreCount);
+            for(int i = 0; i < coreCount; i++) {
+                stringBuilder.append(", \"cpu");
+                stringBuilder.append(i);
+                stringBuilder.append("\": ");
+                stringBuilder.append(Arrays.toString(coreLoad[i]));
+            }
+
+            stringBuilder.append(",\"ram\": ");
+            stringBuilder.append(Arrays.toString(ram));
+
+            stringBuilder.append('}');
+            return stringBuilder.toString();
+        } finally {
+            lock.unlockRead();
         }
-
-        stringBuilder.append(",\"ram\": ");
-        stringBuilder.append(Arrays.toString(ram));
-
-        stringBuilder.append('}');
-        return stringBuilder.toString();
     }
 
     public enum RamType {
@@ -124,6 +155,10 @@ public final class ComputerData {
         /**
          * Servicing softirqs
          */
-        SOFTIRQ;
+        SOFTIRQ,
+        /**
+         * All times
+         */
+        ALL
     }
 }

@@ -83,12 +83,12 @@ public final class MenuPlugin extends JSClass {
     }
 
     /**
-     * Add method. If method name is "isActive", "getWidth", "getCode", "getName" it do nothing.
+     * Add method. If method name is "isActive", "getWidth", "getCode", "getText" it do nothing.
      */
     @Override
     public void addMethod(String methodName, String arguments, String code) {
         if(methodName.equals("isActive") || methodName.equals("getWidth")
-                || methodName.equals("getCode") || methodName.equals("getName") || methodName.equals("setParameter")
+                || methodName.equals("getCode") || methodName.equals("getText") || methodName.equals("setParameter")
                 || methodName.equals("getDefaultParameters")) {
             return;
         }
@@ -96,12 +96,12 @@ public final class MenuPlugin extends JSClass {
     }
 
     /**
-     * Remove method. If method name is "isActive", "getWidth", "getCode", "getName" it do nothing.
+     * Remove method. If method name is "isActive", "getWidth", "getCode", "getText" it do nothing.
      */
     @Override
     public void removeMethod(String methodName) {
         if(methodName.equals("isActive") || methodName.equals("getWidth")
-                || methodName.equals("getCode") || methodName.equals("getName") || methodName.equals("setParameter")
+                || methodName.equals("getCode") || methodName.equals("getText") || methodName.equals("setParameter")
                 || methodName.equals("getDefaultParameters")) {
             return;
         }

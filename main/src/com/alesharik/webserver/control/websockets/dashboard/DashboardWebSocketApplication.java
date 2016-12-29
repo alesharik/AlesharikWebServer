@@ -3,7 +3,7 @@ package com.alesharik.webserver.control.websockets.dashboard;
 import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketPlugin;
 import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketWrapper;
 import com.alesharik.webserver.control.ControlRequestHandler;
-import com.alesharik.webserver.control.dashboard.PluginDataHolder;
+import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import org.glassfish.grizzly.http.HttpRequestPacket;
@@ -33,7 +33,7 @@ public final class DashboardWebSocketApplication extends WebSocketApplication {
     private final ControlRequestHandler requestHandler;
     private DashboardWebSocket webSocket;
 
-    public DashboardWebSocketApplication(PluginDataHolder holder, ControlRequestHandler requestHandler) {
+    public DashboardWebSocketApplication(DashboardDataHolder holder, ControlRequestHandler requestHandler) {
         parser = new DashboardWebSocketParser(this, holder);
         this.requestHandler = requestHandler;
     }

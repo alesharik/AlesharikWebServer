@@ -1,6 +1,6 @@
 package com.alesharik.webserver.api.server;
 
-import com.alesharik.webserver.control.dashboard.PluginDataHolder;
+import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
@@ -8,7 +8,7 @@ import org.glassfish.grizzly.websockets.WebSocketApplication;
 import java.io.IOException;
 
 public abstract class WebServer extends Server {
-    public WebServer(String host, int port, FileManager fileManager, PluginDataHolder holder) {
+    public WebServer(String host, int port, FileManager fileManager, DashboardDataHolder holder) {
         super(host, port);
     }
 

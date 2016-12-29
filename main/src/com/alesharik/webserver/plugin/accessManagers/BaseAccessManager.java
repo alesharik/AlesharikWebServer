@@ -1,17 +1,17 @@
 package com.alesharik.webserver.plugin.accessManagers;
 
-import com.alesharik.webserver.control.dashboard.PluginDataHolder;
+import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.main.FileManager;
 
 public final class BaseAccessManager {
     FileManager fileManager;
-    PluginDataHolder pluginDataHolder;
+    DashboardDataHolder dashboardDataHolder;
 
     public FileManager getFileManager() {
         return fileManager;
     }
 
-    public PluginDataHolder getPluginDataHolder() {
-        return pluginDataHolder;
+    public DashboardDataHolder getDashboardDataHolder() {
+        return dashboardDataHolder;
     }
 }

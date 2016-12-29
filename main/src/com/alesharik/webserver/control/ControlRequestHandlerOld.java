@@ -3,7 +3,7 @@ package com.alesharik.webserver.control;
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.server.RequestHandler;
-import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
+import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.control.websockets.control.WebSocketController;
 import com.alesharik.webserver.main.FileManager;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ControlRequestHandlerOld implements RequestHandler {
     private final ConcurrentLiveArrayList<UUID> sessions = new ConcurrentLiveArrayList<>();
     private final FileManager fileManager;
-    private final AdminDataHolder adminDataHolder;
+    private final AdminDataStorageImpl adminDataStorageImpl;
     private final ConcurrentHashMap<String, WebSocketController> servers = new ConcurrentHashMap<>();
 
     private ServerConsoleCommandHandler serverConsoleCommandHandler;
@@ -37,9 +37,9 @@ public final class ControlRequestHandlerOld implements RequestHandler {
     private volatile ArrayList<byte[]> receivedBytes = new ArrayList<>();
     private volatile String folderName = "";
 
-    public ControlRequestHandlerOld(FileManager fileManager, File rootFolder, AdminDataHolder adminDataHolder) {
+    public ControlRequestHandlerOld(FileManager fileManager, File rootFolder, AdminDataStorageImpl adminDataStorageImpl) {
         this.fileManager = fileManager;
-        this.adminDataHolder = adminDataHolder;
+        this.adminDataStorageImpl = adminDataStorageImpl;
     }
 
     @Override
@@ -60,7 +60,7 @@ public final class ControlRequestHandlerOld implements RequestHandler {
         } else if(request.getDecodedRequestURI().equals("/login")) {
             String loginForm = request.getParameter("loginForm");
             String passwordForm = request.getParameter("passwordForm");
-            if(adminDataHolder.check(loginForm, passwordForm)) {
+            if(adminDataStorageImpl.check(loginForm, passwordForm)) {
                 response.addHeader(Header.Location, "com.alesharik.webserver.tests.html");
                 UUID uuid = UUID.randomUUID();
                 Cookie cookie = new Cookie("uuid", uuid.toString());
@@ -76,7 +76,7 @@ public final class ControlRequestHandlerOld implements RequestHandler {
             return;
         } else if(request.getDecodedRequestURI().equals("/getValue")) {
             if(hasValidUUID(request)) {
-                String result = (String) adminDataHolder.get(request.getParameter("key"));
+                String result = (String) adminDataStorageImpl.get(request.getParameter("key"));
                 if(result == null) {
                     result = "";
                 }
@@ -87,17 +87,17 @@ public final class ControlRequestHandlerOld implements RequestHandler {
             }
         } else if(request.getDecodedRequestURI().equals("/setValue")) {
             if(hasValidUUID(request)) {
-                adminDataHolder.put(request.getParameter("key"), request.getParameter("value"));
+                adminDataStorageImpl.put(request.getParameter("key"), request.getParameter("value"));
                 return;
             }
         } else if(request.getDecodedRequestURI().equals("/deleteValue")) {
             if(hasValidUUID(request)) {
-                adminDataHolder.remove(request.getParameter("key"));
+                adminDataStorageImpl.remove(request.getParameter("key"));
                 return;
             }
         } else if(request.getDecodedRequestURI().equals("/changePassword")) {
             if(hasValidUUID(request)) {
-                adminDataHolder.updateLoginPassword(request.getParameter("oldLogin"), request.getParameter("oldPassword"), request.getParameter("newLogin"), request.getParameter("newPassword"));
+                adminDataStorageImpl.updateLoginPassword(request.getParameter("oldLogin"), request.getParameter("oldPassword"), request.getParameter("newLogin"), request.getParameter("newPassword"));
                 response.setContentType(MIMETypes.findType(".txt"));
                 response.setContentLength("OK".length());
                 response.getWriter().write("OK");

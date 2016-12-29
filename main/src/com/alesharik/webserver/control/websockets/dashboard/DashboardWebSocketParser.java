@@ -2,7 +2,7 @@ package com.alesharik.webserver.control.websockets.dashboard;
 
 import com.alesharik.webserver.api.ComputerData;
 import com.alesharik.webserver.control.dashboard.CommandBuilderFactory;
-import com.alesharik.webserver.control.dashboard.PluginDataHolder;
+import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 
@@ -14,11 +14,11 @@ import java.util.concurrent.TimeUnit;
 final class DashboardWebSocketParser {
     private static final ThreadGroup THREAD_GROUP = new ThreadGroup("DashboardWebSocketThreads");
     private final DashboardWebSocketApplication application;
-    private final PluginDataHolder holder;
+    private final DashboardDataHolder holder;
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(10, r -> new Thread(THREAD_GROUP, r));
     private final CurrentCompInfoTask currentCompInfoTask;
 
-    public DashboardWebSocketParser(DashboardWebSocketApplication application, PluginDataHolder holder) {
+    public DashboardWebSocketParser(DashboardWebSocketApplication application, DashboardDataHolder holder) {
         this.application = application;
         this.holder = holder;
 

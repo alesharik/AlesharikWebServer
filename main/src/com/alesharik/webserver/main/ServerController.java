@@ -10,8 +10,8 @@ import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.api.sharedStorage.SharedStorageManager;
 import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueSetter;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
-import com.alesharik.webserver.control.dashboard.PluginDataHolder;
-import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
+import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
+import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.main.server.ControlServer;
@@ -72,7 +72,7 @@ public final class ServerController {
     private FileManager mainFileManager;
     private Server server;
     private int config = 0;
-    private PluginDataHolder pluginDataHolder = new PluginDataHolder();
+    private DashboardDataHolder dashboardDataHolder = new DashboardDataHolder();
     private boolean isStarted = false;
 
     private static final int IS_CONTROL_SERVER_FLAG = 1;
@@ -117,7 +117,7 @@ public final class ServerController {
             initMicroserviceServer();
             initRouterServer();
             baseAccessManagerBuilder.setFileManager(mainFileManager);
-            baseAccessManagerBuilder.setPluginDataHolder(pluginDataHolder);
+            baseAccessManagerBuilder.setDashboardDataHolder(dashboardDataHolder);
 
             Logger.log("Server successfully initialized");
 
@@ -202,9 +202,9 @@ public final class ServerController {
                 }
             }
             if(isEnabled(IS_CONTROL_SERVER_FLAG)) {
-                server = new ControlServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, new AdminDataHolder(serverPassword), pluginDataHolder, logRequests, logFile);
+                server = new ControlServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, new AdminDataStorageImpl(serverPassword), dashboardDataHolder, logRequests, logFile);
             } else {
-                server = new MainServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, this, pluginDataHolder, logRequests, logFile);
+                server = new MainServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, this, dashboardDataHolder, logRequests, logFile);
 
             }
             ((WebServer) server).setupServerAccessManagerBuilder(serverAccessManagerBuilder);

@@ -3,8 +3,8 @@ package com.alesharik.webserver.main.server;
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.WebServer;
-import com.alesharik.webserver.control.dashboard.PluginDataHolder;
-import com.alesharik.webserver.control.dataHolding.AdminDataHolder;
+import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
+import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketApplication;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.ControlHttpHandler;
@@ -30,10 +30,10 @@ public final class ControlServer extends WebServer {
     private ModularErrorPageGenerator errorPageGenerator;
     private DashboardWebSocketApplication dashboardWebSocketApplication;
 
-    public ControlServer(String host, int port, FileManager fileManager, AdminDataHolder adminDataHolder, PluginDataHolder holder, boolean logRequests, File logFile) {
+    public ControlServer(String host, int port, FileManager fileManager, AdminDataStorageImpl adminDataStorageImpl, DashboardDataHolder holder, boolean logRequests, File logFile) {
         super(host, port);
         errorPageGenerator = new ModularErrorPageGenerator(fileManager);
-        controlHttpHandler = new ControlHttpHandler(fileManager, adminDataHolder, logRequests, logFile, errorPageGenerator);
+        controlHttpHandler = new ControlHttpHandler(fileManager, adminDataStorageImpl, logRequests, logFile, errorPageGenerator);
         final NetworkListener networkListener = new NetworkListener("grizzly", host, port);
         networkListener.getFileCache().setEnabled(true);
         networkListener.setCompression(String.valueOf(CompressionLevel.ON));

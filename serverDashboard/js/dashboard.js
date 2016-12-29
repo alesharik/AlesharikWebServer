@@ -114,19 +114,21 @@ class ComputerInfo {
     getCoreLoad(cpu, type) {
         switch (type) {
             case "user":
-                return this.cpuLoad[cpu][0][0];
+                return this.cpuLoad[cpu][0];
             case "nice":
-                return this.cpuLoad[cpu][0][1];
+                return this.cpuLoad[cpu][1];
             case "system":
-                return this.cpuLoad[cpu][0][2];
+                return this.cpuLoad[cpu][2];
             case "idle":
-                return this.cpuLoad[cpu][0][3];
+                return this.cpuLoad[cpu][3];
             case "iowait":
-                return this.cpuLoad[cpu][0][4];
+                return this.cpuLoad[cpu][4];
             case "irq":
-                return this.cpuLoad[cpu][0][5];
+                return this.cpuLoad[cpu][5];
             case "softirq":
-                return this.cpuLoad[cpu][0][6];
+                return this.cpuLoad[cpu][6];
+            case "all":
+                return this.cpuLoad[cpu][7];
         }
     }
 }
@@ -150,184 +152,114 @@ class DiskPartition {
 //====================Side menu====================\\
 
 /**
- * This class used for works with side menu
+ * This is a basic menu item, you need to extend from it to create new Menu Item types
  */
-class Navigator {
-    /**
-     * @param {ContentLoader} contentLoader
-     */
-    constructor(contentLoader) {
-        this.contentLoader = contentLoader;
-        this.items = [];
-        this.hasSearchModeOn = false;
-
-        this.navigator = document.querySelector("#navigator");
-        this.searchElement = document.querySelector("#navigatorSearch");
-        this.searchList = this.searchElement.querySelector("ul.list-group");
-
-        this.searchElementCode = "<li class=\'sidebar-search\'>" +
-            "<div class=\'input-group custom-search-form\'>" +
-            "<input type=\'text\' class=\'form-control menuSearchInputElement\' placeholder=\'Search...\' onkeydown=\'handleMenuSearchInput(event)\'>" +
-            "<span class=\'input-group-btn\'>" +
-            "<button class=\'btn btn-default\' type=\'button\' onclick=\'searchInMenu(document.querySelectorAll(\".menuSearchInputElement\")[1])\'>" +
-            "<i class=\'fa fa-search\'></i>" +
-            "</button>" +
-            "</span>" +
-            "</div>" +
-            "</li>";
-        this.didNotFindCode = "<div class='text-center'>" +
-            "<strong>Your search did not match any items.</strong>" +
-            "</div>";
-        this.searchItemCode = "<li class='list-group-item'>" +
-            "<a data-contentID='{&contentId}' onclick='handleMenuItemClick(event)' role='button' style='cursor: pointer'>" +
-            "<i class='fa fa-{&fa} fa-fw'></i>" +
-            "{&text}</a>" +
-            "</li>";
+class MenuItem {
+    constructor(fa, text) {
+        this.fa = fa;
+        this.text = text;
+        this.type = "none";
     }
 
     /**
-     * @param {string} jsonString
+     * Serialize this object
+     * @return {string}
      */
-    parse(jsonString) {
-        let json = JSON.parse(jsonString);
-        let items = this.items;
-        json.items.forEach((item) => {
-            item = JSON.parse(item);
-            items.push((item.type == "item") ? MenuItem.deserialize(item) : MenuDropdown.deserialize(item));
-        });
-        this.renderMenu();
+    serialize() {
+        return JSON.serialize(this);
     }
 
     /**
-     * Clear menu on call!
+     * Deserialize the object.
+     * @param {object} json
+     * @return {MenuItem} new instance
      */
-    renderMenu() {
-        this.navigator.innerHTML = this.searchElementCode;
-        this.items.forEach((item) => {
-            this.navigator.innerHTML += item.toHTML(0);
-        });
-
-        $('#navigator').metisMenu();
+    deserialize(json) {
+        let item = new MenuItem(json.fa, json.text);
+        item.type = json.type;
+        return item;
     }
 
     /**
-     * Search text in elements, switch to search mode and render result
-     * @param {string} text
+     * This function return html code, which will be inserted into menu in item container
+     * @return {string}
      */
-    search(text) {
-        if (!this.hasSearchModeOn) {
-            this.toggleSearchMode();
-        }
-
-        //Set text of all search elements
-        document.querySelectorAll(".menuSearchInputElement").forEach((element) => {
-            element.value = text;
-        });
-
-        let result = [];
-        //noinspection JSCheckFunctionSignatures
-        this.items.forEach((item) => {
-            if (item.type == "item") {
-                if (item.text.indexOf(text) != -1) {
-                    result.push(item);
-                }
-            } else {
-                result = result.concat(item.search(text));
-            }
-        });
-
-        if (result.length > 0) {
-            this.renderSearchList(result);
-        } else {
-            this.searchList.innerHTML = this.didNotFindCode;
-        }
+    toHtml() {
+        return "";
     }
 
     /**
-     * Render search list. Do not enable search mode!
-     * @param list
+     * Handle muse click
+     * @param {MouseEvent} event
      */
-    renderSearchList(list) {
-        let that = this;
-        that.searchList.innerHTML = "";
-        list.forEach((item) => {
-            that.searchList.innerHTML += new Pattern().setPattern(that.searchItemCode).setParameters(item).build();
-        });
-    }
-
-
-    toggleSearchMode() {
-        if (!this.hasSearchModeOn) {
-            this.navigator.parentNode.style.height = "0";
-            this.searchElement.style.height = "";
-            this.hasSearchModeOn = true;
-        } else {
-            this.navigator.parentNode.style.height = "";
-            this.searchElement.style.height = "0";
-            this.hasSearchModeOn = false;
-        }
-    }
-
-    /**
-     * Try to load content with ContentLoader and select element
-     * @param {HTMLElement} target
-     */
-    showContent(target) {
-        if (this.hasSearchModeOn) {
-            this.toggleSearchMode();
-        }
-        target.parentNode.parentNode.parentNode.querySelectorAll(".active").forEach((element) => element.classList.remove("active"));
-
-        this.contentLoader.load(target.getAttribute("data-contentid"));
-
-        let parent = target.parentNode.parentNode;
-        parent.classList.add("in");
-        target.classList.add("active");
-        let element = parent.parentNode;
-        if (element.tagName == "LI") {
-            element.classList.add("active");
-        }
-    }
-
-    /**
-     * Remove all elements form menu and render it
-     */
-    clear() {
-        this.items = [];
-        this.renderMenu();
+    handleClick(event) {
     }
 }
+
+/**
+ * This class store all MenuItems. Used for get the plugin for type.
+ */
+let itemManagerItems = new Map();
+class MenuItemManager {
+
+    constructor() {
+        throw new Error("Can't initialize this class")
+    }
+
+    /**
+     * @param {MenuItem} item
+     */
+    static registerNewItem(item) {
+        itemManagerItems.set(item.type, item);
+    }
+
+    /**
+     * @param {MenuItem} item
+     */
+    static unregisterItem(item) {
+        itemManagerItems.delete(item.type);
+    }
+
+    /**
+     * @param {string} type
+     * @return {MenuItem}
+     */
+    static getItemForType(type) {
+        return itemManagerItems.get(type);
+    }
+}
+
 
 /**
  * This class is a abstraction on MenuTextItem in backend and used in Navigator.
  * Better use this class to parse json from backend.
  * Json sample code:
  * {
- *      "type": "item",
+ *      "type": "text",
   *     "fa": "dashboard",
   *     "text": "Dashboard",
   *     "contentId": "dashboard"
  * }
  */
-class MenuItem {
+class TextMenuItem extends MenuItem {
     /**
      * @param {string} contentId
      * @param {string} fa
      * @param {string} text
      */
     constructor(contentId, fa, text) {
+        super(fa, text);
+        this.type = "text";
         this.contentId = contentId;
-        this.fa = fa;
-        this.text = text;
-        this.type = "item";
     }
 
     /**
-     * @param {Object} json parsed json
-     * @return {MenuItem}
+     * Deserialize the object.
+     * @param {object} json
+     * @return {MenuItem} new instance
      */
-    static deserialize(json) {
-        return new MenuItem(json.contentId, json.fa, json.text);
+    deserialize(json) {
+        return new TextMenuItem(json.contentId, json.fa, json.text);
     }
 
     /**
@@ -335,13 +267,26 @@ class MenuItem {
      */
     toHTML() {
         let pattern = "<li>" +
-            "<a data-contentID='{&contentId}' onclick='handleMenuItemClick(event)' role='button'>" +
+            "<a data-contentID='{&contentId}' onclick='handleMenuItemClick(event, \"text\")' role='button'>" +
             "<i class='fa fa-{&fa} fa-fw'></i>" +
             "{&text}</a>" +
             "</li>";
         return new Pattern().setPattern(pattern).setParameters(this).build();
     }
+
+    /**
+     * @return {TextMenuItem} empty item
+     */
+    static empty() {
+        return new TextMenuItem("", "", "");
+    }
+
+    handleClick(event) {
+        dashboard.navigator.showContent(event.target || event.srcElement);
+    }
 }
+
+MenuItemManager.registerNewItem(TextMenuItem.empty());
 
 /**
  * This class is a abstraction on MenuDropdown in backend and used in Navigator.
@@ -353,7 +298,7 @@ class MenuItem {
  *     "text": "Servers",
  *     "items": [
  *          {
- *              "type": "item",
+ *              "type": "text",
  *              "fa": "add",
  *              "text": "Add server",
  *              "contentId": "addServer"
@@ -361,28 +306,27 @@ class MenuItem {
  *     ]
  * }
  */
-class MenuDropdown {
+class MenuDropdown extends MenuItem {
     /**
      * @param {string} fa
      * @param {string} text
-     * @param {MenuItem[]} items
+     * @param {TextMenuItem[]} items
      */
     constructor(fa, text, items) {
+        super(fa, text);
         this.type = "dropdown";
-        this.fa = fa;
-        this.text = text;
         this.items = items;
     }
 
     /**
-     * @param json parsed json
-     * @return {MenuDropdown}
+     * Deserialize the object.
+     * @param {object} json
+     * @return {MenuItem} new instance
      */
-    static deserialize(json) {
+    deserialize(json) {
         let items = [];
         json.items.forEach((item) => {
-            item = JSON.parse(item);
-            items.push((item.type == "item") ? MenuItem.deserialize(item) : MenuDropdown.deserialize(item))
+            items.push(MenuItemManager.getItemForType(item.type).deserialize(item));
         });
         return new MenuDropdown(json.fa, json.text, items);
     }
@@ -426,19 +370,179 @@ class MenuDropdown {
         let result = [];
 
         this.items.forEach((item) => {
-            if (item.type == "item") {
+            if (item.text != undefined) {
                 if (item.text.indexOf(text) != -1) {
                     result.push(item);
                 }
-            } else {
+            }
+            if (item.type == "dropdown") {
                 result = result.concat(item.search(text));
             }
         });
 
         return result;
     }
+
+    /**
+     * Return new empty dropdown
+     * @return {MenuDropdown}
+     */
+    static empty() {
+        return new MenuDropdown("", "", []);
+    }
 }
 
+MenuItemManager.registerNewItem(MenuDropdown.empty());
+
+/**
+ * This class used for works with side menu.
+ * The instance of item created by item.deserialize
+ */
+class Navigator {
+    /**
+     * @param {ContentLoader} contentLoader
+     */
+    constructor(contentLoader) {
+        this.contentLoader = contentLoader;
+        this.items = [];
+        this.hasSearchModeOn = false;
+
+        this.navigator = document.querySelector("#navigator");
+        this.searchElement = document.querySelector("#navigatorSearch");
+        this.searchList = this.searchElement.querySelector("ul.list-group");
+
+        this.searchElementCode = "<li class=\'sidebar-search\'>" +
+            "<div class=\'input-group custom-search-form\'>" +
+            "<input type=\'text\' class=\'form-control menuSearchInputElement\' placeholder=\'Search...\' onkeydown=\'handleMenuSearchInput(event)\'>" +
+            "<span class=\'input-group-btn\'>" +
+            "<button class=\'btn btn-default\' type=\'button\' onclick=\'searchInMenu(document.querySelectorAll(\".menuSearchInputElement\")[1])\'>" +
+            "<i class=\'fa fa-search\'></i>" +
+            "</button>" +
+            "</span>" +
+            "</div>" +
+            "</li>";
+        this.didNotFindCode = "<div class='text-center'>" +
+            "<strong>Your search did not match any items.</strong>" +
+            "</div>";
+        this.searchItemCode = "<li class='list-group-item'>" +
+            "<a data-contentID='{&contentId}' onclick='handleMenuItemClick(event)' role='button' style='cursor: pointer'>" +
+            "<i class='fa fa-{&fa} fa-fw'></i>" +
+            "{&text}</a>" +
+            "</li>";
+    }
+
+    /**
+     * @param {string} jsonString
+     */
+    parse(jsonString) {
+        let json = JSON.parse(jsonString);
+        let items = this.items;
+        json.items.forEach((item) => {
+            items.push(MenuItemManager.getItemForType(item.type).deserialize(item));
+        });
+        this.renderMenu();
+    }
+
+    /**
+     * Clear menu on call!
+     */
+    renderMenu() {
+        this.navigator.innerHTML = this.searchElementCode;
+        this.items.forEach((item) => {
+            this.navigator.innerHTML += item.toHTML(0);
+        });
+
+        $('#navigator').metisMenu();
+    }
+
+    /**
+     * Search text in elements, switch to search mode and render result
+     * @param {string} text
+     */
+    search(text) {
+        if (!this.hasSearchModeOn) {
+            this.toggleSearchMode();
+        }
+
+        //Set text of all search elements
+        document.querySelectorAll(".menuSearchInputElement").forEach((element) => {
+            element.value = text;
+        });
+
+        let result = [];
+        //noinspection JSCheckFunctionSignatures
+        this.items.forEach((item) => {
+            if (item.text != undefined) {
+                if (item.text.indexOf(text) != -1) {
+                    result.push(item);
+                }
+            }
+            if (item.type == "dropdown") {
+                result = result.concat(item.search(text));
+            }
+        });
+
+        if (result.length > 0) {
+            this.renderSearchList(result);
+        } else {
+            this.searchList.innerHTML = this.didNotFindCode;
+        }
+    }
+
+    /**
+     * Render search list. Do not enable search mode!
+     * @param list
+     */
+    renderSearchList(list) {
+        let that = this;
+        that.searchList.innerHTML = "";
+        list.forEach((item) => {
+            that.searchList.innerHTML += new Pattern().setPattern(that.searchItemCode).setParameters(item).build();
+        });
+    }
+
+
+    toggleSearchMode() {
+        if (!this.hasSearchModeOn) {
+            this.navigator.parentNode.style.height = "0";
+            this.searchElement.style.height = "";
+            this.hasSearchModeOn = true;
+        } else {
+            this.navigator.parentNode.style.height = "";
+            this.searchElement.style.height = "0";
+            this.hasSearchModeOn = false;
+        }
+    }
+
+    /**
+     * Try to load content with ContentLoader and select element
+     * @param {*} target
+     */
+    showContent(target) {
+        if (this.hasSearchModeOn) {
+            this.toggleSearchMode();
+        }
+        target.parentNode.parentNode.parentNode.querySelectorAll(".active").forEach((element) => element.classList.remove("active"));
+
+        this.contentLoader.load(target.getAttribute("data-contentid"));
+
+        let parent = target.parentNode.parentNode;
+        parent.classList.add("in");
+        target.classList.add("active");
+        let element = parent.parentNode;
+        if (element.tagName == "LI") {
+            element.classList.add("active");
+        }
+    }
+
+    /**
+     * Remove all elements form menu and render it
+     */
+    clear() {
+        this.items = [];
+        this.renderMenu();
+    }
+}
 //====================Side menu end====================\\
 //====================Content loading====================\\
 
@@ -482,10 +586,10 @@ class ContentLoader {
                     ContentLoader.staticLoadError(request.status, that);
                 } else {
                     let headers = new RegExp("<title>(.*?)</title>").exec(request.responseText);
-                    if (headers.length >= 2) {
-                        that.header.innerHTML = headers[1];
-                    } else {
+                    if (headers == null || headers == undefined || headers.length < 2) {
                         that.header.innerHTML = id;
+                    } else {
+                        that.header.innerHTML = headers[1];
                     }
                     that.contentHolder.innerHTML = request.responseText.replace("<link rel=\"stylesheet\".*>", "");
 
@@ -1124,14 +1228,14 @@ class MenuUtils {
      */
     static sortable(enabled) {
         if (enabled) {
-            $("#menuPluginsEditor").removeClass("menuPluginsDisabled").sortable({
+            $("#menuPluginsEditor").sortable({
                 connectWith: ".menuPluginsConnected",
                 cancel: ".menuPluginsDisabled"
-            }).disableSelection();
-            $("#menuPlugins").removeClass("menuPluginsDisabled").sortable({
+            }).disableSelection().removeClass("menuPluginsDisabled");
+            $("#menuPlugins").sortable({
                 connectWith: ".menuPluginsConnected",
                 cancel: ".menuPluginsDisabled"
-            }).disableSelection();
+            }).disableSelection().removeClass("menuPluginsDisabled");
         } else {
             $("#menuPluginsEditor").addClass("menuPluginsDisabled");
             $("#menuPlugins").addClass("menuPluginsDisabled");
