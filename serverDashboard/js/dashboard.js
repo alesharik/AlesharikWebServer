@@ -750,6 +750,8 @@ class NavbarTop {
             ((this.count > 1) ? this.divider : "") +
             this.messagesElement.innerHTML.substring(0, this.messagesElement.innerHTML.length - this.showAllMessagesElement.length);
         this.messagesElement.innerHTML += this.showAllMessagesElement;
+
+        momentTimer.update();
     }
 
     removeLast() {
@@ -1097,7 +1099,7 @@ class User {
  */
 class Message {
     /**
-     * @param {User} sender
+     * @param {string} sender
      * @param {string} date
      * @param {string} message
      */

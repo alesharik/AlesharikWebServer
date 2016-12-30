@@ -12,4 +12,13 @@ class Timer {
             })
         }, 1000);
     }
+
+    update() {
+        document.querySelectorAll('[data-timer="1"]').forEach((element) => {
+            element.innerHTML = moment(element.getAttribute("data-time"), "YYYYMMDD-hh:mm").fromNow()
+        });
+        document.querySelectorAll("[data-clock='true']").forEach((element) => {
+            element.innerHTML = moment().format("hh:mm:ss");
+        });
+    }
 }

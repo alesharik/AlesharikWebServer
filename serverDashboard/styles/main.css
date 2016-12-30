@@ -26,6 +26,34 @@ button, .btn,
     border-color: #00f800;
 }
 
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_desc:after,
+table.dataTable thead .sorting_asc_disabled:after,
+table.dataTable thead .sorting_desc_disabled:after {
+    position: static !important;
+}
+
+table.dataTable thead,
+table.dataTable tr.even {
+    background-color: #1f1f1f;
+}
+
+table {
+    background-color: transparent;
+}
+
+table,
+.panel-body,
+.pagination > .active > a,
+.pagination > .active > span,
+.pagination > .active > a:hover,
+.pagination > .active > span:hover,
+.pagination > .active > a:focus,
+.pagination > .active > span:focus {
+    color: #9b9b9b;
+}
+
 .btn-success {
     border-color: transparent;
 }

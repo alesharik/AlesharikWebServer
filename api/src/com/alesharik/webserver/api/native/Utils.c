@@ -14,7 +14,8 @@
 #include <blkid/blkid.h>
 #include <err.h>
 #include <dirent.h>
-#include <sys/statvfs.h>
+#include <sys/vfs.h>
+#include <mntent.h>
 
 #define BUFFER_SIZE 1024
 
@@ -24,7 +25,7 @@ struct partition {
     const char *type;
 
     long max;
-    long used;
+    long free;
     long inodes;
     long inodesFree;
 };
@@ -226,20 +227,57 @@ int getPartitionsInDevice(char *name, struct partitions *parts) {
         part.type = strdup(type);
         part.max = blkid_probe_get_size(probe);
 
-        struct statvfs stat;
-        if(statvfs(name, &stat) != 0) {
-            part.used = -1;
+//        struct statvfs stat;
+//        if(statvfs(name, &stat) != 0) {
+//            part.free = -1;
+//            part.inodes = -1;
+//            part.inodesFree = -1;
+//        } else {
+//            part.free = stat.f_bfree * stat.f_bsize;
+//            part.inodes = stat.f_files;
+//            part.inodesFree = stat.f_ffree;
+//        }
+
+        FILE *file = setmntent("/proc/mounts", "r");
+        if(file == NULL) {
+            part.free = -1;
+            part.inodes = -1;
+            part.inodesFree = -1;
+            goto end;
+        }
+
+        struct mntent *ent;
+
+        while(NULL != (ent = getmntent(file))) {
+            if(strcmp(ent->mnt_fsname, dev_name) == 0) {
+                break;
+            }
+        }
+        if(ent == NULL) {
+            part.free = -1;
+            part.inodes = -1;
+            part.inodesFree = -1;
+            endmntent(file);
+            goto end;
+        }
+
+        endmntent(file);
+
+        struct statfs stat;
+        if(statfs(ent->mnt_dir, &stat) != 0) {
+            part.free = -1;
             part.inodes = -1;
             part.inodesFree = -1;
         } else {
-            part.used = stat.f_bfree * stat.f_bsize;
+            part.free = stat.f_bfree * stat.f_frsize;
             part.inodes = stat.f_files;
             part.inodesFree = stat.f_ffree;
         }
 
-        partitions[realCount] = part;
-        realCount++;
-        blkid_free_probe(probe);
+        end:
+            partitions[realCount] = part;
+            realCount++;
+            blkid_free_probe(probe);
     }
     parts->partitionArray = partitions;
     parts->count = realCount;
@@ -325,7 +363,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_alesharik_webserver_api_Utils_getPartiti
         jmethodID PartitionConstructor = (*env)->GetMethodID(env, PartitionClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJJ)V");
         jobjectArray ret = (*env)->NewObjectArray(env, retPartitions.count, PartitionClass, NULL);
         for(int i = 0; i < retPartitions.count; i++) {
-            jobject obj = (*env)->NewObject(env, PartitionClass, PartitionConstructor, (*env)->NewStringUTF(env, retPartitions.partitionArray[i].address), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].label), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].type), retPartitions.partitionArray[i].max, retPartitions.partitionArray[i].used, retPartitions.partitionArray[i].inodes, retPartitions.partitionArray[i].inodesFree);
+            jobject obj = (*env)->NewObject(env, PartitionClass, PartitionConstructor, (*env)->NewStringUTF(env, retPartitions.partitionArray[i].address), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].label), (*env)->NewStringUTF(env, retPartitions.partitionArray[i].type), retPartitions.partitionArray[i].max, retPartitions.partitionArray[i].free, retPartitions.partitionArray[i].inodes, retPartitions.partitionArray[i].inodesFree);
             (*env)->SetObjectArrayElement(env, ret, i, obj);
         }
         closedir(dir);

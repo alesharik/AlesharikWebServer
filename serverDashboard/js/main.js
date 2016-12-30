@@ -80,7 +80,7 @@ function loadScreen() {
 /**
  * Init timer
  */
-new Timer();
+let momentTimer = new Timer();
 var dashboard;
 
 /**

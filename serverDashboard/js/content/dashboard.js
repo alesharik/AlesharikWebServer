@@ -225,15 +225,19 @@ events.addEventListener("loadingContentEnded", () => {
         let array = [];
         for (let i = 0; i < dashboard.currentCompInfo.partitions.length; i++) {
             let partition = dashboard.currentCompInfo.partitions[i];
+            let used = Math.floor(partition.freeSize / (1024 * 1024 * 1024) * 100) / 100;
+            if (used < 0) {
+                used = 0;
+            }
             array.push([
                 partition.name,
                 partition.address,
                 partition.type,
                 Math.floor(partition.maxSize / (1024 * 1024 * 1024) * 100) / 100,
                 Math.floor(partition.usedSize / (1024 * 1024 * 1024) * 100) / 100,
-                Math.floor(partition.freeSize / (1024 * 1024 * 1024) * 100) / 100,
-                partition.inodes,
-                partition.inodesFree
+                used,
+                ((partition.inodes < 0) ? "device not mounted" : partition.inodes),
+                ((partition.inodesFree < 0) ? "device not mounted" : partition.inodesFree)
             ]);
         }
         diskDatatable.rows.add(array);
