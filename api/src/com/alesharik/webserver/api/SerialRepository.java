@@ -20,6 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * This class used for serialize and deserialize classes using one-nio method
  */
+//TODO написать профилирование базы данных и реквестов
 public final class SerialRepository {
     private static final ReentrantLock snapshotLock = new ReentrantLock();
     private volatile static File snapshotFile = null;

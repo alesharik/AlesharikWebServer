@@ -76,7 +76,14 @@ events.addEventListener("loadingContentEnded", () => {
         type: "doughnut",
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            tooltips: {
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return data.datasets[0].data[tooltipItems.index] + ' MB';
+                    }
+                }
+            }
         },
         data: {
             labels: [
@@ -115,6 +122,13 @@ events.addEventListener("loadingContentEnded", () => {
                         }
                     }
                 ]
+            },
+            tooltips: {
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return tooltipItems.yLabel + '%';
+                    }
+                }
             }
         }
     });
@@ -287,6 +301,9 @@ events.addEventListener("loadingContentEnded", () => {
     let jvmCpuMaxHold = 60;
     let jvmGCMaxHold = 60;
 
+    let jvmHeapMaxHold = 60;
+    let jvmNonHeapMaxHold = 60;
+
     $("#JVMCPUButtons").find("li").click((event) => {
         // jvmCpuDataHolder.setMax(event.target.dataset.time);
         jvmCpuMaxHold = event.target.dataset.time;
@@ -296,6 +313,16 @@ events.addEventListener("loadingContentEnded", () => {
     $("#JVMGCButtons").find("li").click((event) => {
         jvmCpuMaxHold = event.target.dataset.time;
         document.querySelector("#JVMGCButtons > button").innerHTML = event.target.innerHTML;
+    });
+
+    $("#JVMHeapButtons").find("li").click((event) => {
+        jvmHeapMaxHold = event.target.dataset.time;
+        document.querySelector("#JVMHeapButtons > button").innerHTML = event.target.innerHTML;
+    });
+
+    $("#JVMNonHeapButtons").find("li").click((event) => {
+        jvmNonHeapMaxHold = event.target.dataset.time;
+        document.querySelector("#JVMNonHeapButtons > button").innerHTML = event.target.innerHTML;
     });
 
     let jvmCpuChart;
@@ -366,6 +393,10 @@ events.addEventListener("loadingContentEnded", () => {
     let lastGCCounts = [];
     let lastGCTime = [];
     let gcData = [];
+
+    let lastIForHeap = 0;
+    let lastIForNonHeap = 0;
+
     for (let i = 0; i < dashboard.currentCompInfo.java.gc.length; i++) {
         gcData.push({
             label: (dashboard.currentCompInfo.java.gc[i].name + " GC activity" + ((dashboard.currentCompInfo.java.gc[i].isValid) ? "" : "(invalid)")),
@@ -457,7 +488,12 @@ events.addEventListener("loadingContentEnded", () => {
                 // },
                 tooltips: {
                     mode: 'index',
-                    intersect: false
+                    intersect: false,
+                    callbacks: {
+                        label: function (tooltipItems, data) {
+                            return tooltipItems.yLabel + '%';
+                        }
+                    }
                 },
                 scales: {
                     xAxes: [{
@@ -505,7 +541,12 @@ events.addEventListener("loadingContentEnded", () => {
                 // },
                 tooltips: {
                     mode: 'index',
-                    intersect: false
+                    intersect: false,
+                    callbacks: {
+                        label: function (tooltipItems, data) {
+                            return tooltipItems.yLabel + '%';
+                        }
+                    }
                 },
                 scales: {
                     xAxes: [{
@@ -528,12 +569,34 @@ events.addEventListener("loadingContentEnded", () => {
         });
     }
 
-    let jvmHeapChart = new Chart(document.querySelector("#JVMNonHeapChart").getContext("2d"), {
+    let jvmHeapChart = new Chart(document.querySelector("#JVMHEapChart").getContext("2d"), {
         type: 'line',
         data: {
-            datasets: gcData
+            datasets: [
+                {
+                    label: "committed",
+                    backgroundColor: backgroundColors[1],
+                    borderColor: borderColors[1],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "init",
+                    backgroundColor: backgroundColors[2],
+                    borderColor: borderColors[2],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "used",
+                    backgroundColor: backgroundColors[3],
+                    borderColor: borderColors[3],
+                    borderWidth: 1,
+                    fill: false
+                }
+            ]
         },
-        options: { //TODO написать профилирование базы данных и реквестов
+        options: {
             responsive: true,
             bezierCurve: false,
             elements: {
@@ -541,13 +604,78 @@ events.addEventListener("loadingContentEnded", () => {
                     radius: 0
                 }
             },
-            // title: {
-            //     display: true,
-            //     text: 'Chart.js Line Chart'
-            // },
             tooltips: {
                 mode: 'index',
-                intersect: false
+                intersect: false,
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return tooltipItems.yLabel + ' MB';
+                    }
+                }
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+
+    let jvmNonHeapChart = new Chart(document.querySelector("#JVMNonHeapChart").getContext("2d"), {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: "committed",
+                    backgroundColor: backgroundColors[1],
+                    borderColor: borderColors[1],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "init",
+                    backgroundColor: backgroundColors[2],
+                    borderColor: borderColors[2],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "used",
+                    backgroundColor: backgroundColors[3],
+                    borderColor: borderColors[3],
+                    borderWidth: 1,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            bezierCurve: false,
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return tooltipItems.yLabel + ' MB';
+                    }
+                }
             },
             scales: {
                 xAxes: [{
@@ -586,7 +714,7 @@ events.addEventListener("loadingContentEnded", () => {
             // for(let i = 0; i < jvmCpuDataHolder.items.length; i++) {
             //
             // }
-            let currentJvmCpuValue = elapsedTime > 0 ? Math.round(Math.min(1000 * currentElapsedCpuTime / elapsedTime, 1000) * 10) / 100 : 0;
+            let currentJvmCpuValue = elapsedTime > 0 ? Math.round(Math.min(1000 * currentElapsedCpuTime / elapsedTime, 1000) * 100) / 100 : 0;
             if (currentJvmCpuValue < 0) {
                 currentJvmCpuValue = 0;
             }
@@ -615,7 +743,7 @@ events.addEventListener("loadingContentEnded", () => {
                 let has = dashboard.currentCompInfo.java.gc[i].gcCount > lastGCCounts[i];
                 if (has) {
                     let elapsedGCTime = (dashboard.currentCompInfo.java.gc[i].gcTime / dashboard.currentCompInfo.processorCount * 1000000) - (lastGCTime[i] / dashboard.currentCompInfo.processorCount * 1000000);
-                    let currentJvmGCValue = Math.round(Math.min(1000 * elapsedGCTime / elapsedTime, 1000) * 10) / 100;
+                    let currentJvmGCValue = Math.round(Math.min(1000 * elapsedGCTime / elapsedTime, 1000) * 100) / 100;
                     if (currentJvmGCValue < 0) {
                         currentJvmGCValue = 0;
                     }
@@ -644,6 +772,47 @@ events.addEventListener("loadingContentEnded", () => {
             jvmGCChart.update();
 
         }
+
+        jvmHeapChart.data.datasets[0].data.push(Math.round(dashboard.currentCompInfo.java.memory.heap.committed / (1024 * 1024)));
+        jvmHeapChart.data.datasets[1].data.push(Math.round(dashboard.currentCompInfo.java.memory.heap.init / (1024 * 1024)));
+        jvmHeapChart.data.datasets[2].data.push(Math.round(dashboard.currentCompInfo.java.memory.heap.used / (1024 * 1024)));
+
+        jvmHeapChart.data.labels.push((lastIForHeap % 5 == 0) ? moment().format("hh:mm:ss") : "");
+
+        while (jvmHeapChart.data.datasets[0].data.length > jvmCpuMaxHold) {
+            for (let i = 0; i < 3; i++) {
+                jvmHeapChart.data.datasets[i].data.shift();
+            }
+            jvmHeapChart.data.labels.shift();
+        }
+
+        lastIForHeap++;
+        if (lastIForHeap >= 10) {
+            lastIForHeap = 0;
+        }
+
+        jvmHeapChart.update();
+
+        jvmNonHeapChart.data.datasets[0].data.push(Math.round(dashboard.currentCompInfo.java.memory.nonHeap.committed / (1024 * 1024)));
+        jvmNonHeapChart.data.datasets[1].data.push(Math.round(dashboard.currentCompInfo.java.memory.nonHeap.init / (1024 * 1024)));
+        jvmNonHeapChart.data.datasets[2].data.push(Math.round(dashboard.currentCompInfo.java.memory.nonHeap.used / (1024 * 1024)));
+
+        jvmNonHeapChart.data.labels.push((lastIForNonHeap % 5 == 0) ? moment().format("hh:mm:ss") : "");
+
+        while (jvmNonHeapChart.data.datasets[0].data.length > jvmCpuMaxHold) {
+            for (let i = 0; i < 3; i++) {
+                jvmNonHeapChart.data.datasets[i].data.shift();
+            }
+            jvmNonHeapChart.data.labels.shift();
+        }
+
+        lastIForNonHeap++;
+        if (lastIForNonHeap >= 10) {
+            lastIForNonHeap = 0;
+        }
+
+        jvmNonHeapChart.update();
+
         //noinspection JSUnresolvedVariable
         lastJvmUptime = dashboard.currentCompInfo.java.uptime;
     };
