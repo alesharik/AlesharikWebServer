@@ -163,8 +163,8 @@ public final class SerialRepository {
         @Override
         @SneakyThrows
         public void run() {
+            snapshotLock.lock();
             try {
-                snapshotLock.lock();
                 if(snapshotFile == null) {
                     Logger.log("Snapshot file not selected! Stopping snapshot thread...");
                     return;
@@ -175,13 +175,15 @@ public final class SerialRepository {
                 while(true) {
                     file.setLength(0);
                     file.write(Repository.saveSnapshot());
-                    Thread.sleep(updateTime);
+                    try {
+                        Thread.sleep(updateTime);
+                    } catch (InterruptedException e) {
+                        Logger.log("Snapshot thread stopped!");
+                    }
                 }
-            } catch (InterruptedException e) {
-                Logger.log("Snapshot thread stopped!");
             } finally {
-                file.close();
                 snapshotLock.unlock();
+                file.close();
             }
         }
     }
