@@ -1,6 +1,7 @@
 package com.alesharik.webserver.api;
 
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.Prefix;
 import lombok.SneakyThrows;
 import one.nio.serial.DataStream;
 import one.nio.serial.Repository;
@@ -9,8 +10,8 @@ import one.nio.serial.SerializerNotFoundException;
 import org.glassfish.grizzly.http.util.Base64Utils;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -150,30 +151,38 @@ public final class SerialRepository {
         }
     }
 
+    @Prefix("[SnapshotThread]")
     private static final class SnapshotThread extends Thread {
+        private RandomAccessFile file;
+
         public SnapshotThread() {
             setName("SerializerRepositorySnapshotThread");
+            setDaemon(true);
         }
 
         @Override
         @SneakyThrows
         public void run() {
-            snapshotLock.lock();
-            while(true) {
-                if(!isSnapshotEnabled.get()) {
-                    break;
-                }
+            try {
+                snapshotLock.lock();
                 if(snapshotFile == null) {
-                    Logger.log("Snapshot file not selected!");
-                    break;
+                    Logger.log("Snapshot file not selected! Stopping snapshot thread...");
+                    return;
                 } else {
-                    try (FileOutputStream fileOutputStream = new FileOutputStream(snapshotFile)) {
-                        fileOutputStream.write(Repository.saveSnapshot());
-                    }
+                    file = new RandomAccessFile(snapshotFile, "rw");
                 }
-                Thread.sleep(updateTime);
+                //noinspection InfiniteLoopStatement because we exit only on vm stop
+                while(true) {
+                    file.setLength(0);
+                    file.write(Repository.saveSnapshot());
+                    Thread.sleep(updateTime);
+                }
+            } catch (InterruptedException e) {
+                Logger.log("Snapshot thread stopped!");
+            } finally {
+                file.close();
+                snapshotLock.unlock();
             }
-            snapshotLock.unlock();
         }
     }
 }

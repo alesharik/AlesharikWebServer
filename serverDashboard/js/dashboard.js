@@ -86,13 +86,18 @@ class ComputerInfo {
         this.cpuLoad = [];
         this.ram = [];
         this.partitions = [];
+        this.java = {};
+        this.processorCount = 0;
+        this.ok = false;
     }
 
     /**
      * @param {string} string
      */
     parse(string) {
+        this.ok = true;
         let json = JSON.parse(string);
+        this.processorCount = json.processorCount;
         this.cpuCount = json.cpuCount;
         for (let i = 0; i < this.cpuCount; i++) {
             this.cpuLoad[i] = json["cpu" + i];
@@ -102,6 +107,7 @@ class ComputerInfo {
         json.partitions.forEach((part) => {
             this.partitions.push(Partition.parse(part));
         });
+        this.java = json.java;
     }
 
     /**

@@ -18,13 +18,35 @@ input[type=text]:focus {
 }
 
 button, .btn,
-.btn-default, .btn-default.disabled, .btn-default[disabled], .btn-default:hover,
 .btn-primary, .btn-primary:hover, .btn-primary.disabled, .btn-primary[disabled],
 .btn-info, .btn-info:hover, .btn-info.disabled, .btn-info[disabled],
 .btn-warning, .btn-warning:hover, .btn-warning.disabled, .btn-warning[disabled],
 .btn-danger, .btn-danger:hover .btn-danger.disabled, .btn-danger[disabled] {
     border-color: #00f800;
 }
+
+.btn-default,
+.btn-default:hover,
+.btn-default.disabled,
+.btn-default[disabled],
+.btn-default:active,
+.btn-default.active,
+.open > .dropdown-toggle.btn-default,
+.btn-default:active:hover,
+.btn-default.active:hover,
+.open > .dropdown-toggle.btn-default:hover,
+.btn-default:active:focus,
+.btn-default.active:focus,
+.open > .dropdown-toggle.btn-default:focus,
+.btn-default:active.focus,
+.btn-default.active.focus,
+.open > .dropdown-toggle.btn-default.focus {
+    color: #888888;
+    background-color: #3c3c3c;
+    border-color: #3a3a3a;
+}
+
+
 
 table.dataTable thead .sorting:after,
 table.dataTable thead .sorting_asc:after,

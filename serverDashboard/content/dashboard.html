@@ -69,5 +69,152 @@
         </div>
     </div>
 </div>
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">JVM</div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                CPU
+                                <div class="pull-right">
+                                    <div class="btn-group" id="JVMCPUButtons">
+                                        <button data-time="60" type="button"
+                                                class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"
+                                                aria-expanded="false">1 min
+                                        </button>
+                                        <span class="caret"></span>
+                                        <ul class="dropdown-menu pull-right" role="menu">
+                                            <li data-time="60" role="button">1 min</li>
+                                            <li data-time="300" role="button">5 min</li>
+                                            <li data-time="600" role="button">10 min</li>
+                                            <li data-time="1800" role="button">30 min</li>
+                                            <li data-time="3600" role="button">1 hour</li>
+                                            <li data-time="21600" role="button">6 hours</li>
+                                            <li data-time="86400" role="button">1 day</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div id="JVMCPUChartContainer" style="width: 100%">
+                                    <div style="width: 100%; height: 100%;">
+                                        <canvas id="JVMCPUChart"></canvas>
+                                        <div style="display: none; align-self: center; margin: auto; z-index: 10; text-align: center">
+                                            CPU data gathering is not supported
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                GC
+                                <div class="pull-right">
+                                    <div class="btn-group" id="JVMGCButtons">
+                                        <button data-time="60" type="button"
+                                                class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"
+                                                aria-expanded="false">1 min
+                                        </button>
+                                        <span class="caret"></span>
+                                        <ul class="dropdown-menu pull-right" role="menu">
+                                            <li data-time="60" role="button">1 min</li>
+                                            <li data-time="300" role="button">5 min</li>
+                                            <li data-time="600" role="button">10 min</li>
+                                            <li data-time="1800" role="button">30 min</li>
+                                            <li data-time="3600" role="button">1 hour</li>
+                                            <li data-time="21600" role="button">6 hours</li>
+                                            <li data-time="86400" role="button">1 day</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div id="JVMGCChartContainer" style="width: 100%">
+                                    <div style="width: 100%; height: 100%;">
+                                        <canvas id="JVMGCChart"></canvas>
+                                        <div style="display: none; align-self: center; margin: auto; z-index: 10;text-align: center">
+                                            GC data gathering is not supported
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                CPU
+                                <div class="pull-right">
+                                    <div class="btn-group" id="JVMHeapButtons">
+                                        <button data-time="60" type="button"
+                                                class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"
+                                                aria-expanded="false">1 min
+                                        </button>
+                                        <span class="caret"></span>
+                                        <ul class="dropdown-menu pull-right" role="menu">
+                                            <li data-time="60" role="button">1 min</li>
+                                            <li data-time="300" role="button">5 min</li>
+                                            <li data-time="600" role="button">10 min</li>
+                                            <li data-time="1800" role="button">30 min</li>
+                                            <li data-time="3600" role="button">1 hour</li>
+                                            <li data-time="21600" role="button">6 hours</li>
+                                            <li data-time="86400" role="button">1 day</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div id="JVMHeapChartContainer" style="width: 100%">
+                                    <div style="width: 100%; height: 100%;">
+                                        <canvas id="JVMHEapChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                GC
+                                <div class="pull-right">
+                                    <div class="btn-group" id="JVMNonHeapButtons">
+                                        <button data-time="60" type="button"
+                                                class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"
+                                                aria-expanded="false">1 min
+                                        </button>
+                                        <span class="caret"></span>
+                                        <ul class="dropdown-menu pull-right" role="menu">
+                                            <li data-time="60" role="button">1 min</li>
+                                            <li data-time="300" role="button">5 min</li>
+                                            <li data-time="600" role="button">10 min</li>
+                                            <li data-time="1800" role="button">30 min</li>
+                                            <li data-time="3600" role="button">1 hour</li>
+                                            <li data-time="21600" role="button">6 hours</li>
+                                            <li data-time="86400" role="button">1 day</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div id="JVMNonHeapChartContainer" style="width: 100%">
+                                    <div style="width: 100%; height: 100%;">
+                                        <canvas id="JVMNonHeapChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

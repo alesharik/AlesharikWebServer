@@ -4,7 +4,18 @@ import com.alesharik.webserver.logger.Logger;
 import one.nio.lock.RWLock;
 
 import java.io.IOException;
+import java.lang.management.ClassLoadingMXBean;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryUsage;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.RuntimeMXBean;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,6 +25,19 @@ import java.util.TimerTask;
  */
 public final class ComputerData {
     public static final ComputerData INSTANCE = new ComputerData();
+
+    private static final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+    private static final boolean isThreadCPUCollectionEnabled = threadMXBean.isThreadCpuTimeSupported() && threadMXBean.isThreadCpuTimeEnabled();
+
+    private static final List<GarbageCollectorMXBean> garbageCollectorMXBeans = ManagementFactory.getGarbageCollectorMXBeans();
+
+    private static final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    private static final List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
+
+    private static final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+    private static final ClassLoadingMXBean classLoadingMXBean = ManagementFactory.getClassLoadingMXBean();
+
+    private static final OperatingSystemMXBean operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
 
     private final int coreCount;
     private final long[][] coreLoad;
@@ -101,7 +125,11 @@ public final class ComputerData {
             lock.lockRead();
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append('{');
-            stringBuilder.append("\"cpuCount\": ");
+
+            stringBuilder.append("\"processorCount\": ");
+            stringBuilder.append(operatingSystemMXBean.getAvailableProcessors());
+
+            stringBuilder.append(", \"cpuCount\": ");
             stringBuilder.append(coreCount);
             for(int i = 0; i < coreCount; i++) {
                 stringBuilder.append(", \"cpu");
@@ -125,6 +153,103 @@ public final class ComputerData {
                     stringBuilder.append(',');
                 }
             }
+
+            long[] threadIds = threadMXBean.getAllThreadIds();
+
+            stringBuilder.append(", \"java\": {");
+
+            stringBuilder.append("\"uptime\": ");
+            stringBuilder.append(runtimeMXBean.getUptime());
+
+            stringBuilder.append(", \"cpuUsage\": {");
+            stringBuilder.append("\"isSupported\": ");
+            stringBuilder.append(isThreadCPUCollectionEnabled);
+            if(isThreadCPUCollectionEnabled) {
+                stringBuilder.append(", \"count\": ");
+                stringBuilder.append(threadIds.length);
+                stringBuilder.append(", \"data\": [");
+                for(int i = 0; i < threadIds.length; i++) {
+                    stringBuilder.append(threadMXBean.getThreadCpuTime(threadIds[i]));
+                    if(i == threadIds.length - 1) {
+                        stringBuilder.append(']');
+                    } else {
+                        stringBuilder.append(',');
+                    }
+                }
+            }
+            stringBuilder.append('}');
+
+            stringBuilder.append(", \"gc\": [");
+            for(int i = 0; i < garbageCollectorMXBeans.size(); i++) {
+                stringBuilder.append(serializeGCMXBean(garbageCollectorMXBeans.get(i)));
+                if(i == garbageCollectorMXBeans.size() - 1) {
+                    stringBuilder.append(']');
+                } else {
+                    stringBuilder.append(',');
+                }
+            }
+
+            stringBuilder.append(", \"memory\": {");
+            stringBuilder.append("\"heap\": ");
+            stringBuilder.append(serializeMemoryUsage(memoryMXBean.getHeapMemoryUsage()));
+
+            stringBuilder.append(", \"nonHeap\": ");
+            stringBuilder.append(serializeMemoryUsage(memoryMXBean.getNonHeapMemoryUsage()));
+
+            stringBuilder.append(", \"objectsPendingFinalizationCount\": ");
+            stringBuilder.append(memoryMXBean.getObjectPendingFinalizationCount());
+
+            stringBuilder.append(", \"isVerbose\": ");
+            stringBuilder.append(memoryMXBean.isVerbose());
+
+            stringBuilder.append(", \"memoryPools\": [");
+            for(int i = 0; i < memoryPoolMXBeans.size(); i++) {
+                stringBuilder.append(serializeMemoryPoolMXBean(memoryPoolMXBeans.get(i)));
+                if(i == memoryPoolMXBeans.size() - 1) {
+                    stringBuilder.append(']');
+                } else {
+                    stringBuilder.append(',');
+                }
+            }
+            stringBuilder.append('}');
+
+            stringBuilder.append(", \"classes\": {");
+            stringBuilder.append("\"isVerbose\": ");
+            stringBuilder.append(classLoadingMXBean.isVerbose());
+
+            stringBuilder.append(", \"loadClasses\": ");
+            stringBuilder.append(classLoadingMXBean.getLoadedClassCount());
+
+            stringBuilder.append(", \"totalClasses\": ");
+            stringBuilder.append(classLoadingMXBean.getTotalLoadedClassCount());
+
+            stringBuilder.append(", \"unloadedClasses\": ");
+            stringBuilder.append(classLoadingMXBean.getUnloadedClassCount());
+            stringBuilder.append('}');
+
+            stringBuilder.append(", \"threads\": {");
+            stringBuilder.append("\"online\": ");
+            stringBuilder.append(threadMXBean.getThreadCount());
+
+            stringBuilder.append(", \"daemon\": ");
+            stringBuilder.append(threadMXBean.getDaemonThreadCount());
+
+            stringBuilder.append(", \"peak\": ");
+            stringBuilder.append(threadMXBean.getPeakThreadCount());
+
+            stringBuilder.append(", \"threads\": [");
+            for(int i = 0; i < threadIds.length; i++) {
+                stringBuilder.append(serializeThreadInfo(threadMXBean.getThreadInfo(threadIds[i])));
+                if(i == threadIds.length - 1) {
+                    stringBuilder.append(']');
+                } else {
+                    stringBuilder.append(',');
+                }
+            }
+            stringBuilder.append('}');
+
+            stringBuilder.append('}');
+
             stringBuilder.append('}');
             return stringBuilder.toString();
         } catch (IOException e) {
@@ -135,22 +260,154 @@ public final class ComputerData {
         }
     }
 
+    private String serializeThreadInfo(ThreadInfo threadInfo) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append('{');
+
+        stringBuilder.append("\"id\": ");
+        stringBuilder.append(threadInfo.getThreadId());
+
+        stringBuilder.append(", \"name\": \"");
+        stringBuilder.append(threadInfo.getThreadName());
+        stringBuilder.append('\"');
+
+        stringBuilder.append(", \"state\": ");
+        stringBuilder.append(threadInfo.getThreadState().ordinal());
+
+        stringBuilder.append(", \"blockedTime\": ");
+        stringBuilder.append(threadInfo.getBlockedTime());
+
+        stringBuilder.append(", \"blockedCount\": ");
+        stringBuilder.append(threadInfo.getBlockedCount());
+
+        stringBuilder.append(", \"waitTime\": ");
+        stringBuilder.append(threadInfo.getWaitedTime());
+
+        stringBuilder.append(", \"waitCount\": ");
+        stringBuilder.append(threadInfo.getWaitedCount());
+
+        stringBuilder.append(", \"isInNative\": ");
+        stringBuilder.append(threadInfo.isInNative());
+
+        stringBuilder.append('}');
+        return stringBuilder.toString();
+    }
+
+    private String serializeGCMXBean(GarbageCollectorMXBean garbageCollectorMXBean) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append('{');
+
+        stringBuilder.append("\"gcTime\": ");
+        stringBuilder.append(garbageCollectorMXBean.getCollectionTime());
+
+        stringBuilder.append(", \"gcCount\": ");
+        stringBuilder.append(garbageCollectorMXBean.getCollectionCount());
+
+        stringBuilder.append(", \"isValid\": ");
+        stringBuilder.append(garbageCollectorMXBean.isValid());
+
+        stringBuilder.append(", \"name\": \"");
+        stringBuilder.append(garbageCollectorMXBean.getName());
+        stringBuilder.append('\"');
+
+        stringBuilder.append('}');
+        return stringBuilder.toString();
+    }
+
+    private String serializeMemoryUsage(MemoryUsage memoryUsage) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append('{');
+
+        stringBuilder.append("\"committed\": ");
+        stringBuilder.append(memoryUsage.getCommitted());
+
+        stringBuilder.append(", \"init\": ");
+        stringBuilder.append(memoryUsage.getInit());
+
+        stringBuilder.append(", \"used\": ");
+        stringBuilder.append(memoryUsage.getUsed());
+
+        stringBuilder.append(", \"max\": ");
+        stringBuilder.append(memoryUsage.getMax());
+
+        stringBuilder.append('}');
+        return stringBuilder.toString();
+    }
+
+    private String serializeMemoryPoolMXBean(MemoryPoolMXBean memoryPoolMXBean) {
+        boolean isCollectionUsageThresholdSupported = memoryPoolMXBean.isCollectionUsageThresholdSupported();
+        boolean isUsageThresholdSupported = memoryPoolMXBean.isUsageThresholdSupported();
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append('{');
+
+        stringBuilder.append("\"name\": \"");
+        stringBuilder.append(memoryPoolMXBean.getName());
+        stringBuilder.append('\"');
+
+        stringBuilder.append(", \"isValid\": ");
+        stringBuilder.append(memoryPoolMXBean.isValid());
+
+        stringBuilder.append(", \"usage\": ");
+        stringBuilder.append(serializeMemoryUsage(memoryPoolMXBean.getUsage()));
+
+        stringBuilder.append(", \"peakUsage\": ");
+        stringBuilder.append(serializeMemoryUsage(memoryPoolMXBean.getPeakUsage()));
+
+        stringBuilder.append(", \"isUsableThresholdSupported\": ");
+        stringBuilder.append(isUsageThresholdSupported);
+        if(isUsageThresholdSupported) {
+            stringBuilder.append(", \"usableThreshold\": ");
+            stringBuilder.append(memoryPoolMXBean.getUsageThreshold());
+
+            stringBuilder.append(", \"usableThresholdCount\": ");
+            stringBuilder.append(memoryPoolMXBean.getUsageThresholdCount());
+        }
+        stringBuilder.append(", \"isCollectionUsageThresholdSupported\": ");
+        stringBuilder.append(isCollectionUsageThresholdSupported);
+        if(isCollectionUsageThresholdSupported) {
+            stringBuilder.append(", \"collectionUsableThreshold\": ");
+            stringBuilder.append(memoryPoolMXBean.getCollectionUsageThreshold());
+
+            stringBuilder.append(", \"getCollectionUsageThresholdCount\": ");
+            stringBuilder.append(memoryPoolMXBean.getCollectionUsageThresholdCount());
+        }
+
+        if(memoryPoolMXBean.getCollectionUsage() != null) {
+            stringBuilder.append(", \"collectionUsage\": ");
+            stringBuilder.append(serializeMemoryUsage(memoryPoolMXBean.getCollectionUsage()));
+        }
+
+        stringBuilder.append('}');
+
+        return stringBuilder.toString();
+    }
+
     private String serializePartition(Utils.Partition partition) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("{\"name\": \"");
         stringBuilder.append(partition.getName());
+
         stringBuilder.append("\", \"addr\": \"");
         stringBuilder.append(partition.getAddress());
+
         stringBuilder.append("\", \"type\": \"");
         stringBuilder.append(partition.getType());
+
         stringBuilder.append("\", \"max\": ");
         stringBuilder.append(partition.getMax());
+
         stringBuilder.append(", \"free\": ");
         stringBuilder.append(partition.getFree());
+
         stringBuilder.append(", \"inodes\": ");
         stringBuilder.append(partition.getInodeMax());
+
         stringBuilder.append(", \"inodesFree\": ");
         stringBuilder.append(partition.getInodeFree());
+
         stringBuilder.append("}");
         return stringBuilder.toString();
     }
