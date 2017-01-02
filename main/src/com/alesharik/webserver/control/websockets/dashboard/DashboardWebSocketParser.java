@@ -75,7 +75,7 @@ final class DashboardWebSocketParser {
         }
     }
 
-    @SuppressFBWarnings("DM_GC") //Because we need to handle "Collect GC" from dashboard
+    @SuppressFBWarnings({"DM_GC", "DM_GC"}) //Because we need to handle "Collect GC" from dashboard
     private void parseSystemMessage(String[] parts) {
         if(parts[1].equals("gc")) {
             System.gc();
