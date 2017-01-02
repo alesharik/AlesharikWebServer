@@ -41,6 +41,9 @@ final class DashboardWebSocketParser {
             case "currentCompInfo":
                 parseCurrentCompInfoMessage(parts);
                 break;
+            case "system":
+                parseSystemMessage(parts);
+                break;
             default:
                 Logger.log("Strange message: " + msg);
                 break;
@@ -68,6 +71,12 @@ final class DashboardWebSocketParser {
             currentCompInfoTask.start();
         } else if(parts[1].equals("stop")) {
             currentCompInfoTask.stop();
+        }
+    }
+
+    private void parseSystemMessage(String[] parts) {
+        if(parts[1].equals("gc")) {
+            System.gc();
         }
     }
 

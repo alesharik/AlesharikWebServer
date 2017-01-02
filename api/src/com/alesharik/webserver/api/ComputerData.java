@@ -260,8 +260,9 @@ public final class ComputerData {
         }
     }
 
+    //int - 10
     private String serializeThreadInfo(ThreadInfo threadInfo) {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder(246);
 
         stringBuilder.append('{');
 
@@ -295,7 +296,7 @@ public final class ComputerData {
     }
 
     private String serializeGCMXBean(GarbageCollectorMXBean garbageCollectorMXBean) {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder(115);
         stringBuilder.append('{');
 
         stringBuilder.append("\"gcTime\": ");
@@ -315,8 +316,9 @@ public final class ComputerData {
         return stringBuilder.toString();
     }
 
+    //123 chars
     private String serializeMemoryUsage(MemoryUsage memoryUsage) {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder(123);
         stringBuilder.append('{');
 
         stringBuilder.append("\"committed\": ");
@@ -339,7 +341,7 @@ public final class ComputerData {
         boolean isCollectionUsageThresholdSupported = memoryPoolMXBean.isCollectionUsageThresholdSupported();
         boolean isUsageThresholdSupported = memoryPoolMXBean.isUsageThresholdSupported();
 
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder(745);
 
         stringBuilder.append('{');
 
@@ -385,8 +387,10 @@ public final class ComputerData {
         return stringBuilder.toString();
     }
 
+    //String - 20 chars
+    //long - 20 chars
     private String serializePartition(Utils.Partition partition) {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder(223);
         stringBuilder.append("{\"name\": \"");
         stringBuilder.append(partition.getName());
 
