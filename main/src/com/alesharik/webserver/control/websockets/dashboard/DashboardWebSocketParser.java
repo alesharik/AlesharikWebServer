@@ -5,6 +5,7 @@ import com.alesharik.webserver.control.dashboard.CommandBuilderFactory;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -74,6 +75,7 @@ final class DashboardWebSocketParser {
         }
     }
 
+    @SuppressFBWarnings("DM_GC") //Because we need to handle "Collect GC" from dashboard
     private void parseSystemMessage(String[] parts) {
         if(parts[1].equals("gc")) {
             System.gc();
