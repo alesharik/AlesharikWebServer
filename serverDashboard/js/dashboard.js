@@ -1,6 +1,10 @@
 'use strict';
 class Dashboard {
     constructor() {
+        if (!window.Worker) {
+            alert("Workers ot supported! Please update your browser!");
+        }
+
         this.navbarTop = new NavbarTop();
         this.contentLoader = new ContentLoader();
         this.navigator = new Navigator(this.contentLoader);
@@ -1202,6 +1206,10 @@ class WebSocketManager {
             this.isGetCurrentComputerInfoEnabled = true;
         }
     }
+
+    performGC() {
+        this.webSocketSender.send("system:gc");
+    }
 }
 
 /**
@@ -1237,6 +1245,123 @@ class WebsocketSender {
 }
 
 //====================Websocket end====================\\
+
+//====================Message api====================\\
+
+/**<pre>
+ *                                                       ┌------------MessagingManager--------------┐
+ *                                                       ∨                   |                      |
+ *                                                 send(message)             ∨                      ∨
+ *                                                       |            add/remove parser       postMessage(result)--------┐
+ *                                                       ∨                      |                             ∧          |
+ * (receive the message)<===================(send the message)                  |                             └----┐     |
+ *      Backend                               WebSocketWorker                   | (add/remove parser message)      |     |
+ *  (send message)========================>(receive the message)-------┐        |                                  |     |
+ *                                                                     |        |                                  |     |
+ *                                                                     ∨        ∨                                  |     |
+ *                                                               MessageProcessor                 the result       |     |
+ *                                                             (The shared worker)      ┌--------------------------┘     |
+ *                                                         (find parser for message)    |                                |
+ *                                                                     |                |                                |
+ *                                                                     |                |                                |
+ *                                                                     ∨                |                                ∨
+ *                                                                   Parser.parse ------┘                          Parser.postParse
+ *                                                   (Parse the message in MessageProcessor thread)           (executes in main thread)
+ *                                                           (send result to main thread)
+ * </pre>
+ */
+
+let messagingManagerData = new Map();
+let messageProcessorWorker = new SharedWorker("js/workers/messageProcessorSharedWorker.js");
+let webSocketWorker = new Worker("js/workers/webSocketWorker.js");
+
+messageProcessorWorker.port.addEventListener("message", e => {
+    MessagingManager.postMessage(e.data[0], e.data[1]);
+}, false);
+
+webSocketWorker.start();
+webSocketWorker.postMessage({
+    cause: "init",
+    processor: messageProcessorWorker.port
+});
+
+messageProcessorWorker.port.start();
+
+class MessagingManager {
+    /**
+     * @param {string} message
+     * @param {Parser} parser
+     */
+    static addParser(message, parser) {
+        let v = messagingManagerData.get(message);
+        if (v == undefined) {
+            v = [];
+            messagingManagerData.set(message, v);
+        }
+        v.push(parser);
+
+        messageProcessorWorker.port.postMessage({
+            cause: "add",
+            message: message,
+            parser: parser
+        });
+    }
+
+    /**
+     * @param {string} message
+     * @param {Parser} parser
+     */
+    static removeParser(message, parser) {
+        let v = messagingManagerData.get(message);
+        if (v == undefined) {
+            return;
+        }
+        v.splice(v.indexOf(parser), 1);
+
+        messageProcessorWorker.port.postMessage({
+            cause: "remove",
+            message: message,
+            parser: parser
+        });
+    }
+
+    /**
+     * DO NOT USE THIS METHOD
+     * @param {string} message
+     * @param result
+     */
+    static postMessage(message, result) {
+        let v = messagingManagerData.get(message);
+        if (v == undefined || v.length == 0) {
+            return;
+        }
+        v.forEach((parser, i) => {
+            parser.postParse(result[i]);
+        })
+    }
+}
+
+/**
+ * This class used for parse message
+ */
+class Parser {
+    /**
+     * This method parse message in MessageProcessor WORKER THREAD and return result of parsing.
+     * YOU CANNOT USE DOM, CANVAS, ETC.
+     * YOU CANNOT SEND LINKS IN RESULT.
+     * @param {string} message
+     */
+    parse(message);
+
+    /**
+     * This method executes after parse() in MessageProcessor. It executes in main thread.
+     * @param result
+     */
+    postParse(result);
+}
+
+//====================Message api end====================\\
+
 //====================Menu plugin====================\\
 
 class MenuUtils {

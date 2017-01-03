@@ -46,6 +46,21 @@ button, .btn,
     border-color: #3a3a3a;
 }
 
+.btn-group .btn-primary,
+.btn-group .btn-primary[disabled],
+.btn-group .btn-primary.disabled {
+    background-color: transparent;
+    border-color: transparent;
+    color: #888888;
+}
+
+.btn-group .btn-primary:hover,
+.btn-group .btn-primary:focus,
+.btn-group .btn-primary:active {
+    background-color: #2180ac;
+    border-color: #2180ac;
+    color: #888888;
+}
 
 
 table.dataTable thead .sorting:after,

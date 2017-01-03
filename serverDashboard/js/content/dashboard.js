@@ -304,6 +304,11 @@ events.addEventListener("loadingContentEnded", () => {
     let jvmHeapMaxHold = 60;
     let jvmNonHeapMaxHold = 60;
 
+    let jvmCodeCacheMaxHold = 60;
+    let jvmMetaspaceMaxHold = 60;
+    let jvmCompressedClassSpaceMaxHold = 60;
+    let jvmPSEdenSpaceMaxHold = 60;
+
     $("#JVMCPUButtons").find("li").click((event) => {
         // jvmCpuDataHolder.setMax(event.target.dataset.time);
         jvmCpuMaxHold = event.target.dataset.time;
@@ -311,7 +316,7 @@ events.addEventListener("loadingContentEnded", () => {
     });
 
     $("#JVMGCButtons").find("li").click((event) => {
-        jvmCpuMaxHold = event.target.dataset.time;
+        jvmGCMaxHold = event.target.dataset.time;
         document.querySelector("#JVMGCButtons > button").innerHTML = event.target.innerHTML;
     });
 
@@ -323,6 +328,26 @@ events.addEventListener("loadingContentEnded", () => {
     $("#JVMNonHeapButtons").find("li").click((event) => {
         jvmNonHeapMaxHold = event.target.dataset.time;
         document.querySelector("#JVMNonHeapButtons > button").innerHTML = event.target.innerHTML;
+    });
+
+    $("#JVMCodeCacheButtons").find("li").click((event) => {
+        jvmCodeCacheMaxHold = event.target.dataset.time;
+        document.querySelector("#JVMCodeCacheButtons > button").innerHTML = event.target.innerHTML;
+    });
+
+    $("#JVMMetaspaceButtons").find("li").click((event) => {
+        jvmMetaspaceMaxHold = event.target.dataset.time;
+        document.querySelector("#JVMMetaspaceButtons > button").innerHTML = event.target.innerHTML;
+    });
+
+    $("#JVMCompressedClassSpaceButtons").find("li").click((event) => {
+        jvmPSEdenSpaceMaxHold = event.target.dataset.time;
+        document.querySelector("#JVMCompressedClassSpaceButtons > button").innerHTML = event.target.innerHTML;
+    });
+
+    $("#JVMPSEdenSpaceButtons").find("li").click((event) => {
+        jvmPSEdenSpaceMaxHold = event.target.dataset.time;
+        document.querySelector("#JVMPSEdenSpaceButtons > button").innerHTML = event.target.innerHTML;
     });
 
     let jvmCpuChart;
@@ -697,6 +722,253 @@ events.addEventListener("loadingContentEnded", () => {
         }
     });
 
+    let jvmCodeCacheChart = new Chart(document.querySelector("#JVMCodeCacheChart").getContext("2d"), {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: "committed",
+                    backgroundColor: backgroundColors[1],
+                    borderColor: borderColors[1],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "init",
+                    backgroundColor: backgroundColors[2],
+                    borderColor: borderColors[2],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "used",
+                    backgroundColor: backgroundColors[3],
+                    borderColor: borderColors[3],
+                    borderWidth: 1,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            bezierCurve: false,
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return tooltipItems.yLabel + ' MB';
+                    }
+                }
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+
+    let jvmMetaspaceChart = new Chart(document.querySelector("#JVMMetaspaceChart").getContext("2d"), {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: "committed",
+                    backgroundColor: backgroundColors[1],
+                    borderColor: borderColors[1],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "used",
+                    backgroundColor: backgroundColors[3],
+                    borderColor: borderColors[3],
+                    borderWidth: 1,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            bezierCurve: false,
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return tooltipItems.yLabel + ' MB';
+                    }
+                }
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+
+    let jvmCompressedClassSpaceChart = new Chart(document.querySelector("#JVMCompressedClassSpaceChart").getContext("2d"), {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: "committed",
+                    backgroundColor: backgroundColors[1],
+                    borderColor: borderColors[1],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "used",
+                    backgroundColor: backgroundColors[3],
+                    borderColor: borderColors[3],
+                    borderWidth: 1,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            bezierCurve: false,
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return tooltipItems.yLabel + ' MB';
+                    }
+                }
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+
+    let jvmPSEdenSpaceChart = new Chart(document.querySelector("#JVMPSEdenSpaceChart").getContext("2d"), {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: "committed",
+                    backgroundColor: backgroundColors[1],
+                    borderColor: borderColors[1],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "init",
+                    backgroundColor: backgroundColors[2],
+                    borderColor: borderColors[2],
+                    borderWidth: 1,
+                    fill: false
+                },
+                {
+                    label: "used",
+                    backgroundColor: backgroundColors[3],
+                    borderColor: borderColors[3],
+                    borderWidth: 1,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            bezierCurve: false,
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function (tooltipItems, data) {
+                        return tooltipItems.yLabel + ' MB';
+                    }
+                }
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        show: true,
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+
+    let lastIForCodeCache = 0;
+    let lastIForMetaspace = 0;
+    let lastIForCompressedClassSpace = 0;
+    let lastIForPSEdenSpace = 0;
+
     let jvmChartsUpdate = () => {
         let elapsedTime = (dashboard.currentCompInfo.java.uptime - lastJvmUptime) * 1000000;
 
@@ -757,7 +1029,7 @@ events.addEventListener("loadingContentEnded", () => {
 
             jvmGCChart.data.labels.push((labelIForGC % 5 == 0) ? moment().format("hh:mm:ss") : "");
 
-            while (jvmGCChart.data.datasets[0].data.length > jvmCpuMaxHold) {
+            while (jvmGCChart.data.datasets[0].data.length > jvmGCMaxHold) {
                 for (let i = 0; i < dashboard.currentCompInfo.java.gc.length; i++) {
                     jvmGCChart.data.datasets[i].data.shift();
                 }
@@ -812,6 +1084,108 @@ events.addEventListener("loadingContentEnded", () => {
         }
 
         jvmNonHeapChart.update();
+
+        let memoryPool = undefined;
+        for (let i = 0; i < dashboard.currentCompInfo.java.memory.memoryPools.length; i++) {
+            if (dashboard.currentCompInfo.java.memory.memoryPools[i].name == "Code Cache") {
+                memoryPool = dashboard.currentCompInfo.java.memory.memoryPools[i];
+            }
+        }
+        jvmCodeCacheChart.data.datasets[0].data.push(Math.round(memoryPool.usage.committed / (1024 * 1024)));
+        jvmCodeCacheChart.data.datasets[1].data.push(Math.round(memoryPool.usage.init / (1024 * 1024)));
+        jvmCodeCacheChart.data.datasets[2].data.push(Math.round(memoryPool.usage.used / (1024 * 1024)));
+
+        jvmCodeCacheChart.data.labels.push((lastIForCodeCache % 5 == 0) ? moment().format("hh:mm:ss") : "");
+
+        while (jvmCodeCacheChart.data.datasets[0].data.length > jvmCodeCacheMaxHold) {
+            for (let i = 0; i < 3; i++) {
+                jvmCodeCacheChart.data.datasets[i].data.shift();
+            }
+            jvmCodeCacheChart.data.labels.shift();
+        }
+
+        lastIForCodeCache++;
+        if (lastIForCodeCache >= 10) {
+            lastIForCodeCache = 0;
+        }
+
+        jvmCodeCacheChart.update();
+
+        let memoryPool1 = undefined;
+        for (let i = 0; i < dashboard.currentCompInfo.java.memory.memoryPools.length; i++) {
+            if (dashboard.currentCompInfo.java.memory.memoryPools[i].name == "Metaspace") {
+                memoryPool1 = dashboard.currentCompInfo.java.memory.memoryPools[i];
+            }
+        }
+        jvmMetaspaceChart.data.datasets[0].data.push(Math.round(memoryPool1.usage.committed / (1024 * 1024)));
+        jvmMetaspaceChart.data.datasets[1].data.push(Math.round(memoryPool1.usage.used / (1024 * 1024)));
+
+        jvmMetaspaceChart.data.labels.push((lastIForMetaspace % 5 == 0) ? moment().format("hh:mm:ss") : "");
+
+        while (jvmMetaspaceChart.data.datasets[0].data.length > jvmMetaspaceMaxHold) {
+            for (let i = 0; i < 2; i++) {
+                jvmMetaspaceChart.data.datasets[i].data.shift();
+            }
+            jvmMetaspaceChart.data.labels.shift();
+        }
+
+        lastIForMetaspace++;
+        if (lastIForMetaspace >= 10) {
+            lastIForMetaspace = 0;
+        }
+
+        jvmMetaspaceChart.update();
+
+        let memoryPool2 = undefined;
+        for (let i = 0; i < dashboard.currentCompInfo.java.memory.memoryPools.length; i++) {
+            if (dashboard.currentCompInfo.java.memory.memoryPools[i].name == "Compressed Class Space") {
+                memoryPool2 = dashboard.currentCompInfo.java.memory.memoryPools[i];
+            }
+        }
+        jvmCompressedClassSpaceChart.data.datasets[0].data.push(Math.round(memoryPool2.usage.committed / (1024 * 1024)));
+        jvmCompressedClassSpaceChart.data.datasets[1].data.push(Math.round(memoryPool2.usage.used / (1024 * 1024)));
+
+        jvmCompressedClassSpaceChart.data.labels.push((lastIForCompressedClassSpace % 5 == 0) ? moment().format("hh:mm:ss") : "");
+
+        while (jvmCompressedClassSpaceChart.data.datasets[0].data.length > jvmCompressedClassSpaceMaxHold) {
+            for (let i = 0; i < 2; i++) {
+                jvmCompressedClassSpaceChart.data.datasets[i].data.shift();
+            }
+            jvmCompressedClassSpaceChart.data.labels.shift();
+        }
+
+        lastIForCompressedClassSpace++;
+        if (lastIForCompressedClassSpace >= 10) {
+            lastIForCompressedClassSpace = 0;
+        }
+
+        jvmCompressedClassSpaceChart.update();
+
+        let memoryPool3 = undefined;
+        for (let i = 0; i < dashboard.currentCompInfo.java.memory.memoryPools.length; i++) {
+            if (dashboard.currentCompInfo.java.memory.memoryPools[i].name == "PS Eden Space") {
+                memoryPool2 = dashboard.currentCompInfo.java.memory.memoryPools[i];
+            }
+        }
+        jvmPSEdenSpaceChart.data.datasets[0].data.push(Math.round(memoryPool2.usage.committed / (1024 * 1024)));
+        jvmPSEdenSpaceChart.data.datasets[1].data.push(Math.round(memoryPool2.usage.init / (1024 * 1024)));
+        jvmPSEdenSpaceChart.data.datasets[2].data.push(Math.round(memoryPool2.usage.used / (1024 * 1024)));
+
+        jvmPSEdenSpaceChart.data.labels.push((lastIForPSEdenSpace % 5 == 0) ? moment().format("hh:mm:ss") : "");
+
+        while (jvmPSEdenSpaceChart.data.datasets[0].data.length > jvmPSEdenSpaceMaxHold) {
+            for (let i = 0; i < 3; i++) {
+                jvmPSEdenSpaceChart.data.datasets[i].data.shift();
+            }
+            jvmPSEdenSpaceChart.data.labels.shift();
+        }
+
+        lastIForPSEdenSpace++;
+        if (lastIForPSEdenSpace >= 10) {
+            lastIForPSEdenSpace = 0;
+        }
+
+        jvmPSEdenSpaceChart.update();
 
         //noinspection JSUnresolvedVariable
         lastJvmUptime = dashboard.currentCompInfo.java.uptime;
