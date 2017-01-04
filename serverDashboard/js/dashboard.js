@@ -1322,6 +1322,10 @@ class MessagingManager {
         });
     }
 
+    static sendMessage(message) {
+        webSocketWorker.postMessage(message);
+    }
+
     /**
      * DO NOT USE THIS METHOD
      * @param {string} message
@@ -1613,3 +1617,194 @@ class MenuPlugin {
 }
 
 //====================Menu plugin API End====================\\
+
+//====================Permissions====================\\
+/**
+ * This class used for check permissions
+ */
+class Permissions {
+    /**
+     * If permission acquired - call resolve(), overwise reject()
+     * @return {Promise.<>}
+     */
+    static acquirePushNotificationPermission() {
+        if (Notification.permission == undefined) {
+            alert("Can't use notification api!");
+            return Promise.reject();
+        }
+        switch (Notification.permission.toLowerCase()) {
+            case "granted":
+                return Promise.resolve();
+            case "denied":
+                return Promise.reject();
+            case "default": {
+                return new Promise((resolve, reject) => {
+                    Notification.requestPermission((result) => {
+                        if (result.toLowerCase() == "granted") {
+                            resolve();
+                        } else {
+                            reject();
+                        }
+                    })
+                });
+            }
+        }
+    }
+}
+//====================Permissions end====================\\
+
+//====================Notification API====================\\
+/**
+ * This class used for build notification
+ */
+class PushNotificationBuilder {
+    constructor(title) {
+        this._title = title;
+        this._dir = "auto";
+        this._lang = "en-US";
+        this._body = "";
+        this._tag = "";
+        this._icon = "";
+        this._data = "";
+        this._requireInteraction = false;
+        this._silent = false;
+
+        this._listeners = new Map();
+    }
+
+    /**
+     * <code>auto</code> - auto, <code>ltr</code> - left to right, <code>rtl</code> - right to left
+     * @param {string} value
+     */
+    setTextDirection(value) {
+        this._dir = value;
+        return this;
+    }
+
+    /**
+     *
+     * @param {string} value like <code>en-US</code>
+     * @return {PushNotificationBuilder}
+     */
+    setLang(value) {
+        this._lang = value;
+        return this;
+    }
+
+    /**
+     * @param {string} value
+     * @return {PushNotificationBuilder}
+     */
+    setBody(value) {
+        this._body = value;
+        return this;
+    }
+
+    /**
+     * If app create second notification with tag, it will replace first
+     * @param {string} value
+     * @return {PushNotificationBuilder}
+     */
+    setTag(value) {
+        this._tag = value;
+        return this;
+    }
+
+    /**
+     * @param {string} value
+     * @return {PushNotificationBuilder}
+     */
+    setIcon(value) {
+        this._icon = value;
+        return this;
+    }
+
+    /**
+     * @param {string} value
+     * @return {PushNotificationBuilder}
+     */
+    setData(value) {
+        this._data = value;
+        return this;
+    }
+
+    /**
+     *
+     * @param {boolean} value
+     * @return {PushNotificationBuilder}
+     */
+    setRequireInteraction(value) {
+        this._requireInteraction = value;
+        return this;
+    }
+
+    /**
+     *
+     * @param {boolean} value
+     * @return {PushNotificationBuilder}
+     */
+    setSilent(value) {
+        this._silent = value;
+        return this;
+    }
+
+    /**
+     *
+     * @param {string} name
+     * @param {function} listener
+     * @return {PushNotificationBuilder}
+     */
+    addListener(name, listener) {
+        let v = this._listeners.get(name);
+        if (v == undefined) {
+            v = [];
+            this._listeners.set(message, v);
+        }
+        v.push(listener);
+        return this;
+    }
+
+    /**
+     *
+     * @param {string} name
+     * @param {function} listener
+     * @return {PushNotificationBuilder}
+     */
+    removeListener(name, listener) {
+        let v = this._listeners.get(name);
+        if (v == undefined) {
+            return this;
+        }
+        v.splice(v.indexOf(listener), 1);
+        return this;
+    }
+
+    /**
+     * if notification created - resolve(notification), else - reject()
+     * @return {Promise.<Notification>}
+     */
+    build() {
+        return Permissions.acquirePushNotificationPermission().then((resolve) => {
+            let notification = new Notification(this._title, {
+                dir: this._dir,
+                lang: this._lang,
+                body: this._body,
+                tag: this._tag,
+                icon: this._icon,
+                data: this._data,
+                requireInteraction: this._requireInteraction,
+                silent: this._silent
+            });
+            this._listeners.forEach((value, key) => {
+                value.forEach((v) => notification.addEventListener(key, v));
+            });
+
+            if (resolve != undefined) {
+                resolve(notification);
+            }
+        })
+    }
+}
+//====================Notification API end====================\\
+
+
