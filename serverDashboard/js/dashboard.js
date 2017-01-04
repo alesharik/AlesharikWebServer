@@ -1279,13 +1279,10 @@ messageProcessorWorker.port.addEventListener("message", e => {
     MessagingManager.postMessage(e.data[0], e.data[1]);
 }, false);
 
-webSocketWorker.start();
 webSocketWorker.postMessage({
     cause: "init",
     processor: messageProcessorWorker.port
-});
-
-messageProcessorWorker.port.start();
+}, [messageProcessorWorker.port]);
 
 class MessagingManager {
     /**
@@ -1351,13 +1348,15 @@ class Parser {
      * YOU CANNOT SEND LINKS IN RESULT.
      * @param {string} message
      */
-    parse(message);
+    parse(message) {
+    }
 
     /**
      * This method executes after parse() in MessageProcessor. It executes in main thread.
      * @param result
      */
-    postParse(result);
+    postParse(result) {
+    }
 }
 
 //====================Message api end====================\\

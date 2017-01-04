@@ -1,25 +1,4 @@
 "use strict";
-let webSocketSender = new WebsocketSender();
-let webSocketWorkerReady = false;
-let webSocketMessageProcessor = undefined;
-
-onmessage = (e) => {
-    if (e.data.cause == "init") {
-        /** @namespace e.data.processor */
-        webSocketMessageProcessor = e.data.processor;
-    } else {
-        if (!webSocketWorkerReady) {
-            webSocketSender.useWebsocket(new WebSocket("ws" + new RegExp("://.*/").exec(document.location.href) + "dashboard"));
-            webSocketWorkerReady = true;
-        } else {
-            try {
-                webSocketSender.send(e.data);
-            } catch (e) {
-                webSocketWorkerReady = false;
-            }
-        }
-    }
-};
 
 /**
  * This class used for send requests on WebSocket. If WebSocket is not ready then sender add message to queue and if
@@ -64,3 +43,25 @@ class WebsocketSender {
         }
     }
 }
+
+let webSocketSender = new WebsocketSender();
+let webSocketWorkerReady = false;
+let webSocketMessageProcessor = undefined;
+
+onmessage = (e) => {
+    if (e.data.cause == "init") {
+        /** @namespace e.data.processor */
+        webSocketMessageProcessor = e.data.processor;
+    } else {
+        if (!webSocketWorkerReady) {
+            webSocketSender.useWebsocket(new WebSocket("ws" + new RegExp("://.*/").exec(document.location.href) + "dashboard"));
+            webSocketWorkerReady = true;
+        } else {
+            try {
+                webSocketSender.send(e.data);
+            } catch (e) {
+                webSocketWorkerReady = false;
+            }
+        }
+    }
+};
