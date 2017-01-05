@@ -42,16 +42,6 @@ public interface TickingPool {
     void stopTicking(Tickable tickable);
 
     /**
-     * This method stop {@link Tickable} and delete it from pool
-     *
-     * @param tickable   the tickable to delete
-     * @param periodInMs the period of tickable to remove
-     * @throws IllegalArgumentException if periodInMs <= 0
-     * @throws NullPointerException     if tickable == <code>null</code>
-     */
-    void stopTicking(Tickable tickable, long periodInMs);
-
-    /**
      * Pause {@link Tickable} and NOT delete it
      *
      * @param tickable the tickable to pause

@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @see Info
  */
+@Deprecated
 public final class InfoManager {
     private static final ConcurrentHashMap<String, CopyOnWriteArrayList<Info>> infoMap = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Info, InfoLoader> threads = new ConcurrentHashMap<>();

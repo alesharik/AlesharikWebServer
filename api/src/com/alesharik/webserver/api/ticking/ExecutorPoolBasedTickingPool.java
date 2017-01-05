@@ -82,16 +82,6 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
     }
 
     @Override
-    public void stopTicking(Tickable tickable, long periodInMs) {
-        Objects.requireNonNull(tickable);
-        if(periodInMs <= 0) {
-            throw new IllegalArgumentException();
-        }
-
-        tickables.remove(tickable, periodInMs);
-    }
-
-    @Override
     public void pauseTickable(Tickable tickable) {
         Objects.requireNonNull(tickable);
 

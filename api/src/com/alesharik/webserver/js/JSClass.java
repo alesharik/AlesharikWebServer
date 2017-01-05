@@ -131,7 +131,7 @@ public class JSClass {
         if(!extend.isEmpty()) {
             extend = extend.substring("extends ".length());
         }
-        String methods = clazz.substring(("class " + name + " " + ((extend.isEmpty()) ? "" : "extends " + extend) + " {").length(), clazz.lastIndexOf("}") - 1);
+//        String methods = clazz.substring(("class " + name + " " + ((extend.isEmpty()) ? "" : "extends " + extend) + " {").length(), clazz.lastIndexOf("}") - 1);
         return new JSClass(name, extend);
     }
 

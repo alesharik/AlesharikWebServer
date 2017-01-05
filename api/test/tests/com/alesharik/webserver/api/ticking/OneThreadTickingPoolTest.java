@@ -54,21 +54,6 @@ public class OneThreadTickingPoolTest {
     }
 
     @Test
-    public void stopTicking1() throws Exception {
-        pool.stopTicking(dude, 1000);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void stopTicking1Illegal() throws Exception {
-        pool.stopTicking(dude, -1);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void stopTicking1Null() throws Exception {
-        pool.stopTicking(null, 1000);
-    }
-
-    @Test
     public void pauseTickable() throws Exception {
         pool.pauseTickable(dude);
     }
