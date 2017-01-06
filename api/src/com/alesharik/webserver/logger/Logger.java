@@ -81,6 +81,7 @@ public class Logger {
     }
 
     public static void log(String prefix, Throwable throwable) {
+        throwable.printStackTrace();
         LOGGER.log(Level.WARNING, prefix + ": " + throwable.toString());
         Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> LOGGER.log(Level.WARNING, stackTraceElement.toString()));
     }

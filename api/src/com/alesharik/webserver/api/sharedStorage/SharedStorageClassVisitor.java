@@ -7,6 +7,7 @@ import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -46,7 +47,7 @@ final class SharedStorageClassVisitor extends ClassAdapter {
             if(id.isEmpty()) {
                 registerId(storageName.get());
             }
-            return new MethodReplacer(super.visitMethod(access, name, desc, signature, exceptions), id, desc, desc.substring(desc.indexOf('(') + 1, desc.indexOf(')')).split(";").length);
+            return new MethodReplacer(super.visitMethod(access, name, desc, signature, exceptions), id, desc, desc.substring(desc.indexOf('(') + 1, desc.indexOf(')')).split(";").length, desc);
         }
         return super.visitMethod(access, name, desc, signature, exceptions);
     }
@@ -93,13 +94,15 @@ final class SharedStorageClassVisitor extends ClassAdapter {
         private ConcurrentCompletableFuture<String> result;
         private int type = -1; //0 - setter, 1 - getter, -1 - ops
         private int argCount;
+        private Type[] args;
 
-        public MethodReplacer(MethodVisitor mv, String id, String ret, int agrCount) {
+        public MethodReplacer(MethodVisitor mv, String id, String ret, int agrCount, String desc) {
             super(mv);
             this.id = id;
             this.result = new ConcurrentCompletableFuture<>();
             this.ret = ret;
             this.argCount = agrCount;
+            this.args = Type.getArgumentTypes(desc);
         }
 
         public MethodReplacer(MethodVisitor mv) {
@@ -125,14 +128,20 @@ final class SharedStorageClassVisitor extends ClassAdapter {
             try {
                 if(type > -1) {
                     super.visitCode();
-                    if(type == 1) {// Is a getIpForMicroservice method
+                    if(type == 1) {// Is a get method //TODO add support to primitives
                         mv.visitCode();
                         mv.visitLdcInsn(id); // First parameter - id
                         mv.visitLdcInsn(result.get()); // Second parameter - field name
-                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "getIpForMicroservice", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;"); // Invoke method
-                        mv.visitTypeInsn(CHECKCAST, ret.substring(ret.indexOf("()") + 3, ret.lastIndexOf(";"))); // Cast to return var
+                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "get", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;"); // Invoke method
+
+                        if(ret.contains(";")) {
+                            Type returnType = Type.getReturnType(ret);
+                            mv.visitTypeInsn(CHECKCAST, getBoxedType(returnType).getInternalName()); // check cast
+                            unBoxForSignature(getTypeSignature(returnType.getSort()));
+                        } else {
+                            mv.visitTypeInsn(CHECKCAST, ret.substring(ret.indexOf("()") + 3, ret.lastIndexOf(";"))); //check cast
+                        }
                         mv.visitInsn(ARETURN); //Return
-                        mv.visitMaxs(2, 1);
                         mv.visitEnd();
                     } else if(type == 0) { // Is a set method
                         if(argCount <= 0) {
@@ -140,14 +149,18 @@ final class SharedStorageClassVisitor extends ClassAdapter {
                             mv.visitEnd();
                             return;
                         }
-
+                        Type arg = args[0];
+                        Type boxedArg = getBoxedType(arg);
                         mv.visitCode();
                         mv.visitLdcInsn(id); // First parameter - id
                         mv.visitLdcInsn(result.get()); // Second parameter - field name
-                        mv.visitVarInsn(ALOAD, 1); // load var
+                        mv.visitVarInsn(getLoadOpcodeForType(arg), 1); // load var
+                        String typeSignature = String.valueOf(getTypeSignature(arg.getSort()));
+                        if(!typeSignature.equals("L")) {
+                            mv.visitMethodInsn(INVOKESTATIC, boxedArg.getInternalName(), "valueOf", "(" + typeSignature + ")L" + boxedArg.getInternalName() + ";");
+                        }
                         mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "set", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"); // Set method
                         mv.visitInsn(RETURN); // Return
-                        mv.visitMaxs(3, 2);
                         mv.visitEnd();
                     }
                 } else {
@@ -158,5 +171,99 @@ final class SharedStorageClassVisitor extends ClassAdapter {
             }
         }
 
+        private static int getLoadOpcodeForType(Type type) {
+            switch (type.getSort()) {
+                case Type.BOOLEAN:
+                case Type.BYTE:
+                case Type.CHAR:
+                case Type.SHORT:
+                case Type.INT:
+                    return ILOAD;
+                case Type.LONG:
+                    return LLOAD;
+                case Type.FLOAT:
+                    return FLOAD;
+                case Type.DOUBLE:
+                    return DLOAD;
+                default:
+                    return ALOAD;
+            }
+        }
+
+        private static Type getBoxedType(final Type type) {
+            switch (type.getSort()) {
+                case Type.BYTE:
+                    return Type.getType(Byte.class);
+                case Type.BOOLEAN:
+                    return Type.getType(Boolean.class);
+                case Type.SHORT:
+                    return Type.getType(Short.class);
+                case Type.CHAR:
+                    return Type.getType(Character.class);
+                case Type.INT:
+                    return Type.getType(Integer.class);
+                case Type.LONG:
+                    return Type.getType(Long.class);
+                case Type.FLOAT:
+                    return Type.getType(Float.class);
+                case Type.DOUBLE:
+                    return Type.getType(Double.class);
+                default:
+                    return type;
+            }
+        }
+
+//        private static Type getUnboxedType(Type type) {
+//            switch (type) {
+//                case Type.BYTE_TYPE:
+//                    return Type.BYTE;
+//                case Type.BOOLEAN_TYPE:
+//                    return Type.BOOLEAN_TYPE;
+//                case Type.SHORT_TYPE:
+//                    return Type.SHORT_TYPE;
+//                case Type.CHAR_TYPE:
+//                    return Type.CHAR_TYPE;
+//                case Type.INT_TYPE:
+//                    return Type.INT_TYPE;
+//                case Type.LONG_TYPE:
+//                    return Type.LONG_TYPE;
+//                case Type.FLOAT_TYPE:
+//                    return Type.FLOAT_TYPE;
+//                case Type.DOUBLE_TYPE:
+//                    return Type.DOUBLE_TYPE;
+//                default:
+//                    return type;
+//            }
+//        }
+
+        private char getTypeSignature(int type) {
+            switch (type) {
+                case Type.BYTE:
+                    return 'B';
+                case Type.BOOLEAN:
+                    return 'Z';
+                case Type.CHAR:
+                    return 'C';
+                case Type.SHORT:
+                    return 'S';
+                case Type.INT:
+                    return 'I';
+                case Type.LONG:
+                    return 'J';
+                case Type.FLOAT:
+                    return 'F';
+                case Type.DOUBLE:
+                    return 'D';
+                default:
+                    return 'L';
+            }
+        }
+
+        private void unBoxForSignature(char signature) {
+            switch (signature) {
+                case 'B':
+
+            }
+        }
     }
 }

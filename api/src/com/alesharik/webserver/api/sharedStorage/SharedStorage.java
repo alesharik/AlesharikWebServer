@@ -18,7 +18,7 @@ final class SharedStorage {
     }
 
     private void checkAccess(AccessFilter.Type type, String field) throws IllegalAccessException {
-        Class<?> clazz = CallingClass.INSTANCE.getCallingClasses()[3];
+        Class<?> clazz = CallingClass.INSTANCE.getCallingClasses()[4];
         for(AccessFilter filter : filters) {
             if(!filter.canAccess(clazz, type, field)) {
                 throw new IllegalAccessException("Access denied!");

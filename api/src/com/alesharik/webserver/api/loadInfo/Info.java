@@ -3,6 +3,7 @@ package com.alesharik.webserver.api.loadInfo;
 /**
  * This interface represent a gathered information and way to gather information. An implementation must be thread-safe!
  */
+@Deprecated
 public interface Info {
     /**
      * This function called every <code>getId()</code> milliseconds in other thread.In this function must be
