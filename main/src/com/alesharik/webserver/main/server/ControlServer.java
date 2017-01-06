@@ -50,6 +50,7 @@ public final class ControlServer extends WebServer {
         httpServer = new HttpServer();
         httpServer.addListener(networkListener);
         ServerConfiguration serverConfiguration = httpServer.getServerConfiguration();
+        serverConfiguration.setJmxEnabled(true);
         serverConfiguration.addHttpHandler(controlHttpHandler, "/");
         TCPNIOTransportBuilder transportBuilder = TCPNIOTransportBuilder.newInstance();
         ThreadPoolConfig config = ThreadPoolConfig.defaultConfig();

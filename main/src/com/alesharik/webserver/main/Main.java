@@ -1,6 +1,7 @@
 package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueGetter;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.logger.Logger;
 
@@ -10,7 +11,7 @@ import java.io.IOException;
 //TODO rewrite site as green terminal
 //TODO add more prefixes to java
 
-@UseSharedStorage("serverFolders")
+@UseSharedStorage("config")
 public class Main {
     @SuppressWarnings("unused")
     public static final MainLoggerConfiguration MAIN_LOGGER_CONFIGURATION = new MainLoggerConfiguration();
@@ -42,6 +43,7 @@ public class Main {
 ////            Logger.log(Utils.getExternalIp());
 
         } catch (Throwable e) {
+            System.out.println(new Main().getTest());
             Logger.log(e);
 //            e.printStackTrace();
             System.exit(0);
@@ -139,5 +141,10 @@ public class Main {
                 Logger.log("Can't create server dashboard folder!");
             }
         }
+    }
+
+    @SharedValueGetter("main.isRepositorySnapshotEnabled")
+    public boolean getTest() {
+        return false;
     }
 }

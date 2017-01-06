@@ -58,6 +58,7 @@ public final class MainServer extends WebServer {
         httpServer = new HttpServer();
         httpServer.addListener(networkListener);
         ServerConfiguration serverConfiguration = httpServer.getServerConfiguration();
+        serverConfiguration.setJmxEnabled(true);
         serverConfiguration.addHttpHandler(new MainHttpHandler(handlerList, fileManager, logRequests, logFile, errorPageGenerator), "/");
 
         TCPNIOTransportBuilder transportBuilder = TCPNIOTransportBuilder.newInstance();

@@ -55,8 +55,8 @@ import static com.alesharik.webserver.main.Main.USER_DIR;
  * and start server
  */
 @Prefix("[ServerController]")
-@UseSharedStorage("serverFolders")
 public final class ServerController {
+    private final ConfigValues configValues = new ConfigValues();
 
     private final BaseAccessManagerBuilder baseAccessManagerBuilder = new BaseAccessManagerBuilder();
     private final ControlAccessManagerBuilder controlAccessManagerBuilder = new ControlAccessManagerBuilder();
@@ -90,10 +90,10 @@ public final class ServerController {
      */
     public ServerController() {
         try {
-            SharedStorageManager.addAccessFilter("serverFolders", (clazz, type, fieldName) -> {
+            SharedStorageManager.addAccessFilter("config", (clazz, type, fieldName) -> {
                 switch (type) {
                     case SET:
-                        return ServerController.class.equals(clazz);
+                        return ConfigValues.class.equals(clazz);
                     case SET_EXTERNAL:
                     case ADD_FILTER:
                     case CLEAR:
@@ -372,7 +372,7 @@ public final class ServerController {
                 throw new Error("Can't create new logging folder! Stopping...");
             }
         }
-        setLogFolder(logsFolder);
+        configValues.setLogFolder(logsFolder);
         File pluginsFolder = new File(configuration.getString("folders.plugins").replace("./", Main.USER_DIR.getPath() + "/"));
         if(!pluginsFolder.exists()) {
             Logger.log("Can't find plugins folder. Create new one...");
@@ -380,7 +380,7 @@ public final class ServerController {
                 throw new Error("Can't create new plugins folder! Stopping...");
             }
         }
-        setPluginFolder(pluginsFolder);
+        configValues.setPluginFolder(pluginsFolder);
         File wwwFolder = new File(configuration.getString("folders.www").replace("./", Main.USER_DIR.getPath() + "/"));
         if(!wwwFolder.exists()) {
             Logger.log("Can't find www folder. Create new one...");
@@ -388,7 +388,7 @@ public final class ServerController {
                 throw new Error("Can't create new www folder! Stopping...");
             }
         }
-        setWwwFolder(wwwFolder);
+        configValues.setWwwFolder(wwwFolder);
         File dashboardFolder = new File(configuration.getString("folders.dashboard").replace("./", Main.USER_DIR.getPath() + "/"));
         if(!dashboardFolder.exists()) {
             Logger.log("Can't find dashboard folder. Create new one...");
@@ -396,7 +396,9 @@ public final class ServerController {
                 throw new Error("Can't create new dashboard folder! Stopping...");
             }
         }
-        setDashboardFolder(dashboardFolder);
+        configValues.setDashboardFolder(dashboardFolder);
+
+        setupSharedStorage(configuration);
 
         Logger.setupLogger(new File(logsFolder + generateLogName()));
 
@@ -423,6 +425,7 @@ public final class ServerController {
             snapshotFileString = snapshotFileString.replace("./", Main.USER_DIR.getPath() + "/");
         }
         File snapshotFile = new File(snapshotFileString);
+        configValues.setRepositorySnapshotFile(snapshotFile);
         if(snapshotFile.isDirectory() || !snapshotFile.canRead() || !snapshotFile.canWrite()) {
             Logger.log("Snapshot file " + snapshotFileString + " can't be used! Disabling snapshot...");
             SerialRepository.snapsotEnabled(false);
@@ -434,6 +437,38 @@ public final class ServerController {
             }
         }
         SerialRepository.setSnapshotFile(snapshotFile);
+    }
+
+    private void setupSharedStorage(Configuration configuration) {
+        configValues.setRepositorySnapshotEnabled(configuration.getBoolean("main.isRepositorySnapshotEnabled"));
+        configValues.setRepositorySnapshotDelay(configuration.getLong("main.repositorySnapshotDelay"));
+
+        configValues.setWebServerEnabled(configuration.getBoolean("webServer.enabled"));
+        configValues.setWebServerPort(configuration.getInt("webServer.port"));
+        configValues.setWebServerHost(configuration.getString("webServer.host"));
+        configValues.setWebServerControlServer(configuration.getBoolean("webServer.isControlServer"));
+        configValues.setWebServerLogRequests(configuration.getBoolean("webServer.logRequests"));
+
+        Date date = new Date();
+        date.setTime(System.currentTimeMillis());
+        File logFile = new File(configuration.getString("webServer.logFile").replace("./", Main.USER_DIR.getPath() + "/").replace("{$time}", date.toString().replace(" ", "_")));
+        configValues.setWebServerLogFile(logFile);
+
+        configValues.setMicroserviceClientEnabled(configuration.getBoolean("microserviceClient.enabled"));
+        configValues.setMicroserviceClientPort(configuration.getInt("microserviceClient.port"));
+        configValues.setMicroserviceClientRouterHost(configuration.getString("microserviceClient.routerHost"));
+        configValues.setMicroserviceClientRouterPort(configuration.getInt("microserviceClient.routerPort"));
+
+        configValues.setMicroserviceServerEnabled(configuration.getBoolean("microserviceServer.enabled"));
+        configValues.setMicroserviceServerPort(configuration.getInt("microserviceServer.port"));
+        configValues.setMicroserviceServerHost(configuration.getString("microserviceServer.host"));
+        configValues.setMicroserviceServerRouterHost(configuration.getString("microserviceServer.routerHost"));
+        configValues.setMicroserviceServerRouterPort(configuration.getInt("microserviceServer.routerPort"));
+
+        configValues.setRouterServerEnabled(configuration.getBoolean("routerServer.enabled"));
+        configValues.setRouterServerHost(configuration.getString("routerServer.host"));
+        configValues.setRouterServerPort(configuration.getInt("routerServer.port"));
+        configValues.setRouterServerThreadCount(configuration.getInt("routerServer.threadCount"));
     }
 
     private boolean isEnabled(int flag) {
@@ -524,25 +559,128 @@ public final class ServerController {
 
     }
 
-    @SharedValueSetter("log")
-    private void setLogFolder(File folder) {
-    }
-
-    @SharedValueSetter("plugin")
-    private void setPluginFolder(File folder) {
-    }
-
-    @SharedValueSetter("www")
-    private void setWwwFolder(File folder) {
-    }
-
-    @SharedValueSetter("dashboard")
-    private void setDashboardFolder(File folder) {
-    }
-
     private static String generateLogName() {
         Date date = new Date();
         date.setTime(System.currentTimeMillis());
         return "/Log-" + date.toString().replace(" ", "_");
+    }
+
+    @UseSharedStorage("config")
+    private static final class ConfigValues {
+        //====================Main====================\\
+
+        @SharedValueSetter("main.isRepositorySnapshotEnabled")
+        public void setRepositorySnapshotEnabled(boolean value) {
+        }
+
+        @SharedValueSetter("main.repositorySnapshotFile")
+        public void setRepositorySnapshotFile(File file) {
+        }
+
+        @SharedValueSetter("main.repositorySnapshotDelay")
+        public void setRepositorySnapshotDelay(long delay) {
+        }
+
+        //====================Web server====================\\
+
+        @SharedValueSetter("webServer.enabled")
+        public void setWebServerEnabled(boolean value) {
+        }
+
+        @SharedValueSetter("webServer.port")
+        public void setWebServerPort(int port) {
+        }
+
+        @SharedValueSetter("webServer.host")
+        public void setWebServerHost(String host) {
+        }
+
+        @SharedValueSetter("webServer.isControlServer")
+        public void setWebServerControlServer(boolean value) {
+        }
+
+        @SharedValueSetter("webServer.logRequests")
+        public void setWebServerLogRequests(boolean value) {
+        }
+
+        @SharedValueSetter("webServer.logFile")
+        public void setWebServerLogFile(File file) {
+        }
+
+        //====================Microservice client====================\\
+
+        @SharedValueSetter("microserviceClient.enabled")
+        public void setMicroserviceClientEnabled(boolean value) {
+        }
+
+        @SharedValueSetter("microserviceClient.port")
+        public void setMicroserviceClientPort(int port) {
+        }
+
+        @SharedValueSetter("microserviceClient.routerHost")
+        public void setMicroserviceClientRouterHost(String value) {
+        }
+
+        @SharedValueSetter("microserviceClient.routerPort")
+        public void setMicroserviceClientRouterPort(int port) {
+        }
+
+        //====================Microservice server====================\\
+
+        @SharedValueSetter("microserviceServer.enabled")
+        public void setMicroserviceServerEnabled(boolean value) {
+        }
+
+        @SharedValueSetter("microserviceServer.port")
+        public void setMicroserviceServerPort(int port) {
+        }
+
+        @SharedValueSetter("microserviceServer.host")
+        public void setMicroserviceServerHost(String value) {
+        }
+
+        @SharedValueSetter("microserviceServer.routerHost")
+        public void setMicroserviceServerRouterHost(String value) {
+        }
+
+        @SharedValueSetter("microserviceServer.routerPort")
+        public void setMicroserviceServerRouterPort(int port) {
+        }
+
+        //====================Router server====================\\
+
+        @SharedValueSetter("routerServer.enabled")
+        public void setRouterServerEnabled(boolean value) {
+        }
+
+        @SharedValueSetter("routerServer.host")
+        public void setRouterServerHost(String host) {
+        }
+
+        @SharedValueSetter("routerServer.port")
+        public void setRouterServerPort(int port) {
+        }
+
+        @SharedValueSetter("routerServer.threadCount")
+        public void setRouterServerThreadCount(int value) {
+        }
+
+        //====================Folders====================\\
+
+        @SharedValueSetter("folder.logs")
+        public void setLogFolder(File folder) {
+        }
+
+        @SharedValueSetter("folders.plugin")
+        public void setPluginFolder(File folder) {
+        }
+
+        @SharedValueSetter("folders.www")
+        public void setWwwFolder(File folder) {
+        }
+
+        @SharedValueSetter("folders.dashboard")
+        public void setDashboardFolder(File folder) {
+        }
     }
 }

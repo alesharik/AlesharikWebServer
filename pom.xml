@@ -118,6 +118,21 @@
             <version>2.3.3</version>
         </dependency>
         <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-framework-monitoring</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-http-monitoring</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-http-server-monitoring</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>3.1.0</version>
