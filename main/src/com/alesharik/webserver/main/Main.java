@@ -1,7 +1,5 @@
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.api.Utils;
-import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueGetter;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.logger.Logger;
 
@@ -17,10 +15,12 @@ public class Main {
     public static final MainLoggerConfiguration MAIN_LOGGER_CONFIGURATION = new MainLoggerConfiguration();
 
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
+    @Deprecated
     public static final File LOGS_FOLDER = new File(USER_DIR + "/logs");
+    @Deprecated
     public static final File WWW = new File(USER_DIR + "/www");
+    @Deprecated
     public static final File SERVER_DASHBOARD = new File(USER_DIR + "/serverDashboard");
-    public static final String HOST = Utils.getExternalIp();
 
     private static ServerController controller;
 //    public static final String HOST = "127.0.0.1";
@@ -43,7 +43,6 @@ public class Main {
 ////            Logger.log(Utils.getExternalIp());
 
         } catch (Throwable e) {
-            System.out.println(new Main().getTest());
             Logger.log(e);
 //            e.printStackTrace();
             System.exit(0);
@@ -141,10 +140,5 @@ public class Main {
                 Logger.log("Can't create server dashboard folder!");
             }
         }
-    }
-
-    @SharedValueGetter("main.isRepositorySnapshotEnabled")
-    public boolean getTest() {
-        return false;
     }
 }

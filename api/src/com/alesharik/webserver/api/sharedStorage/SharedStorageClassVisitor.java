@@ -105,10 +105,6 @@ final class SharedStorageClassVisitor extends ClassAdapter {
             this.args = Type.getArgumentTypes(desc);
         }
 
-        public MethodReplacer(MethodVisitor mv) {
-            super(mv);
-        }
-
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
             switch (desc) {
@@ -128,20 +124,21 @@ final class SharedStorageClassVisitor extends ClassAdapter {
             try {
                 if(type > -1) {
                     super.visitCode();
-                    if(type == 1) {// Is a get method //TODO add support to primitives
+                    if(type == 1) {// Is a get method
+                        Type returnType = Type.getReturnType(ret);
+
                         mv.visitCode();
                         mv.visitLdcInsn(id); // First parameter - id
                         mv.visitLdcInsn(result.get()); // Second parameter - field name
-                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "get", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;"); // Invoke method
-
-                        if(ret.contains(";")) {
-                            Type returnType = Type.getReturnType(ret);
-                            mv.visitTypeInsn(CHECKCAST, getBoxedType(returnType).getInternalName()); // check cast
-                            unBoxForSignature(getTypeSignature(returnType.getSort()));
-                        } else {
-                            mv.visitTypeInsn(CHECKCAST, ret.substring(ret.indexOf("()") + 3, ret.lastIndexOf(";"))); //check cast
+                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "get", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;"); // get result
+                        if(ret.contains(";")) { //If return need object
+                            mv.visitTypeInsn(CHECKCAST, ret.substring(ret.indexOf("()") + 3, ret.lastIndexOf(";"))); //check cast to return object
+                        } else { //If return need primitive
+                            mv.visitTypeInsn(CHECKCAST, getBoxedType(returnType).getInternalName()); // check cast to boxed primitive
+                            unBoxForSignature(getTypeSignature(returnType.getSort())); //Unbox primitive
                         }
-                        mv.visitInsn(ARETURN); //Return
+                        mv.visitInsn(getReturnOpcodeForType(returnType)); //Return
+                        //Return
                         mv.visitEnd();
                     } else if(type == 0) { // Is a set method
                         if(argCount <= 0) {
@@ -151,16 +148,17 @@ final class SharedStorageClassVisitor extends ClassAdapter {
                         }
                         Type arg = args[0];
                         Type boxedArg = getBoxedType(arg);
+                        String typeSignature = String.valueOf(getTypeSignature(arg.getSort()));
+
                         mv.visitCode();
                         mv.visitLdcInsn(id); // First parameter - id
                         mv.visitLdcInsn(result.get()); // Second parameter - field name
                         mv.visitVarInsn(getLoadOpcodeForType(arg), 1); // load var
-                        String typeSignature = String.valueOf(getTypeSignature(arg.getSort()));
-                        if(!typeSignature.equals("L")) {
-                            mv.visitMethodInsn(INVOKESTATIC, boxedArg.getInternalName(), "valueOf", "(" + typeSignature + ")L" + boxedArg.getInternalName() + ";");
+                        if(!typeSignature.equals("L")) { // Has a primitive
+                            mv.visitMethodInsn(INVOKESTATIC, boxedArg.getInternalName(), "valueOf", "(" + typeSignature + ")L" + boxedArg.getInternalName() + ";"); //Cast to boxed primitive
                         }
-                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "set", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"); // Set method
-                        mv.visitInsn(RETURN); // Return
+                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "set", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"); //Set object
+                        mv.visitInsn(RETURN); // Return void
                         mv.visitEnd();
                     }
                 } else {
@@ -190,6 +188,25 @@ final class SharedStorageClassVisitor extends ClassAdapter {
             }
         }
 
+        private static int getReturnOpcodeForType(Type type) {
+            switch (type.getSort()) {
+                case Type.LONG:
+                    return LRETURN;
+                case Type.FLOAT:
+                    return FRETURN;
+                case Type.DOUBLE:
+                    return DRETURN;
+                case Type.BOOLEAN:
+                case Type.BYTE:
+                case Type.CHAR:
+                case Type.SHORT:
+                case Type.INT:
+                    return IRETURN;
+                default:
+                    return ARETURN;
+            }
+        }
+
         private static Type getBoxedType(final Type type) {
             switch (type.getSort()) {
                 case Type.BYTE:
@@ -212,29 +229,6 @@ final class SharedStorageClassVisitor extends ClassAdapter {
                     return type;
             }
         }
-
-//        private static Type getUnboxedType(Type type) {
-//            switch (type) {
-//                case Type.BYTE_TYPE:
-//                    return Type.BYTE;
-//                case Type.BOOLEAN_TYPE:
-//                    return Type.BOOLEAN_TYPE;
-//                case Type.SHORT_TYPE:
-//                    return Type.SHORT_TYPE;
-//                case Type.CHAR_TYPE:
-//                    return Type.CHAR_TYPE;
-//                case Type.INT_TYPE:
-//                    return Type.INT_TYPE;
-//                case Type.LONG_TYPE:
-//                    return Type.LONG_TYPE;
-//                case Type.FLOAT_TYPE:
-//                    return Type.FLOAT_TYPE;
-//                case Type.DOUBLE_TYPE:
-//                    return Type.DOUBLE_TYPE;
-//                default:
-//                    return type;
-//            }
-//        }
 
         private char getTypeSignature(int type) {
             switch (type) {
@@ -262,7 +256,25 @@ final class SharedStorageClassVisitor extends ClassAdapter {
         private void unBoxForSignature(char signature) {
             switch (signature) {
                 case 'B':
-
+                case 'S':
+                case 'I':
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I");
+                    break;
+                case 'J':
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J");
+                    break;
+                case 'F':
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F");
+                    break;
+                case 'D':
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D");
+                    break;
+                case 'Z':
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z");
+                    break;
+                case 'C':
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C");
+                    break;
             }
         }
     }

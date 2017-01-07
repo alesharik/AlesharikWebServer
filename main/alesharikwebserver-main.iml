@@ -45,6 +45,17 @@
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.3" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-rcm:2.3.3" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.3" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-framework-monitoring:2.3.3" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.gmbal:gmbal-api-only:3.2.0-b003" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.external:management-api:3.0.0-b012" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.gmbal:gmbal:3.2.0-b003" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.pfl:pfl-basic:1.0.0-b001" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.pfl:pfl-tf:1.0.0-b001" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.pfl:pfl-asm:1.0.0-b001" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.pfl:pfl-tf-tools:1.0.0-b001" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.pfl:pfl-basic-tools:1.0.0-b001" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-monitoring:2.3.3" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-server-monitoring:2.3.3" level="project" />
     <orderEntry type="library" name="Maven: javax.servlet:javax.servlet-api:3.1.0" level="project" />
     <orderEntry type="library" name="Maven: org.openjdk.jmh:jmh-core:1.17" level="project" />
     <orderEntry type="library" name="Maven: org.openjdk.jmh:jmh-generator-annprocess:1.17" level="project" />
