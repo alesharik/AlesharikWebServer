@@ -275,6 +275,8 @@ final class SharedStorageClassVisitor extends ClassAdapter {
                 case 'C':
                     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C");
                     break;
+                default: //Is a object - do nothing
+                    break;
             }
         }
     }
