@@ -240,7 +240,7 @@ public final class ServerController {
         }
         try {
             if(password.isEmpty()) {
-                password = Helpers.getRandomString(24);
+                password = Utils.getRandomString(24);
                 Files.write(passwordFile.toPath(), StringCipher.encrypt(password, null, secretKey).getBytes(Charsets.UTF8_CHARSET));
             }
         } catch (BadPaddingException | IllegalBlockSizeException | InvalidKeySpecException | InvalidKeyException e) {
@@ -258,7 +258,7 @@ public final class ServerController {
         }
         if(secretKey == null) {
             try {
-                String randomString = Helpers.getRandomString(24);
+                String randomString = Utils.getRandomString(24);
                 secretKey = StringCipher.generateKey(randomString);
                 KeySaver.saveKeyToFile(secretKey, keyFile);
             } catch (InvalidKeySpecException | InvalidKeyException e) {

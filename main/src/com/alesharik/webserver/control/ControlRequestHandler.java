@@ -1,13 +1,13 @@
 package com.alesharik.webserver.control;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
+import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.main.FileManager;
-import com.alesharik.webserver.main.Helpers;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
@@ -54,7 +54,7 @@ public class ControlRequestHandler implements RequestHandler {
     }
 
     private void handleLoginPasswordChangeCommand(Request request, Response response) throws IOException {
-        Cookie uuidCookie = Helpers.getCookieForName("UUID", request.getCookies());
+        Cookie uuidCookie = Utils.getCookieForName("UUID", request.getCookies());
         if(uuidCookie == null || !isSessionValid(UUID.fromString(uuidCookie.getValue()))) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
             return;

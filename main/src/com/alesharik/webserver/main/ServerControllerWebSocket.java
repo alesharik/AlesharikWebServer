@@ -35,7 +35,7 @@ public class ServerControllerWebSocket extends DefaultWebSocket {
             }
         } else if(text.equals("getBaseInfo")) {
             try {
-                this.send("<pre>" + Helpers.getCompInfo() + "</pre>");
+//                this.send("<pre>" + Helpers.getCompInfo() + "</pre>");
             } catch (Exception e) {
                 this.send("<pre>" + e.getLocalizedMessage() + "</pre>");
             }

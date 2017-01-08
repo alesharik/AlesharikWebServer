@@ -1,10 +1,7 @@
 package com.alesharik.webserver.main.websockets;
 
-import com.alesharik.webserver.main.Helpers;
 import com.alesharik.webserver.main.server.MainServer;
 import org.glassfish.grizzly.http.HttpRequestPacket;
-import org.glassfish.grizzly.http.util.Base64Utils;
-import org.glassfish.grizzly.utils.Charsets;
 import org.glassfish.grizzly.websockets.Broadcaster;
 import org.glassfish.grizzly.websockets.DefaultWebSocket;
 import org.glassfish.grizzly.websockets.ProtocolHandler;
@@ -13,6 +10,7 @@ import org.glassfish.grizzly.websockets.WebSocketListener;
 /**
  * This class represent WebSocket, which control the server
  */
+//TODO rewrite this
 public final class ServerControllerWebSocket extends DefaultWebSocket {
     private ServerControllerWebSocketApplication application;
     private MainServer mainServer;
@@ -64,7 +62,7 @@ public final class ServerControllerWebSocket extends DefaultWebSocket {
         String[] parts = message.split(":");
         switch (parts[0]) {
             case "getComputerInfo":
-                send(Base64Utils.encodeToString(Helpers.getCompInfo().getBytes(Charsets.UTF8_CHARSET), false));
+//                send(Base64Utils.encodeToString(Helpers.getCompInfo().getBytes(Charsets.UTF8_CHARSET), false));
                 break;
             case "plugin":
                 processPluginMessage(parts);
