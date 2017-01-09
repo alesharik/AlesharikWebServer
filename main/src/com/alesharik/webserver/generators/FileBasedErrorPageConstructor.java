@@ -1,5 +1,6 @@
 package com.alesharik.webserver.generators;
 
+import com.alesharik.webserver.api.errorPageGenerators.ErrorPageConstructor;
 import com.alesharik.webserver.main.FileManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.glassfish.grizzly.http.server.Request;
@@ -14,44 +15,54 @@ import org.jsoup.select.Elements;
  * Custom error page must be named as error code, which customize error page<br>
  * For use error pages with description in custom error page file must be element with <code>id="description"</code>
  */
-public final class AdvancedErrorPageGenerator {
-    private static final BasicErrorPageGenerator BASIC_ERROR_PAGE_GENERATOR = new BasicErrorPageGenerator();
+public final class FileBasedErrorPageConstructor implements ErrorPageConstructor {
+    private static final BasicErrorPageConstructor BASIC_ERROR_PAGE_CONSTRUCTOR = new BasicErrorPageConstructor();
 
     private final FileManager fileManager;
 
-    public AdvancedErrorPageGenerator(FileManager fileManager) {
+    public FileBasedErrorPageConstructor(FileManager fileManager) {
         this.fileManager = fileManager;
     }
 
-    //    @Override
+    @Override
     public String generate(Request request, int status, String reasonPhrase, String description, Throwable exception) {
         if(fileManager.exists("/errors/" + status + ".html", true)) {
             String file = new String(fileManager.readFile("/errors/" + status + ".html"), Charsets.UTF8_CHARSET);
-            String content = "";
+            StringBuilder content = new StringBuilder();
             if(description != null && !description.isEmpty()) {
-                content += description;
+                content.append(description);
             }
             if(exception != null) {
-                if(!content.isEmpty()) {
-                    content += "\n";
+                if(content.length() > 0) {
+                    content.append('\n');
                 }
-                content += ExceptionUtils.getMessage(exception);
+                content.append(ExceptionUtils.getMessage(exception));
             }
 
-            if(content.isEmpty()) {
+            if(content.length() <= 0) {
                 return file;
             } else {
-                return generateDescriptedErrorpage(status, reasonPhrase, content, file);
+                return generateErrorPageWithDescription(content.toString(), file);
             }
         } else {
-            return BASIC_ERROR_PAGE_GENERATOR.generate(request, status, reasonPhrase, description, exception);
+            return BASIC_ERROR_PAGE_CONSTRUCTOR.generate(request, status, reasonPhrase, description, exception);
         }
     }
 
-    private String generateDescriptedErrorpage(int status, String reasonPhrase, String content, String file) {
+    private String generateErrorPageWithDescription(String content, String file) {
         Document document = Jsoup.parse(file);
         Elements elements = document.select("#description");
         elements.first().replaceWith(elements.first().html(content));
         return document.html();
+    }
+
+    @Override
+    public boolean support(int status) {
+        return true;
+    }
+
+    @Override
+    public String getName() {
+        return "File-based error page generator";
     }
 }

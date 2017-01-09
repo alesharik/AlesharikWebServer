@@ -1,28 +1,30 @@
 package com.alesharik.webserver.generators;
 
+import com.alesharik.webserver.api.errorPageGenerators.ErrorPageConstructor;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.glassfish.grizzly.http.server.Request;
 
 /**
  * Generate basic error pages
  */
-public final class BasicErrorPageGenerator {
-    //    @Override
+public final class BasicErrorPageConstructor implements ErrorPageConstructor {
+
+    @Override
     public String generate(Request request, int status, String reasonPhrase, String description, Throwable exception) {
-        String content = "";
+        StringBuilder content = new StringBuilder();
         if(description != null && !description.isEmpty()) {
-            content += description;
+            content.append(description);
         }
         if(exception != null) {
-            if(!content.isEmpty()) {
-                content += "\n";
+            if(content.length() > 0) {
+                content.append("\n");
             }
-            content += ExceptionUtils.getMessage(exception);
+            content.append(ExceptionUtils.getMessage(exception));
         }
-        if(content.isEmpty()) {
+        if(content.length() <= 0) {
             return generateBasicErrorPage(status, reasonPhrase);
         } else {
-            return generateDescriptedErrorpage(status, reasonPhrase, content);
+            return generateErrorPageWithDescription(status, reasonPhrase, content.toString());
         }
     }
 
@@ -45,7 +47,7 @@ public final class BasicErrorPageGenerator {
                 "</html>";
     }
 
-    private String generateDescriptedErrorpage(int status, String reasonPhrase, String content) {
+    private String generateErrorPageWithDescription(int status, String reasonPhrase, String content) {
         return "<html>" +
                 "<head>" +
                 "<style>" +
@@ -65,5 +67,15 @@ public final class BasicErrorPageGenerator {
                 "<p>AlesharikWebServer</p>" +
                 "</body>" +
                 "</html>";
+    }
+
+    @Override
+    public boolean support(int status) {
+        return true;
+    }
+
+    @Override
+    public String getName() {
+        return "Basic error page generator";
     }
 }

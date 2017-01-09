@@ -1,60 +1,58 @@
 package com.alesharik.webserver.generators;
 
-import com.alesharik.webserver.exceptions.KeyExistsException;
+import com.alesharik.webserver.api.errorPageGenerators.ErrorPageConstructor;
 import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import org.glassfish.grizzly.http.server.Request;
 
-import java.util.HashMap;
+import java.util.List;
 
 /**
  * This error page generator use modules as additional error page providers
  */
-public final class ModularErrorPageGenerator implements ErrorPageGenerator {
-    private final AdvancedErrorPageGenerator pageGenerator;
-    private final HashMap<Integer, ErrorPageGenerator> errorPageGenerators = new HashMap<>();
+public final class ModularErrorPageGenerator implements com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator {
+    private final ErrorPageConstructors constructors;
 
     public ModularErrorPageGenerator(FileManager fileManager) {
-        this.pageGenerator = new AdvancedErrorPageGenerator(fileManager);
+        constructors = new ErrorPageConstructors();
+        constructors.addConstructor(new BasicErrorPageConstructor());
+        constructors.addConstructor(new FileBasedErrorPageConstructor(fileManager));
     }
 
     @Override
     public String generate(Request request, int status, String reasonPhrase, String description, Throwable exception) {
-        if(errorPageGenerators.containsKey(status)) {
-            return errorPageGenerators.get(status).generate(request, status, reasonPhrase, description, exception);
-        } else {
-            return pageGenerator.generate(request, status, reasonPhrase, description, exception);
-        }
+        return constructors.getConstructor(status)
+                .orElseThrow(() -> new RuntimeException("Page constructor not found"))
+                .generate(request, status, reasonPhrase, description, exception);
     }
 
-    /**
-     * Add constructor
-     *
-     * @throws KeyExistsException if status is busy
-     */
-    public void addConstructor(ErrorPageConstructor constructor) {
-        if(hasConstructorOn(constructor.getStatus())) {
-            throw new KeyExistsException();
-        }
-
-        errorPageGenerators.put(constructor.getStatus(), constructor);
-    }
-
-    /**
-     * Check if status is busy
-     */
-    public boolean hasConstructorOn(int status) {
-        return errorPageGenerators.containsKey(status);
-    }
-
-    /**
-     * Set free current status
-     */
-    public void clearStatus(int status) {
-        errorPageGenerators.remove(status);
-    }
-
+    //TODO remove
     public void setupServerAccessManagerBuilder(ServerAccessManagerBuilder builder) {
         builder.setErrorPageGenerator(this);
+    }
+
+    @Override
+    public void addErrorPageConstructor(ErrorPageConstructor constructor) {
+        constructors.addConstructor(constructor);
+    }
+
+    @Override
+    public void removeErrorPageConstructor(ErrorPageConstructor constructor) {
+        constructors.removeErrorPageConstructor(constructor);
+    }
+
+    @Override
+    public boolean containsErrorPageConstructor(ErrorPageConstructor constructor) {
+        return constructors.containsConstructor(constructor);
+    }
+
+    @Override
+    public List<ErrorPageConstructor> getErrorPageConstructorsForStatus(int status) {
+        return constructors.constructors(status);
+    }
+
+    @Override
+    public void setDefaultErrorPageConstructor(ErrorPageConstructor errorPageConstructor, int status) {
+        constructors.setDefault(errorPageConstructor, status);
     }
 }

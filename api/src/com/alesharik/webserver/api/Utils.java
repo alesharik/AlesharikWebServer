@@ -4,7 +4,6 @@ import com.alesharik.webserver.logger.Logger;
 import one.nio.util.ByteArrayBuilder;
 import one.nio.util.Hex;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.glassfish.grizzly.http.Cookie;
 
 import javax.annotation.concurrent.Immutable;
 import java.io.ByteArrayOutputStream;
@@ -246,19 +245,5 @@ public final class Utils {
         }
 
         return RandomStringUtils.random(length, true, true);
-    }
-
-    /**
-     * Find cookie for name in cookies list
-     *
-     * @return {@link Cookie} if it find needed cookie, overwise <code>null</code>
-     */
-    public static Cookie getCookieForName(String name, Cookie[] cookies) {
-        for(Cookie cookie : cookies) {
-            if(cookie.getName().equals(name)) {
-                return cookie;
-            }
-        }
-        return null;
     }
 }
