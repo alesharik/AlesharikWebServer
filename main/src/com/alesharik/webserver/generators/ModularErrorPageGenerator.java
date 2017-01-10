@@ -1,6 +1,7 @@
 package com.alesharik.webserver.generators;
 
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageConstructor;
+import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import org.glassfish.grizzly.http.server.Request;
@@ -10,7 +11,7 @@ import java.util.List;
 /**
  * This error page generator use modules as additional error page providers
  */
-public final class ModularErrorPageGenerator implements com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator {
+public final class ModularErrorPageGenerator implements ErrorPageGenerator {
     private final ErrorPageConstructors constructors;
 
     public ModularErrorPageGenerator(FileManager fileManager) {
@@ -27,6 +28,7 @@ public final class ModularErrorPageGenerator implements com.alesharik.webserver.
     }
 
     //TODO remove
+    @Deprecated
     public void setupServerAccessManagerBuilder(ServerAccessManagerBuilder builder) {
         builder.setErrorPageGenerator(this);
     }
@@ -43,7 +45,7 @@ public final class ModularErrorPageGenerator implements com.alesharik.webserver.
 
     @Override
     public boolean containsErrorPageConstructor(ErrorPageConstructor constructor) {
-        return constructors.containsConstructor(constructor);
+        return constructor != null && constructors.containsConstructor(constructor);
     }
 
     @Override

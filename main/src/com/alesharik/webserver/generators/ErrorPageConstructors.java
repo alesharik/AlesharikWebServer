@@ -49,7 +49,7 @@ class ErrorPageConstructors {
         }
         return constructors.stream()
                 .filter(constructor -> constructor.support(status))
-                .findFirst();
+                .reduce((constructor, constructor2) -> constructor2);
     }
 
     public List<ErrorPageConstructor> constructors(int status) {

@@ -138,6 +138,26 @@ public class ErrorPageConstructorsTest {
         }).equals(test));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void setDefaultIllegalArgument() throws Exception {
+        constructors.setDefault(new ErrorPageConstructor() {
+            @Override
+            public String generate(Request request, int status, String reasonPhrase, String description, Throwable throwable) {
+                return null;
+            }
+
+            @Override
+            public boolean support(int status) {
+                return false;
+            }
+
+            @Override
+            public String getName() {
+                return null;
+            }
+        }, 300);
+    }
+
     @Test
     public void getConstructor() throws Exception {
         assertNotNull(constructors.getConstructor(200));

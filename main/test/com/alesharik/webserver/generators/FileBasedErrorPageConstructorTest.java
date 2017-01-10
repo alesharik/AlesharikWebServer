@@ -40,13 +40,19 @@ public class FileBasedErrorPageConstructorTest {
     public static void setUp() throws Exception {
         File tmpFolder = Files.createTempDirectory("FileBasedErrorPageConstructorTest").toFile();
         File errorFolder = new File(tmpFolder + "/errors/");
-        errorFolder.mkdir();
+        if(!errorFolder.mkdir()) {
+            throw new Error();
+        }
         File test404 = new File(errorFolder + "/404.html");
-        test404.createNewFile();
+        if(!test404.createNewFile()) {
+            throw new Error();
+        }
         Files.write(test404.toPath(), "asd".getBytes(Charsets.ASCII_CHARSET));
 
         File test403 = new File(errorFolder + "/403.html");
-        test403.createNewFile();
+        if(!test403.createNewFile()) {
+            throw new Error();
+        }
         Files.write(test403.toPath(), "<div id=\"description\"></div>".getBytes(Charsets.ASCII_CHARSET));
 
         FileManager fileManager = new FileManager(tmpFolder, FileManager.FileHoldingMode.NO_HOLD);
