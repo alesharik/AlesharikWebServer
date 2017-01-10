@@ -40,7 +40,7 @@ public final class FileBasedErrorPageConstructor implements ErrorPageConstructor
             }
 
             if(content.length() <= 0) {
-                return file;
+                return Jsoup.parse(file).html();
             } else {
                 return generateErrorPageWithDescription(content.toString(), file);
             }
@@ -52,7 +52,10 @@ public final class FileBasedErrorPageConstructor implements ErrorPageConstructor
     private String generateErrorPageWithDescription(String content, String file) {
         Document document = Jsoup.parse(file);
         Elements elements = document.select("#description");
-        elements.first().replaceWith(elements.first().html(content));
+        if(elements.first() == null) {
+            return document.html();
+        }
+        elements.first().html(content);
         return document.html();
     }
 
