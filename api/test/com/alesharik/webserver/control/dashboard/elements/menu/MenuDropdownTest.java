@@ -1,9 +1,6 @@
-package tests.com.alesharik.webserver.control.dashboard.elements.menu;
+package com.alesharik.webserver.control.dashboard.elements.menu;
 
 import com.alesharik.webserver.api.GsonUtils;
-import com.alesharik.webserver.control.dashboard.elements.menu.MenuDropdown;
-import com.alesharik.webserver.control.dashboard.elements.menu.MenuItem;
-import com.alesharik.webserver.control.dashboard.elements.menu.TextMenuItem;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;

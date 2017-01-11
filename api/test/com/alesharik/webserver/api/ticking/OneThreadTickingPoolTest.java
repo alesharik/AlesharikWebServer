@@ -1,17 +1,16 @@
-package tests.com.alesharik.webserver.api.ticking;
+package com.alesharik.webserver.api.ticking;
 
-import com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool;
-import com.alesharik.webserver.api.ticking.Tickable;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-public class ExecutorPoolBasedTickingPoolTest {
-    private ExecutorPoolBasedTickingPool pool;
+public class OneThreadTickingPoolTest {
+    private OneThreadTickingPool pool;
+    private OneThreadTickingPool not;
+    private OneThreadTickingPool not1;
     private Tickable dude = () -> {
     };
     private Tickable imOK = () -> {
@@ -21,11 +20,14 @@ public class ExecutorPoolBasedTickingPoolTest {
 
     @Before
     public void setup() {
-        pool = new ExecutorPoolBasedTickingPool();
+        pool = new OneThreadTickingPool();
 
         pool.startTicking(imOK, 501);
         pool.startTicking(sleepy, 999);
         pool.pauseTickable(sleepy);
+
+        not = new OneThreadTickingPool();
+        not1 = new OneThreadTickingPool();
     }
 
     @Test
@@ -38,19 +40,9 @@ public class ExecutorPoolBasedTickingPoolTest {
         pool.startTicking(dude, -1);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void startTickingNull() throws Exception {
-        pool.startTicking(null, 1000);
-    }
-
     @Test
     public void stopTicking() throws Exception {
         pool.stopTicking(dude);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void stopTickingNull() throws Exception {
-        pool.stopTicking(null);
     }
 
     @Test
@@ -58,19 +50,9 @@ public class ExecutorPoolBasedTickingPoolTest {
         pool.pauseTickable(dude);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void pauseTickableNull() throws Exception {
-        pool.pauseTickable(null);
-    }
-
     @Test
     public void resumeTickable() throws Exception {
         pool.resumeTickable(dude);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void resumeTickableNull() throws Exception {
-        pool.resumeTickable(null);
     }
 
     @Test
@@ -84,22 +66,38 @@ public class ExecutorPoolBasedTickingPoolTest {
     }
 
     @Test
-    public void z_shutdown() throws Exception { //z for last execution
+    public void shutdown() throws Exception {
         pool.shutdown();
     }
 
     @Test
-    public void z_shutdownNow() throws Exception { //z for last execution
+    public void shutdownNow() throws Exception {
         pool.shutdownNow();
     }
 
     @Test
     public void workTest() throws InterruptedException {
-        ExecutorPoolBasedTickingPool pool1 = new ExecutorPoolBasedTickingPool();
+        OneThreadTickingPool pool1 = new OneThreadTickingPool();
         AtomicBoolean atomicBoolean = new AtomicBoolean(false);
         pool1.startTicking(() -> atomicBoolean.set(true), 10);
         Thread.sleep(100);
         assertTrue(atomicBoolean.get());
         pool1.shutdown();
+    }
+
+    @Test
+    public void equals() throws Exception {
+        assertFalse(pool.equals(not));
+        assertFalse(not.equals(not1));
+    }
+
+    @Test
+    public void hashCodeTest() throws Exception {
+        assertTrue(Integer.compare(pool.hashCode(), not.hashCode()) != 0);
+    }
+
+    @Test
+    public void toStringTest() throws Exception {
+        assertNotNull(pool.toString());
     }
 }

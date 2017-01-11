@@ -1,6 +1,5 @@
-package tests.com.alesharik.webserver.control.dashboard.elements.menu;
+package com.alesharik.webserver.control.dashboard.elements.menu;
 
-import com.alesharik.webserver.control.dashboard.elements.menu.MenuItem;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import org.junit.BeforeClass;

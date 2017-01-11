@@ -1,6 +1,5 @@
-package tests.com.alesharik.webserver.api.functions;
+package com.alesharik.webserver.api.functions;
 
-import com.alesharik.webserver.api.functions.TriplePredicate;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -1,8 +1,5 @@
-package tests.com.alesharik.webserver.api.ticking;
+package com.alesharik.webserver.api.ticking;
 
-import com.alesharik.webserver.api.ticking.OneThreadTickingPool;
-import com.alesharik.webserver.api.ticking.Tickable;
-import com.alesharik.webserver.api.ticking.TickingPool;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,10 +23,5 @@ public class TickingPoolTest {
     @Test(expected = IllegalArgumentException.class)
     public void startTickingIllegal() throws Exception {
         pool.startTicking(dude, -100, TimeUnit.SECONDS);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void startTickingNull() throws Exception {
-        pool.startTicking(dude, 100, null);
     }
 }

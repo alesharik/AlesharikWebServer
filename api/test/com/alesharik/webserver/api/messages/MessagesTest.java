@@ -1,12 +1,5 @@
-package tests.com.alesharik.webserver.api.messages;
+package com.alesharik.webserver.api.messages;
 
-import com.alesharik.webserver.api.messages.AbstractMessageFactory;
-import com.alesharik.webserver.api.messages.Message;
-import com.alesharik.webserver.api.messages.MessageHandler;
-import com.alesharik.webserver.api.messages.MessageListener;
-import com.alesharik.webserver.api.messages.MessageTranslator;
-import com.alesharik.webserver.api.messages.Messages;
-import com.alesharik.webserver.api.messages.Subscribe;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

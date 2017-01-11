@@ -1,6 +1,5 @@
-package tests.com.alesharik.webserver.api.functions;
+package com.alesharik.webserver.api.functions;
 
-import com.alesharik.webserver.api.functions.TripleFunction;
 import org.junit.Before;
 import org.junit.Test;
 

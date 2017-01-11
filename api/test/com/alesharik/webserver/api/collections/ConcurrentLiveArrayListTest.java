@@ -1,6 +1,5 @@
-package tests.com.alesharik.webserver.api.collections;
+package com.alesharik.webserver.api.collections;
 
-import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

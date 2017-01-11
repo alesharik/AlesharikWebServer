@@ -1,8 +1,5 @@
-package tests.com.alesharik.webserver.control.dashboard.elements.menu;
+package com.alesharik.webserver.control.dashboard.elements.menu;
 
-import com.alesharik.webserver.control.dashboard.elements.menu.Menu;
-import com.alesharik.webserver.control.dashboard.elements.menu.MenuItem;
-import com.alesharik.webserver.control.dashboard.elements.menu.TextMenuItem;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

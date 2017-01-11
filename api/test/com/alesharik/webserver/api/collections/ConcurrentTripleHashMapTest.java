@@ -1,6 +1,5 @@
-package tests.com.alesharik.webserver.api.collections;
+package com.alesharik.webserver.api.collections;
 
-import com.alesharik.webserver.api.collections.TripleHashMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,7 +11,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("Duplicates")
-public class TripleHashMapTest {
+public class ConcurrentTripleHashMapTest {
     private TripleHashMap<Integer, Integer, Integer> map;
     private TripleHashMap<Integer, Integer, Integer> toClear;
     private TripleHashMap<Integer, Integer, Integer> readOnly;
@@ -24,32 +23,32 @@ public class TripleHashMapTest {
 
     @Before
     public void setUp() throws Exception {
-        map = new TripleHashMap<>();
+        map = new ConcurrentTripleHashMap<>();
         for(int i = 1; i <= 13; i++) {
             map.put(i, i, i);
         }
 
-        readOnly = new TripleHashMap<>();
+        readOnly = new ConcurrentTripleHashMap<>();
         for(int i = 1; i <= 10; i++) {
             readOnly.put(i, i, i);
         }
-        toClear = new TripleHashMap<>();
+        toClear = new ConcurrentTripleHashMap<>();
         for(int i = 0; i < 1000; i++) {
             toClear.put(i, i + 1, i + 2);
         }
-        empty = new TripleHashMap<>();
+        empty = new ConcurrentTripleHashMap<>();
 
         toPut = new HashMap<>();
         for(int i = 150; i < 200; i++) {
             toPut.put(i, i);
         }
 
-        toPut1 = new TripleHashMap<>();
+        toPut1 = new ConcurrentTripleHashMap<>();
         for(int i = 250; i < 300; i++) {
             toPut1.put(i, i, i);
         }
 
-        replaceAll = new TripleHashMap<>();
+        replaceAll = new ConcurrentTripleHashMap<>();
         for(int i = 0; i < 100; i++) {
             replaceAll.put(i, i, i);
         }
@@ -226,7 +225,7 @@ public class TripleHashMapTest {
     public void replaceAll() throws Exception {
         replaceAll.replaceAll((integer, integer2, integer3) -> 99, (integer, integer2, integer3) -> 100);
         for(int i = 0; i < 100; i++) {
-            assertTrue(replaceAll.get(i) == 99 && replaceAll.getAddition(i) == 100);
+            assertTrue("i = " + i + ", val = " + replaceAll.get(i) + ", add = " + replaceAll.getAddition(i), replaceAll.get(i) == 99 && replaceAll.getAddition(i) == 100);
         }
     }
 }

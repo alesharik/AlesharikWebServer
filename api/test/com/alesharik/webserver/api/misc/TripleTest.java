@@ -1,6 +1,5 @@
-package tests.com.alesharik.webserver.api.misc;
+package com.alesharik.webserver.api.misc;
 
-import com.alesharik.webserver.api.misc.Triple;
 import org.junit.Before;
 import org.junit.Test;
 
