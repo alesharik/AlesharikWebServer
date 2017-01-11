@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @see Tickable
  */
-public interface TickingPool {
+public interface TickingPool extends TickingPoolMXBean {
     /**
      * This method add new tickable to pool. The element start ticking after it added to pool
      *

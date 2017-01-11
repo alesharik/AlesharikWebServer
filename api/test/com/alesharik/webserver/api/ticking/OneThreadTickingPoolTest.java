@@ -3,6 +3,8 @@ package com.alesharik.webserver.api.ticking;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
@@ -11,6 +13,7 @@ public class OneThreadTickingPoolTest {
     private OneThreadTickingPool pool;
     private OneThreadTickingPool not;
     private OneThreadTickingPool not1;
+    private OneThreadTickingPool forMBeanTest;
     private Tickable dude = () -> {
     };
     private Tickable imOK = () -> {
@@ -28,6 +31,60 @@ public class OneThreadTickingPoolTest {
 
         not = new OneThreadTickingPool();
         not1 = new OneThreadTickingPool();
+
+        forMBeanTest = new OneThreadTickingPool();
+        forMBeanTest.startTicking(() -> {
+        }, 1000);
+        forMBeanTest.startTicking(() -> {
+        }, 1000);
+        forMBeanTest.startTicking(() -> {
+        }, 1000);
+        Tickable paused = () -> {
+        };
+
+        forMBeanTest.startTicking(paused, 10);
+        forMBeanTest.pauseTickable(paused);
+    }
+
+    @Test
+    public void getThreadCountTest() throws Exception {
+        assertTrue(forMBeanTest.getThreadCount() == 1);
+    }
+
+    @Test
+    public void getTotalTaskCount() throws Exception {
+        assertTrue(forMBeanTest.getTotalTaskCount() == 4);
+    }
+
+    @Test
+    public void getRunningTaskCount() throws Exception {
+        assertTrue(forMBeanTest.getRunningTaskCount() == 3);
+    }
+
+    @Test
+    public void getPauseTaskCount() throws Exception {
+        assertTrue(forMBeanTest.getPauseTaskCount() == 1);
+    }
+
+    @Test
+    public void getIdTest() throws Exception {
+        assertTrue(pool.getId() > 0);
+    }
+
+    @Test
+    public void testRegisterMBean() throws Exception {
+        assertTrue(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + pool.getId())));
+        assertTrue(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + not.getId())));
+        assertTrue(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + not1.getId())));
+        assertTrue(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + forMBeanTest.getId())));
+    }
+
+    @SuppressWarnings("FinalizeCalledExplicitly")
+    @Test
+    public void finalizeTest() throws Throwable {
+        assertTrue(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + not1.getId())));
+        not1.finalize();
+        assertFalse(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + not1.getId())));
     }
 
     @Test

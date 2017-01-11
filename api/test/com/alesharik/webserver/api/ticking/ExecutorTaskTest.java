@@ -1,5 +1,6 @@
 package com.alesharik.webserver.api.ticking;
 
+import com.alesharik.webserver.exceptions.ExceptionWithoutStacktrace;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,7 +21,7 @@ public class ExecutorTaskTest {
         executorTask = new ExecutorPoolBasedTickingPool.ExecutorTask(tickable, map);
 
         Tickable thr = () -> {
-            throw new Exception();
+            throw new ExceptionWithoutStacktrace();
         };
         map.put(thr, true);
         exception = new ExecutorPoolBasedTickingPool.ExecutorTask(thr, map);

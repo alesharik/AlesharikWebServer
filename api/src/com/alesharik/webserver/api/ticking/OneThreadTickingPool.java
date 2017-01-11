@@ -1,25 +1,33 @@
 package com.alesharik.webserver.api.ticking;
 
 import com.alesharik.webserver.api.Utils;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
+import one.nio.mgt.Management;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class use <code>Executors.newSingleThreadScheduledExecutor()</code> to create executor pool => it execute all {@link Tickable}s in one thread
  * => it can execute {@link Tickable} not in time if {@link Tickable} execute long operations or pool have too many {@link Tickable}s
  * It is prefect for use if you need execute small amount of fast tasks or you need a fast and lightweight pool
  */
-@Prefix("[TickingPool]")
+@Prefixes({"[TickingPool]", "[OneThreadTickingPool]"})
+@ThreadSafe
 public final class OneThreadTickingPool implements TickingPool {
+    private static final AtomicLong COUNTER = new AtomicLong(0);
+
     private static final String DEFAULT_NAME = "TickingPool";
 
     private final ConcurrentHashMap<Tickable, Boolean> tickables;
     private final ScheduledExecutorService executor;
+
+    private final long id;
 
     /**
      * Create {@link OneThreadTickingPool} with <code>DEFAULT_NAME</code> thread name which use current group (group of this thread)
@@ -56,6 +64,9 @@ public final class OneThreadTickingPool implements TickingPool {
 
         tickables = new ConcurrentHashMap<>();
         executor = Executors.newSingleThreadScheduledExecutor(r -> new Thread(threadGroup, r, name));
+        id = COUNTER.incrementAndGet();
+
+        Management.registerMXBean(this, TickingPoolMXBean.class, "com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + id);
     }
 
     @Override
@@ -132,5 +143,42 @@ public final class OneThreadTickingPool implements TickingPool {
                 "tickables=" + tickables +
                 ", executor=" + executor +
                 '}';
+    }
+
+    @Override
+    public int getThreadCount() {
+        return 1;
+    }
+
+    @Override
+    public int getTotalTaskCount() {
+        return tickables.size();
+    }
+
+    @Override
+    public int getRunningTaskCount() {
+        return (int) tickables.values().stream()
+                .filter(Boolean::booleanValue)
+                .count();
+    }
+
+    @Override
+    public int getPauseTaskCount() {
+        return (int) tickables.values().stream()
+                .filter(aBoolean -> !aBoolean)
+                .count();
+    }
+
+    /**
+     * The id used for find needed {@link TickingPool} in mx beans
+     */
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        Management.unregisterMXBean("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + this.id);
     }
 }

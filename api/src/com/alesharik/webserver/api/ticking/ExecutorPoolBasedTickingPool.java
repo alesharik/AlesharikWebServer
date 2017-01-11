@@ -1,26 +1,35 @@
 package com.alesharik.webserver.api.ticking;
 
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
+import one.nio.mgt.Management;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This pool use <code>Executors.newScheduledThreadPool()</code> pool => it execute {@link Tickable}s in multiple threads => you can
  * do(but it is not recommended) long operations in {@link Tickable}s or execute a lot of {@link Tickable}s without having a timing problem
  * This class perfectly used in high-load systems and systems where you need speed, concurrency and timing
  */
-@Prefix("[TickingPool]")
+@Prefixes({"[TickingPool]", "[ExecutorPoolBasedTickingPool]"})
+@ThreadSafe
 public final class ExecutorPoolBasedTickingPool implements TickingPool {
+    private static final AtomicLong COUNTER = new AtomicLong(0);
+
     private static final int DEFAULT_PARALLELISM = 10;
 
     private final ConcurrentHashMap<Tickable, Boolean> tickables;
     private final ScheduledExecutorService executor;
+
+    private final int parallelism;
+    private final long id;
 
     /**
      * Create {@link ExecutorPoolBasedTickingPool} with default parallelism(var <code>DEFAULT_PARALLELISM</code>)
@@ -58,8 +67,13 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
             throw new IllegalArgumentException();
         }
 
-        tickables = new ConcurrentHashMap<>();
-        executor = Executors.newScheduledThreadPool(parallelism, threadFactory);
+        this.parallelism = parallelism;
+        this.tickables = new ConcurrentHashMap<>();
+        this.executor = Executors.newScheduledThreadPool(parallelism, threadFactory);
+
+        this.id = COUNTER.incrementAndGet();
+
+        Management.registerMXBean(this, TickingPoolMXBean.class, "com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id);
     }
 
     @Override
@@ -136,6 +150,43 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
                 "tickables=" + tickables +
                 ", executor=" + executor +
                 '}';
+    }
+
+    @Override
+    public int getThreadCount() {
+        return parallelism;
+    }
+
+    @Override
+    public int getTotalTaskCount() {
+        return tickables.size();
+    }
+
+    @Override
+    public int getRunningTaskCount() {
+        return (int) tickables.values().stream()
+                .filter(Boolean::booleanValue)
+                .count();
+    }
+
+    @Override
+    public int getPauseTaskCount() {
+        return (int) tickables.values().stream()
+                .filter(aBoolean -> !aBoolean)
+                .count();
+    }
+
+    /**
+     * The id used for find needed {@link TickingPool} in mx beans
+     */
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        Management.unregisterMXBean("com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id);
     }
 
     /**
