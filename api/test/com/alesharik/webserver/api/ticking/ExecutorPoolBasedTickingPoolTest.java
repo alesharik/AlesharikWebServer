@@ -1,5 +1,6 @@
 package com.alesharik.webserver.api.ticking;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -80,6 +81,7 @@ public class ExecutorPoolBasedTickingPoolTest {
         assertTrue(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + forMBeanTest.getId())));
     }
 
+    @SuppressFBWarnings("FI_EXPLICIT_INVOCATION")
     @SuppressWarnings("FinalizeCalledExplicitly")
     @Test
     public void finalizeTest() throws Throwable {
