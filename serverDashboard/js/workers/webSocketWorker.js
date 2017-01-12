@@ -6,7 +6,8 @@
  */
 class WebsocketSender {
     constructor() {
-        this.startQueue = [];
+        this.queue = [];
+        this.websocket = undefined;
     }
 
     /**
@@ -15,17 +16,16 @@ class WebsocketSender {
     useWebsocket(websocket) {
         this.websocket = websocket;
         this.websocket.onmessage = (event) => {
-            if (webSocketMessageProcessor != undefined) {
-                webSocketMessageProcessor.postMessage({
-                    message: event.data
-                });
-            }
+            //noinspection JSUnresolvedFunction
+            postMessage({
+                cause: "parse",
+                msg: event.data
+            });
         };
 
-        let that = this;
         this.websocket.onopen = () => {
-            that.startQueue.forEach((message) => {
-                that.websocket.send(message);
+            this.queue.forEach((message) => {
+                this.websocket.send(message);
             })
         };
     }
@@ -35,7 +35,7 @@ class WebsocketSender {
      */
     send(message) {
         if (this.websocket.readyState == 0) {
-            this.startQueue.push(message);
+            this.queue.push(message);
         } else if (this.websocket.readyState == 1) {
             this.websocket.send(message);
         } else {
@@ -44,24 +44,23 @@ class WebsocketSender {
     }
 }
 
-let webSocketSender = new WebsocketSender();
-let webSocketWorkerReady = false;
-let webSocketMessageProcessor = undefined;
+let sender = new WebsocketSender();
+let ready = false;
 
 onmessage = (e) => {
-    if (e.data.cause == "init") {
-        /** @namespace e.data.processor */
-        webSocketMessageProcessor = e.data.processor;
-    } else {
-        if (!webSocketWorkerReady) {
-            webSocketSender.useWebsocket(new WebSocket("ws" + new RegExp("://.*/").exec(document.location.href) + "dashboard"));
-            webSocketWorkerReady = true;
-        } else {
-            try {
-                webSocketSender.send(e.data);
-            } catch (e) {
-                webSocketWorkerReady = false;
-            }
+    let data = e.data;
+    if (data.cause == "message") {
+        if (!ready) {
+            sender.useWebsocket(new WebSocket("ws" + new RegExp(":\/{2}[^\/]*").exec(self.location.href) + "/dashboard"));
+            ready = true;
         }
+
+        try {
+            sender.send(data.msg);
+        } catch (e) {
+            ready = false;
+        }
+    } else {
+        console.log("[Worker][WebSocket]: Unexpected message: " + e.data);
     }
 };
