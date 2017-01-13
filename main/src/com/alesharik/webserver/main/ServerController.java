@@ -418,7 +418,7 @@ public final class ServerController {
             config |= WEB_SERVER;
         }
 
-        SerialRepository.snapsotEnabled(configuration.getBoolean("main.isRepositorySnapshotEnabled"));
+        SerialRepository.snapshotEnabled(configuration.getBoolean("main.isRepositorySnapshotEnabled"));
         SerialRepository.setUpdateTime(configuration.getLong("main.repositorySnapshotDelay"));
         String snapshotFileString = configuration.getString("main.repositorySnapshotFile");
         if(snapshotFileString.startsWith("./")) {
@@ -428,12 +428,12 @@ public final class ServerController {
         configValues.setRepositorySnapshotFile(snapshotFile);
         if(snapshotFile.isDirectory() || !snapshotFile.canRead() || !snapshotFile.canWrite()) {
             Logger.log("Snapshot file " + snapshotFileString + " can't be used! Disabling snapshot...");
-            SerialRepository.snapsotEnabled(false);
+            SerialRepository.snapshotEnabled(false);
         }
         if(!snapshotFile.exists()) {
             if(!snapshotFile.createNewFile()) {
                 Logger.log("Can't create " + snapshotFileString + "! Disabling snapshot...");
-                SerialRepository.snapsotEnabled(false);
+                SerialRepository.snapshotEnabled(false);
             }
         }
         SerialRepository.setSnapshotFile(snapshotFile);
