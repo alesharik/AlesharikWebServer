@@ -87,23 +87,23 @@ class Dashboard {
 //====================Message api====================\\
 
 /**<pre>
- *                                                       ┌------------MessagingManager--------------┐
- *                                                       ∨                   |                      |
+ *                                                       ┌────────────MessagingManager──────────────┐
+ *                                                       ∨                   │                      │
  *                                                 send(message)             ∨                      ∨
- *                                                       |            add/remove parser       postMessage(result)--------┐
- *                                                       ∨                      |                             ∧          |
- * (receive the message)<===================(send the message)                  |                             └----┐     |
- *      Backend                               WebSocketWorker                   | (add/remove parser message)      |     |
- *  (send message)========================>(receive the message)-------┐        |                                  |     |
- *                                                                     |        |                                  |     |
- *                                                                     ∨        ∨                                  |     |
- *                                                               MessageProcessor                 the result       |     |
- *                                                             (The shared worker)      ┌--------------------------┘     |
- *                                                         (find parser for message)    |                                |
- *                                                                     |                |                                |
- *                                                                     |                |                                |
+ *                                                       │            add/remove parser       postMessage(result)────────┐
+ *                                                       ∨                      │                             ∧          │
+ * (receive the message)<═══════════════════(send the message)                  │                             └────┐     │
+ *      Backend                               WebSocketWorker                   │ (add/remove parser message)      │     │
+ *  (send message)════════════════════════>(receive the message)───────┐        │                                  │     │
+ *                                                                     │        │                                  │     │
+ *                                                                     ∨        ∨                                  │     │
+ *                                                               MessageProcessor                 the result       │     │
+ *                                                                   (Worker)           ┌──────────────────────────┘     │
+ *                                                         (find parser for message)    │                                │
+ *                                                                     │                │                                │
+ *                                                                     │                │                                │
  *                                                                     ∨                |                                ∨
- *                                                                   Parser.parse ------┘                          Parser.postParse
+ *                                                                   Parser.parse ──────┘                          Parser.postParse
  *                                                   (Parse the message in MessageProcessor thread)           (executes in main thread)
  *                                                           (send result to main thread)
  * </pre>

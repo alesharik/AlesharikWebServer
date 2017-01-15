@@ -1,9 +1,9 @@
 package com.alesharik.webserver.microservices.api;
 
-public class OneArgMicorserviceEvent<A> extends MicroserviceEvent {
+public class OneArgMicroserviceEvent<A> extends MicroserviceEvent {
     private A arg0;
 
-    public OneArgMicorserviceEvent(A arg0) {
+    public OneArgMicroserviceEvent(A arg0) {
         this.arg0 = arg0;
     }
 

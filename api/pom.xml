@@ -80,6 +80,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <version>1.5.0</version>
                 <executions>
                     <!--<execution>&lt;!&ndash; Run our version calculation script &ndash;&gt;-->
                     <!--<id>one-nio_setup</id>-->
@@ -132,6 +133,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
                 <configuration>
                     <outputDirectory>./out/artifact/</outputDirectory>
                     <archive>

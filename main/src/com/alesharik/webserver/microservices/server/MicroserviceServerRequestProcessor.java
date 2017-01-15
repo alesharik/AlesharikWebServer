@@ -2,7 +2,7 @@ package com.alesharik.webserver.microservices.server;
 
 import com.alesharik.webserver.api.SerialRepository;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.microservices.api.MicroserviceEvent;
 import com.lmax.disruptor.RingBuffer;
 import one.nio.net.Socket;
@@ -14,8 +14,12 @@ import java.io.IOException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Prefix("[MicroserviceServerRequestProcessor]")
+@Prefixes({"[Microservices]", "[MicroserviceServer]", "[MicroserviceServerRequestProcessor]"})
 class MicroserviceServerRequestProcessor {
+    private static final byte EVENT_BYTE = 0x01;
+    private static final byte SET_SERIALIZER_BYTE = 0x02;
+    private static final byte GET_SERIALIZER_BYTE = 0x03;
+
     private final String host;
     private final int port;
 

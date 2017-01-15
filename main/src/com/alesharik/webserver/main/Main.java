@@ -8,6 +8,7 @@ import java.io.IOException;
 
 //TODO rewrite site as green terminal
 //TODO add more prefixes to java
+//TODO написать профилирование базы данных и реквестов
 
 @UseSharedStorage("config")
 public class Main {
