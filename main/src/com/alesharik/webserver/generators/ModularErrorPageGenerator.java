@@ -3,7 +3,6 @@ package com.alesharik.webserver.generators;
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageConstructor;
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.main.FileManager;
-import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import org.glassfish.grizzly.http.server.Request;
 
 import java.util.List;
@@ -25,12 +24,6 @@ public final class ModularErrorPageGenerator implements ErrorPageGenerator {
         return constructors.getConstructor(status)
                 .orElseThrow(() -> new RuntimeException("Page constructor not found"))
                 .generate(request, status, reasonPhrase, description, exception);
-    }
-
-    //TODO remove
-    @Deprecated
-    public void setupServerAccessManagerBuilder(ServerAccessManagerBuilder builder) {
-        builder.setErrorPageGenerator(this);
     }
 
     @Override

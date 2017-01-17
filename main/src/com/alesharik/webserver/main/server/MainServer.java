@@ -113,8 +113,9 @@ public final class MainServer extends WebServer {
     }
 
     @Override
+    @Deprecated
     public void setupServerAccessManagerBuilder(ServerAccessManagerBuilder builder) {
-        errorPageGenerator.setupServerAccessManagerBuilder(builder);
+//        errorPageGenerator.setupServerAccessManagerBuilder(builder);
         super.setupServerAccessManagerBuilder(builder);
     }
 }

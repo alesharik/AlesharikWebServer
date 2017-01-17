@@ -99,7 +99,7 @@ public final class ControlServer extends WebServer {
 
     @Override
     public void setupServerAccessManagerBuilder(ServerAccessManagerBuilder builder) {
-        errorPageGenerator.setupServerAccessManagerBuilder(builder);
+//        errorPageGenerator.setupServerAccessManagerBuilder(builder);
         super.setupServerAccessManagerBuilder(builder);
     }
 
