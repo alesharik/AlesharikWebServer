@@ -1,5 +1,6 @@
 package com.alesharik.webserver.api.sharedStorage;
 
+import com.alesharik.webserver.api.agent.Agent;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 
 import java.lang.instrument.UnmodifiableClassException;
@@ -111,6 +112,6 @@ public final class SharedStorageManager {
         if(!clazz.isAnnotationPresent(UseSharedStorage.class)) {
             throw new IllegalArgumentException("The class must annotated of @UseSharedStorage annotation");
         }
-        ClassTransformerAgent.reload(clazz);
+        Agent.reload(clazz);
     }
 }

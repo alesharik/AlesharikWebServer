@@ -1,5 +1,7 @@
 package com.alesharik.webserver.main;
 
+import com.alesharik.webserver.api.agent.Agent;
+import com.alesharik.webserver.api.sharedStorage.SharedStorageClassTransformer;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.logger.Logger;
 
@@ -14,6 +16,8 @@ import java.io.IOException;
 public class Main {
     @SuppressWarnings("unused")
     public static final MainLoggerConfiguration MAIN_LOGGER_CONFIGURATION = new MainLoggerConfiguration();
+    @SuppressWarnings("unused")
+    private static final SharedStorageClassTransformer transformer = new SharedStorageClassTransformer();
 
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
     @Deprecated
@@ -28,6 +32,7 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
         try {
+            Agent.reload(Main.class);
 //            initStructure();
 //            Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
             controller = new ServerController();

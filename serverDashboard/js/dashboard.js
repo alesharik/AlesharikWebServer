@@ -18,10 +18,13 @@ class Dashboard {
 
         MenuUtils.setupMenu();
         this.menuPluginHandler = new MenuPluginHandler();
+        MessagingManager.addParser("menuPlugins", this.menuPluginHandler);
 
         // this.webSocketManager.updateMenuPlugins();
 
         this.currentCompInfo = new ComputerInfo();
+        MessagingManager.addParser("currentCompInfo", this.currentCompInfo);
+        MessagingUtils.enableRecievingComputerInfo();
         // this.webSocketManager.enableCurrentComputerInfo();
     }
 
@@ -249,7 +252,7 @@ class MessagingManager {
      * @param result
      */
     static postMessage(message, result) {
-        let v = messagingManagerData.get(message);
+        let v = messagingManagerData.get(message.split(":")[0]);
         if (v == undefined || v.length == 0) {
             return;
         }
@@ -263,9 +266,6 @@ class MessagingManager {
  * This class used for parse message
  */
 class Parser {
-    preParse(message) {
-    }
-
     /**
      * This method parse message in MessageProcessor WORKER THREAD and return result of parsing.
      * YOU CANNOT USE DOM, CANVAS, ETC.
@@ -297,14 +297,15 @@ class MessagingUtils {
 
     static disableRecievengComputerInfo() {
         if (computerInfoEnabled) {
-            MessagingManager.send("currentCompInfo:stop");
+            MessagingManager.sendMessage("currentCompInfo:stop");
             computerInfoEnabled = false;
         }
     }
 
+
     static enableRecievingComputerInfo() {
         if (!computerInfoEnabled) {
-            MessagingManager.send("currentCompInfo:start");
+            MessagingManager.sendMessage("currentCompInfo:start");
             computerInfoEnabled = true;
         }
     }
@@ -318,8 +319,10 @@ class MessagingUtils {
 
 //====================Computer info====================\\
 
-class ComputerInfo {
+class ComputerInfo extends Parser {
     constructor() {
+        super();
+
         this.cpuCount = 0;
         this.cpuLoad = [];
         this.ram = [];
@@ -333,19 +336,47 @@ class ComputerInfo {
      * @param {string} string
      */
     parse(string) {
-        this.ok = true;
-        let json = JSON.parse(string);
-        this.processorCount = json.processorCount;
-        this.cpuCount = json.cpuCount;
-        for (let i = 0; i < this.cpuCount; i++) {
-            this.cpuLoad[i] = json["cpu" + i];
+        let split = string.split(":");
+
+        let parts = [];
+        parts.push(split[0]);
+        parts.push(split[1]);
+        parts.push(split.slice(2, split.length).join(":"));
+
+        if (parts[1] == "set") {
+            let json = JSON.parse(parts[2]);
+            let ret = {};
+            ret.processorCount = json.processorCount;
+            ret.cpuCount = json.cpuCount;
+            ret.cpuLoad = [];
+            for (let i = 0; i < ret.cpuCount; i++) {
+                ret.cpuLoad[i] = json["cpu" + i];
+            }
+            ret.ram = json.ram;
+            ret.partitions = json.partitions;
+            // json.partitions.forEach((part) => {
+            //     this.partitions.push(Partition.parse(part));
+            // });
+            ret.java = json.java;
+            return ret;
+        } else {
+            console.log("[ComputerInfo] Unexpected message: " + message);
+            return {};
         }
-        this.ram = json.ram;
+    }
+
+    postParse(result) {
+        this.ok = true;
+
+        this.processorCount = result.processorCount;
+        this.cpuCount = result.cpuCount;
+        this.cpuLoad = result.cpuLoad;
+        this.ram = result.ram;
         this.partitions = [];
-        json.partitions.forEach((part) => {
+        result.partitions.forEach((part) => {
             this.partitions.push(Partition.parse(part));
         });
-        this.java = json.java;
+        this.java = result.java;
     }
 
     /**
@@ -701,9 +732,6 @@ class Navigator extends Parser {
 
 
     parse(message) {
-        debugger;
-        // let parts = message.split(":");
-        // parts = parts.slice(0, 2).join(":");
         let split = message.split(":");
 
         let parts = [];
@@ -712,23 +740,26 @@ class Navigator extends Parser {
         parts.push(split.slice(2, split.length).join(":"));
         if (parts[1] == "set") {
             let json = JSON.parse(parts[2]);
-            let items = [];
-            json.items.forEach((item) => {
-                items.push(MenuItemManager.getItemForType(item.type).deserialize(item));
-            });
-            return items;
+            return {cause: "set", items: json.items};
         } else if (parts[1] == "render") {
-            return "render";
+            return {cause: "render"};
         } else {
             console.log("[Navigator] Unexpected message:" + message);
+            return {};
         }
     }
 
     postParse(result) {
-        if (result != "render") {
-            this.items = result;
+        if (result.cause == "set") {
+            this.items = [];
+            result.items.forEach((item) => {
+                this.items.push(MenuItemManager.getItemForType(item.type).deserialize(item));
+            });
+
+            this.renderMenu();
+        } else if (result.cause == "render") {
+            this.renderMenu();
         }
-        this.renderMenu();
     }
 
     /**
@@ -1230,7 +1261,7 @@ class MessageHandler {
     sendMessage(messageText) {
         let msg = new Message(this.chats[0].receiver, moment().format("YYYYMMDD-hh:mm"), messageText);
         this.addMessage(msg);
-        this.webSocketManager.sendMessage(msg);
+        // this.webSocketManager.sendMessage(msg);
     }
 }
 
@@ -1406,6 +1437,9 @@ class Message {
 //====================Messages End====================\\
 //====================Websocket====================\\
 
+/**
+ * @deprecated
+ */
 class WebSocketManager {
     constructor(dashboard) {
         this.webSocket = new WebSocket("ws" + new RegExp("://.*/").exec(document.location.href) + "dashboard");
@@ -1630,8 +1664,10 @@ class MenuPluginsEditorHandler {
 /**
  * This class holds plugins for top menu. Used in MenuEditorHandler.
  */
-class MenuPluginHandler {
+class MenuPluginHandler extends Parser {
     constructor() {
+        super();
+
         this.plugins = [];
         this.onPluginAdd = (plugin, handler) => {
         };
@@ -1679,12 +1715,25 @@ class MenuPluginHandler {
      * @param {string} message
      */
     parse(message) {
-        this.plugins = [];
+        let split = message.split(":");
 
-        let array = JSON.parse(message);
-        array.forEach((element) => {
-            let clazz = eval(element.value);
-            //noinspection JSCheckFunctionSignatures
+        let parts = [];
+        parts.push(split[0]);
+        parts.push(split[1]);
+        parts.push(split.slice(2, split.length).join(":"));
+        if (parts[1] == "set") {
+            return JSON.parse(parts[2]);
+        } else {
+            console.log("[MenuPluginHandler] Unexpected message: " + message);
+            return {};
+        }
+    }
+
+    postParse(result) {
+        this.plugins = [];
+        result.items.forEach((item) => {
+            let clazz = eval(item.value);
+
             dashboard.menuPluginHandler.addPlugin(new clazz());
         })
     }
