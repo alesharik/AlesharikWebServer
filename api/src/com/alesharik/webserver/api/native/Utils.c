@@ -298,11 +298,11 @@ JNIEXPORT jstring JNICALL Java_com_alesharik_webserver_api_Utils_getExternalIp0 
     return result;
 }
 
-JNIEXPORT jint JNICALL Java_com_alesharik_webserver_api_Utils_getCoresCount (JNIEnv *env, jclass clazz) {
+JNIEXPORT jint JNICALL Java_com_alesharik_webserver_api_Utils_getCoresCount0 (JNIEnv *env, jclass clazz) {
     return getCoresCount();
 }
 
-JNIEXPORT jlongArray JNICALL Java_com_alesharik_webserver_api_Utils_getCoreInfo (JNIEnv *env, jclass clazz, jint cpu) {
+JNIEXPORT jlongArray JNICALL Java_com_alesharik_webserver_api_Utils_getCoreInfo0 (JNIEnv *env, jclass clazz, jint cpu) {
     long result[7];
     getCpuLoad(cpu, result);
 
@@ -314,7 +314,7 @@ JNIEXPORT jlongArray JNICALL Java_com_alesharik_webserver_api_Utils_getCoreInfo 
     return jArray;
 }
 
-JNIEXPORT jlongArray JNICALL Java_com_alesharik_webserver_api_Utils_getRAMInfo (JNIEnv *env, jclass clazz) {
+JNIEXPORT jlongArray JNICALL Java_com_alesharik_webserver_api_Utils_getRAMInfo0 (JNIEnv *env, jclass clazz) {
     long result[6];
     getRAMInfo(result);
 

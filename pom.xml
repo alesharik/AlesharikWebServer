@@ -258,9 +258,9 @@
                         </goals>
                         <configuration>
                             <rules>
-                                <requireOS>
-                                    <family>unix</family>
-                                </requireOS>
+                                <!--<requireOS>-->
+                                <!--<family>unix</family>-->
+                                <!--</requireOS>-->
                                 <requireMavenVersion>
                                     <version>2.0.6</version>
                                 </requireMavenVersion>
@@ -352,6 +352,28 @@
     </reporting>
 
     <profiles>
+        <profile>
+            <id>Windows</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <properties>
+                <script.extension>.bat</script.extension>
+            </properties>
+        </profile>
+        <profile>
+            <id>unix</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <script.extension>.sh</script.extension>
+            </properties>
+        </profile>
         <profile>
             <id>release-profile</id>
 

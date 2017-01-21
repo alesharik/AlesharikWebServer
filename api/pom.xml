@@ -99,7 +99,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${basedir}/compileNative.sh</executable>
+                            <executable>${basedir}/compileNative${script.extension}</executable>
                         </configuration>
                     </execution>
                     <execution>
@@ -109,7 +109,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${basedir}/copyAgent.sh</executable>
+                            <executable>${basedir}/copyAgent${script.extension}</executable>
                         </configuration>
                     </execution>
                 </executions>

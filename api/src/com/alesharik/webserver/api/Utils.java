@@ -21,33 +21,40 @@ public final class Utils {
     private static final Utils INSTANCE = new Utils();
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    private static boolean isSupportedOs() {
+        return System.getProperty("os.name").toLowerCase().contains("linux") &&
+                System.getProperty("os.arch").contains("64");
+    }
+
     private Utils() {
     }
 
     static {
-        try {
-            InputStream in = Utils.class.getResourceAsStream("/libalesharikwebserver.so");
+        if(isSupportedOs()) {
+            try {
+                InputStream in = Utils.class.getResourceAsStream("/libalesharikwebserver.so");
 
-            if(in != null) {
-                ByteArrayBuilder libData = readStream(in);
-                in.close();
+                if(in != null) {
+                    ByteArrayBuilder libData = readStream(in);
+                    in.close();
 
-                String tmpDir = System.getProperty("java.io.tmpdir", "/tmp");
-                File dll = new File(tmpDir, "libalesharikwebserver." + crc32(libData) + ".so");
-                if(!dll.exists()) {
-                    try (OutputStream out = new FileOutputStream(dll)) {
-                        out.write(libData.buffer(), 0, libData.length());
-                        out.close();
+                    String tmpDir = System.getProperty("java.io.tmpdir", "/tmp");
+                    File dll = new File(tmpDir, "libalesharikwebserver." + crc32(libData) + ".so");
+                    if(!dll.exists()) {
+                        try (OutputStream out = new FileOutputStream(dll)) {
+                            out.write(libData.buffer(), 0, libData.length());
+                            out.close();
+                        }
                     }
-                }
 
-                String libraryPath = dll.getAbsolutePath();
-                System.load(libraryPath);
-            } else {
-                System.out.println("Cannot find native IO library");
+                    String libraryPath = dll.getAbsolutePath();
+                    System.load(libraryPath);
+                } else {
+                    System.out.println("Cannot find native IO library");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -76,7 +83,11 @@ public final class Utils {
      * @return dot-splitted ip address
      */
     public static String getExternalIp() {
-        return INSTANCE.getExternalIp0();
+        if(isSupportedOs()) {
+            return INSTANCE.getExternalIp0();
+        } else {
+            return "127.0.0.1";
+        }
     }
 
     /**
@@ -92,11 +103,35 @@ public final class Utils {
         }
     }
 
-    public static native int getCoresCount();
+    public static int getCoresCount() {
+        if(isSupportedOs()) {
+            return getCoresCount0();
+        } else {
+            return 0;
+        }
+    }
 
-    static native long[] getCoreInfo(int core);
+    private static native int getCoresCount0();
 
-    static native long[] getRAMInfo();
+    private static native long[] getCoreInfo0(int core);
+
+    private static native long[] getRAMInfo0();
+
+    static long[] getCoreInfo(int core) {
+        if(isSupportedOs()) {
+            return getCoreInfo0(core);
+        } else {
+            return new long[7];
+        }
+    }
+
+    static long[] getRAMInfo() {
+        if(isSupportedOs()) {
+            return getRAMInfo0();
+        } else {
+            return new long[6];
+        }
+    }
 
     public static byte[] getURLAsByteArray(URL url) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -139,7 +174,11 @@ public final class Utils {
      * @throws IOException then bad things happens
      */
     public static Partition[] getComputerPartitions() throws IOException {
-        return getPartitions();
+        if(isSupportedOs()) {
+            return getPartitions();
+        } else {
+            return new Partition[0];
+        }
     }
 
     @Immutable
