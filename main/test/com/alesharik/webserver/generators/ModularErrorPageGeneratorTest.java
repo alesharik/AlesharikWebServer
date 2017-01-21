@@ -1,8 +1,8 @@
 package com.alesharik.webserver.generators;
 
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageConstructor;
+import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.exceptions.ExceptionWithoutStacktrace;
-import com.alesharik.webserver.main.FileManager;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Assert;

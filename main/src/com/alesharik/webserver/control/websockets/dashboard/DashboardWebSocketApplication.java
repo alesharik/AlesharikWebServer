@@ -5,7 +5,6 @@ import com.alesharik.webserver.api.server.dashboard.DashboardWebsocketWrapper;
 import com.alesharik.webserver.control.ControlRequestHandler;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.logger.Prefixes;
-import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.websockets.Broadcaster;
@@ -106,9 +105,5 @@ public final class DashboardWebSocketApplication extends WebSocketApplication {
         }
         wrappers.put(wrapper.getName(), wrapper);
         return wrapper;
-    }
-
-    public void setupControlAccessManagerBuilder(ControlAccessManagerBuilder builder) {
-        builder.setDashboardWebSocketApplication(this);
     }
 }

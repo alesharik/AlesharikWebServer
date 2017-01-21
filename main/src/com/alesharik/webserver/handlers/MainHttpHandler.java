@@ -2,11 +2,11 @@ package com.alesharik.webserver.handlers;
 
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
+import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.NamedLogger;
 import com.alesharik.webserver.logger.storingStrategies.WriteOnLogStoringStrategy;
-import com.alesharik.webserver.main.FileManager;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.util.HttpStatus;

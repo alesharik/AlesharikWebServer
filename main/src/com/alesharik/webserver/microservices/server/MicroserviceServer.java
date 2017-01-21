@@ -5,7 +5,6 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.microservices.api.Microservice;
 import com.alesharik.webserver.microservices.client.MicroserviceClient;
-import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManagerBuilder;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 
@@ -39,11 +38,6 @@ public class MicroserviceServer extends Server implements Runnable {
     public void registerMicroservice(String name, Microservice microservice) {
         microservices.put(name, microservice);
         microservice.setup();
-    }
-
-    public void setupMicorserviceAccessManagerBuilder(MicroserviceAccessManagerBuilder builder) {
-        builder.setClient(client);
-        builder.setServer(this);
     }
 
     @Override

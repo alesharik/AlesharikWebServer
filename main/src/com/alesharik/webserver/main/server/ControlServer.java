@@ -1,6 +1,8 @@
 package com.alesharik.webserver.main.server;
 
 import com.alesharik.webserver.api.MIMETypes;
+import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
+import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
@@ -8,9 +10,6 @@ import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketApplication;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.ControlHttpHandler;
-import com.alesharik.webserver.main.FileManager;
-import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
-import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import org.glassfish.grizzly.http.server.CompressionLevel;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -98,12 +97,7 @@ public final class ControlServer extends WebServer {
     }
 
     @Override
-    public void setupServerAccessManagerBuilder(ServerAccessManagerBuilder builder) {
-//        errorPageGenerator.setupServerAccessManagerBuilder(builder);
-        super.setupServerAccessManagerBuilder(builder);
-    }
-
-    public void setupControlAccessManagerBuilder(ControlAccessManagerBuilder builder) {
-        dashboardWebSocketApplication.setupControlAccessManagerBuilder(builder);
+    public ErrorPageGenerator getErrorPageGenerator() {
+        return errorPageGenerator;
     }
 }

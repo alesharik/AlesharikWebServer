@@ -1,6 +1,6 @@
 package com.alesharik.webserver.api.server;
 
-import com.alesharik.webserver.main.FileManager;
+import com.alesharik.webserver.api.fileManager.FileManager;
 
 import java.io.IOException;
 

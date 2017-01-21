@@ -1,20 +1,10 @@
 package com.alesharik.webserver.plugin.accessManagers;
 
+import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.api.server.RequestHandler;
-import com.alesharik.webserver.api.server.WebServer;
-import com.alesharik.webserver.generators.ModularErrorPageGenerator;
-import lombok.Getter;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 
-public final class ServerAccessManager {
-    WebServer server;
-    @Getter
-    ModularErrorPageGenerator errorPageGenerator;
-
-    ServerAccessManager() {
-
-    }
-
+public interface ServerAccessManager {
     /**
      * Register a WebSocketApplication to a specific context path and url pattern.
      * If you wish to associate this application with the root context, use an
@@ -49,19 +39,13 @@ public final class ServerAccessManager {
      * @param urlPattern  url pattern
      * @param application the WebSocket application.
      */
-    public void registerNewWebSocket(WebSocketApplication application, String contextPath, String urlPattern) {
-        server.registerNewWebSocket(application, contextPath, urlPattern);
-    }
+    void registerNewWebSocket(WebSocketApplication application, String contextPath, String urlPattern);
 
-    public void unregisterWebSocket(WebSocketApplication application) {
-        server.unregisterWebSocket(application);
-    }
+    void unregisterWebSocket(WebSocketApplication application);
 
-    public void addRequestHandler(RequestHandler requestHandler) {
-        server.addRequestHandler(requestHandler);
-    }
+    void addRequestHandler(RequestHandler requestHandler);
 
-    public void removeRequestHandler(RequestHandler requestHandler) {
-        server.removeRequestHandler(requestHandler);
-    }
+    void removeRequestHandler(RequestHandler requestHandler);
+
+    ErrorPageGenerator getErrorPageGenerator();
 }

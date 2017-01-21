@@ -1,4 +1,4 @@
-package com.alesharik.webserver.main;
+package com.alesharik.webserver.api.fileManager;
 
 public interface FileManagerResourcePlugin {
     String getAddress();

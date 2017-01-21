@@ -2,10 +2,10 @@ package com.alesharik.webserver.control;
 
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
+import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.control.websockets.control.WebSocketController;
-import com.alesharik.webserver.main.FileManager;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;

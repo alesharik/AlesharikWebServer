@@ -1,6 +1,8 @@
 package com.alesharik.webserver.main.server;
 
 import com.alesharik.webserver.api.MIMETypes;
+import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
+import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.RequestHandlerList;
 import com.alesharik.webserver.api.server.WebServer;
@@ -8,10 +10,8 @@ import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.MainHttpHandler;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.main.FileManager;
 import com.alesharik.webserver.main.ServerController;
 import com.alesharik.webserver.main.websockets.ServerControllerWebSocketApplication;
-import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import org.glassfish.grizzly.http.server.CompressionLevel;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -113,9 +113,7 @@ public final class MainServer extends WebServer {
     }
 
     @Override
-    @Deprecated
-    public void setupServerAccessManagerBuilder(ServerAccessManagerBuilder builder) {
-//        errorPageGenerator.setupServerAccessManagerBuilder(builder);
-        super.setupServerAccessManagerBuilder(builder);
+    public ErrorPageGenerator getErrorPageGenerator() {
+        return errorPageGenerator;
     }
 }

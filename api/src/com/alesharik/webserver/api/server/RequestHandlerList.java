@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 /**
  * This class used for hold multiple {@link RequestHandler}'s in one {@link RequestHandler}
  */
-public class RequestHandlerList implements RequestHandler {
+public final class RequestHandlerList implements RequestHandler {//TODO rewrite and tests
     private ArrayList<RequestHandler> handlers = new ArrayList<>();
     private RequestHandler currentHandler;
 

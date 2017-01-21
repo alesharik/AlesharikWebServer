@@ -5,7 +5,6 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.microservices.api.MicroserviceEvent;
 import com.alesharik.webserver.microservices.server.MicroserviceServer;
-import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManagerBuilder;
 import com.alesharik.webserver.router.Router;
 
 import java.io.IOException;
@@ -59,11 +58,6 @@ public class MicroserviceClient {
             e.printStackTrace();
         }
         send(microserviceName, message, address);
-    }
-
-    public void setupMicroserviceAccessMangerBuilder(MicroserviceAccessManagerBuilder builder) {
-        builder.setServer(server);
-        builder.setClient(this);
     }
 
     public enum WorkingMode {

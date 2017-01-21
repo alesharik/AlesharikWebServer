@@ -1,8 +1,8 @@
 package com.alesharik.webserver.api.server;
 
+import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
+import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
-import com.alesharik.webserver.main.FileManager;
-import com.alesharik.webserver.plugin.accessManagers.ServerAccessManagerBuilder;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 
 import java.io.IOException;
@@ -33,7 +33,5 @@ public abstract class WebServer extends Server {
 
     public abstract void unregisterWebSocket(WebSocketApplication application);
 
-    public void setupServerAccessManagerBuilder(ServerAccessManagerBuilder builder) {
-        builder.setServer(this);
-    }
+    public abstract ErrorPageGenerator getErrorPageGenerator();
 }

@@ -2,11 +2,12 @@ package com.alesharik.webserver.plugin;
 
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
-import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
 import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -14,29 +15,30 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/**
- * This class used for load and works with plugins. For work need {@link PluginAccessManager}, which used for plugin
- * interact with server
- */
 @Prefix("[PluginManager]")
 public class PluginManager {
-    private final PluginAccessManager accessManager;
-
     private final ArrayList<File> packages = new ArrayList<>();
     private final HashMap<File, MetaFile> packageMetaFiles = new HashMap<>();
     private final ArrayList<Class<?>> cores = new ArrayList<>();
     private final HashMap<String, MetaFile> metaFiles = new HashMap<>();
+    private final AccessManagerBuilder accessManagerBuilder;
 
     private PluginHolderPool pluginHolderPool;
     private boolean isLoaded = false;
 
-    PluginManager(PluginAccessManager accessManager) {
-        this.accessManager = accessManager;
+    public PluginManager(AccessManagerBuilder accessManagerBuilder) {
+        this.accessManagerBuilder = accessManagerBuilder;
+        this.pluginHolderPool = new PluginHolderPool();
+        isLoaded = true;
     }
 
     public void addPlugin(File pluginFolder) {
         if(isLoaded) {
-            loadPlugin(pluginFolder);
+            try {
+                loadPlugin(pluginFolder);
+            } catch (NoSuchMethodException | InvocationTargetException e) {
+                Logger.log(e);
+            }
         } else {
             packages.add(pluginFolder);
         }
@@ -53,11 +55,11 @@ public class PluginManager {
         if(!isLoaded) {
             throw new IllegalStateException("Can't run manager without loading plugins!");
         }
-        this.pluginHolderPool = new PluginHolderPool(accessManager);
 
-        ArrayList<PluginCore> cores = new ArrayList<>();
-        this.cores.forEach(core -> tryInitCore(cores, core));
-        cores.forEach(core -> pluginHolderPool.addPlugin(core, metaFiles.get(core.getName())));
+
+//        ArrayList<PluginCore> cores = new ArrayList<>();
+//        this.cores.forEach(core -> tryInitCore(cores, core));
+//        cores.forEach(pluginHolderPool::addPlugin);
     }
 
     private void loadConfigFiles() {
@@ -85,7 +87,7 @@ public class PluginManager {
         return MetaFile.parse(new String(fileBytes, Charsets.UTF8_CHARSET));
     }
 
-    private void loadPlugin(File pluginFolder) {
+    private void loadPlugin(File pluginFolder) throws NoSuchMethodException, InvocationTargetException {
         try {
             MetaFile metaFile = loadMetaFile(pluginFolder);
             packageMetaFiles.put(pluginFolder, metaFile);
@@ -93,7 +95,9 @@ public class PluginManager {
             ClassLoader classLoader = new URLClassLoader(new URL[]{pluginFolder.toURI().toURL()});
             Class<?> core = classLoader.loadClass(metaFile.getAttribute("Main-File"));
             if(pluginHolderPool != null) {
-                pluginHolderPool.addPlugin((PluginCore) core.newInstance(), metaFile);
+                Constructor<?> constructor = core.getDeclaredConstructor(AccessManager.class);
+                constructor.setAccessible(true);
+                pluginHolderPool.addPlugin((PluginCore) constructor.newInstance(accessManagerBuilder.forPermissions(metaFile.getAttribute("Access"), ",")));
             } else {
                 cores.add(core);
             }

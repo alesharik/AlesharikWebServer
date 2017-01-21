@@ -13,7 +13,7 @@ import java.util.HashMap;
  * characters, parser use first
  */
 class MetaFile {
-    MetaFile() {
+    private MetaFile() {
     }
 
     private final HashMap<String, String> attributes = new HashMap<>();

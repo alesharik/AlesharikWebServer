@@ -1,7 +1,7 @@
 package com.alesharik.webserver.generators;
 
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageConstructor;
-import com.alesharik.webserver.main.FileManager;
+import com.alesharik.webserver.api.fileManager.FileManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.utils.Charsets;

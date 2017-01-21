@@ -1,10 +1,12 @@
 package com.alesharik.webserver.api.server.control;
 
+import com.alesharik.webserver.api.control.ControlWebSocketPlugin;
+import com.alesharik.webserver.api.control.ControlWebSocketPluginWrapper;
 import com.alesharik.webserver.control.websockets.control.WebSocketController;
 
 import java.io.Serializable;
 
-public class ControlWebSocketWrapper {
+public class ControlWebSocketWrapper implements ControlWebSocketPluginWrapper {
     private final WebSocketController webSocketController;
     private final ControlWebSocketPlugin plugin;
 
@@ -15,6 +17,11 @@ public class ControlWebSocketWrapper {
 
     public String getName() {
         return plugin.getName();
+    }
+
+    @Override
+    public ControlWebSocketPlugin getPlugin() {
+        return plugin;
     }
 
     public void send(String message) {

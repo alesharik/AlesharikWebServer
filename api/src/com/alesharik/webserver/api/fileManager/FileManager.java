@@ -1,4 +1,4 @@
-package com.alesharik.webserver.main;
+package com.alesharik.webserver.api.fileManager;
 
 import com.alesharik.webserver.api.CompressionUtils;
 import com.alesharik.webserver.exceptions.FileFoundException;

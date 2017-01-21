@@ -2,10 +2,9 @@ package com.alesharik.webserver.control.websockets.control;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.SerialRepository;
-import com.alesharik.webserver.api.server.control.ControlWebSocketPlugin;
+import com.alesharik.webserver.api.control.ControlWebSocketPlugin;
 import com.alesharik.webserver.api.server.control.ControlWebSocketWrapper;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.plugin.accessManagers.ControlAccessManagerBuilder;
 import org.glassfish.grizzly.http.util.Base64Utils;
 import org.glassfish.grizzly.utils.Charsets;
 
@@ -16,9 +15,9 @@ import java.net.URI;
 import java.util.HashMap;
 
 /**
- * This is controller of ControlWebSocket
+ * This is controller of ControlWebSocketPluginWrapper
  */
-public final class WebSocketController {
+public final class WebSocketController {//TODO rewrite
     private final HashMap<String, ControlWebSocketWrapper> wrappers = new HashMap<>();
     private final URI uri;
     private final String logPass;
@@ -97,10 +96,14 @@ public final class WebSocketController {
 
 
     public ControlWebSocketWrapper registerPlugin(ControlWebSocketPlugin plugin) {
-        return new ControlWebSocketWrapper(this, plugin);
+        ControlWebSocketWrapper wrapper = new ControlWebSocketWrapper(this, plugin);
+        wrappers.put(plugin.getName(), wrapper);
+        return wrapper;
     }
 
-    public void setupControlAccessManagerBuilder(ControlAccessManagerBuilder builder) {
-        builder.setWebSocketController(this);
+    public void unregisterPlugin(ControlWebSocketPlugin plugin) {
+        if(wrappers.containsKey(plugin.getName())) {
+            wrappers.remove(plugin.getName());
+        }
     }
 }
