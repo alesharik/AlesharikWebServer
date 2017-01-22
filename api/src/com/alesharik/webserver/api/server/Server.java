@@ -1,7 +1,5 @@
 package com.alesharik.webserver.api.server;
 
-import com.alesharik.webserver.api.fileManager.FileManager;
-
 import java.io.IOException;
 
 /**
@@ -10,10 +8,6 @@ import java.io.IOException;
 public abstract class Server {
     protected String host;
     protected int port;
-
-    public Server(String host, int port, FileManager fileManager) {
-        this(host, port);
-    }
 
     protected Server(String host, int port) {
         this.host = host;
