@@ -1,6 +1,6 @@
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.api.agent.Agent;
+import com.alesharik.webserver.api.agent.RequireLoaded;
 import com.alesharik.webserver.api.sharedStorage.SharedStorageClassTransformer;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.logger.Logger;
@@ -13,9 +13,8 @@ import java.io.IOException;
 //TODO написать профилирование базы данных и реквестов
 
 @UseSharedStorage("config")
+@RequireLoaded(MainLoggerConfiguration.class)
 public class Main {
-    @SuppressWarnings("unused")
-    public static final MainLoggerConfiguration MAIN_LOGGER_CONFIGURATION = new MainLoggerConfiguration();
     @SuppressWarnings("unused")
     private static final SharedStorageClassTransformer transformer = new SharedStorageClassTransformer();
 
@@ -32,7 +31,7 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
         try {
-            Agent.reload(Main.class);
+//            Agent.reload(Main.class);
 //            initStructure();
 //            Logger.setupLogger(new File(LOGS_FOLDER + generateLogName()));
             controller = new ServerController();
@@ -44,7 +43,7 @@ public class Main {
 //            new Testt().run();
 //
 ////            WebSocketController controller = new WebSocketController(new URI("ws://" + HOST + ":7000/serverControl"), "admin", "admin");
-////            controller.connect();
+////            controller.connectAndSend();
 ////            Logger.log(controller.getComputerInfo());
 ////            Logger.log(Utils.getExternalIp());
 
@@ -73,7 +72,7 @@ public class Main {
 //        AsyncHttpClientConfig cfg = new DefaultAsyncHttpClientConfig.Builder().build();
 //        AsyncHttpClient client = new DefaultAsyncHttpClient(cfg);
 //        ServerController controller = new ServerController(client);
-//        controller.connect("ws://" + HOST + ":6999/", new WebSocketControlListener("admin", "admin"));
+//        controller.connectAndSend("ws://" + HOST + ":6999/", new WebSocketControlListener("admin", "admin"));
 //        OldPluginManager pl = new OldPluginManager(ServerController.USER_DIR);
 //        pl.loadPlugins();
 //        pl.test();
