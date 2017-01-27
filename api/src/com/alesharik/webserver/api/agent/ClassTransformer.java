@@ -7,11 +7,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Ths annotation load specified class BEFORE annotated class using imoprts
+ * DO NOT TRY TRANSFORM CLASS TRANSFORMERS!
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface RequireLoaded {
-    Class<?> value();
+public @interface ClassTransformer {
 }

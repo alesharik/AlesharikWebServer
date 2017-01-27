@@ -1,8 +1,6 @@
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.api.agent.RequireLoaded;
 import com.alesharik.webserver.api.sharedStorage.SharedStorageClassTransformer;
-import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.logger.Logger;
 
 import java.io.File;
@@ -12,11 +10,9 @@ import java.io.IOException;
 //TODO add more prefixes to java
 //TODO написать профилирование базы данных и реквестов
 
-@UseSharedStorage("config")
-@RequireLoaded(MainLoggerConfiguration.class)
 public class Main {
-    @SuppressWarnings("unused")
-    private static final SharedStorageClassTransformer transformer = new SharedStorageClassTransformer();
+    private static final SharedStorageClassTransformer a = new SharedStorageClassTransformer();
+    private static final MainLoggerConfiguration c = new MainLoggerConfiguration();
 
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
     @Deprecated
