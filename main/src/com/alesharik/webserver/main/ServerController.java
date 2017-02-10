@@ -44,12 +44,13 @@ import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Date;
+import java.util.stream.Stream;
 
 import static com.alesharik.webserver.main.Main.USER_DIR;
 
 /**
  * This class used fo run and shutdown server.In this class load configuration, initialize FileManager, OldPluginManager
- * and start server
+ * and setup server
  */
 @Prefix("[ServerController]")
 public final class ServerController {
@@ -123,7 +124,10 @@ public final class ServerController {
 ////                    .isMicroserviceServer(false)
 ////                    .isRouterServer(configuration.getBoolean("isRouterServer"))
 //                    .build();
-            pluginManager.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
+//            pluginManager.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
+            File pluginsFolder = new File(Main.USER_DIR + "/plugins/"); //TODO rewrite
+            Stream.of(pluginsFolder.listFiles((dir, name) -> dir.isDirectory()))
+                    .forEach(pluginManager::addPlugin);
             pluginManager.loadPlugins();
             pluginManager.start();
         } catch (IOException | ConfigurationException | IllegalAccessException e) {
@@ -395,7 +399,7 @@ public final class ServerController {
 
         setupSharedStorage(configuration);
 
-        Logger.setupLogger(new File(logsFolder + generateLogName()));
+        Logger.setupLogger(new File(logsFolder + generateLogName()), 200); //TODO remove
 
         if(configuration.getBoolean("webServer.isControlServer")) {
             config |= IS_CONTROL_SERVER_FLAG;

@@ -8,6 +8,7 @@ import com.alesharik.webserver.logger.handlers.WarningConsoleHandler;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.jctools.queues.atomic.MpscAtomicArrayQueue;
 import sun.misc.SharedSecrets;
 
 import java.io.File;
@@ -20,6 +21,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -43,7 +46,7 @@ import java.util.stream.Stream;
 @Prefix("[LOGGER]")
 public class Logger {
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("AlesharikWebServerMainLogger");
-    private static boolean isConfigured = false;
+    private static AtomicBoolean isConfigured = new AtomicBoolean(false);
 
     /**
      * Class : Prefixes
@@ -51,6 +54,8 @@ public class Logger {
     private static final HashMap<String, ArrayList<String>> configuredPrefixes = new HashMap<>();
     private static final ArrayList<WeakReference<ClassLoader>> classLoaders = new ArrayList<>();
     static final HashMap<String, WeakReference<NamedLogger>> loggers = new HashMap<>();
+
+    private static LoggerListenerThread listenerThread;
 
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
@@ -78,12 +83,17 @@ public class Logger {
 
     public static void log(String prefix, String message) {
         LOGGER.log(Level.INFO, prefix + ": " + message);
+        listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, message));
     }
 
     public static void log(String prefix, Throwable throwable) {
         throwable.printStackTrace();
         LOGGER.log(Level.WARNING, prefix + ": " + throwable.toString());
-        Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> LOGGER.log(Level.WARNING, stackTraceElement.toString()));
+        listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, throwable.toString()));
+        Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> {
+            LOGGER.log(Level.WARNING, prefix + ": " + stackTraceElement.toString());
+            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, stackTraceElement.toString()));
+        });
     }
 
     //WARNING! Don't works in JDK9
@@ -100,8 +110,8 @@ public class Logger {
         log(getPrefixLocation(2), throwable);
     }
 
-    public static void setupLogger(File log) {
-        if(!isConfigured) {
+    public static void setupLogger(File log, int listenerQueueCapacity) {
+        if(!isConfigured.get()) {
             try {
                 if(log.exists()) {
                     log = new File(log.getPath() + 1);
@@ -115,8 +125,11 @@ public class Logger {
                 LOGGER.addHandler(new WarningConsoleHandler());
 
                 loadConfigurations(ClassLoader.getSystemClassLoader());
+
+                listenerThread = new LoggerListenerThread(listenerQueueCapacity);
+
                 log("Logger successfully setup!");
-                isConfigured = true;
+                isConfigured.set(true);
             } catch (SecurityException | IOException e) {
                 e.printStackTrace(System.out);
             }
@@ -131,6 +144,14 @@ public class Logger {
             loggers.put(name, new WeakReference<>(namedLogger));
             return namedLogger;
         }
+    }
+
+    public void addListener(LoggerListener loggerListener) {
+        listenerThread.addListener(loggerListener);
+    }
+
+    public void removeListener(LoggerListener loggerListener) {
+        listenerThread.removeListener(loggerListener);
     }
 
     @SneakyThrows
@@ -159,7 +180,7 @@ public class Logger {
         }
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("UC_USELESS_OBJECT")
+    //    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("UC_USELESS_OBJECT")
     private static void parseConfigurationClass(Class<?> clazz) throws InstantiationException, IllegalAccessException, NoSuchFieldException {
         Mutable<String> basePackage = new MutableObject<>("");
 
@@ -285,6 +306,88 @@ public class Logger {
 
         public Class[] getCallingClasses() {
             return getClassContext();
+        }
+    }
+
+    private static final class LoggerListenerThread extends Thread {
+        private final MpscAtomicArrayQueue<Message> messages;
+        private final CopyOnWriteArrayList<LoggerListener> loggerListeners;
+
+        public LoggerListenerThread(int listenerQueueCapacity) {
+            messages = new MpscAtomicArrayQueue<>(listenerQueueCapacity);
+            loggerListeners = new CopyOnWriteArrayList<>();
+        }
+
+        public void addListener(LoggerListener loggerListener) {
+            loggerListeners.add(loggerListener);
+        }
+
+        public void removeListener(LoggerListener loggerListener) {
+            loggerListeners.remove(loggerListener);
+        }
+
+        public void sendMessage(Message message) {
+            messages.add(message);
+        }
+
+        public void run() {
+            while(true) {
+                Message message = messages.poll();
+                if(message != null) {
+                    loggerListeners.forEach(loggerListener -> loggerListener.listen(message.getPrefixes(), message.getMessage()));
+                } else {
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        public static final class Message {
+            private final String message;
+            private final String prefixes;
+
+            public Message(String message, String prefixes) {
+                this.message = message;
+                this.prefixes = prefixes;
+            }
+
+            public String getMessage() {
+                return message;
+            }
+
+            public String getPrefixes() {
+                return prefixes;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if(this == o) return true;
+                if(!(o instanceof Message)) return false;
+
+                Message message1 = (Message) o;
+
+                if(getMessage() != null ? !getMessage().equals(message1.getMessage()) : message1.getMessage() != null)
+                    return false;
+                return getPrefixes() != null ? getPrefixes().equals(message1.getPrefixes()) : message1.getPrefixes() == null;
+            }
+
+            @Override
+            public int hashCode() {
+                int result = getMessage() != null ? getMessage().hashCode() : 0;
+                result = 31 * result + (getPrefixes() != null ? getPrefixes().hashCode() : 0);
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "Message{" +
+                        "message='" + message + '\'' +
+                        ", prefixes='" + prefixes + '\'' +
+                        '}';
+            }
         }
     }
 }
