@@ -41,4 +41,10 @@ public interface ReportingModule extends Module, ReportingModuleMXBean {
 
     @Override
     void reportAll();
+
+    @Override
+    void reload(Element configNode);
+
+    @Override
+    int getActiveReporterCount();
 }

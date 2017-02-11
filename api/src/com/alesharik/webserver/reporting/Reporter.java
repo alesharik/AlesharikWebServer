@@ -11,12 +11,19 @@ import java.io.File;
  */
 public abstract class Reporter implements Tickable {
     /**
-     * Setup reporter. Will called while loading or reloading config.
+     * Setup reporter. Will be called only at start.
      *
      * @param file       the file to report
      * @param tickPeriod report period in milliseconds
      */
     public abstract void setup(@Nullable File file, long tickPeriod, Element config);
+
+    /**
+     * Reload config
+     *
+     * @param config the config element
+     */
+    public abstract void reload(Element config);
 
     @Override
     public void tick() throws Exception {
