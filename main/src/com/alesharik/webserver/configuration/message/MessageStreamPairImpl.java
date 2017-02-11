@@ -3,11 +3,11 @@ package com.alesharik.webserver.configuration.message;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.jctools.queues.atomic.MpscAtomicArrayQueue;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -17,8 +17,8 @@ public class MessageStreamPairImpl<M extends Message> implements MessageStreamPa
     private final MessageStreamImpl<M> second;
 
     public MessageStreamPairImpl() {
-        ConcurrentLinkedQueue<M> firstQueue = new ConcurrentLinkedQueue<>();
-        ConcurrentLinkedQueue<M> secondQueue = new ConcurrentLinkedQueue<>();
+        MpscAtomicArrayQueue<M> firstQueue = new MpscAtomicArrayQueue<>(512);
+        MpscAtomicArrayQueue<M> secondQueue = new MpscAtomicArrayQueue<>(512);
 
         first = new MessageStreamImpl<>(secondQueue, firstQueue);
         second = new MessageStreamImpl<>(firstQueue, secondQueue);
@@ -40,10 +40,10 @@ public class MessageStreamPairImpl<M extends Message> implements MessageStreamPa
 
     @Prefixes({"[MessageStream]"})
     public static final class MessageStreamImpl<M extends Message> implements MessageStream<M> {
-        private final ConcurrentLinkedQueue<M> sendQueue;
-        private final ConcurrentLinkedQueue<M> receiveQueue;
+        private final MpscAtomicArrayQueue<M> sendQueue;
+        private final MpscAtomicArrayQueue<M> receiveQueue;
 
-        public MessageStreamImpl(ConcurrentLinkedQueue<M> sendQueue, ConcurrentLinkedQueue<M> receiveQueue) {
+        public MessageStreamImpl(MpscAtomicArrayQueue<M> sendQueue, MpscAtomicArrayQueue<M> receiveQueue) {
             this.sendQueue = sendQueue;
             this.receiveQueue = receiveQueue;
         }
@@ -57,13 +57,17 @@ public class MessageStreamPairImpl<M extends Message> implements MessageStreamPa
         @Override
         public M receiveMessage() throws InterruptedException {
             if(Thread.interrupted()) {
-                return null;
+                throw new InterruptedException();
             }
             while(receiveQueue.peek() == null) {
                 Signaller signaller = new Signaller(0L, 0L, receiveQueue);
                 waitForSignaller(signaller);
             }
-            return receiveQueue.poll();
+            M poll = receiveQueue.poll();
+            if(poll == null) {
+                poll = receiveMessage();
+            }
+            return poll;
         }
 
         @Nullable

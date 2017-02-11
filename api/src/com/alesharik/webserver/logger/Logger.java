@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  * mainPackage = "*.main" = "test.main"<br>
  */
 @Prefix("[LOGGER]")
-public class Logger {
+public final class Logger {
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("AlesharikWebServerMainLogger");
     private static AtomicBoolean isConfigured = new AtomicBoolean(false);
 
@@ -127,6 +127,7 @@ public class Logger {
                 loadConfigurations(ClassLoader.getSystemClassLoader());
 
                 listenerThread = new LoggerListenerThread(listenerQueueCapacity);
+                listenerThread.start();
 
                 log("Logger successfully setup!");
                 isConfigured.set(true);
@@ -146,11 +147,11 @@ public class Logger {
         }
     }
 
-    public void addListener(LoggerListener loggerListener) {
+    public static void addListener(LoggerListener loggerListener) {
         listenerThread.addListener(loggerListener);
     }
 
-    public void removeListener(LoggerListener loggerListener) {
+    public static void removeListener(LoggerListener loggerListener) {
         listenerThread.removeListener(loggerListener);
     }
 
@@ -316,6 +317,8 @@ public class Logger {
         public LoggerListenerThread(int listenerQueueCapacity) {
             messages = new MpscAtomicArrayQueue<>(listenerQueueCapacity);
             loggerListeners = new CopyOnWriteArrayList<>();
+            setName("LoggerListenerThread");
+            setDaemon(true);
         }
 
         public void addListener(LoggerListener loggerListener) {
@@ -349,7 +352,7 @@ public class Logger {
             private final String message;
             private final String prefixes;
 
-            public Message(String message, String prefixes) {
+            public Message(String prefixes, String message) {
                 this.message = message;
                 this.prefixes = prefixes;
             }
