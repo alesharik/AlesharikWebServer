@@ -206,15 +206,14 @@ public final class Logger {
                         continue;
                     }
                     File dir = new File(url.getFile());
-                    List<Class<?>> classes = new ArrayList<>();
                     File[] files = dir.listFiles();
                     if(files == null) {
                         continue;
                     }
                     for(File file : files) {
-                        classes.addAll(findClassesFromFile(file, configurationValueWithBasePackage, classLoader));
+                        findClassesFromFile(file, configurationValueWithBasePackage, classLoader)
+                                .forEach(aClass -> addPrefix(aClass.getCanonicalName(), prefix));
                     }
-                    classes.forEach(aClass -> addPrefix(aClass.getCanonicalName(), prefix));
                 }
                 continue;
             }

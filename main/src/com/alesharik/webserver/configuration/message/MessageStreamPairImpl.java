@@ -63,11 +63,11 @@ public class MessageStreamPairImpl<M extends Message> implements MessageStreamPa
                 Signaller signaller = new Signaller(0L, 0L, receiveQueue);
                 waitForSignaller(signaller);
             }
-            M poll = receiveQueue.poll();
-            if(poll == null) {
-                poll = receiveMessage();
-            }
-            return poll;
+//            M poll = ;
+//            if(poll == null) {
+//                poll = receiveMessage();
+//            }
+            return receiveQueue.poll();
         }
 
         @Nullable
