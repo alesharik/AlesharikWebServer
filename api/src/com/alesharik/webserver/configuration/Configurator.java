@@ -19,12 +19,15 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Prefix("[Configurator]")
 public class Configurator {
+    private static final int LOGGER_LISTENER_QUEUE_CAPACITY = 200;
+
     private final File file;
     private final AtomicBoolean isFileCheckerRunning;
     private final Configuration configuration;
@@ -71,6 +74,23 @@ public class Configurator {
                 Logger.log(e);
             }
         }
+
+        int listenerThreadQueueCapacity = LOGGER_LISTENER_QUEUE_CAPACITY;
+        File logFile = null;
+        Element logger = (Element) node.getElementsByTagName("logger").item(0);
+        if(logger != null) {
+            Node listenerThreadQueueSize = logger.getElementsByTagName("listenerQueueCapacity").item(0);
+            if(listenerThreadQueueSize != null) {
+                listenerThreadQueueCapacity = Integer.parseInt(listenerThreadQueueSize.getTextContent());
+            }
+
+            Node logFileNode = logger.getElementsByTagName("logFile").item(0);
+
+            Date date = new Date();
+            date.setTime(System.currentTimeMillis());
+            logFile = new File(logFileNode.getTextContent().replace("{$time}", date.toString().replace(" ", "_")));
+        }
+        Logger.setupLogger(logFile, listenerThreadQueueCapacity);
     }
 
     private void startFileChecker() throws IOException {
