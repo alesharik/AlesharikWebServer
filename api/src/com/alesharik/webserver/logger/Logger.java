@@ -48,6 +48,10 @@ public final class Logger {
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("AlesharikWebServerMainLogger");
     private static AtomicBoolean isConfigured = new AtomicBoolean(false);
 
+    static {
+        LOGGER.setLevel(Level.ALL);
+    }
+
     /**
      * Class : Prefixes
      */
@@ -69,6 +73,43 @@ public final class Logger {
         return "[" + element.getFileName() + ":" + element.getLineNumber() + "]";
     }
 
+    public static void log(String message) {
+        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
+        if(prefix.isEmpty()) {
+            log(getPrefixLocation(2), message);
+        } else {
+            log(prefix, message);
+        }
+    }
+
+    public static void log(Throwable throwable) {
+        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
+        if(prefix.isEmpty()) {
+            log(getPrefixLocation(2), throwable);
+        } else {
+            log(prefix + '[' + getPrefixLocation(2) + ']', throwable);
+        }
+    }
+
+    //WARNING! Don't works in JDK9
+    public static void log(String message, TextFormatter textFormatter) {
+        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
+        if(prefix.isEmpty()) {
+            log(getPrefixLocation(2), message, textFormatter);
+        } else {
+            log(prefix, message, textFormatter);
+        }
+    }
+
+    public static void log(Throwable throwable, TextFormatter textFormatter) {
+        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
+        if(prefix.isEmpty()) {
+            log(getPrefixLocation(2), throwable, textFormatter);
+        } else {
+            log(prefix + '[' + getPrefixLocation(2) + ']', throwable, textFormatter);
+        }
+    }
+
     public static void log(String message, String... prefixes) {
         StringBuilder sb = new StringBuilder();
         Arrays.asList(prefixes).forEach(sb::append);
@@ -81,33 +122,69 @@ public final class Logger {
         log(sb.toString(), throwable);
     }
 
+    public static void log(String message, TextFormatter textFormatter, String... prefixes) {
+        StringBuilder sb = new StringBuilder();
+        Arrays.asList(prefixes).forEach(sb::append);
+        log(sb.toString(), message, textFormatter);
+    }
+
+    public static void log(Throwable throwable, TextFormatter textFormatter, String... prefixes) {
+        StringBuilder sb = new StringBuilder();
+        Arrays.asList(prefixes).forEach(sb::append);
+        log(sb.toString(), throwable, textFormatter);
+    }
+
     public static void log(String prefix, String message) {
+        checkState();
+
         LOGGER.log(Level.INFO, prefix + ": " + message);
-        listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, message));
-    }
-
-    public static void log(String prefix, Throwable throwable) {
-        throwable.printStackTrace();
-        LOGGER.log(Level.WARNING, prefix + ": " + throwable.toString());
-        listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, throwable.toString()));
-        Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> {
-            LOGGER.log(Level.WARNING, prefix + ": " + stackTraceElement.toString());
-            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, stackTraceElement.toString()));
-        });
-    }
-
-    //WARNING! Don't works in JDK9
-    public static void log(String message) {
-        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
-        if(prefix.isEmpty()) {
-            log(getPrefixLocation(2), message);
-        } else {
-            log(prefix, message);
+        if(listenerThread != null) {
+            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, message));
         }
     }
 
-    public static void log(Throwable throwable) {
-        log(getPrefixLocation(2), throwable);
+    public static void log(String prefix, Throwable throwable) {
+        checkState();
+
+//        throwable.printStackTrace();
+        LOGGER.log(Level.WARNING, prefix + ": " + throwable.toString());
+        if(listenerThread != null)
+            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, throwable.toString()));
+        Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> {
+            LOGGER.log(Level.WARNING, prefix + ": " + stackTraceElement.toString());
+            if(listenerThread != null) {
+                listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, stackTraceElement.toString()));
+            }
+        });
+    }
+
+    public static void log(String prefix, String message, TextFormatter textFormatter) {
+        if(textFormatter.wholeMessage) {
+            LOGGER.log(Level.INFO, textFormatter.format(prefix + ": " + message));
+        } else {
+            LOGGER.log(Level.INFO, prefix + ": " + textFormatter.format(message));
+        }
+
+        if(listenerThread != null) {
+            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, message));
+        }
+    }
+
+    public static void log(String prefix, Throwable throwable, TextFormatter textFormatter) {
+        throwable.printStackTrace();
+        if(textFormatter.wholeMessage) {
+            LOGGER.log(Level.WARNING, textFormatter.format(prefix + ": " + throwable.toString()));
+        } else {
+            LOGGER.log(Level.WARNING, textFormatter.format(prefix + ": " + throwable.toString()));
+        }
+        if(listenerThread != null)
+            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, throwable.toString()));
+        Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> {
+            LOGGER.log(Level.WARNING, prefix + ": " + stackTraceElement.toString());
+            if(listenerThread != null) {
+                listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, stackTraceElement.toString()));
+            }
+        });
     }
 
     public static void setupLogger(File log, int listenerQueueCapacity) {
@@ -288,13 +365,24 @@ public final class Logger {
 
     private static String getConfiguredPrefixes(Class<?> clazz) {
         ClassLoader classLoader = clazz.getClassLoader();
-        if(!classLoaders.stream().anyMatch(classLoaderWeakReference -> classLoader.equals(classLoaderWeakReference.get()))) {
+        if(classLoaders.stream().noneMatch(classLoaderWeakReference -> classLoader.equals(classLoaderWeakReference.get()))) {
             loadConfigurations(classLoader);
         }
         if(configuredPrefixes.containsKey(clazz.getCanonicalName())) {
             return configuredPrefixes.get(clazz.getCanonicalName()).stream().reduce("", String::concat);
         } else {
             return "";
+        }
+    }
+
+    /**
+     * Check logger state
+     *
+     * @throws LoggerNotConfiguredException if logger not configured
+     */
+    private static void checkState() throws LoggerNotConfiguredException {
+        if(!isConfigured.get()) {
+            throw new LoggerNotConfiguredException();
         }
     }
 
@@ -390,6 +478,131 @@ public final class Logger {
                         ", prefixes='" + prefixes + '\'' +
                         '}';
             }
+        }
+    }
+
+    /**
+     * Enum of foreground colors
+     */
+    public enum ForegroundColor {
+        BLACK(30),
+        RED(31),
+        GREEN(32),
+        YELLOW(33),
+        BLUE(34),
+        MAGENTA(35),
+        CYAN(36),
+        WHITE(37),
+        /**
+         * Default terminal color
+         */
+        NONE(0);
+
+        private final int code;
+
+        ForegroundColor(int code) {
+            this.code = code;
+        }
+
+        /**
+         * Color code
+         */
+        public int getCode() {
+            return code;
+        }
+
+        @Override
+        public String toString() {
+            return "ForegroundColor{" +
+                    "code=" + code +
+                    '}';
+        }
+    }
+
+    /**
+     * Enum of background colors
+     */
+    public enum BackgroundColor {
+        BLACK(40),
+        RED(41),
+        GREEN(42),
+        YELLOW(43),
+        BLUE(44),
+        MAGENTA(45),
+        CYAN(46),
+        WHITE(47),
+        /**
+         * Default terminal color
+         */
+        NONE(0);
+
+        private final int code;
+
+        BackgroundColor(int code) {
+            this.code = code;
+        }
+
+        /**
+         * Color code
+         */
+        public int getCode() {
+            return code;
+        }
+
+        @Override
+        public String toString() {
+            return "BackgroundColor{" +
+                    "code=" + code +
+                    '}';
+        }
+    }
+
+    /**
+     * TextFormatter add color to given text
+     */
+    public static class TextFormatter {
+        protected static final String PREFIX = "\033[";
+        protected static final String SEPARATOR = ";";
+        protected static final String POSTFIX = "m";
+
+        protected final ForegroundColor foregroundColor;
+        protected final BackgroundColor backgroundColor;
+        protected final boolean wholeMessage;
+
+        /**
+         * @param wholeMessage if true color all message with prefix and etc, overwise color only user message
+         */
+        public TextFormatter(ForegroundColor foregroundColor, BackgroundColor backgroundColor, boolean wholeMessage) {
+            this.foregroundColor = foregroundColor;
+            this.backgroundColor = backgroundColor;
+            this.wholeMessage = wholeMessage;
+        }
+
+        /**
+         * Add color(background and foreground) to string
+         *
+         * @param str the string
+         * @return colored string
+         */
+        public String format(String str) {
+            return PREFIX +
+                    foregroundColor.getCode() +
+                    SEPARATOR +
+                    backgroundColor.getCode() +
+                    POSTFIX +
+                    str;
+        }
+
+        public ForegroundColor getForegroundColor() {
+            return foregroundColor;
+        }
+
+        public BackgroundColor getBackgroundColor() {
+            return backgroundColor;
+        }
+
+        public boolean isWholeMessage() {
+            return wholeMessage;
         }
     }
 }
