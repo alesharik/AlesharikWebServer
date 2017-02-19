@@ -111,27 +111,19 @@ public final class Logger {
     }
 
     public static void log(String message, String... prefixes) {
-        StringBuilder sb = new StringBuilder();
-        Arrays.asList(prefixes).forEach(sb::append);
-        log(sb.toString(), message);
+        log(String.join("", prefixes), message);
     }
 
     public static void log(Throwable throwable, String... prefixes) {
-        StringBuilder sb = new StringBuilder();
-        Arrays.asList(prefixes).forEach(sb::append);
-        log(sb.toString(), throwable);
+        log(String.join("", prefixes), throwable);
     }
 
     public static void log(String message, TextFormatter textFormatter, String... prefixes) {
-        StringBuilder sb = new StringBuilder();
-        Arrays.asList(prefixes).forEach(sb::append);
-        log(sb.toString(), message, textFormatter);
+        log(String.join("", prefixes), message, textFormatter);
     }
 
     public static void log(Throwable throwable, TextFormatter textFormatter, String... prefixes) {
-        StringBuilder sb = new StringBuilder();
-        Arrays.asList(prefixes).forEach(sb::append);
-        log(sb.toString(), throwable, textFormatter);
+        log(String.join("", prefixes), throwable, textFormatter);
     }
 
     public static void log(String prefix, String message) {
