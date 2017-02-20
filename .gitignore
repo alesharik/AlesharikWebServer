@@ -21,8 +21,6 @@
 /evosuite-1.0.3.jar
 
 /api/src/com/alesharik/webserver/api/native/cmake-build-debug/
-/api/src/com/alesharik/webserver/api/native/.idea/
-
 /repository.snapshot
 /adminData.dat
 /adminKey.key
@@ -32,3 +30,6 @@
 /pluginSources/
 /ignoredFiles.conf
 /reporting/
+/AlesharikWebServer.zip
+/main/reporting/
+/api/reporting/

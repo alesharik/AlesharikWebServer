@@ -215,6 +215,11 @@
             <artifactId>opencsv</artifactId>
             <version>3.8</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.lukehutch</groupId>
+            <artifactId>fast-classpath-scanner</artifactId>
+            <version>LATEST</version>
+        </dependency>
     </dependencies>
 
     <repositories>

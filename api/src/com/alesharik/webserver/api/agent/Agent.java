@@ -5,10 +5,11 @@ import java.lang.instrument.UnmodifiableClassException;
 import java.util.List;
 
 public final class Agent {
-    static Instrumentation instrumentation;
+    private static Instrumentation instrumentation;
 
     public static void premain(String agentArgs, Instrumentation inst) throws UnmodifiableClassException {
         instrumentation = inst;
+        inst.addTransformer(new ClassPathScannerTransformer(), false);
         inst.addTransformer(new AgentClassTransformer(), true);
     }
 

@@ -1,9 +1,12 @@
 package com.alesharik.webserver.api.ticking;
 
 import com.alesharik.webserver.exceptions.ExceptionWithoutStacktrace;
+import com.alesharik.webserver.logger.Logger;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ExecutorTaskTest {
@@ -11,6 +14,11 @@ public class ExecutorTaskTest {
     private ExecutorPoolBasedTickingPool.ExecutorTask executorTask;
     private ExecutorPoolBasedTickingPool.ExecutorTask exception;
     private ConcurrentHashMap<Tickable, Boolean> map = new ConcurrentHashMap<>();
+
+    @BeforeClass
+    public static void init() throws Exception {
+        Logger.setupLogger(File.createTempFile("asdassdfasd", "sdfgasdsdf"), 10);
+    }
 
     @Before
     public void setUp() throws Exception {

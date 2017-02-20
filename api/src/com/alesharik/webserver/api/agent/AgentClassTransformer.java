@@ -2,8 +2,6 @@ package com.alesharik.webserver.api.agent;
 
 import com.alesharik.webserver.logger.Logger;
 import one.nio.util.JavaInternals;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import sun.misc.Unsafe;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -17,7 +15,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 final class AgentClassTransformer implements ClassFileTransformer {
@@ -30,12 +27,13 @@ final class AgentClassTransformer implements ClassFileTransformer {
      * ClassName: Transformers
      */
     private static final ConcurrentHashMap<String, CopyOnWriteArrayList<MethodHolder>> transformers = new ConcurrentHashMap<>();
-
     private static final CopyOnWriteArrayList<MethodHolder> allTransformers = new CopyOnWriteArrayList<>();
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        byte[] data = executeASM(classfileBuffer);
+//        byte[] data = executeASM(classfileBuffer);
+        byte[] data = new byte[classfileBuffer.length];
+        System.arraycopy(classfileBuffer, 0, data, 0, classfileBuffer.length);
         CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
         if(transformers != null) {
             for(MethodHolder transformer : transformers) {
@@ -56,24 +54,8 @@ final class AgentClassTransformer implements ClassFileTransformer {
         return data;
     }
 
-    private static byte[] executeASM(byte[] classfileBuffer) {
-        AtomicBoolean isTransformer = new AtomicBoolean(false);
-        ClassReader classReader = new ClassReader(classfileBuffer);
-        ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
-        classReader.accept(new AgentClassVisitor(classWriter, isTransformer), 0);
-        byte[] bytes = classWriter.toByteArray();
-        if(isTransformer.get()) {
-            Class<?> clazz = UNSAFE.defineAnonymousClass(AgentClassTransformer.class, bytes, null);
-            addTransformer(clazz);
-            anonymousClasses.add(clazz);
-        }
-        return bytes;
-    }
 
-    private static void addTransformer(Class<?> transformer) {
-        if(!transformer.isAnnotationPresent(ClassTransformer.class)) {
-            return;
-        }
+    static void addTransformer(Class<?> transformer) {
         Stream.of(transformer.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Transform.class) || method.isAnnotationPresent(TransformAll.class))
                 .filter(method -> method.getReturnType().isAssignableFrom(byte[].class))

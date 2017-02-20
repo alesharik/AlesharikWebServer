@@ -2,6 +2,7 @@ package com.alesharik.webserver.generators;
 
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.exceptions.ExceptionWithoutStacktrace;
+import com.alesharik.webserver.logger.Logger;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.util.HttpStatus;
 import org.glassfish.grizzly.utils.Charsets;
@@ -38,6 +39,8 @@ public class FileBasedErrorPageConstructorTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
+        Logger.setupLogger(File.createTempFile("asdfsdfasfsdf", "sdfasfsdfasd"), 10);
+
         File tmpFolder = Files.createTempDirectory("FileBasedErrorPageConstructorTest").toFile();
         File errorFolder = new File(tmpFolder + "/errors/");
         if(!errorFolder.mkdir()) {
