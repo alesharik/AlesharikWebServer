@@ -167,7 +167,7 @@ public final class Logger {
         if(textFormatter.wholeMessage) {
             LOGGER.log(Level.WARNING, textFormatter.format(prefix + ": " + throwable.toString()));
         } else {
-            LOGGER.log(Level.WARNING, textFormatter.format(prefix + ": " + throwable.toString()));
+            LOGGER.log(Level.WARNING, prefix + ": " + textFormatter.format(throwable.toString()));
         }
         if(listenerThread != null)
             listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, throwable.toString()));
@@ -198,8 +198,8 @@ public final class Logger {
                 listenerThread = new LoggerListenerThread(listenerQueueCapacity);
                 listenerThread.start();
 
-                log("Logger successfully setup!");
                 isConfigured.set(true);
+                log("Logger successfully setup!");
             } catch (SecurityException | IOException e) {
                 e.printStackTrace(System.out);
             }
