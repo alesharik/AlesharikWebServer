@@ -4,6 +4,7 @@ import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
 import com.alesharik.webserver.api.agent.classPath.ListenClass;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
+import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
 import com.alesharik.webserver.api.collections.ConcurrentTripleHashMap;
 import com.alesharik.webserver.api.collections.TripleHashMap;
 import com.alesharik.webserver.logger.Logger;
@@ -22,8 +23,14 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Stream;
 
+/**
+ * This thread find annotated classes
+ */
 @Prefix("[ClassPathScannerThread]")
 final class ClassPathScannerThread extends Thread {
+    /**
+     * FJP parallelism
+     */
     private static final int PARALLELISM = 5;
 
     private final ForkJoinPool workerPool;

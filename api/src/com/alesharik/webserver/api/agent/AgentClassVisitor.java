@@ -8,7 +8,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class AgentClassVisitor extends ClassAdapter {
+final class AgentClassVisitor extends ClassAdapter {
     private static final String CLASS_LOADER_ANNOTATION_DESCRIPTION = "Lcom/alesharik/webserver/api/agent/ClassTransformer;";
     private static final String TRANSFORM_ANNOTATION_DESCRIPTION = "Lcom/alesharik/webserver/api/agent/Transform;";
     private static final String TRANSFORM_ALL_ANNOTATION_DESCRIPTION = "Lcom/alesharik/webserver/api/agent/TransformAll;";

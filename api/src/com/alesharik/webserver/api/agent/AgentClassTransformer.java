@@ -1,8 +1,8 @@
 package com.alesharik.webserver.api.agent;
 
-import com.alesharik.webserver.logger.Logger;
-import one.nio.util.JavaInternals;
-import sun.misc.Unsafe;
+import com.alesharik.webserver.api.agent.transformer.Param;
+import com.alesharik.webserver.api.agent.transformer.Transform;
+import com.alesharik.webserver.api.agent.transformer.TransformAll;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -11,18 +11,15 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
+/**
+ * Transform classes with {@link com.alesharik.webserver.api.agent.transformer.ClassTransformer} annotated classes
+ */
 final class AgentClassTransformer implements ClassFileTransformer {
-    private static final Unsafe UNSAFE = JavaInternals.unsafe;
     private static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = MethodHandles.lookup();
-
-    private static final CopyOnWriteArrayList<Class<?>> anonymousClasses = new CopyOnWriteArrayList<>();
-
     /**
      * ClassName: Transformers
      */
@@ -31,27 +28,24 @@ final class AgentClassTransformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-//        byte[] data = executeASM(classfileBuffer);
-        byte[] data = new byte[classfileBuffer.length];
-        System.arraycopy(classfileBuffer, 0, data, 0, classfileBuffer.length);
         CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
         if(transformers != null) {
             for(MethodHolder transformer : transformers) {
                 try {
-                    data = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+                    classfileBuffer = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
                 } catch (Throwable throwable) {
-                    Logger.log(throwable);
+                    throwable.printStackTrace();
                 }
             }
         }
-        for(MethodHolder allTransformer : allTransformers) {
+        for(MethodHolder transformer : allTransformers) {
             try {
-                data = allTransformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+                classfileBuffer = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
             } catch (Throwable throwable) {
-                Logger.log(throwable);
+                throwable.printStackTrace();
             }
         }
-        return data;
+        return classfileBuffer;
     }
 
 
@@ -59,7 +53,7 @@ final class AgentClassTransformer implements ClassFileTransformer {
         Stream.of(transformer.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Transform.class) || method.isAnnotationPresent(TransformAll.class))
                 .filter(method -> method.getReturnType().isAssignableFrom(byte[].class))
-                .filter(method -> (method.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
+                .filter(method -> Modifier.isStatic(method.getModifiers()))
                 .forEach(method -> {
                     try {
                         MethodHandle methodHandle = METHOD_HANDLES_LOOKUP.unreflect(method);
@@ -74,7 +68,6 @@ final class AgentClassTransformer implements ClassFileTransformer {
                         }
                     } catch (Throwable e) {
                         e.printStackTrace();
-                        Logger.log(e);
                     }
                 });
     }
@@ -114,9 +107,5 @@ final class AgentClassTransformer implements ClassFileTransformer {
             }
             return (byte[]) methodHandle.invokeWithArguments(invokeArgs);
         }
-    }
-
-    static List<Class<?>> getCreatedClasses() {
-        return Collections.unmodifiableList(anonymousClasses);
     }
 }

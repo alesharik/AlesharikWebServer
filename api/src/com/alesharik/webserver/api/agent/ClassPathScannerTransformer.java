@@ -13,10 +13,10 @@ import java.util.Set;
  * It do not perform any bytecode transformations
  */
 final class ClassPathScannerTransformer implements ClassFileTransformer {
-    private final ClassPathScannerThread thread;
-    private final Set<ClassLoader> classLoaders;
+    private static final ClassPathScannerThread thread;
+    private static final Set<ClassLoader> classLoaders;
 
-    public ClassPathScannerTransformer() {
+    static {
         thread = new ClassPathScannerThread();
         thread.start();
 
@@ -36,7 +36,7 @@ final class ClassPathScannerTransformer implements ClassFileTransformer {
     /**
      * Return all class loaders
      */
-    public Set<ClassLoader> getClassLoaders() {
+    public static Set<ClassLoader> getClassLoaders() {
         return Collections.unmodifiableSet(classLoaders);
     }
 }
