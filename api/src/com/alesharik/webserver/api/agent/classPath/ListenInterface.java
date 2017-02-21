@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * Method, annotated by this annotation, will be called for every class, implementing given interface(<code>value()</code>).
- * Annotated method must be static and have only 1 argument: <code>{@link Class}</code>
+ * Annotated method must be static and have only 1 argument: <code>{@link Class}</code>. Return result will be ignored
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

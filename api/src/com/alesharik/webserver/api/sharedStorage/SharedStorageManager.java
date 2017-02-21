@@ -104,14 +104,14 @@ public final class SharedStorageManager {
     }
 
     /**
-     * If something wrong, you can reload class
+     * If something wrong, you can retransform class
      *
-     * @param clazz the class to reload
+     * @param clazz the class to retransform
      */
     public static void reload(Class<?> clazz) throws UnmodifiableClassException {
         if(!clazz.isAnnotationPresent(UseSharedStorage.class)) {
             throw new IllegalArgumentException("The class must annotated of @UseSharedStorage annotation");
         }
-        Agent.reload(clazz);
+        Agent.retransform(clazz);
     }
 }
