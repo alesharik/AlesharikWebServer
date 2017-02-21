@@ -1,8 +1,8 @@
 package com.alesharik.webserver.api.sharedStorage;
 
-import com.alesharik.webserver.api.agent.ClassTransformer;
-import com.alesharik.webserver.api.agent.Param;
-import com.alesharik.webserver.api.agent.TransformAll;
+import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
+import com.alesharik.webserver.api.agent.transformer.Param;
+import com.alesharik.webserver.api.agent.transformer.TransformAll;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
