@@ -1,29 +1,155 @@
 package com.alesharik.webserver.api.memory.impl;
 
-import com.alesharik.webserver.api.memory.OffHeapVector;
+import com.alesharik.webserver.api.memory.OffHeapVectorBase;
 
-public class LongOffHeapVector extends OffHeapVector<Long> {
-    @Override
-    protected long getElementSize() {
-        return 8L; //sizeof(long)
+import java.util.Iterator;
+import java.util.function.Consumer;
+
+public class LongOffHeapVector extends OffHeapVectorBase {
+    private static final long LONG_SIZE = 8L; //sizeof(long)
+    private static final long LONG_ARRAY_BASE_OFFSET = unsafe.arrayBaseOffset(long[].class);
+    private static final LongOffHeapVector INSTANCE = new LongOffHeapVector();
+
+    public static LongOffHeapVector instance() {
+        return INSTANCE;
     }
 
-    @Override
-    protected Long getUnsafe(long address) {
-        return unsafe.getLong(address);
+    public long fromLongArray(long[] arr) {
+        int length = arr.length;
+        long address = unsafe.allocateMemory(length * LONG_SIZE + META_SIZE);
+        unsafe.copyMemory(arr, LONG_ARRAY_BASE_OFFSET, null, address + META_SIZE, length * LONG_SIZE);
+        unsafe.putLong(address, 4L);
+        unsafe.putLong(address + BASE_FIELD_SIZE, length);
+        unsafe.putLong(address + BASE_FIELD_SIZE + COUNT_FIELD_SIZE, length);
+        return address;
     }
 
-    @Override
-    protected void setUnsafe(long address, Long l) {
-        unsafe.putLong(address, l);
+    /**
+     * If size > Integer.MAX_INTEGER, it copy only Integer.MAX_INTEGER elements
+     */
+    public long[] toLongArray(long address) {
+        long s = size(address);
+        long[] arr = new long[(int) s];
+        unsafe.copyMemory(null, address + META_SIZE, arr, LONG_ARRAY_BASE_OFFSET, arr.length * LONG_SIZE);
+        return arr;
     }
 
-    @Override
-    protected boolean elementEquals(Long t1, Long t2) {
-        return t1.compareTo(t2) == 0;
+    /**
+     * Return element with given index
+     *
+     * @param i       element index
+     * @param address array pointer (array memory block address)
+     */
+    public long get(long address, long i) {
+        if(i < 0) {
+            throw new IllegalArgumentException();
+        }
+
+        long count = size(address);
+        if(i >= count) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+
+        return unsafe.getLong(address + META_SIZE + i * getElementSize());
+    }
+
+    /**
+     * Add element to end of array and increment it's capacity. If capacity > max, array grow it's capacity and max size
+     *
+     * @param address array pointer (array memory block address)
+     * @param t       object to add
+     * @return new address
+     */
+    public long add(long address, long t) {
+        long next = size(address);
+        address = checkBounds(address, next);
+
+        unsafe.putLong(address + META_SIZE + next * getElementSize(), t);
+        incrementSize(address);
+
+        return address;
+    }
+
+    public boolean contains(long address, long t) {
+        return indexOf(address, t) >= 0;
+    }
+
+    public Iterator<Long> iterator(long address) {
+        return new Iter(address);
+    }
+
+    public void forEach(long address, Consumer<Long> consumer) {
+        iterator(address).forEachRemaining(consumer);
+    }
+
+    public long indexOf(long address, long t) {
+        long size = size(address);
+        long lastAddress = address + META_SIZE;
+        for(long i = 0; i < size; i++) {
+            long element = unsafe.getLong(lastAddress);
+            if(Long.compare(element, t) == 0) {
+                return i;
+            }
+            lastAddress += getElementSize();
+        }
+        return -1;
+    }
+
+    public long lastIndexOf(long address, long t) {
+        long size = size(address);
+        long lastAddress = address + META_SIZE;
+        for(long i = size - 1; i >= 0; i++) {
+            long element = unsafe.getLong(lastAddress);
+            if(Long.compare(element, t) == 0) {
+                return i;
+            }
+            lastAddress += getElementSize();
+        }
+        return -1;
+    }
+
+    public long set(long address, long t, long i) {
+        checkIndexBounds(address, i);
+
+        long last = unsafe.getLong(address + META_SIZE + i * getElementSize());
+        unsafe.putLong(address + META_SIZE + i * getElementSize(), t);
+        return last;
     }
 
     public void remove(long address, long obj) {
-        super.remove(address, (Long) obj);
+        long index = indexOf(address, obj);
+        if(index >= 0) {
+            remove(address, index);
+        }
+    }
+
+    @Override
+    protected long getElementSize() {
+        return LONG_SIZE; //sizeof(short)
+    }
+
+    private class Iter implements Iterator<Long> {
+        private final long address;
+        private long pos;
+
+        public Iter(long address) {
+            this.address = address;
+            this.pos = 0;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return pos < size(address);
+        }
+
+        @Override
+        public Long next() {
+            if(!hasNext()) {
+                return null;
+            }
+            long res = get(address, pos);
+            pos++;
+            return res;
+        }
     }
 }

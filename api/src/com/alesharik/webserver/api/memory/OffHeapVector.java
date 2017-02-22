@@ -1,8 +1,5 @@
 package com.alesharik.webserver.api.memory;
 
-import one.nio.util.JavaInternals;
-import sun.misc.Unsafe;
-
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Iterator;
 import java.util.function.Consumer;
@@ -17,83 +14,7 @@ import java.util.function.Consumer;
  */
 @SuppressWarnings("WeakerAccess")
 @NotThreadSafe
-public abstract class OffHeapVector<T> {
-    protected static final int DEFAULT_INITIAL_COUNT = 16;
-    /**
-     * <code>newCapacity = oldCapacity + RESIZE_DELTA</code>
-     */
-    protected static final int RESIZE_DELTA = 20;
-
-    protected static final Unsafe unsafe = JavaInternals.getUnsafe();
-
-    /**
-     * Size - <code>sizeof(long) == 8</code><br>
-     * Hold <code>sizeof(T)</code>
-     */
-    protected static final long BASE_FIELD_SIZE = 8L;
-    /**
-     * Size - <code>sizeof(long) == 8</code><br>
-     * Hold array size
-     */
-    protected static final long COUNT_FIELD_SIZE = 8L;
-    /**
-     * Size - <code>sizeof(long) == 8</code><br>
-     * Hold array max size
-     */
-    protected static final long MAX_FIELD_SIZE = 8L;
-    /**
-     * Size - <code>((sizeof(long) == 8) * 3) == 24</code><br>
-     * All meta information size
-     */
-    protected static final long META_SIZE = COUNT_FIELD_SIZE + BASE_FIELD_SIZE + MAX_FIELD_SIZE;
-
-    /**
-     * Initial size of all arrays after {@link #allocate()}
-     */
-    protected final long initialCount;
-
-    public OffHeapVector() {
-        this(DEFAULT_INITIAL_COUNT);
-    }
-
-    /**
-     * Created array initial size
-     */
-    public OffHeapVector(long initialCount) {
-        this.initialCount = initialCount;
-    }
-
-    /**
-     * Allocate offHeap memory for array. YOU MUST DO {@link #free(long)} BEFORE CLEAN YOUR OBJECT BY GARBAGE COLLECTOR
-     *
-     * @return memory address
-     */
-    public long allocate() {
-        long address = unsafe.allocateMemory(META_SIZE + (initialCount * getElementSize())); //malloc
-        unsafe.putLong(address, getElementSize()); //put BASE(element size)
-        unsafe.putLong(address + BASE_FIELD_SIZE, 0L); //put COUNT(array size) == 0
-        unsafe.putLong(address + BASE_FIELD_SIZE + COUNT_FIELD_SIZE, initialCount); //put MAX(max size) == initialCount
-        return address;
-    }
-
-    /**
-     * Delete memory region
-     *
-     * @param address array pointer (array memory block address)
-     */
-    public void free(long address) {
-        unsafe.freeMemory(address);
-    }
-
-    /**
-     * Return array size
-     *
-     * @param address array pointer (array memory block address)
-     */
-    public long size(long address) {
-        return unsafe.getLong(address + BASE_FIELD_SIZE);
-    }
-
+public abstract class OffHeapVector<T> extends OffHeapVectorBase {
     /**
      * Return element with given index
      *
@@ -121,13 +42,12 @@ public abstract class OffHeapVector<T> {
      * @return new address
      */
     public long add(long address, T t) {
-        long max = getMax(address);
         long next = size(address);
-        if(next >= max) {
-            address = resize(address, max + RESIZE_DELTA);
-        }
+        address = checkBounds(address, next);
+
         setUnsafe(address + META_SIZE + next * getElementSize(), t);
         incrementSize(address);
+
         return address;
     }
 
@@ -141,10 +61,6 @@ public abstract class OffHeapVector<T> {
 
     public void forEach(long address, Consumer<T> consumer) {
         iterator(address).forEachRemaining(consumer);
-    }
-
-    public boolean isEmpty(long address) {
-        return size(address) == 0;
     }
 
     public long indexOf(long address, T t) {
@@ -187,83 +103,11 @@ public abstract class OffHeapVector<T> {
         return last;
     }
 
-    public void remove(long address, long i) {
-        long count = size(address);
-        if(i < 0) {
-            throw new IllegalArgumentException();
-        }
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-//        unsafe.copyMemory(address + META_SIZE + getElementSize() * i, address + META_SIZE + getElementSize() * (i + 1), (count - i) * getElementSize());
-//        unsafe.putLong(address + BASE_FIELD_SIZE, count - 1);
-        unsafe.copyMemory(address + META_SIZE + getElementSize() * (i + 1), address + META_SIZE + getElementSize() * i, getElementSize() * (count - i));
-        decrementSize(address);
-    }
-
     public void remove(long address, T obj) {
         long index = indexOf(address, obj);
         if(index >= 0) {
             remove(address, index);
         }
-    }
-
-    /**
-     * Free all unused memory
-     *
-     * @param address array pointer (array memory block address)
-     * @return new address
-     */
-    public long shrink(long address) {
-        long size = size(address);
-        if(getMax(address) > size) {
-            address = unsafe.reallocateMemory(address, META_SIZE + getElementSize() * size);
-            setMax(address, size);
-        }
-        return address;
-    }
-
-    private long resize(long address, long elementCount) {
-        address = unsafe.reallocateMemory(address, META_SIZE + elementCount * getElementSize());
-        setMax(address, elementCount);
-        return address;
-    }
-
-    /**
-     * Return maximum array size
-     *
-     * @param address array pointer (memory block address)
-     */
-    protected final long getMax(long address) {
-        return unsafe.getLong(address + BASE_FIELD_SIZE + COUNT_FIELD_SIZE);
-    }
-
-    /**
-     * Set maximum array size
-     *
-     * @param address array pointer (array memory block address)
-     * @param max     new maximum array size
-     */
-    protected final void setMax(long address, long max) {
-        unsafe.putLong(address + BASE_FIELD_SIZE + COUNT_FIELD_SIZE, max);
-    }
-
-    /**
-     * Increment array size
-     *
-     * @param address array pointer (array memory block address)
-     */
-    protected final void incrementSize(long address) {
-        unsafe.putLong(address + BASE_FIELD_SIZE, size(address) + 1);
-    }
-
-    /**
-     * Decrement array size
-     *
-     * @param address array pointer (array memory block address)
-     */
-    protected final void decrementSize(long address) {
-        unsafe.putLong(address + BASE_FIELD_SIZE, size(address) - 1);
     }
 
     /**
