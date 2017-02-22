@@ -188,51 +188,51 @@ public class ModularErrorPageGeneratorTest {
     @Test
     public void generateWithFileBased() throws Exception {
         String gen = generator.generate(Request.create(), 404, "Not found");
-//        assertTrue(gen.equals("<html>\n" +
-//                " <head></head>\n" +
-//                " <body>\n" +
-//                "  asd\n" +
-//                " </body>\n" +
-//                "</html>"));
+        assertTrue(gen.equals("<html>\n" +
+                " <head></head>\n" +
+                " <body>\n" +
+                "  asd\n" +
+                " </body>\n" +
+                "</html>"));
     }
 
     @Test
     public void generateWithFileBasedWithDescription() throws Exception {
-//        String gen = generator.generate(Request.create(), 403, "Access denied", "test");
-//        assertTrue(gen.equals("<html>\n" +
-//                " <head></head>\n" +
-//                " <body>\n" +
-//                "  <div id=\"description\">\n" +
-//                "   test\n" +
-//                "  </div>\n" +
-//                " </body>\n" +
-//                "</html>"));
+        String gen = generator.generate(Request.create(), 403, "Access denied", "test");
+        assertTrue(gen.equals("<html>\n" +
+                " <head></head>\n" +
+                " <body>\n" +
+                "  <div id=\"description\">\n" +
+                "   test\n" +
+                "  </div>\n" +
+                " </body>\n" +
+                "</html>"));
     }
 
     @Test
     public void generateWithFileBasedWithException() throws Exception {
         String gen = generator.generate(Request.create(), 403, "Access denied", null, new ExceptionWithoutStacktrace("Oops!"));
-//        assertTrue(gen.equals("<html>\n" +
-//                " <head></head>\n" +
-//                " <body>\n" +
-//                "  <div id=\"description\">\n" +
-//                "   ExceptionWithoutStacktrace: Oops!\n" +
-//                "  </div>\n" +
-//                " </body>\n" +
-//                "</html>"));
+        assertTrue(gen.equals("<html>\n" +
+                " <head></head>\n" +
+                " <body>\n" +
+                "  <div id=\"description\">\n" +
+                "   ExceptionWithoutStacktrace: Oops!\n" +
+                "  </div>\n" +
+                " </body>\n" +
+                "</html>"));
     }
 
     @Test
     public void generateWithFileBasedWithDescriptionAndException() throws Exception {
         String gen = generator.generate(Request.create(), 403, "Access denied", "test", new ExceptionWithoutStacktrace("Oops!"));
-//        assertTrue(gen.equals("<html>\n" +
-//                " <head></head>\n" +
-//                " <body>\n" +
-//                "  <div id=\"description\">\n" +
-//                "   test ExceptionWithoutStacktrace: Oops!\n" +
-//                "  </div>\n" +
-//                " </body>\n" +
-//                "</html>"));
+        assertTrue(gen.equals("<html>\n" +
+                " <head></head>\n" +
+                " <body>\n" +
+                "  <div id=\"description\">\n" +
+                "   test ExceptionWithoutStacktrace: Oops!\n" +
+                "  </div>\n" +
+                " </body>\n" +
+                "</html>"));
     }
 
     @Test
