@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Spliterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -23,11 +24,13 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     private ArrayList<Long> times;
     private long lastTime;
+    private AtomicBoolean isRunning = new AtomicBoolean();
 
     public CachedArrayList() {
         super();
         this.times = new ArrayList<>(16);
         lastTime = System.currentTimeMillis();
+        isRunning = new AtomicBoolean(true);
     }
 
     public CachedArrayList(int count) {
@@ -41,10 +44,20 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
     }
 
     public boolean add(V v, long lifeTime) {
-        int address = super.size() - 1;
+        int address = super.size();
         super.add(address, v);
         times.add(address, lifeTime);
         return true;
+    }
+
+    @Override
+    public void add(int index, V element) {
+        add(index, element, DEFAULT_LIFE_TIME);
+    }
+
+    public void add(int index, V element, long lifeTime) {
+        super.add(index, element);
+        times.add(index, lifeTime);
     }
 
     @Override
@@ -60,16 +73,6 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
         } else {
             return null;
         }
-    }
-
-    @Override
-    public void add(int index, V element) {
-        add(index, element, DEFAULT_LIFE_TIME);
-    }
-
-    public void add(int index, V element, long lifeTime) {
-        super.add(index, element);
-        times.add(index, lifeTime);
     }
 
     @Override
@@ -111,7 +114,7 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
     }
 
     public boolean addAll(int index, Collection<? extends V> c, long lifeTime) {
-        c.forEach(o -> add(size() - 1 + index, o, lifeTime));
+        c.forEach(o -> add(super.size() + index, o, lifeTime));
         return true;
     }
 
@@ -133,10 +136,12 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
         return super.listIterator(index);
     }
 
+    @Deprecated
     public HashMap<Long, V> timeMap() {
-        HashMap<Long, V> map = new HashMap<>(size());
-        forEach((v, aLong) -> map.put(aLong, v));
-        return map;
+//        HashMap<V, Long> map = new HashMap<>(size());
+//        forEach((v, aLong) -> map.put(aLong, v));
+//        return map;
+        return null;
     }
 
     @Override
@@ -175,12 +180,12 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
         if(contains(o)) {
             int i = 0;
             for(Object o1 : this) {
-                i++;
                 if(o1.equals(o)) {
                     times.remove(i);
                     super.remove(i);
                     return true;
                 }
+                i++;
             }
             return false;
         } else {
@@ -302,7 +307,7 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
 
     public void forEach(BiConsumer<? super V, ? super Long> action) {
         update();
-        for(int i = 0; i < size(); i++) {
+        for(int i = 0; i < super.size(); i++) {
             action.accept(super.get(i), times.get(i));
         }
     }
@@ -357,13 +362,16 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
     }
 
     private void update() {
+        if(!isRunning.get()) {
+            return;
+        }
         long time = System.currentTimeMillis();
         updateValues(time - lastTime);
         lastTime = time;
     }
 
     private void updateValues(long delta) {
-        for(int i = 0; i < size(); i++) {
+        for(int i = 0; i < super.size(); i++) {
             long current = getTime0(i) - delta;
             if(current < 0) {
                 remove0(i);
@@ -371,5 +379,17 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
                 times.set(i, current);
             }
         }
+    }
+
+    public void start() {
+        isRunning.set(true);
+    }
+
+    public void stop() {
+        isRunning.set(false);
+    }
+
+    public AtomicBoolean isRunning() {
+        return this.isRunning;
     }
 }
