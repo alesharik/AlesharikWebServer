@@ -1,5 +1,7 @@
 package com.alesharik.webserver.logger.handlers;
 
+import com.alesharik.webserver.logger.Logger;
+
 import java.util.logging.Level;
 
 /**
@@ -9,7 +11,7 @@ public class InfoConsoleHandler extends SimpleConsoleHandler {
 
     public InfoConsoleHandler() {
         super();
-        setOutputStream(System.out);
+        setOutputStream(Logger.getSystemOut());
     }
 
     @Override

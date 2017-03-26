@@ -11,8 +11,11 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import org.jctools.queues.atomic.MpscAtomicArrayQueue;
 import sun.misc.SharedSecrets;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -20,9 +23,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -45,21 +50,28 @@ import java.util.stream.Stream;
  */
 @Prefix("[LOGGER]")
 public final class Logger {
+    static final HashMap<String, WeakReference<NamedLogger>> loggers = new HashMap<>();
+    /**
+     * Default Java System.out
+     */
+    private static final PrintStream SYSTEM_OUT = System.out;
+    /**
+     * Default Java System.err
+     */
+    private static final PrintStream SYSTEM_ERR = System.err;
+
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("AlesharikWebServerMainLogger");
-    private static AtomicBoolean isConfigured = new AtomicBoolean(false);
-
-    static {
-        LOGGER.setLevel(Level.ALL);
-    }
-
     /**
      * Class : Prefixes
      */
     private static final HashMap<String, ArrayList<String>> configuredPrefixes = new HashMap<>();
     private static final ArrayList<WeakReference<ClassLoader>> classLoaders = new ArrayList<>();
-    static final HashMap<String, WeakReference<NamedLogger>> loggers = new HashMap<>();
-
+    private static AtomicBoolean isConfigured = new AtomicBoolean(false);
     private static LoggerListenerThread listenerThread;
+
+    static {
+        LOGGER.setLevel(Level.ALL);
+    }
 
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
@@ -73,13 +85,17 @@ public final class Logger {
         return "[" + element.getFileName() + ":" + element.getLineNumber() + "]";
     }
 
-    public static void log(String message) {
+    private static void log(String message, int depth) {
         String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
         if(prefix.isEmpty()) {
-            log(getPrefixLocation(2), message);
+            log(getPrefixLocation(depth), message);
         } else {
             log(prefix, message);
         }
+    }
+
+    public static void log(String message) {
+        log(message, 2);
     }
 
     public static void log(Throwable throwable) {
@@ -200,9 +216,14 @@ public final class Logger {
 
                 isConfigured.set(true);
                 log("Logger successfully setup!");
+
+                System.setOut(new LoggerPrintStream(SYSTEM_OUT));
+                System.setErr(new LoggerErrorPrintStream(SYSTEM_ERR));
             } catch (SecurityException | IOException e) {
                 e.printStackTrace(System.out);
             }
+        } else {
+            Logger.log("Oops! Someone try to reconfigure logger! ");
         }
     }
 
@@ -378,6 +399,90 @@ public final class Logger {
         }
     }
 
+    public static PrintStream getSystemOut() {
+        return SYSTEM_OUT;
+    }
+
+    public static PrintStream getSystemErr() {
+        return SYSTEM_ERR;
+    }
+
+    /**
+     * Enum of foreground colors
+     */
+    public enum ForegroundColor {
+        BLACK(30),
+        RED(31),
+        GREEN(32),
+        YELLOW(33),
+        BLUE(34),
+        MAGENTA(35),
+        CYAN(36),
+        WHITE(37),
+        /**
+         * Default terminal color
+         */
+        NONE(0);
+
+        private final int code;
+
+        ForegroundColor(int code) {
+            this.code = code;
+        }
+
+        /**
+         * Color code
+         */
+        public int getCode() {
+            return code;
+        }
+
+        @Override
+        public String toString() {
+            return "ForegroundColor{" +
+                    "code=" + code +
+                    '}';
+        }
+    }
+
+    /**
+     * Enum of background colors
+     */
+    public enum BackgroundColor {
+        BLACK(40),
+        RED(41),
+        GREEN(42),
+        YELLOW(43),
+        BLUE(44),
+        MAGENTA(45),
+        CYAN(46),
+        WHITE(47),
+        /**
+         * Default terminal color
+         */
+        NONE(0);
+
+        private final int code;
+
+        BackgroundColor(int code) {
+            this.code = code;
+        }
+
+        /**
+         * Color code
+         */
+        public int getCode() {
+            return code;
+        }
+
+        @Override
+        public String toString() {
+            return "BackgroundColor{" +
+                    "code=" + code +
+                    '}';
+        }
+    }
+
     private static class CallingClass extends SecurityManager {
         public static final CallingClass INSTANCE = new CallingClass();
 
@@ -474,82 +579,6 @@ public final class Logger {
     }
 
     /**
-     * Enum of foreground colors
-     */
-    public enum ForegroundColor {
-        BLACK(30),
-        RED(31),
-        GREEN(32),
-        YELLOW(33),
-        BLUE(34),
-        MAGENTA(35),
-        CYAN(36),
-        WHITE(37),
-        /**
-         * Default terminal color
-         */
-        NONE(0);
-
-        private final int code;
-
-        ForegroundColor(int code) {
-            this.code = code;
-        }
-
-        /**
-         * Color code
-         */
-        public int getCode() {
-            return code;
-        }
-
-        @Override
-        public String toString() {
-            return "ForegroundColor{" +
-                    "code=" + code +
-                    '}';
-        }
-    }
-
-    /**
-     * Enum of background colors
-     */
-    public enum BackgroundColor {
-        BLACK(40),
-        RED(41),
-        GREEN(42),
-        YELLOW(43),
-        BLUE(44),
-        MAGENTA(45),
-        CYAN(46),
-        WHITE(47),
-        /**
-         * Default terminal color
-         */
-        NONE(0);
-
-        private final int code;
-
-        BackgroundColor(int code) {
-            this.code = code;
-        }
-
-        /**
-         * Color code
-         */
-        public int getCode() {
-            return code;
-        }
-
-        @Override
-        public String toString() {
-            return "BackgroundColor{" +
-                    "code=" + code +
-                    '}';
-        }
-    }
-
-    /**
      * TextFormatter add color to given text
      */
     public static class TextFormatter {
@@ -596,6 +625,468 @@ public final class Logger {
         public boolean isWholeMessage() {
             return wholeMessage;
         }
+    }
+
+    /**
+     * Override <code>System#out</code>. Stream has auto flush. Buffer is thread local
+     */
+    @ThreadSafe
+    private static final class LoggerPrintStream extends PrintStream {
+        private static final int NEW_LINE_INDEX = '\n';
+
+        /**
+         * Close bit
+         */
+        private static final int CLOSE = 1;
+        /**
+         * Error bit
+         */
+        private static final int ERROR = 2;
+
+        private final ThreadLocal<String> lineBuffer;
+        private final AtomicInteger state;
+
+        public LoggerPrintStream(OutputStream out) {
+            super(out);
+            state = new AtomicInteger(0);
+            lineBuffer = new ThreadLocal<>();
+            lineBuffer.set("");
+        }
+
+        @Override
+        public void flush() {
+            Logger.log(lineBuffer.get());
+            lineBuffer.set("");
+        }
+
+        @Override
+        public void close() {
+            int v;
+            do {
+                v = state.get();
+            } while(!state.compareAndSet(v, v | CLOSE));
+        }
+
+        @Override
+        public boolean checkError() {
+            return (state.get() & ERROR) == ERROR;
+        }
+
+        @Override
+        protected void setError() {
+            int v;
+            do {
+                v = state.get();
+            } while(!state.compareAndSet(v, v | ERROR));
+        }
+
+        @Override
+        protected void clearError() {
+            int v;
+            do {
+                v = state.get();
+            } while(!state.compareAndSet(v, v & ~ERROR));
+        }
+
+        @Override
+        public void write(int b) {
+            if(b == NEW_LINE_INDEX) {
+                Logger.log(lineBuffer.get(), 3);
+                lineBuffer.set("");
+            } else {
+                lineBuffer.set(lineBuffer.get().concat(Character.toString((char) b)));
+            }
+        }
+
+        @Override
+        public void write(byte[] buf, int off, int len) {
+            byte[] b = new byte[len];
+            System.arraycopy(buf, off, b, 0, len);
+            lineBuffer.set(lineBuffer.get().concat(new String(b)));
+            flush();
+        }
+
+        @Override
+        public void print(boolean b) {
+            lineBuffer.set(lineBuffer.get().concat(Boolean.toString(b)));
+        }
+
+        @Override
+        public void print(char c) {
+            lineBuffer.set(lineBuffer.get().concat(Character.toString(c)));
+        }
+
+        @Override
+        public void print(int i) {
+            lineBuffer.set(lineBuffer.get().concat(Integer.toString(i)));
+        }
+
+        @Override
+        public void print(long l) {
+            lineBuffer.set(lineBuffer.get().concat(Long.toString(l)));
+        }
+
+        @Override
+        public void print(float f) {
+            lineBuffer.set(lineBuffer.get().concat(Float.toString(f)));
+        }
+
+        @Override
+        public void print(double d) {
+            lineBuffer.set(lineBuffer.get().concat(Double.toString(d)));
+        }
+
+        @Override
+        public void print(char[] arr) {
+            lineBuffer.set(lineBuffer.get().concat(new String(arr)));
+        }
+
+        @Override
+        public void print(String str) {
+            lineBuffer.set(lineBuffer.get().concat(str));
+        }
+
+        @Override
+        public void print(Object obj) {
+            lineBuffer.set(lineBuffer.get().concat(obj.toString()));
+        }
+
+        @Override
+        public void println() {
+            flush();
+        }
+
+        @Override
+        public void println(boolean x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(char x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(int x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(long x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(float x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(double x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(char[] x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(String x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(Object x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public PrintStream printf(String format, Object... args) {
+            print(String.format(format, args));
+            return this;
+        }
+
+        @Override
+        public PrintStream printf(Locale l, String format, Object... args) {
+            print(String.format(l, format, args));
+            return this;
+        }
+
+        @Override
+        public PrintStream format(String format, Object... args) {
+            return printf(format, args);
+        }
+
+        @Override
+        public PrintStream format(Locale l, String format, Object... args) {
+            return printf(l, format, args);
+        }
+
+        @Override
+        public PrintStream append(CharSequence csq) {
+            print(csq.toString());
+            return this;
+        }
+
+        @Override
+        public PrintStream append(CharSequence csq, int start, int end) {
+            print(csq.subSequence(start, end).toString());
+            return this;
+        }
+
+        @Override
+        public PrintStream append(char c) {
+            print(c);
+            return this;
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            write(b, 0, b.length);
+        }
+
+    }
+
+    /**
+     * Override <code>System#err</code>. Stream has auto flush. Buffer is thread local. All messages are {@link ForegroundColor#RED} on {@link BackgroundColor#NONE} and format all message
+     * without date
+     */
+    @ThreadSafe
+    private static final class LoggerErrorPrintStream extends PrintStream {
+        private static final TextFormatter FORMATTER = new TextFormatter(ForegroundColor.RED, BackgroundColor.NONE, true);
+        private static final int NEW_LINE_INDEX = '\n';
+
+        /**
+         * Close bit
+         */
+        private static final int CLOSE = 1;
+        /**
+         * Error bit
+         */
+        private static final int ERROR = 2;
+
+        private final ThreadLocal<String> lineBuffer;
+        private final AtomicInteger state;
+
+        public LoggerErrorPrintStream(OutputStream out) {
+            super(out);
+            state = new AtomicInteger(0);
+            lineBuffer = new ThreadLocal<>();
+            lineBuffer.set("");
+        }
+
+        @Override
+        public void flush() {
+            Logger.log(lineBuffer.get(), FORMATTER);
+            lineBuffer.set("");
+        }
+
+        @Override
+        public void close() {
+            int v;
+            do {
+                v = state.get();
+            } while(!state.compareAndSet(v, v | CLOSE));
+        }
+
+        @Override
+        public boolean checkError() {
+            return (state.get() & ERROR) == ERROR;
+        }
+
+        @Override
+        protected void setError() {
+            int v;
+            do {
+                v = state.get();
+            } while(!state.compareAndSet(v, v | ERROR));
+        }
+
+        @Override
+        protected void clearError() {
+            int v;
+            do {
+                v = state.get();
+            } while(!state.compareAndSet(v, v & ~ERROR));
+        }
+
+        @Override
+        public void write(int b) {
+            if(b == NEW_LINE_INDEX) {
+                Logger.log(lineBuffer.get(), 3);
+                lineBuffer.set("");
+            } else {
+                lineBuffer.set(lineBuffer.get().concat(Character.toString((char) b)));
+            }
+        }
+
+        @Override
+        public void write(byte[] buf, int off, int len) {
+            byte[] b = new byte[len];
+            System.arraycopy(buf, off, b, 0, len);
+            lineBuffer.set(lineBuffer.get().concat(new String(b)));
+            flush();
+        }
+
+        @Override
+        public void print(boolean b) {
+            lineBuffer.set(lineBuffer.get().concat(Boolean.toString(b)));
+        }
+
+        @Override
+        public void print(char c) {
+            lineBuffer.set(lineBuffer.get().concat(Character.toString(c)));
+        }
+
+        @Override
+        public void print(int i) {
+            lineBuffer.set(lineBuffer.get().concat(Integer.toString(i)));
+        }
+
+        @Override
+        public void print(long l) {
+            lineBuffer.set(lineBuffer.get().concat(Long.toString(l)));
+        }
+
+        @Override
+        public void print(float f) {
+            lineBuffer.set(lineBuffer.get().concat(Float.toString(f)));
+        }
+
+        @Override
+        public void print(double d) {
+            lineBuffer.set(lineBuffer.get().concat(Double.toString(d)));
+        }
+
+        @Override
+        public void print(char[] arr) {
+            lineBuffer.set(lineBuffer.get().concat(new String(arr)));
+        }
+
+        @Override
+        public void print(String str) {
+            lineBuffer.set(lineBuffer.get().concat(str));
+        }
+
+        @Override
+        public void print(Object obj) {
+            lineBuffer.set(lineBuffer.get().concat(obj.toString()));
+        }
+
+        @Override
+        public void println() {
+            flush();
+        }
+
+        @Override
+        public void println(boolean x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(char x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(int x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(long x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(float x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(double x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(char[] x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(String x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public void println(Object x) {
+            print(x);
+            flush();
+        }
+
+        @Override
+        public PrintStream printf(String format, Object... args) {
+            print(String.format(format, args));
+            return this;
+        }
+
+        @Override
+        public PrintStream printf(Locale l, String format, Object... args) {
+            print(String.format(l, format, args));
+            return this;
+        }
+
+        @Override
+        public PrintStream format(String format, Object... args) {
+            return printf(format, args);
+        }
+
+        @Override
+        public PrintStream format(Locale l, String format, Object... args) {
+            return printf(l, format, args);
+        }
+
+        @Override
+        public PrintStream append(CharSequence csq) {
+            print(csq.toString());
+            return this;
+        }
+
+        @Override
+        public PrintStream append(CharSequence csq, int start, int end) {
+            print(csq.subSequence(start, end).toString());
+            return this;
+        }
+
+        @Override
+        public PrintStream append(char c) {
+            print(c);
+            return this;
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            write(b, 0, b.length);
+        }
+
     }
 }
 

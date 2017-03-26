@@ -1,5 +1,6 @@
 package com.alesharik.webserver.logger.handlers;
 
+import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.LoggerFormatter;
 import org.glassfish.grizzly.utils.Charsets;
 
@@ -17,7 +18,7 @@ class SimpleConsoleHandler extends java.util.logging.ConsoleHandler {
 
     public SimpleConsoleHandler() {
         configure();
-        setOutputStream(System.err);
+        setOutputStream(Logger.getSystemErr());
     }
 
     private void configure() {
