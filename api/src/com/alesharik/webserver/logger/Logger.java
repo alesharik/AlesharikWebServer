@@ -19,6 +19,7 @@ import java.io.PrintStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -611,7 +612,12 @@ public final class Logger {
                     SEPARATOR +
                     backgroundColor.getCode() +
                     POSTFIX +
-                    str;
+                    str +
+                    PREFIX +
+                    ForegroundColor.WHITE.code +
+                    SEPARATOR +
+                    BackgroundColor.NONE.code +
+                    POSTFIX;
         }
 
         public ForegroundColor getForegroundColor() {
@@ -702,7 +708,7 @@ public final class Logger {
         public void write(byte[] buf, int off, int len) {
             byte[] b = new byte[len];
             System.arraycopy(buf, off, b, 0, len);
-            lineBuffer.set(lineBuffer.get().concat(new String(b)));
+            lineBuffer.set(lineBuffer.get().concat(new String(b, Charset.defaultCharset())));
             flush();
         }
 
@@ -934,7 +940,7 @@ public final class Logger {
         public void write(byte[] buf, int off, int len) {
             byte[] b = new byte[len];
             System.arraycopy(buf, off, b, 0, len);
-            lineBuffer.set(lineBuffer.get().concat(new String(b)));
+            lineBuffer.set(lineBuffer.get().concat(new String(b, Charset.defaultCharset())));
             flush();
         }
 
