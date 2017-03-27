@@ -2,6 +2,7 @@ package com.alesharik.webserver.api.ticking;
 
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
 import one.nio.mgt.Management;
@@ -236,7 +237,7 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
 
         public TickableCache(@Nonnull Tickable tickable) {
             this.tickable = tickable;
-            hashCode = tickable.objectHashCode();
+            this.hashCode = tickable.objectHashCode();
         }
 
         @Override
@@ -257,6 +258,12 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
         public void tick() throws Exception {
             tickable.tick();
         }
+
+        @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION") //tickable is always non-null!
+        @Nonnull
+        public Tickable getTickable() {
+            return tickable;
+        }
     }
 
     /**
@@ -276,13 +283,14 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
         @Nullable
         public static TickableCache forTickable(@Nonnull Tickable tickable) {
             for(WeakReference<TickableCache> tickableCache : cache) {
-                if(tickableCache.isEnqueued() || tickableCache.get() == null) {
-                    cache.remove(tickableCache);
+                TickableCache cache = tickableCache.get();
+                if(tickableCache.isEnqueued() || cache == null) {
+                    TickableCacheManager.cache.remove(tickableCache);
                     continue;
                 }
 
-                if(tickableCache.get().getTickable().objectEquals(tickable)) {
-                    return tickableCache.get();
+                if(cache.getTickable().objectEquals(tickable)) {
+                    return cache;
                 }
             }
             return null;
@@ -294,7 +302,6 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
          * @param tickable tickable
          * @return new or existing tickable cache
          */
-        @Nonnull
         public static TickableCache addTickable(@Nonnull Tickable tickable) {
             TickableCache tickableCache = forTickable(tickable);
             if(tickableCache == null) {
