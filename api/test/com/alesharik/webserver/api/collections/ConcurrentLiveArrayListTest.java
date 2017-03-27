@@ -57,6 +57,8 @@ public class ConcurrentLiveArrayListTest {
     @Test
     public void constructorTest() throws Exception { //Test constructor works
         ConcurrentLiveArrayList<String> list = new ConcurrentLiveArrayList<>(1L);
+        list.add("sdf");
+        assertTrue(list.contains("sdf"));
     }
 
     @Test
