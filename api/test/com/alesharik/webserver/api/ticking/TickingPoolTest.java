@@ -7,8 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 public class TickingPoolTest {
     private TickingPool pool;
-    private Tickable dude = () -> {
-    };
+    private Tickable dude = () -> System.out.println("Hi!");
 
     @Before
     public void setUp() throws Exception {

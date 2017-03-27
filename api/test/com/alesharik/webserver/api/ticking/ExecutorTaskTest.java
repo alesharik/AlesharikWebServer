@@ -9,11 +9,14 @@ import org.junit.Test;
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.TickableCache;
+import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.TickableCacheManager;
+
 public class ExecutorTaskTest {
     private Tickable tickable;
     private ExecutorPoolBasedTickingPool.ExecutorTask executorTask;
     private ExecutorPoolBasedTickingPool.ExecutorTask exception;
-    private ConcurrentHashMap<Tickable, Boolean> map = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<TickableCache, Boolean> map = new ConcurrentHashMap<>();
 
     @BeforeClass
     public static void init() throws Exception {
@@ -25,13 +28,13 @@ public class ExecutorTaskTest {
         tickable = () -> {
         };
 
-        map.put(tickable, true);
+        map.put(TickableCacheManager.addTickable(tickable), true);
         executorTask = new ExecutorPoolBasedTickingPool.ExecutorTask(tickable, map);
 
         Tickable thr = () -> {
             throw new ExceptionWithoutStacktrace();
         };
-        map.put(thr, true);
+        map.put(TickableCacheManager.addTickable(thr), true);
         exception = new ExecutorPoolBasedTickingPool.ExecutorTask(thr, map);
     }
 
@@ -47,7 +50,10 @@ public class ExecutorTaskTest {
 
     @Test(expected = RuntimeException.class)
     public void stop() throws Exception {
-        map.remove(tickable);
-        executorTask.run();
+        TickableCache tickableCache = TickableCacheManager.forTickable(tickable);
+        if(tickableCache != null) {
+            map.remove(tickableCache);
+            executorTask.run();
+        }
     }
 }

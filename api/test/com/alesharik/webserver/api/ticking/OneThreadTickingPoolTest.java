@@ -1,6 +1,5 @@
 package com.alesharik.webserver.api.ticking;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -80,12 +79,10 @@ public class OneThreadTickingPoolTest {
         assertTrue(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + forMBeanTest.getId())));
     }
 
-    @SuppressFBWarnings("FI_EXPLICIT_INVOCATION")
-    @SuppressWarnings("FinalizeCalledExplicitly")
     @Test
     public void finalizeTest() throws Throwable {
         assertTrue(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + not1.getId())));
-        not1.finalize();
+        not1.getCleaner().clean();
         assertFalse(ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + not1.getId())));
     }
 

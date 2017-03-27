@@ -2,7 +2,10 @@ package com.alesharik.webserver.api.ticking;
 
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Prefixes;
+import lombok.AccessLevel;
+import lombok.Getter;
 import one.nio.mgt.Management;
+import sun.misc.Cleaner;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
@@ -11,6 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.*;
 
 /**
  * This class use <code>Executors.newSingleThreadScheduledExecutor()</code> to create executor pool => it execute all {@link Tickable}s in one thread
@@ -24,8 +29,11 @@ public final class OneThreadTickingPool implements TickingPool {
 
     private static final String DEFAULT_NAME = "TickingPool";
 
-    private final ConcurrentHashMap<Tickable, Boolean> tickables;
+    private final ConcurrentHashMap<TickableCache, Boolean> tickables;
     private final ScheduledExecutorService executor;
+
+    @Getter(value = AccessLevel.PACKAGE)
+    private final Cleaner cleaner;
 
     private final long id;
 
@@ -67,6 +75,7 @@ public final class OneThreadTickingPool implements TickingPool {
         id = COUNTER.incrementAndGet();
 
         Management.registerMXBean(this, TickingPoolMXBean.class, "com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + id);
+        cleaner = Cleaner.create(this, () -> Management.unregisterMXBean("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + this.id));
     }
 
     @Override
@@ -76,37 +85,48 @@ public final class OneThreadTickingPool implements TickingPool {
             throw new IllegalArgumentException();
         }
 
-        tickables.put(tickable, true);
+        ExecutorTask command = new ExecutorTask(tickable, tickables);
 
-        executor.scheduleAtFixedRate(new ExecutorPoolBasedTickingPool.ExecutorTask(tickable, tickables), 0, periodInMs, TimeUnit.MILLISECONDS);
+        tickables.put(command.getTickable(), true);
+
+        executor.scheduleAtFixedRate(command, 0, periodInMs, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void stopTicking(Tickable tickable) {
         Objects.requireNonNull(tickable);
-
-        tickables.remove(tickable);
+        TickableCache key = TickableCacheManager.forTickable(tickable);
+        if(key != null)
+            tickables.remove(key);
     }
 
     @Override
     public void pauseTickable(Tickable tickable) {
         Objects.requireNonNull(tickable);
 
-        tickables.replace(tickable, true, false);
+        TickableCache key = TickableCacheManager.forTickable(tickable);
+        if(key != null)
+            tickables.replace(key, true, false);
     }
 
     @Override
     public void resumeTickable(Tickable tickable) {
         Objects.requireNonNull(tickable);
 
-        tickables.replace(tickable, false, true);
+        TickableCache key = TickableCacheManager.forTickable(tickable);
+        if(key != null)
+            tickables.replace(key, false, true);
     }
 
     @Override
     public boolean isRunning(Tickable tickable) {
         Objects.requireNonNull(tickable);
 
-        return tickables.get(tickable);
+        TickableCache key = TickableCacheManager.forTickable(tickable);
+        if(key != null)
+            return tickables.get(key);
+        else
+            return false;
     }
 
     @Override
@@ -174,11 +194,5 @@ public final class OneThreadTickingPool implements TickingPool {
      */
     public long getId() {
         return id;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        Management.unregisterMXBean("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + this.id);
     }
 }
