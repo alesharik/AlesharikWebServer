@@ -31,7 +31,6 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
     private ArrayList<Long> times;
     private final long delay;
     private final AtomicBoolean isStarted = new AtomicBoolean(false);
-    //    private final StampedLock lock = new StampedLock(); DON'T WORKS!
     private final RWLock lock = new RWLock();
 
     public ConcurrentLiveArrayList() {
@@ -540,38 +539,48 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
     @Override
     public boolean equals(Object o) {
         ConcurrentLiveArrayList that;
-        lock.lockRead();
         try {
+            lock.lockRead();
             that = this;
         } finally {
             lock.unlockRead();
         }
         if(that == o) return true;
         if(!(o instanceof ConcurrentLiveArrayList)) return false;
-        if(!super.equals(o)) return false;
+        try {
+            lock.lockRead();
+            if(!super.equals(o)) return false;
+        } finally {
+            lock.unlockRead();
+        }
 
-        ConcurrentLiveArrayList<?> list = (ConcurrentLiveArrayList<?>) o;
 
-        return that.times != null ? that.times.equals(list.times) : list.times == null;
+        ConcurrentLiveArrayList<?> thatt = (ConcurrentLiveArrayList<?>) o;
+
+        return that.delay == thatt.delay && that.isStarted.get() == thatt.isStarted.get();
     }
 
     @Override
     public int hashCode() {
+        ConcurrentLiveArrayList that;
         int result;
         try {
             lock.lockRead();
+            that = this;
             result = super.hashCode();
-            result = 31 * result + (times != null ? times.hashCode() : 0);
         } finally {
             lock.unlockRead();
         }
+
+        result = 31 * result + (int) (that.delay ^ (that.delay >>> 32));
+        result = 31 * result + (that.isStarted.get() ? 1 : 0);
         return result;
     }
 
     void updateValues(long delta) {
         for(int i = 0; i < size(); i++) {
             long current = getTime0(i) - delta;
-            if(current < 0) {
+            if(current <= 0) {
                 remove(i);
             } else {
                 times.set(i, current);
@@ -581,7 +590,6 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
 
     public void start() {
         if(!isStarted.get()) {
-//            TickingPool.addArrayList(this, delay);
             DEFAULT_POOL.startTicking(this, delay);
             isStarted.set(true);
         }
@@ -589,7 +597,6 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
 
     public void stop() {
         if(isStarted.get()) {
-//            TickingPool.removeArrayList(this, delay);
             DEFAULT_POOL.stopTicking(this);
             isStarted.set(false);
         }
@@ -598,5 +605,10 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
     @Override
     public void tick() throws Exception {
         updateValues(delay);
+    }
+
+    @Override
+    public boolean objectEquals(Object other) {
+        return this == other;
     }
 }

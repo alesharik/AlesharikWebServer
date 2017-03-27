@@ -55,6 +55,11 @@ public class ConcurrentLiveArrayListTest {
     }
 
     @Test
+    public void constructorTest() throws Exception { //Test constructor works
+        ConcurrentLiveArrayList<String> list = new ConcurrentLiveArrayList<>(1L);
+    }
+
+    @Test
     public void add() throws Exception {
         assertTrue(wr.add(1000));
     }
@@ -180,6 +185,7 @@ public class ConcurrentLiveArrayListTest {
     @Test
     public void removeAll() throws Exception {
         assertTrue(wr.removeAll(Arrays.asList(305, 306, 307)));
+        assertFalse(wr.removeAll(Arrays.asList(5412, 45123)));
     }
 
     @Test
@@ -242,6 +248,14 @@ public class ConcurrentLiveArrayListTest {
     public void removeIf() throws Exception {
         assertTrue(wr.removeIf(integer -> integer.compareTo(320) == 0));
         assertFalse(wr.contains(320));
+        wr.add(320);
+        assertFalse(wr.removeIf(integer -> {
+            boolean ok = integer.compareTo(320) == 0;
+            if(ok) {
+                wr.remove(integer);
+            }
+            return ok;
+        }));
     }
 
     @Test
@@ -315,5 +329,16 @@ public class ConcurrentLiveArrayListTest {
     public void hashCodeTest() throws Exception {
         assertTrue(Integer.compare(readOnly.hashCode(), sameAsReadOnly.hashCode()) == 0);
         assertFalse(Integer.compare(readOnly.hashCode(), wr.hashCode()) == 0);
+    }
+
+    @Test
+    public void testArrayWorks() throws Exception {
+        ConcurrentLiveArrayList<Integer> list = new ConcurrentLiveArrayList<>(1, 10, false);
+        for(int i = 0; i < 100; i++) {
+            list.add(i, (long) i);
+        }
+        list.start();
+        Thread.sleep(200);
+        assertTrue(list.isEmpty());
     }
 }
