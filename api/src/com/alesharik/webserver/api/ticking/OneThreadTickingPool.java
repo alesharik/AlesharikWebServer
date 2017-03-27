@@ -7,8 +7,8 @@ import lombok.Getter;
 import one.nio.mgt.Management;
 import sun.misc.Cleaner;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -66,8 +66,7 @@ public final class OneThreadTickingPool implements TickingPool {
      * @throws NullPointerException     if name or threadGroup == null
      * @throws IllegalArgumentException if name is empty
      */
-    public OneThreadTickingPool(String name, ThreadGroup threadGroup) {
-        Objects.requireNonNull(threadGroup);
+    public OneThreadTickingPool(String name, @Nonnull ThreadGroup threadGroup) {
         Utils.requireNotNullOrEmpty(name);
 
         tickables = new ConcurrentHashMap<>();
@@ -79,8 +78,7 @@ public final class OneThreadTickingPool implements TickingPool {
     }
 
     @Override
-    public void startTicking(Tickable tickable, long periodInMs) {
-        Objects.requireNonNull(tickable);
+    public void startTicking(@Nonnull Tickable tickable, long periodInMs) {
         if(periodInMs <= 0) {
             throw new IllegalArgumentException();
         }
@@ -93,35 +91,28 @@ public final class OneThreadTickingPool implements TickingPool {
     }
 
     @Override
-    public void stopTicking(Tickable tickable) {
-        Objects.requireNonNull(tickable);
+    public void stopTicking(@Nonnull Tickable tickable) {
         TickableCache key = TickableCacheManager.forTickable(tickable);
         if(key != null)
             tickables.remove(key);
     }
 
     @Override
-    public void pauseTickable(Tickable tickable) {
-        Objects.requireNonNull(tickable);
-
+    public void pauseTickable(@Nonnull Tickable tickable) {
         TickableCache key = TickableCacheManager.forTickable(tickable);
         if(key != null)
             tickables.replace(key, true, false);
     }
 
     @Override
-    public void resumeTickable(Tickable tickable) {
-        Objects.requireNonNull(tickable);
-
+    public void resumeTickable(@Nonnull Tickable tickable) {
         TickableCache key = TickableCacheManager.forTickable(tickable);
         if(key != null)
             tickables.replace(key, false, true);
     }
 
     @Override
-    public boolean isRunning(Tickable tickable) {
-        Objects.requireNonNull(tickable);
-
+    public boolean isRunning(@Nonnull Tickable tickable) {
         TickableCache key = TickableCacheManager.forTickable(tickable);
         if(key != null)
             return tickables.get(key);

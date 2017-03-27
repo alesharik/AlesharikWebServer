@@ -2,7 +2,7 @@ package com.alesharik.webserver.api.ticking;
 
 /**
  * This class may tick! If class is mutable, you may need override {@link CacheComparator}.{@link #objectEquals(Object)} and {@link CacheComparator}.{@link #objectHashCode()} methods.
- * All ticking classes are cached. If your class must be non cached, return <code>false</code> in {@link CacheComparator}.{@link #objectEquals(Object)}
+ * All ticking classes are cached. If your class must be non cached, return <code>object == this</code> in {@link CacheComparator}.{@link #objectEquals(Object)}
  */
 @FunctionalInterface
 public interface Tickable extends CacheComparator {

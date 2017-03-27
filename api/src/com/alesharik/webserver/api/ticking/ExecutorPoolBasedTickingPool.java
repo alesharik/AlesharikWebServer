@@ -2,11 +2,19 @@ package com.alesharik.webserver.api.ticking;
 
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
+import lombok.Getter;
+import lombok.experimental.UtilityClass;
 import one.nio.mgt.Management;
+import sun.misc.Cleaner;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -25,7 +33,7 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
 
     private static final int DEFAULT_PARALLELISM = 10;
 
-    private final ConcurrentHashMap<Tickable, Boolean> tickables;
+    private final ConcurrentHashMap<TickableCache, Boolean> tickables;
     private final ScheduledExecutorService executor;
 
     private final int parallelism;
@@ -61,7 +69,7 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
      * @throws NullPointerException     if threadFactory == null
      * @throws IllegalArgumentException if parallelism <= 0
      */
-    public ExecutorPoolBasedTickingPool(int parallelism, ThreadFactory threadFactory) {
+    public ExecutorPoolBasedTickingPool(int parallelism, @Nonnull ThreadFactory threadFactory) {
         Objects.requireNonNull(threadFactory);
         if(parallelism <= 0) {
             throw new IllegalArgumentException();
@@ -74,46 +82,50 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
         this.id = COUNTER.incrementAndGet();
 
         Management.registerMXBean(this, TickingPoolMXBean.class, "com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id);
+        Cleaner.create(this, () -> Management.unregisterMXBean("com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id));
     }
 
     @Override
-    public void startTicking(Tickable tickable, long periodInMs) {
+    public void startTicking(@Nonnull Tickable tickable, long periodInMs) {
         Objects.requireNonNull(tickable);
         if(periodInMs <= 0) {
             throw new IllegalArgumentException();
         }
 
-        tickables.put(tickable, true);
 
-        executor.scheduleAtFixedRate(new ExecutorTask(tickable, tickables), 0, periodInMs, TimeUnit.MILLISECONDS);
+        ExecutorTask command = new ExecutorTask(tickable, tickables);
+        tickables.put(command.getTickable(), true);
+        executor.scheduleAtFixedRate(command, 0, periodInMs, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public void stopTicking(Tickable tickable) {
-        Objects.requireNonNull(tickable);
-
-        tickables.remove(tickable);
+    public void stopTicking(@Nonnull Tickable tickable) {
+        TickableCache key = TickableCacheManager.forTickable(tickable);
+        if(key != null)
+            tickables.remove(key);
     }
 
     @Override
-    public void pauseTickable(Tickable tickable) {
-        Objects.requireNonNull(tickable);
-
-        tickables.replace(tickable, true, false);
+    public void pauseTickable(@Nonnull Tickable tickable) {
+        TickableCache key = TickableCacheManager.forTickable(tickable);
+        if(key != null)
+            tickables.replace(key, true, false);
     }
 
     @Override
-    public void resumeTickable(Tickable tickable) {
-        Objects.requireNonNull(tickable);
-
-        tickables.replace(tickable, false, true);
+    public void resumeTickable(@Nonnull Tickable tickable) {
+        TickableCache key = TickableCacheManager.forTickable(tickable);
+        if(key != null)
+            tickables.replace(key, false, true);
     }
 
     @Override
-    public boolean isRunning(Tickable tickable) {
-        Objects.requireNonNull(tickable);
-
-        return tickables.get(tickable);
+    public boolean isRunning(@Nonnull Tickable tickable) {
+        TickableCache key = TickableCacheManager.forTickable(tickable);
+        if(key != null)
+            return tickables.get(key);
+        else
+            return false;
     }
 
     @Override
@@ -177,27 +189,23 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
     }
 
     /**
-     * The id used for find needed {@link TickingPool} in mx beans
+     * The id used for find needed {@link TickingPool} in {@link javax.management.MXBean}
      */
     public long getId() {
         return id;
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        Management.unregisterMXBean("com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id);
-    }
-
     /**
-     * This task handles {@link Tickable}. It check if pool contains {@link Tickable}(if not - stop itself) and if {@link Tickable} is running and tick the {@link Tickable}
+     * This task handles {@link Tickable}. It check if pool contains {@link Tickable}(if not - shutdown itself) and if {@link Tickable} is running and tick the {@link Tickable}
      */
+    @Immutable
     static final class ExecutorTask implements Runnable {
-        private Tickable tickable;
-        private final ConcurrentHashMap<Tickable, Boolean> tickables;
+        @Getter
+        private final TickableCache tickable;
+        private final ConcurrentHashMap<TickableCache, Boolean> tickables;
 
-        public ExecutorTask(Tickable tickable, ConcurrentHashMap<Tickable, Boolean> tickables) {
-            this.tickable = tickable;
+        public ExecutorTask(@Nonnull Tickable tickable, @Nonnull ConcurrentHashMap<TickableCache, Boolean> tickables) {
+            this.tickable = TickableCacheManager.addTickable(tickable);
             this.tickables = tickables;
         }
 
@@ -213,6 +221,88 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
                 }
             } else {
                 throw new RuntimeException("Stop the task!");
+            }
+        }
+    }
+
+    /**
+     * This class hold tickable and it's first <code>objectHashCode</code>
+     */
+    @Immutable
+    @Getter
+    static final class TickableCache {
+        private final Tickable tickable;
+        private final int hashCode;
+
+        public TickableCache(@Nonnull Tickable tickable) {
+            this.tickable = tickable;
+            hashCode = tickable.objectHashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(this == o) return true;
+            if(!(o instanceof TickableCache)) return false;
+
+            TickableCache that = (TickableCache) o;
+
+            return Integer.compare(hashCode, that.hashCode) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        public void tick() throws Exception {
+            tickable.tick();
+        }
+    }
+
+    /**
+     * This class manage all {@link TickableCache}s in JVM
+     */
+    @ThreadSafe
+    @UtilityClass
+    static final class TickableCacheManager {
+        private static final CopyOnWriteArraySet<WeakReference<TickableCache>> cache = new CopyOnWriteArraySet<>();
+
+        /**
+         * Get cache for tickable
+         *
+         * @param tickable tickable
+         * @return cache if cache found, null - tickable doesn't have a cache
+         */
+        @Nullable
+        public static TickableCache forTickable(@Nonnull Tickable tickable) {
+            for(WeakReference<TickableCache> tickableCache : cache) {
+                if(tickableCache.isEnqueued() || tickableCache.get() == null) {
+                    cache.remove(tickableCache);
+                    continue;
+                }
+
+                if(tickableCache.get().getTickable().objectEquals(tickable)) {
+                    return tickableCache.get();
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Add new tickable to cache if not exists
+         *
+         * @param tickable tickable
+         * @return new or existing tickable cache
+         */
+        @Nonnull
+        public static TickableCache addTickable(@Nonnull Tickable tickable) {
+            TickableCache tickableCache = forTickable(tickable);
+            if(tickableCache == null) {
+                tickableCache = new TickableCache(tickable);
+                cache.add(new WeakReference<>(tickableCache));
+                return tickableCache;
+            } else {
+                return tickableCache;
             }
         }
     }
