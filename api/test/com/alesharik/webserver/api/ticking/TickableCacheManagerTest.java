@@ -1,5 +1,6 @@
 package com.alesharik.webserver.api.ticking;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -34,6 +35,7 @@ public class TickableCacheManagerTest {
         assertSame(tickableCache, tickableCache1);
     }
 
+    @SuppressFBWarnings("DM_GC")
     @Test
     @Ignore("unstable")
     public void tryEnqueueVariable() throws Exception {
