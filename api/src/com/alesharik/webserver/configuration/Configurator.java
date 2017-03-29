@@ -10,6 +10,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import javax.annotation.Nonnull;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -44,7 +45,7 @@ public class Configurator {
     private FileChecker fileChecker;
     private PluginManager pluginManager;
 
-    public Configurator(File file, Configuration configuration, Class<?> pluginManagerClass) {
+    public Configurator(@Nonnull File file, Configuration configuration, Class<?> pluginManagerClass) {
         Objects.requireNonNull(configuration);
         Objects.requireNonNull(file);
         if(file.isDirectory() || !file.exists()) {
@@ -229,8 +230,12 @@ public class Configurator {
 
         public FileChecker() throws IOException {
             path = file.toPath();
-            watchService = path.getParent().getFileSystem().newWatchService();
-            path.getParent().register(watchService, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.OVERFLOW);
+            Path parent = path.getParent();
+            if(parent == null) {
+                throw new IOException("File " + file + " has no parent");
+            }
+            watchService = parent.getFileSystem().newWatchService();
+            parent.register(watchService, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.OVERFLOW);
             setName("ConfigurationFileChecker");
             setDaemon(true);
         }

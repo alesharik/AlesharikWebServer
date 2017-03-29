@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ConfigurationImpl implements Configuration {
     private final AtomicBoolean isInitialized;
-    private final AtomicBoolean isStarted;
     /**
      * Name: module, started
      */
@@ -21,7 +20,6 @@ public final class ConfigurationImpl implements Configuration {
     public ConfigurationImpl() {
         isInitialized = new AtomicBoolean(false);
         modules = new ConcurrentHashMap<>();
-        isStarted = new AtomicBoolean(false);
     }
 
     @Override
@@ -75,8 +73,6 @@ public final class ConfigurationImpl implements Configuration {
     @Override
     public void parseMain(Element main) {
         modules.forEach((s, moduleHolder) -> moduleHolder.mainCheck());
-
-        final boolean isStart = isStarted.getAndSet(true);
         Element initNode = (Element) main.getElementsByTagName("init").item(0);
         if(initNode == null) {
             Logger.log("Init node not found! Server won't start any plugin!");
