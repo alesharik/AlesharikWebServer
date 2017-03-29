@@ -35,7 +35,7 @@ public class Main {
 
             Scanner scanner = new Scanner(System.in);
             while(true) {
-                if(!scanner.hasNext()) {
+                if(!scanner.hasNextLine()) {
                     Thread.sleep(1);
                     continue;
                 }

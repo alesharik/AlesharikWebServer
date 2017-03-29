@@ -82,7 +82,7 @@ public final class ComputerData {
      * @param type load type
      * @return core time
      */
-    private long getCoreTime(int core, CoreLoadType type) {
+    public long getCoreTime(int core, CoreLoadType type) {
         if(core < 0 || core >= coreLoad.length) {
             throw new IllegalArgumentException("Core id must be positive and less than online core count!");
         }

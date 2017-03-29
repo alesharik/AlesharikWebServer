@@ -2,11 +2,10 @@ package com.alesharik.webserver.configuration;
 
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
-import one.nio.util.JavaInternals;
-import sun.misc.Unsafe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,8 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @ClassPathScanner
 public final class ModuleManager {
-    private static final Unsafe UNSAFE = JavaInternals.getUnsafe();
-
     private static final ConcurrentHashMap<String, Module> modules = new ConcurrentHashMap<>();
 
     private ModuleManager() {
@@ -38,9 +35,10 @@ public final class ModuleManager {
     @ListenInterface(Module.class)
     public static void listenModule(Class<?> moduleClazz) {
         try {
-            Module instance = (Module) UNSAFE.allocateInstance(moduleClazz);
+            Constructor<?> constructor = moduleClazz.getConstructor();
+            Module instance = (Module) constructor.newInstance();
             modules.put(instance.getName(), instance);
-        } catch (InstantiationException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

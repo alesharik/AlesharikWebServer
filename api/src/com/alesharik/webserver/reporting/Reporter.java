@@ -8,8 +8,13 @@ import java.io.File;
 
 /**
  * Reporter write report data to file
+ * @implNote your class must have empty constructor and it will be called at loading
  */
 public abstract class Reporter implements Tickable {
+
+    protected Reporter() {
+    }
+
     /**
      * Setup reporter. Will be called only at start.
      *

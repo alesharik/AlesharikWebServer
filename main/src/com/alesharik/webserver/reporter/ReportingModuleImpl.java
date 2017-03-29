@@ -2,6 +2,7 @@ package com.alesharik.webserver.reporter;
 
 import com.alesharik.webserver.api.ThreadFactories;
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
+import com.alesharik.webserver.api.agent.classPath.ListenClass;
 import com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool;
 import com.alesharik.webserver.api.ticking.TickingPool;
 import com.alesharik.webserver.configuration.Layer;
@@ -14,6 +15,8 @@ import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,26 +27,20 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @ClassPathScanner
 @Prefix("[ReportingModule]")
-public class ReportingModuleImpl implements ReportingModule {
+public final class ReportingModuleImpl implements ReportingModule {
     private static final int DEFAULT_THREAD_COUNT = 10;
-    private static final long DEFAULT_PREIOD = 1000; //1 sec //TODO fix it
+    private static final long DEFAULT_PERIOD = 1000; //1 sec //TODO fix it
+    private static final CopyOnWriteArrayList<Reporter> reporters = new CopyOnWriteArrayList<>();
 
     private static final AtomicLong idCounter = new AtomicLong(0);
 
-    private final CopyOnWriteArrayList<Reporter> reporters;
-    private final ConcurrentHashMap<Reporter, Long> activeReporters;
-    private final ThreadGroup threadGroup;
+    private final ConcurrentHashMap<Reporter, Long> activeReporters = new ConcurrentHashMap<>();
+    private final ThreadGroup threadGroup = new ThreadGroup("ReportingModule-" + idCounter.getAndIncrement());
 
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private TickingPool tickingPool;
 
     private AtomicInteger threadCount = new AtomicInteger(DEFAULT_THREAD_COUNT);
-
-    public ReportingModuleImpl(ThreadGroup parent) {
-        reporters = new CopyOnWriteArrayList<>();
-        activeReporters = new ConcurrentHashMap<>();
-        threadGroup = new ThreadGroup(parent, "ReportingModule-" + idCounter.getAndIncrement());
-    }
 
     @Override
     public void parse(Element configNode) {
@@ -121,8 +118,8 @@ public class ReportingModuleImpl implements ReportingModule {
         if(periodElement != null) {
             period = Long.parseLong(periodElement.getTextContent());
         } else {
-            Logger.log("Reporter " + name + " doesn't have a period parameter! It will receive default value(" + DEFAULT_PREIOD + ") as period.");
-            period = DEFAULT_PREIOD;
+            Logger.log("Reporter " + name + " doesn't have a period parameter! It will receive default value(" + DEFAULT_PERIOD + ") as period.");
+            period = DEFAULT_PERIOD;
         }
 
         Element config = (Element) reporter.getElementsByTagName("configuration").item(0);
@@ -265,5 +262,16 @@ public class ReportingModuleImpl implements ReportingModule {
             }
         }
         return null;
+    }
+
+    @ListenClass(Reporter.class)
+    public static void listenReporter(Class<?> reporterClazz) {
+        try {
+            Constructor<?> constructor = reporterClazz.getConstructor();
+            constructor.setAccessible(true);
+            reporters.add((Reporter) constructor.newInstance());
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            e.printStackTrace();
+        }
     }
 }

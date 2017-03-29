@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 
 /**
  * Module loaded by {@link Configurator} if user uses it.
- * Module will be created WITHOUT calling constructor!
+ * Module must have no-args constructor!
  */
 public interface Module {
     void parse(@Nullable Element configNode);
