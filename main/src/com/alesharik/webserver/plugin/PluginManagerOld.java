@@ -15,8 +15,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@Prefix("[PluginManager]")
-public class PluginManager {
+@Deprecated
+@Prefix("[PluginManagerOld]")
+public class PluginManagerOld {
     private final ArrayList<File> packages = new ArrayList<>();
     private final HashMap<File, MetaFile> packageMetaFiles = new HashMap<>();
     private final ArrayList<Class<?>> cores = new ArrayList<>();
@@ -26,7 +27,7 @@ public class PluginManager {
     private PluginHolderPool pluginHolderPool;
     private boolean isLoaded = false;
 
-    public PluginManager(AccessManagerBuilder accessManagerBuilder) {
+    public PluginManagerOld(AccessManagerBuilder accessManagerBuilder) {
         this.accessManagerBuilder = accessManagerBuilder;
         this.pluginHolderPool = new PluginHolderPool();
         isLoaded = true;

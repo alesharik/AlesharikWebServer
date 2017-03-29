@@ -8,6 +8,7 @@ import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManager;
 import lombok.Getter;
 
+@Deprecated
 public final class AccessManagerImpl implements AccessManager {
     @Getter
     private BaseAccessManager baseAccessManager;

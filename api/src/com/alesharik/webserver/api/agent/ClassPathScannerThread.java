@@ -18,9 +18,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
@@ -28,6 +31,7 @@ import java.util.stream.Stream;
  */
 @Prefix("[ClassPathScannerThread]")
 final class ClassPathScannerThread extends Thread {
+    private static final AtomicInteger taskCount = new AtomicInteger(0);
     /**
      * FJP parallelism
      */
@@ -56,6 +60,7 @@ final class ClassPathScannerThread extends Thread {
     public void run() {
         while(isAlive()) {
             ClassLoader classLoader = classLoaderQueue.take();
+            taskCount.incrementAndGet();
             ConcurrentTripleHashMap<Class<?>, Type, Method> newListeners = new ConcurrentTripleHashMap<>();
             new FastClasspathScanner()
                     .overrideClassLoaders(classLoader)
@@ -68,6 +73,7 @@ final class ClassPathScannerThread extends Thread {
             classLoaders.add(classLoader);
             workerPool.submit(new ClassLoaderScanTask(newListeners, classLoaders, workerPool));
             listeners.putAll(newListeners);
+            taskCount.decrementAndGet();
         }
     }
 
@@ -99,6 +105,10 @@ final class ClassPathScannerThread extends Thread {
         workerPool.shutdownNow();
     }
 
+    public boolean isFree() {
+        return workerPool.isQuiescent() && taskCount.get() == 0;
+    }
+
     private enum Type {
         ANNOTATION,
         CLASS,
@@ -118,7 +128,9 @@ final class ClassPathScannerThread extends Thread {
 
         @Override
         public void run() {
+
             FastClasspathScanner scanner = new FastClasspathScanner();
+            ClassPathScannerThread.taskCount.incrementAndGet();
             listeners.forEach((aClass, type, method) -> {
                 switch (type) {
                     case ANNOTATION:
@@ -150,7 +162,18 @@ final class ClassPathScannerThread extends Thread {
                 }
             });
             scanner.overrideClassLoaders(classLoaders.toArray(new ClassLoader[0]));
-            scanner.scanAsync(forkJoinPool, PARALLELISM);
+            CompletableFuture.supplyAsync(ClassPathScannerThread.taskCount::incrementAndGet)
+                    .thenApply(integer -> {
+                        try {
+                            return scanner.scanAsync(forkJoinPool, PARALLELISM).get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .thenRun(ClassPathScannerThread.taskCount::decrementAndGet);
+
+            ClassPathScannerThread.taskCount.decrementAndGet();
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.alesharik.webserver.reporter;
 
 import com.alesharik.webserver.api.ThreadFactories;
+import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool;
 import com.alesharik.webserver.api.ticking.TickingPool;
 import com.alesharik.webserver.configuration.Layer;
@@ -21,10 +22,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+@ClassPathScanner
 @Prefix("[ReportingModule]")
 public class ReportingModuleImpl implements ReportingModule {
     private static final int DEFAULT_THREAD_COUNT = 10;
-    private static final long DEFAULT_PREIOD = 1000; //1 sec
+    private static final long DEFAULT_PREIOD = 1000; //1 sec //TODO fix it
 
     private static final AtomicLong idCounter = new AtomicLong(0);
 

@@ -2,6 +2,7 @@ package com.alesharik.webserver.api.agent;
 
 import com.alesharik.webserver.logger.Prefix;
 
+import javax.annotation.Nonnull;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
@@ -52,5 +53,13 @@ public final class Agent {
      */
     public static Set<ClassLoader> getAllLoadedClassLoaders() {
         return ClassPathScannerTransformer.getClassLoaders();
+    }
+
+    public static void tryScanClassLoader(@Nonnull ClassLoader classLoader) {
+        ClassPathScannerTransformer.tryScanClassLoader(classLoader);
+    }
+
+    public static boolean isScanning() {
+        return !ClassPathScannerTransformer.isFree();
     }
 }

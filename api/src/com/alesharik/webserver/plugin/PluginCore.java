@@ -1,5 +1,6 @@
 package com.alesharik.webserver.plugin;
 
+@Deprecated
 public abstract class PluginCore {
     protected final AccessManager baseAccessManager;
 

@@ -12,6 +12,7 @@ import java.util.HashMap;
  * 2. Key-value pair need to be divided by by <code>=</code> character. If in line used 2 or more <code>=</code>
  * characters, parser use first
  */
+@Deprecated
 class MetaFile {
     private MetaFile() {
     }

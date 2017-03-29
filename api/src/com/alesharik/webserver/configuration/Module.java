@@ -5,10 +5,14 @@ import org.w3c.dom.Element;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+/**
+ * Module loaded by {@link Configurator} if user uses it.
+ * Module will be created WITHOUT calling constructor!
+ */
 public interface Module {
-    void parse(Element configNode);
+    void parse(@Nullable Element configNode);
 
-    void reload(Element configNode);
+    void reload(@Nullable Element configNode);
 
     void start();
 

@@ -5,6 +5,7 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.Objects;
 
+@Deprecated
 public enum AccessPermissions {
     BASE("base"),
     CONTROL("control"),

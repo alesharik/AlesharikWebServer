@@ -1,5 +1,7 @@
 package com.alesharik.webserver.configuration;
 
+import com.alesharik.webserver.api.agent.Agent;
+import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.logger.Prefixes;
@@ -13,6 +15,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
@@ -22,19 +25,26 @@ import java.nio.file.WatchService;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Prefix("[Configurator]")
 public class Configurator {
+    /**
+     * Default value of <code>logger.listenerQueueCapacity</code>
+     */
     private static final int LOGGER_LISTENER_QUEUE_CAPACITY = 200;
 
     private final File file;
     private final AtomicBoolean isFileCheckerRunning;
     private final Configuration configuration;
+    private final Class<?> pluginManagerClass;
+    private final AtomicBoolean isApiSetup;
 
     private FileChecker fileChecker;
+    private PluginManager pluginManager;
 
-    public Configurator(File file, Configuration configuration) {
+    public Configurator(File file, Configuration configuration, Class<?> pluginManagerClass) {
         Objects.requireNonNull(configuration);
         Objects.requireNonNull(file);
         if(file.isDirectory() || !file.exists()) {
@@ -43,7 +53,9 @@ public class Configurator {
 
         this.file = file;
         this.configuration = configuration;
+        this.pluginManagerClass = pluginManagerClass;
         this.isFileCheckerRunning = new AtomicBoolean(false);
+        isApiSetup = new AtomicBoolean(false);
     }
 
     public synchronized void parse() throws ParserConfigurationException, IOException, SAXException {
@@ -61,8 +73,45 @@ public class Configurator {
     }
 
     private void parseApiNode(Element node) {
+        if(isApiSetup.get()) {
+            return;
+        }
+
         Element config = (Element) node.getElementsByTagName("config").item(0);
 
+        //====================Logger setup====================\\
+        int listenerThreadQueueCapacity = LOGGER_LISTENER_QUEUE_CAPACITY;
+        File logFile = null;
+        Element logger = (Element) node.getElementsByTagName("logger").item(0);
+        if(logger != null) {
+            Node listenerThreadQueueSize = logger.getElementsByTagName("listenerQueueCapacity").item(0);
+            if(listenerThreadQueueSize != null) {
+                listenerThreadQueueCapacity = Integer.parseInt(listenerThreadQueueSize.getTextContent());
+            }
+
+            Node logFileNode = logger.getElementsByTagName("logFile").item(0);
+            if(logFileNode == null) {
+                throw new ConfigurationParseError("logger.logFile node not found");
+            }
+            Date date = new Date();
+            date.setTime(System.currentTimeMillis());
+            logFile = new File(logFileNode.getTextContent().replace("{$time}", date.toString().replace(" ", "_")));
+
+            if(!logFile.getParentFile().mkdirs() && !logFile.getParentFile().exists()) {
+                throw new ConfigurationParseError("Can't create directories for log file");
+            }
+            try {
+                if(!logFile.createNewFile()) {
+                    throw new ConfigurationParseError("Can't create log file");
+                }
+            } catch (IOException e) {
+                throw new ConfigurationParseError(e);
+            }
+        }
+        Logger.setupLogger(logFile, listenerThreadQueueCapacity);
+        //====================End logger setup====================\\
+
+        //====================Configurator setup====================\\
         Node fileCheckEnabled = config.getElementsByTagName("fileCheckEnabled").item(0);
         boolean isConfigFileCheckEnabled = Boolean.valueOf(fileCheckEnabled.getTextContent());
         if(isConfigFileCheckEnabled && !isFileCheckerRunning.get() && fileChecker == null) {
@@ -74,23 +123,49 @@ public class Configurator {
                 Logger.log(e);
             }
         }
+        //====================End configurator setup====================\\
 
-        int listenerThreadQueueCapacity = LOGGER_LISTENER_QUEUE_CAPACITY;
-        File logFile = null;
-        Element logger = (Element) node.getElementsByTagName("logger").item(0);
-        if(logger != null) {
-            Node listenerThreadQueueSize = logger.getElementsByTagName("listenerQueueCapacity").item(0);
-            if(listenerThreadQueueSize != null) {
-                listenerThreadQueueCapacity = Integer.parseInt(listenerThreadQueueSize.getTextContent());
+        //====================Plugin manager setup====================\\
+        Element pluginManagerNode = (Element) node.getElementsByTagName("pluginManager").item(0);
+        if(pluginManagerNode != null) {
+            Node pluginFolderNode = pluginManagerNode.getElementsByTagName("folder").item(0);
+            if(pluginManagerNode == null) {
+                throw new ConfigurationParseError("plugin.folder node not found");
             }
 
-            Node logFileNode = logger.getElementsByTagName("logFile").item(0);
+            Node pluginHotReloadNode = pluginManagerNode.getElementsByTagName("hotReload").item(0);
+            boolean hotReload = true;
+            if(pluginHotReloadNode != null) {
+                hotReload = Boolean.valueOf(pluginHotReloadNode.getTextContent());
+            }
 
-            Date date = new Date();
-            date.setTime(System.currentTimeMillis());
-            logFile = new File(logFileNode.getTextContent().replace("{$time}", date.toString().replace(" ", "_")));
+            File pluginFolder = new File(pluginFolderNode.getTextContent());
+            if(pluginFolder.isFile()) {
+                throw new ConfigurationParseError("Selected plugin folder is file");
+            }
+            if(!pluginFolder.exists() && !pluginFolder.mkdirs()) {
+                throw new ConfigurationParseError("Can`t create plugin folder");
+            }
+
+            System.out.println("Folder " + pluginFolder + " used as plugin folder");
+
+            try {
+                pluginManager = (PluginManager) pluginManagerClass.getConstructor(File.class, boolean.class).newInstance(pluginFolder, hotReload);
+                pluginManager.start();
+
+                PluginManagerFreeSignaller signaller = new PluginManagerFreeSignaller(pluginManager);
+                if(signaller.thread != null) {
+                    ForkJoinPool.managedBlock(signaller);
+                }
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | InterruptedException e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
         }
-        Logger.setupLogger(logFile, listenerThreadQueueCapacity);
+        //====================End plugin manager setup====================\\
+
+        System.out.println("API successfully configured!");
+        isApiSetup.set(true);
     }
 
     private void startFileChecker() throws IOException {
@@ -115,6 +190,35 @@ public class Configurator {
         }
     }
 
+    private static final class PluginManagerFreeSignaller implements ForkJoinPool.ManagedBlocker {
+        private final PluginManager pluginManager;
+        volatile Thread thread;
+
+        private PluginManagerFreeSignaller(PluginManager pluginManager) {
+            this.pluginManager = pluginManager;
+            this.thread = Thread.currentThread();
+        }
+
+        @Override
+        public boolean block() throws InterruptedException {
+            if(isReleasable()) {
+                return true;
+            } else {
+                Thread.sleep(1);
+            }
+            return isReleasable();
+        }
+
+        @Override
+        public boolean isReleasable() {
+            boolean realisable = pluginManager.isFree() && !Agent.isScanning();
+            if(realisable) {
+                thread = null;
+            }
+            return realisable;
+        }
+    }
+
     /**
      * This class check config file for changes
      */
@@ -125,8 +229,10 @@ public class Configurator {
 
         public FileChecker() throws IOException {
             path = file.toPath();
-            watchService = path.getFileSystem().newWatchService();
-            path.register(watchService, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.OVERFLOW);
+            watchService = path.getParent().getFileSystem().newWatchService();
+            path.getParent().register(watchService, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.OVERFLOW);
+            setName("ConfigurationFileChecker");
+            setDaemon(true);
         }
 
         public synchronized void shutdownWatcher() throws IOException {
@@ -141,14 +247,19 @@ public class Configurator {
 
                     List<WatchEvent<?>> events = watchKey.pollEvents();
                     for(WatchEvent<?> event : events) {
+
+                        Path filename = (Path) event.context();
+                        if(!path.equals(filename)) {
+                            continue;
+                        }
                         WatchEvent.Kind<?> kind = event.kind();
                         if(kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                            Logger.log("Configuration file" + event.context().toString() + " was deleted! Stopping file checker...");
+                            Logger.log("Configuration file" + filename.toString() + " was deleted! Stopping file checker...");
                             shutdownWatcher();
                         } else if(kind == StandardWatchEventKinds.OVERFLOW) {
-                            Logger.log("Oops! WatchService has overflow on file " + event.context().toString() + "! Please reduce amount of writings in this file!");
+                            Logger.log("Oops! WatchService has overflow on file " + filename.toString() + "! Please reduce amount of writings in this file!");
                         } else if(kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                            Logger.log("Configuration file " + event.context().toString() + " change detected! Reloading configuration...");
+                            Logger.log("Configuration file " + filename.toString() + " change detected! Reloading configuration...");
                             parse();
                         }
                     }

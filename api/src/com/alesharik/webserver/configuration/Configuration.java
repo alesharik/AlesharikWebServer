@@ -12,9 +12,4 @@ public interface Configuration {
 
     void parseMain(Element main);
 
-    void addModule(Module module);
-
-    void removeModule(Module module);
-
-    void parse();
 }

@@ -7,6 +7,7 @@ import com.alesharik.webserver.plugin.accessManagers.MicroserviceAccessManager;
 import com.alesharik.webserver.plugin.accessManagers.PluginAccessManager;
 import com.alesharik.webserver.plugin.accessManagers.ServerAccessManager;
 
+@Deprecated
 public interface AccessManager {
     BaseAccessManager getBaseAccessManager();
 
