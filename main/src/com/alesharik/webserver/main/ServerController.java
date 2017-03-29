@@ -8,7 +8,6 @@ import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.api.server.Server;
 import com.alesharik.webserver.api.server.WebServer;
-import com.alesharik.webserver.api.sharedStorage.SharedStorageManager;
 import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueSetter;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
@@ -20,7 +19,7 @@ import com.alesharik.webserver.main.server.MainServer;
 import com.alesharik.webserver.microservices.client.MicroserviceClient;
 import com.alesharik.webserver.microservices.server.MicroserviceServer;
 import com.alesharik.webserver.plugin.AccessManagerBuilder;
-import com.alesharik.webserver.plugin.PluginManager;
+import com.alesharik.webserver.plugin.PluginManagerOld;
 import com.alesharik.webserver.router.RouterServer;
 import lombok.SneakyThrows;
 import one.nio.mem.OutOfMemoryException;
@@ -56,7 +55,7 @@ import static com.alesharik.webserver.main.Main.USER_DIR;
 public final class ServerController {
     private final ConfigValues configValues = new ConfigValues();
 
-    private PluginManager pluginManager;
+    private PluginManagerOld pluginManagerOld;
 
     private Configuration configuration;
     private String serverPassword;
@@ -85,21 +84,21 @@ public final class ServerController {
     public ServerController() {
         accessManagerBuilder = new AccessManagerBuilder();
         try {
-            SharedStorageManager.addAccessFilter("config", (clazz, type, fieldName) -> {
-                switch (type) {
-                    case SET:
-                        return ConfigValues.class.equals(clazz);
-                    case SET_EXTERNAL:
-                    case ADD_FILTER:
-                    case CLEAR:
-                        return false;
-                    case GET:
-                    case GET_EXTERNAL:
-                        return true;
-                    default:
-                        return false;
-                }
-            });
+//            SharedStorageManager.addAccessFilter("config", (clazz, type, fieldName) -> {
+//                switch (type) {
+//                    case SET:
+//                        return ConfigValues.class.equals(clazz);
+//                    case SET_EXTERNAL:
+//                    case ADD_FILTER:
+//                    case CLEAR:
+//                        return false;
+//                    case GET:
+//                    case GET_EXTERNAL:
+//                        return true;
+//                    default:
+//                        return false;
+//                }
+//            });
 
             loadServerPassword();
             loadConfig();
@@ -117,20 +116,20 @@ public final class ServerController {
 
             Logger.log("Server successfully initialized");
 
-            pluginManager = new PluginManager(accessManagerBuilder);
+            pluginManagerOld = new PluginManagerOld(accessManagerBuilder);
 //                    .setBaseAccessManager(baseAccessManagerBuilder.build())
 //                    .setControlAccessManager(controlAccessManagerBuilder.build())
 //                    .setServerAccessManager(serverAccessManagerBuilder.build())
 ////                    .isMicroserviceServer(false)
 ////                    .isRouterServer(configuration.getBoolean("isRouterServer"))
 //                    .build();
-//            pluginManager.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
+//            pluginManagerOld.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
             File pluginsFolder = new File(Main.USER_DIR + "/plugins/"); //TODO rewrite
             Stream.of(pluginsFolder.listFiles((dir, name) -> dir.isDirectory()))
-                    .forEach(pluginManager::addPlugin);
-            pluginManager.loadPlugins();
-            pluginManager.start();
-        } catch (IOException | ConfigurationException | IllegalAccessException e) {
+                    .forEach(pluginManagerOld::addPlugin);
+            pluginManagerOld.loadPlugins();
+            pluginManagerOld.start();
+        } catch (IOException | ConfigurationException e) {
             Logger.log(e);
         }
     }
