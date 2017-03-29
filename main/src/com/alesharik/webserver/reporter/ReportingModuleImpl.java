@@ -13,6 +13,7 @@ import com.alesharik.webserver.reporting.ReportingModule;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -43,7 +44,7 @@ public final class ReportingModuleImpl implements ReportingModule {
     private AtomicInteger threadCount = new AtomicInteger(DEFAULT_THREAD_COUNT);
 
     @Override
-    public void parse(Element configNode) {
+    public void parse(@Nonnull Element configNode) {
         activeReporters.clear();
 
         parseThreadCount(configNode);
@@ -209,7 +210,7 @@ public final class ReportingModuleImpl implements ReportingModule {
     }
 
     @Override
-    public void reload(Element configNode) {
+    public void reload(@Nonnull Element configNode) {
         int threadCount = Integer.parseInt(configNode.getElementsByTagName("threadCount").item(0).getTextContent());
 
         if(threadCount != this.threadCount.get()) {

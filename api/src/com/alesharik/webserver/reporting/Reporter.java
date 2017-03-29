@@ -3,7 +3,7 @@ package com.alesharik.webserver.reporting;
 import com.alesharik.webserver.api.ticking.Tickable;
 import org.w3c.dom.Element;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.io.File;
 
 /**
@@ -21,7 +21,7 @@ public abstract class Reporter implements Tickable {
      * @param file       the file to report
      * @param tickPeriod report period in milliseconds
      */
-    public abstract void setup(@Nullable File file, long tickPeriod, Element config);
+    public abstract void setup(@Nonnull File file, long tickPeriod, Element config);
 
     /**
      * Reload config

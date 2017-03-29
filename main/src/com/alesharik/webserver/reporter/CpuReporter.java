@@ -12,11 +12,12 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import org.glassfish.grizzly.utils.Charsets;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -27,9 +28,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.util.Date;
@@ -45,7 +48,8 @@ public final class CpuReporter extends Reporter {
     private ReportType reportType;
 
     @Override
-    public void setup(@Nullable File file, long tickPeriod, Element config) {
+    public void setup(@Nonnull File file, long tickPeriod, Element config) {
+
         this.file = file;
         if(!file.exists()) {
             try {
@@ -90,7 +94,7 @@ public final class CpuReporter extends Reporter {
     }
 
     private void reportCSV() throws IOException {
-        CSVReader csvReader = new CSVReader(new FileReader(file));
+        CSVReader csvReader = new CSVReader(new InputStreamReader(new FileInputStream(file), Charsets.UTF8_CHARSET));
         List<String[]> entries = csvReader.readAll();
         csvReader.close();
 
@@ -118,7 +122,7 @@ public final class CpuReporter extends Reporter {
             entries.add(line);
         }
 
-        CSVWriter csvWriter = new CSVWriter(new FileWriter(file));
+        CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(new FileOutputStream(file), Charsets.UTF8_CHARSET));
         csvWriter.writeAll(entries);
         csvWriter.flush();
         csvWriter.close();
@@ -161,10 +165,11 @@ public final class CpuReporter extends Reporter {
             object.add("cpu" + i, toAdd);
         }
         elements.add(object);
-        FileWriter fileWriter = new FileWriter(file, false);
-        fileWriter.write(GSON.toJson(elements));
-        fileWriter.flush();
-        fileWriter.close();
+        try (OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file, false), Charsets.UTF8_CHARSET)) {
+            fileWriter.write(GSON.toJson(elements));
+            fileWriter.flush();
+        }
+
     }
 
     private void reportXml() throws ParserConfigurationException, IOException, TransformerException { //TODO rewrite
@@ -246,10 +251,10 @@ public final class CpuReporter extends Reporter {
         String output = writer.getBuffer().toString().replaceAll("[\n\r]", "");
         writer.close();
 
-        FileWriter fileWriter = new FileWriter(file, true);
-        fileWriter.write(output);
-        fileWriter.flush();
-        fileWriter.close();
+        try (OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file, true), Charsets.UTF8_CHARSET)) {
+            fileWriter.write(output);
+            fileWriter.flush();
+        }
     }
 
     @Override

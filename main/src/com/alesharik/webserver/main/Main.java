@@ -33,7 +33,7 @@ public class Main {
             configurator = new Configurator(CONFIG, configuration, PluginManagerImpl.class);
             configurator.parse();
 
-            Scanner scanner = new Scanner(System.in);
+            Scanner scanner = new Scanner(System.in, "UTF-8");
             while(true) {
                 if(!scanner.hasNextLine()) {
                     Thread.sleep(1);
