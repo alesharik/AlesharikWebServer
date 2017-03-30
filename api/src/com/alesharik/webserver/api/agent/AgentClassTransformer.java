@@ -3,6 +3,7 @@ package com.alesharik.webserver.api.agent;
 import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.Transform;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
+import sun.misc.VM;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -28,6 +29,9 @@ final class AgentClassTransformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        if(VM.isSystemDomainLoader(loader) || className.toLowerCase().contains("nashorn")) {
+            return classfileBuffer;
+        }
         CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
         if(transformers != null) {
             for(MethodHolder transformer : transformers) {

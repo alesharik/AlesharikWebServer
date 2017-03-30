@@ -1,14 +1,13 @@
 package com.alesharik.webserver.api.agent;
 
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class AgentClassVisitor extends ClassAdapter {
+final class AgentClassVisitor extends ClassVisitor {
     private static final String CLASS_LOADER_ANNOTATION_DESCRIPTION = "Lcom/alesharik/webserver/api/agent/ClassTransformer;";
     private static final String TRANSFORM_ANNOTATION_DESCRIPTION = "Lcom/alesharik/webserver/api/agent/Transform;";
     private static final String TRANSFORM_ALL_ANNOTATION_DESCRIPTION = "Lcom/alesharik/webserver/api/agent/TransformAll;";
@@ -19,7 +18,7 @@ final class AgentClassVisitor extends ClassAdapter {
     private AtomicBoolean isAnyMethodPresent = new AtomicBoolean(false);
 
     public AgentClassVisitor(ClassVisitor classVisitor, AtomicBoolean isOk) {
-        super(classVisitor);
+        super(Opcodes.ASM5, classVisitor);
         this.isOk = isOk;
     }
 
@@ -46,12 +45,13 @@ final class AgentClassVisitor extends ClassAdapter {
         super.visitEnd();
     }
 
-    private static final class MethodChecker extends MethodAdapter {
+    private static final class MethodChecker extends MethodVisitor {
         private final AtomicBoolean is;
 
         public MethodChecker(MethodVisitor methodVisitor, AtomicBoolean is) {
-            super(methodVisitor);
+            super(Opcodes.ASM5, methodVisitor);
             this.is = is;
+
         }
 
         @Override
