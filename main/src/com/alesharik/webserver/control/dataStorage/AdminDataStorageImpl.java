@@ -2,26 +2,36 @@ package com.alesharik.webserver.control.dataStorage;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.StringCipher;
+import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.configuration.Layer;
+import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.control.AdminDataStorage;
+import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
-import com.alesharik.webserver.main.Main;
+import com.alesharik.webserver.module.server.SecuredStoreAccessController;
+import com.alesharik.webserver.module.server.SecuredStoreModule;
+import lombok.SneakyThrows;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
-import org.apache.commons.configuration2.builder.fluent.PropertiesBuilderParameters;
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.glassfish.grizzly.http.util.Base64Utils;
 import org.glassfish.grizzly.utils.Charsets;
+import org.w3c.dom.Element;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.SecretKey;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -33,58 +43,102 @@ import java.util.List;
  * This class used ONLY in AlesharikWebServer. Do not use it!
  */
 @Prefixes(value = {"[ServerControl]", "[AdminDataStorage]"})
-public final class AdminDataStorageImpl implements AdminDataStorage {
-    private static final String ADMIN_DATA_FILE = "adminData.dat";
-    private static final String ADMIN_KEY_FILE = "adminKey.key";
+public final class AdminDataStorageImpl implements AdminDataStorage, SecuredStoreAccessController {
+    private static SecretKey SECRET_KEY;
+
+    static {
+        try {
+            SECRET_KEY = StringCipher.generateKey("QZ2VFvxBh2WuYkfeCHN3Sshu");
+        } catch (InvalidKeySpecException | InvalidKeyException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
     private byte[] salt = new byte[32];
     private String adminKey;
     private Configuration configuration;
+    private SecuredStoreModule securedStoreModule;
 
     private String serverKey;
     private File adminKeyFile;
 
-    /**
-     * Initialize new {@link AdminDataStorageImpl}
-     *
-     * @param key encryption key. Length of key must be equals 24!
-     */
-    public AdminDataStorageImpl(String key) throws ConfigurationException, IOException {
+    public AdminDataStorageImpl() {
+    }
+
+
+    @SneakyThrows
+    @Override
+    public void parse(@Nullable Element configNode) {
+        File adminKey = XmlHelper.getFile("adminKeyFile", configNode, true);
+        File adminData = XmlHelper.getFile("adminDataFile", configNode, true);
+        if(!adminKey.exists()) {
+            try {
+                if(!adminKey.createNewFile()) {
+                    throw new ConfigurationParseError("Can't create file: " + adminKey);
+                }
+            } catch (IOException e) {
+                throw new ConfigurationParseError(e);
+            }
+        }
+        if(!adminData.exists()) {
+            try {
+                if(!adminData.createNewFile()) {
+                    throw new ConfigurationParseError("Can't create file: " + adminData);
+                }
+            } catch (IOException e) {
+                throw new ConfigurationParseError(e);
+            }
+        }
+        adminKeyFile = adminKey;
+        try {
+            loadSalt(adminKeyFile);
+        } catch (IOException e) {
+            throw new ConfigurationParseError(e);
+        }
+
+        securedStoreModule = XmlHelper.getSecuredStore("securedStore", configNode, true);
+        securedStoreModule.storeString(this, "adminKey");
+
+        String key;
+        try {
+            key = securedStoreModule.readString("adminKey");
+        } catch (IOException | InvalidKeyException | InvalidKeySpecException | IllegalBlockSizeException | BadPaddingException e) {
+            throw new ConfigurationParseError(e);
+        }
+        if(key.isEmpty()) {
+            key = Utils.getRandomString(24);
+            try {
+                securedStoreModule.writeString("adminKey", key);
+            } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InvalidKeySpecException | IOException e) {
+                throw new ConfigurationParseError(e);
+            }
+        }
         serverKey = key;
-
-        File adminDataFile = new File(Main.USER_DIR + "/" + ADMIN_DATA_FILE);
-        if(!adminDataFile.exists()) {
-            if(!adminDataFile.createNewFile()) {
-                Logger.log("Oops! Problem with creating holder file: " + adminDataFile);
-                throw new IOException("Can't create file: " + adminDataFile);
-            }
-        }
-        adminKeyFile = new File(Main.USER_DIR + "/" + ADMIN_KEY_FILE);
-        if(!adminKeyFile.exists()) {
-            if(!adminKeyFile.createNewFile()) {
-                Logger.log("Oops! Problem with creating holder file: " + adminKeyFile);
-                throw new IOException("Can't create file: " + adminKeyFile);
-            }
-        }
-
-        loadSalt(adminKeyFile);
         try {
             loadAdminKey(key, adminKeyFile);
-        } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InvalidKeySpecException e) {
-            Logger.log(e);
+        } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InvalidKeySpecException | IOException e) {
+            throw new ConfigurationParseError(e);
         }
 
-        PropertiesBuilderParameters properties = new Parameters().properties();
+        Parameters params = new Parameters();
         FileBasedConfigurationBuilder<FileBasedConfiguration> fileBasedConfigurationBuilder
                 = new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class)
-                .configure(properties
-                        .setFileName(ADMIN_DATA_FILE)
-                        .setIOFactory(new EncryptedIOFactory(adminKey))
+                .configure(params.properties()
+                        .setFileName(adminData.getName())
+                        .setIOFactory(new EncryptedIOFactory(this.adminKey))
                         .setThrowExceptionOnMissing(true)
                         .setListDelimiterHandler(new DefaultListDelimiterHandler(';')));
         fileBasedConfigurationBuilder.setAutoSave(true);
-        configuration = fileBasedConfigurationBuilder.getConfiguration();
+        try {
+            configuration = fileBasedConfigurationBuilder.getConfiguration();
+        } catch (ConfigurationException e) {
+            throw new ConfigurationParseError(e);
+        }
+    }
 
-        Logger.log("AdminDataStorageImpl successfully initialized!");
+    @Override
+    public void reload(@Nullable Element configNode) {
+        parse(configNode);
     }
 
     /**
@@ -187,5 +241,39 @@ public final class AdminDataStorageImpl implements AdminDataStorage {
 
     public boolean contains(String key) {
         return configuration.containsKey(key);
+    }
+
+    @Override
+    public void start() {
+    }
+
+    @Override
+    public void shutdown() {
+    }
+
+    @Override
+    public void shutdownNow() {
+    }
+
+    @Nonnull
+    @Override
+    public String getName() {
+        return "admin-data-storage";
+    }
+
+    @Nullable
+    @Override
+    public Layer getMainLayer() {
+        return null;
+    }
+
+    @Override
+    public boolean grantAccess(Class<?> clazz) {
+        return clazz.equals(this.getClass());
+    }
+
+    @Override
+    public SecretKey passwordKey() {
+        return SECRET_KEY;
     }
 }

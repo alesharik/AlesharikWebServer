@@ -1,4 +1,4 @@
-package com.alesharik.webserver.api.server;
+package com.alesharik.webserver.server.api;
 
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 /**
  * This class used for hold multiple {@link RequestHandler}'s in one {@link RequestHandler}
  */
+@Deprecated
 public final class RequestHandlerList implements RequestHandler {//TODO rewrite and tests
     private ArrayList<RequestHandler> handlers = new ArrayList<>();
     private RequestHandler currentHandler;

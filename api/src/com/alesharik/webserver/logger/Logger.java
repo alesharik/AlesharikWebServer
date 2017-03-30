@@ -87,7 +87,7 @@ public final class Logger {
     }
 
     private static void log(String message, int depth) {
-        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
+        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[depth]);
         if(prefix.isEmpty()) {
             log(getPrefixLocation(depth), message);
         } else {

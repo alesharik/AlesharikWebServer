@@ -12,8 +12,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Stream;
 
 /**
@@ -24,12 +26,13 @@ final class AgentClassTransformer implements ClassFileTransformer {
     /**
      * ClassName: Transformers
      */
+    private static final Set<Class<?>> transformerClasses = new CopyOnWriteArraySet<>();
     private static final ConcurrentHashMap<String, CopyOnWriteArrayList<MethodHolder>> transformers = new ConcurrentHashMap<>();
     private static final CopyOnWriteArrayList<MethodHolder> allTransformers = new CopyOnWriteArrayList<>();
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        if(VM.isSystemDomainLoader(loader) || className.toLowerCase().contains("nashorn")) {
+        if(VM.isSystemDomainLoader(loader) || className.toLowerCase().contains("nashorn") || className.toLowerCase().startsWith("org/apache/commons/".toLowerCase())) {
             return classfileBuffer;
         }
         CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
@@ -54,6 +57,11 @@ final class AgentClassTransformer implements ClassFileTransformer {
 
 
     static void addTransformer(Class<?> transformer) {
+        if(transformerClasses.contains(transformer)) {
+            return;
+        } else {
+            transformerClasses.add(transformer);
+        }
         Stream.of(transformer.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Transform.class) || method.isAnnotationPresent(TransformAll.class))
                 .filter(method -> method.getReturnType().isAssignableFrom(byte[].class))

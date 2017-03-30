@@ -6,7 +6,6 @@ import com.alesharik.webserver.api.agent.classPath.ListenClass;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
 import com.alesharik.webserver.api.collections.ConcurrentTripleHashMap;
-import com.alesharik.webserver.api.collections.TripleHashMap;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.LoggerUncaughtExceptionHandler;
 import com.alesharik.webserver.logger.Prefix;
@@ -81,12 +80,13 @@ final class ClassPathScannerThread extends Thread {
         classLoaderQueue.add(classLoader);
     }
 
-    private void matchClassPathScanner(Class<?> clazz, TripleHashMap<Class<?>, Type, Method> newListeners) {
+    private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, Method> newListeners) {
+
         Stream.of(clazz.getDeclaredMethods())
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
                 .filter(method -> method.isAnnotationPresent(ListenAnnotation.class) || method.isAnnotationPresent(ListenClass.class) || method.isAnnotationPresent(ListenInterface.class))
+                .filter(method -> !listeners.containsAddition(method))
                 .forEach(method -> {
-                    method.setAccessible(true);
                     if(method.isAnnotationPresent(ListenAnnotation.class)) {
                         ListenAnnotation annotation = method.getAnnotation(ListenAnnotation.class);
                         newListeners.put(annotation.value(), Type.ANNOTATION, method);
@@ -116,11 +116,11 @@ final class ClassPathScannerThread extends Thread {
     }
 
     private static final class ClassLoaderScanTask implements Runnable {
-        private final TripleHashMap<Class<?>, Type, Method> listeners;
+        private final ConcurrentTripleHashMap<Class<?>, Type, Method> listeners;
         private final Set<ClassLoader> classLoaders;
         private final ForkJoinPool forkJoinPool;
 
-        public ClassLoaderScanTask(TripleHashMap<Class<?>, Type, Method> listeners, Set<ClassLoader> classLoaders, ForkJoinPool forkJoinPool) {
+        public ClassLoaderScanTask(ConcurrentTripleHashMap<Class<?>, Type, Method> listeners, Set<ClassLoader> classLoaders, ForkJoinPool forkJoinPool) {
             this.listeners = listeners;
             this.classLoaders = classLoaders;
             this.forkJoinPool = forkJoinPool;

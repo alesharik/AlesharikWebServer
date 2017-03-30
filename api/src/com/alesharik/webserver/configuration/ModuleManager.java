@@ -6,6 +6,7 @@ import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,6 +36,9 @@ public final class ModuleManager {
     @ListenInterface(Module.class)
     public static void listenModule(Class<?> moduleClazz) {
         try {
+            if(Modifier.isAbstract(moduleClazz.getModifiers())) {
+                return;
+            }
             Constructor<?> constructor = moduleClazz.getConstructor();
             Module instance = (Module) constructor.newInstance();
             modules.put(instance.getName(), instance);

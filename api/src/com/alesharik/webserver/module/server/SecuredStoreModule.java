@@ -15,6 +15,7 @@ public interface SecuredStoreModule extends Module {
     /**
      * @return password or empty string if password not exists
      */
+    @Nonnull
     String readString(@Nonnull String name) throws IllegalAccessException, IOException, InvalidKeySpecException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException;
 
     void writeString(@Nonnull String name, @Nonnull String password) throws IllegalAccessException, InvalidKeySpecException, InvalidKeyException, IOException, BadPaddingException, IllegalBlockSizeException;

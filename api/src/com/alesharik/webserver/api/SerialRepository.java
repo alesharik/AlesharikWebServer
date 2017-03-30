@@ -171,7 +171,7 @@ public final class SerialRepository {
                 } else {
                     file = new RandomAccessFile(snapshotFile, "rw");
                 }
-                //noinspection InfiniteLoopStatement because we exit only on vm stop
+                //noinspection InfiniteLoopStatement because we exit only on vm shutdown
                 while(true) {
                     file.setLength(0);
                     file.write(Repository.saveSnapshot());

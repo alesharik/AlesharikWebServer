@@ -70,7 +70,7 @@ final class DashboardWebSocketParser {
     private void parseCurrentCompInfoMessage(String[] parts) {
         if(parts[1].equals("start")) {
             currentCompInfoTask.start();
-        } else if(parts[1].equals("stop")) {
+        } else if(parts[1].equals("shutdown")) {
             currentCompInfoTask.stop();
         }
     }

@@ -4,10 +4,10 @@ import com.alesharik.webserver.api.GrizzlyUtils;
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.fileManager.FileManager;
-import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.server.api.RequestHandler;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
@@ -107,7 +107,7 @@ public class ControlRequestHandler implements RequestHandler {
         uuidCookie.setHttpOnly(true);
         uuidCookie.setPath("/");
         uuidCookie.setMaxAge(3600);
-        sessions.add(uuid, 3600L);
+        sessions.add(uuid, 3600 * 1000);
         response.addCookie(uuidCookie);
         response.sendRedirect("/dashboard.html");
         if(remember) {

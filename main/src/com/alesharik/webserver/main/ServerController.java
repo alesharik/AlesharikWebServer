@@ -174,7 +174,7 @@ public final class ServerController {
                 }
             }
             if(isEnabled(IS_CONTROL_SERVER_FLAG)) {
-                server = new ControlServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, new AdminDataStorageImpl(serverPassword), dashboardDataHolder, logRequests, logFile);
+                server = new ControlServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, new AdminDataStorageImpl(), dashboardDataHolder, logRequests, logFile);
             } else {
                 server = new MainServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, this, dashboardDataHolder, logRequests, logFile);
 

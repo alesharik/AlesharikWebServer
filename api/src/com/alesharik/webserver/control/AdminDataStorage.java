@@ -1,10 +1,12 @@
 package com.alesharik.webserver.control;
 
+import com.alesharik.webserver.configuration.Module;
+
 /**
  * The AdminDataStorage used for hold dashboard login, password and data.
  * The data must be encrypted!
  */
-public interface AdminDataStorage {
+public interface AdminDataStorage extends Module {
     /**
      * Return <code>true</code> if the login and password are correct
      *

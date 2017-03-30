@@ -675,7 +675,6 @@ public final class FileManager {
                         this.data = CompressionUtils.compress(Files.readAllBytes(file.toPath()), compressionLevel);
                     } else {
                         this.data = Files.readAllBytes(file.toPath());
-                        ;
                     }
                 } catch (IOException e) {
                     Logger.log("Error in reading file " + file);

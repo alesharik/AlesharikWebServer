@@ -10,7 +10,7 @@ import java.util.Objects;
 
 /**
  * This class used for store keys in files. This class simply save and load the key, not secure it!
- */
+ *///FIXME
 public final class KeySaver {
     private KeySaver() {
     }

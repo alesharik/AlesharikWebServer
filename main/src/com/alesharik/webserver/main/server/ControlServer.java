@@ -3,13 +3,13 @@ package com.alesharik.webserver.main.server;
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.api.fileManager.FileManager;
-import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketApplication;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.ControlHttpHandler;
+import com.alesharik.webserver.server.api.RequestHandler;
 import org.glassfish.grizzly.http.server.CompressionLevel;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -32,7 +32,7 @@ public final class ControlServer extends WebServer {
     public ControlServer(String host, int port, FileManager fileManager, AdminDataStorageImpl adminDataStorageImpl, DashboardDataHolder holder, boolean logRequests, File logFile) {
         super(host, port);
         errorPageGenerator = new ModularErrorPageGenerator(fileManager);
-        controlHttpHandler = new ControlHttpHandler(fileManager, adminDataStorageImpl, logRequests, logFile, errorPageGenerator);
+//        controlHttpHandler = new ControlHttpHandler(fileManager, adminDataStorageImpl, logRequests, logFile, errorPageGenerator);
         final NetworkListener networkListener = new NetworkListener("grizzly", host, port);
         networkListener.getFileCache().setEnabled(true);
         networkListener.setCompression(String.valueOf(CompressionLevel.ON));
@@ -50,7 +50,7 @@ public final class ControlServer extends WebServer {
         httpServer.addListener(networkListener);
         ServerConfiguration serverConfiguration = httpServer.getServerConfiguration();
         serverConfiguration.setJmxEnabled(true);
-        serverConfiguration.addHttpHandler(controlHttpHandler, "/");
+//        serverConfiguration.addHttpHandler(controlHttpHandler, "/");
         TCPNIOTransportBuilder transportBuilder = TCPNIOTransportBuilder.newInstance();
         ThreadPoolConfig config = ThreadPoolConfig.defaultConfig();
         config.setCorePoolSize(10)
@@ -62,18 +62,18 @@ public final class ControlServer extends WebServer {
         WebSocketAddOn addOn = new WebSocketAddOn();
         networkListener.registerAddOn(addOn);
 
-        dashboardWebSocketApplication = new DashboardWebSocketApplication(holder, controlHttpHandler.getControlRequestHandler());
-        registerNewWebSocket(dashboardWebSocketApplication, "", "/dashboard");
+//        dashboardWebSocketApplication = new DashboardWebSocketApplication(holder, controlHttpHandler.getControlRequestHandler());
+//        registerNewWebSocket(dashboardWebSocketApplication, "", "/dashboard");
     }
 
     @Override
     public synchronized void addRequestHandler(RequestHandler requestHandler) {
-        controlHttpHandler.addRequestHandler(requestHandler);
+//        controlHttpHandler.addRequestHandler(requestHandler);
     }
 
     @Override
     public synchronized void removeRequestHandler(RequestHandler requestHandler) {
-        controlHttpHandler.removeRequestHandler(requestHandler);
+//        controlHttpHandler.removeRequestHandler(requestHandler);
     }
 
     @Override

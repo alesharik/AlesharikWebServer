@@ -1,5 +1,6 @@
 package com.alesharik.webserver.configuration;
 
+import com.alesharik.webserver.control.AdminDataStorage;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.module.server.SecuredStoreModule;
 import lombok.experimental.UtilityClass;
@@ -39,6 +40,32 @@ public class XmlHelper {
         } else {
             try {
                 return (SecuredStoreModule) configuration.getModuleByName(nameNode.getTextContent());
+            } catch (ClassCastException e) {
+                throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
+            }
+        }
+    }
+
+    /**
+     * Get {@link AdminDataStorage} form xml config
+     *
+     * @param nodeName name of node, which contains {@link AdminDataStorage} name
+     * @param config   config node
+     * @param required if true, throw {@link ConfigurationParseError} if not found
+     * @return null if required == false and value not found, overwise {@link AdminDataStorage} instance
+     */
+    @Nullable
+    public static AdminDataStorage getAdminDataStorage(String nodeName, Element config, boolean required) {
+        Node nameNode = config.getElementsByTagName(nodeName).item(0);
+        if(nameNode == null) {
+            if(required) {
+                throw new ConfigurationParseError("Node " + nodeName + " not found!");
+            } else {
+                return null;
+            }
+        } else {
+            try {
+                return (AdminDataStorage) configuration.getModuleByName(nameNode.getTextContent());
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }

@@ -86,19 +86,18 @@ public class SecuredStoreModuleImpl implements SecuredStoreModule {
 
         SecretKey secretKey = getSecretKey();
         List<String> lines = Files.readAllLines(store.toPath(), Charsets.UTF8_CHARSET);
+        boolean found = false;
         for(String s : lines.subList(1, lines.size())) {
             String decrypted = StringCipher.decrypt(s, null, secretKey);
             if(decrypted.startsWith(name + ": ")) {
                 String n = decrypted.substring(0, name.concat(": ").length()).concat(StringCipher.encrypt(value, null, accessController.passwordKey()));
-                lines.replaceAll(s1 -> {
-                    if(s1.equals(s)) {
-                        return n;
-                    } else {
-                        return s1;
-                    }
-                });
+                lines.replaceAll(s1 -> s1.equals(s) ? n : s1);
+                found = true;
                 break;
             }
+        }
+        if(!found) {
+            lines.add(name + ": " + StringCipher.encrypt(value, null, accessController.passwordKey()));
         }
         Optional<String> s3 = lines.subList(1, lines.size())
                 .stream()
