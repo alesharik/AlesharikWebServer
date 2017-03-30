@@ -3,10 +3,9 @@ package com.alesharik.webserver.api.sharedStorage;
 import com.alesharik.webserver.api.ConcurrentCompletableFuture;
 import lombok.SneakyThrows;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.util.UUID;
@@ -14,13 +13,13 @@ import java.util.concurrent.ExecutionException;
 
 import static org.objectweb.asm.Opcodes.*;
 
-final class SharedStorageClassVisitor extends ClassAdapter {
+final class SharedStorageClassVisitor extends ClassVisitor {
     private boolean transform = false;
     private ConcurrentCompletableFuture<String> storageName;
     private String id = "";
 
     public SharedStorageClassVisitor(ClassVisitor cv) {
-        super(cv);
+        super(Opcodes.ASM5, cv);
     }
 
     private void registerId(String name) {
@@ -55,10 +54,11 @@ final class SharedStorageClassVisitor extends ClassAdapter {
     /**
      * Use for extract annotation value
      */
-    private static final class AnnotationValueExtractor implements AnnotationVisitor {
+    private static final class AnnotationValueExtractor extends AnnotationVisitor {
         private ConcurrentCompletableFuture<String> ret;
 
         public AnnotationValueExtractor(ConcurrentCompletableFuture<String> string) {
+            super(Opcodes.ASM5);
             ret = string;
         }
 
@@ -88,7 +88,7 @@ final class SharedStorageClassVisitor extends ClassAdapter {
         }
     }
 
-    private static final class MethodReplacer extends MethodAdapter {
+    private static final class MethodReplacer extends MethodVisitor {
         private String ret;
         private String id;
         private ConcurrentCompletableFuture<String> result;
@@ -97,7 +97,7 @@ final class SharedStorageClassVisitor extends ClassAdapter {
         private Type[] args;
 
         public MethodReplacer(MethodVisitor mv, String id, String ret, int agrCount, String desc) {
-            super(mv);
+            super(Opcodes.ASM5, mv);
             this.id = id;
             this.result = new ConcurrentCompletableFuture<>();
             this.ret = ret;

@@ -408,6 +408,11 @@ public final class Logger {
         return SYSTEM_ERR;
     }
 
+    static void disable() {
+        LOGGER.setLevel(Level.OFF);
+        listenerThread.disable();
+    }
+
     /**
      * Enum of foreground colors
      */
@@ -499,11 +504,17 @@ public final class Logger {
         private final MpscAtomicArrayQueue<Message> messages;
         private final CopyOnWriteArrayList<LoggerListener> loggerListeners;
 
+        private final AtomicBoolean disabled = new AtomicBoolean(false);
+
         public LoggerListenerThread(int listenerQueueCapacity) {
             messages = new MpscAtomicArrayQueue<>(listenerQueueCapacity);
             loggerListeners = new CopyOnWriteArrayList<>();
             setName("LoggerListenerThread");
             setDaemon(true);
+        }
+
+        public void disable() {
+            disabled.set(true);
         }
 
         public void addListener(LoggerListener loggerListener) {
@@ -515,6 +526,9 @@ public final class Logger {
         }
 
         public void sendMessage(Message message) {
+            if(disabled.get()) {
+                return;
+            }
             messages.add(message);
         }
 

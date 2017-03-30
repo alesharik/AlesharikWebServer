@@ -39,4 +39,6 @@ public interface MessageStream<M extends Message> {
      */
     @Nullable
     M receiveMessage(long timeout, TimeUnit timeUnit) throws InterruptedException;
+
+    String senderModule();
 }
