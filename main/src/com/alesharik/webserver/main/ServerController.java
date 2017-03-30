@@ -7,7 +7,6 @@ import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.api.server.Server;
-import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueSetter;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
@@ -18,8 +17,6 @@ import com.alesharik.webserver.main.server.ControlServer;
 import com.alesharik.webserver.main.server.MainServer;
 import com.alesharik.webserver.microservices.client.MicroserviceClient;
 import com.alesharik.webserver.microservices.server.MicroserviceServer;
-import com.alesharik.webserver.plugin.AccessManagerBuilder;
-import com.alesharik.webserver.plugin.PluginManagerOld;
 import com.alesharik.webserver.router.RouterServer;
 import lombok.SneakyThrows;
 import one.nio.mem.OutOfMemoryException;
@@ -43,7 +40,6 @@ import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Date;
-import java.util.stream.Stream;
 
 import static com.alesharik.webserver.main.Main.USER_DIR;
 
@@ -54,8 +50,6 @@ import static com.alesharik.webserver.main.Main.USER_DIR;
 @Prefix("[ServerController]")
 public final class ServerController {
     private final ConfigValues configValues = new ConfigValues();
-
-    private PluginManagerOld pluginManagerOld;
 
     private Configuration configuration;
     private String serverPassword;
@@ -76,13 +70,10 @@ public final class ServerController {
     private MicroserviceServer microserviceServer = null;
     private RouterServer routerServer = null;
 
-    AccessManagerBuilder accessManagerBuilder;
-
     /**
      * Init all needed systems
      */
     public ServerController() {
-        accessManagerBuilder = new AccessManagerBuilder();
         try {
 //            SharedStorageManager.addAccessFilter("config", (clazz, type, fieldName) -> {
 //                switch (type) {
@@ -111,24 +102,7 @@ public final class ServerController {
             initMicroserviceServer();
             initRouterServer();
 
-            accessManagerBuilder.setDashboardDataHolder(dashboardDataHolder);
-            accessManagerBuilder.setFileManager(mainFileManager);
-
             Logger.log("Server successfully initialized");
-
-            pluginManagerOld = new PluginManagerOld(accessManagerBuilder);
-//                    .setBaseAccessManager(baseAccessManagerBuilder.build())
-//                    .setControlAccessManager(controlAccessManagerBuilder.build())
-//                    .setServerAccessManager(serverAccessManagerBuilder.build())
-////                    .isMicroserviceServer(false)
-////                    .isRouterServer(configuration.getBoolean("isRouterServer"))
-//                    .build();
-//            pluginManagerOld.addPlugin(new File(Main.USER_DIR + "/plugins/test"));
-            File pluginsFolder = new File(Main.USER_DIR + "/plugins/"); //TODO rewrite
-            Stream.of(pluginsFolder.listFiles((dir, name) -> dir.isDirectory()))
-                    .forEach(pluginManagerOld::addPlugin);
-            pluginManagerOld.loadPlugins();
-            pluginManagerOld.start();
         } catch (IOException | ConfigurationException e) {
             Logger.log(e);
         }
@@ -205,7 +179,6 @@ public final class ServerController {
                 server = new MainServer(configuration.getString("webServer.host"), configuration.getInt("webServer.port"), mainFileManager, this, dashboardDataHolder, logRequests, logFile);
 
             }
-            accessManagerBuilder.setWebServer((WebServer) server);
             Logger.log("WebServer loaded!");
         }
     }

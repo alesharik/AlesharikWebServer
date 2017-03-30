@@ -12,6 +12,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+//TODO rewrite
 public class MessageStreamPairImpl<M extends Message> implements MessageStreamPair<M, MessageStreamPairImpl.MessageStreamImpl> {
     private final MessageStreamImpl<M> first;
     private final MessageStreamImpl<M> second;
@@ -83,6 +84,11 @@ public class MessageStreamPairImpl<M extends Message> implements MessageStreamPa
                 waitForSignaller(signaller);
             }
             return receiveQueue.poll();
+        }
+
+        @Override
+        public String senderModule() {
+            return null;
         }
 
         private void waitForSignaller(Signaller signaller) {
