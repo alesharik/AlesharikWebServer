@@ -14,4 +14,8 @@ public class ConfigurationParseError extends Error {
     public ConfigurationParseError(Throwable cause) {
         super(cause);
     }
+
+    public ConfigurationParseError(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

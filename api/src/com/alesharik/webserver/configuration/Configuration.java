@@ -12,4 +12,5 @@ public interface Configuration {
 
     void parseMain(Element main);
 
+    Module getModuleByName(String name);
 }

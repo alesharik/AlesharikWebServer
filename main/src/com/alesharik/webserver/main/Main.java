@@ -4,6 +4,7 @@ import com.alesharik.webserver.configuration.Configuration;
 import com.alesharik.webserver.configuration.ConfigurationImpl;
 import com.alesharik.webserver.configuration.Configurator;
 import com.alesharik.webserver.configuration.PluginManagerImpl;
+import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.logger.Logger;
 
 import java.io.File;
@@ -18,8 +19,6 @@ public class Main {
 
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
     @Deprecated
-    public static final File LOGS_FOLDER = new File(USER_DIR + "/logs");
-    @Deprecated
     public static final File WWW = new File(USER_DIR + "/www");
     @Deprecated
     public static final File SERVER_DASHBOARD = new File(USER_DIR + "/serverDashboard");
@@ -30,6 +29,7 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         try {
             Configuration configuration = new ConfigurationImpl();
+            XmlHelper.setConfiguration(configuration);
             configurator = new Configurator(CONFIG, configuration, PluginManagerImpl.class);
             configurator.parse();
 

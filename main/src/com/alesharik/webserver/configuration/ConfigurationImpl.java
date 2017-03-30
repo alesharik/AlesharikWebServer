@@ -96,11 +96,17 @@ public final class ConfigurationImpl implements Configuration {
         }
 
         modules.entrySet().stream()
+                .filter(stringModuleHolderEntry -> stringModuleHolderEntry.getValue().isRunning())
                 .filter(stringModuleHolderEntry -> stringModuleHolderEntry.getValue().mainIsChecked())
                 .forEach(stringModuleHolderEntry -> {
                     stringModuleHolderEntry.getValue().shutdown();
                     Logger.log("Module " + stringModuleHolderEntry.getKey() + " with type " + stringModuleHolderEntry.getValue().getType() + " shutdown!");
                 });
+    }
+
+    @Override
+    public Module getModuleByName(String name) {
+        return modules.get(name).getModule();
     }
 
     private static final class ModuleHolder {
