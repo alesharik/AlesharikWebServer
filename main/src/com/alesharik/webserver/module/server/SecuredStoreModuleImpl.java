@@ -112,10 +112,15 @@ public class SecuredStoreModuleImpl implements SecuredStoreModule {
                 })
                 .reduce((s, s2) -> s.concat("\n").concat("s2"));
         String w = lines.get(0).concat("\n").concat(s3.orElse(""));
+        Files.write(store.toPath(), w.getBytes(Charsets.UTF8_CHARSET), StandardOpenOption.CREATE);
     }
 
     @Override
     public void parse(@Nullable Element configNode) {
+        if(configNode == null) {
+            throw new ConfigurationParseError();
+        }
+
         Element node = (Element) configNode.getElementsByTagName("store").item(0);
         if(node == null) {
             throw new ConfigurationParseError("Secured store file node not found!");
@@ -133,6 +138,9 @@ public class SecuredStoreModuleImpl implements SecuredStoreModule {
 
     @Override
     public void reload(@Nullable Element configNode) {
+        if(configNode == null) {
+            throw new ConfigurationParseError();
+        }
         Element node = (Element) configNode.getElementsByTagName("store").item(0);
         if(node == null) {
             throw new ConfigurationParseError("Secured store file node not found!");
