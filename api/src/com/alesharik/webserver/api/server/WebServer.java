@@ -3,6 +3,7 @@ package com.alesharik.webserver.api.server;
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
+import com.alesharik.webserver.server.api.RequestHandler;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 
 import java.io.IOException;
