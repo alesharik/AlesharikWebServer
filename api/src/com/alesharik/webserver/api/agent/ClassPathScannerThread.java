@@ -128,7 +128,6 @@ final class ClassPathScannerThread extends Thread {
 
         @Override
         public void run() {
-
             FastClasspathScanner scanner = new FastClasspathScanner();
             ClassPathScannerThread.taskCount.incrementAndGet();
             listeners.forEach((aClass, type, method) -> {
@@ -156,12 +155,15 @@ final class ClassPathScannerThread extends Thread {
                             try {
                                 method.invoke(null, implementingClass);
                             } catch (IllegalAccessException | InvocationTargetException e) {
+                                if(e instanceof InvocationTargetException) {
+                                    Logger.log(e.getCause());
+                                }
                                 Logger.log(e);
                             }
                         });
                 }
             });
-            scanner.overrideClassLoaders(classLoaders.toArray(new ClassLoader[0]));
+            scanner.overrideClassLoaders(classLoaders.toArray(new ClassLoader[classLoaders.size()]));
             CompletableFuture.supplyAsync(ClassPathScannerThread.taskCount::incrementAndGet)
                     .thenApply(integer -> {
                         try {

@@ -15,6 +15,7 @@
 /out
 /api/out
 /main/out
+/ftp
 
 /AlesharikWebServer.jar
 /alesharikwebserver-api-1.0-SNAPSHOT.jar

@@ -140,7 +140,7 @@ public final class PluginManagerImpl extends PluginManager {
     private void loadFile(File jar) {
         executor.submit(() -> {
             try {
-                ClassLoader classLoader = new URLClassLoader(new URL[]{jar.toURI().toURL()});
+                ClassLoader classLoader = new URLClassLoader(new URL[]{jar.toURI().toURL()}, this.getClass().getClassLoader());
                 classLoaders.put(jar, classLoader);
 
                 Agent.tryScanClassLoader(classLoader);

@@ -57,7 +57,7 @@
                     </execution>
                     <execution>
                         <id>${project.artifactId}</id>
-                        <phase>generate-sources</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>unpack</goal>
                         </goals>
@@ -70,7 +70,7 @@
                                     <!--<systemPath>${basedir}/one-nio/one-nio.jar</systemPath>-->
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/production</outputDirectory>
+                                    <outputDirectory>out/production</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -94,7 +94,7 @@
                     <!--</execution>-->
                     <execution>
                         <id>compileNative</id>
-                        <phase>package</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -104,7 +104,7 @@
                     </execution>
                     <execution>
                         <id>copyAgent</id>
-                        <phase>install</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>

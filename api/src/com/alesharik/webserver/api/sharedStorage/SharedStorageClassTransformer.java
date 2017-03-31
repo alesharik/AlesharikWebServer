@@ -23,9 +23,11 @@ public final class SharedStorageClassTransformer {
             classNode.accept(new SharedStorageClassVisitor(classWriter));
             return classWriter.toByteArray();
         } catch (Exception e) {
+            if(e.getCause() instanceof ClassNotFoundException) {
+                return classfileBuffer;
+            }
             e.printStackTrace();
             System.out.println(className);
-            System.exit(0);
         }
         return classfileBuffer;
     }
