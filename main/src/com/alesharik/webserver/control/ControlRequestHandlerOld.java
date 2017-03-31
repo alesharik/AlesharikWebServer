@@ -3,9 +3,9 @@ package com.alesharik.webserver.control;
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.fileManager.FileManager;
-import com.alesharik.webserver.api.server.RequestHandler;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.control.websockets.control.WebSocketController;
+import com.alesharik.webserver.server.api.RequestHandler;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
@@ -108,7 +108,7 @@ public final class ControlRequestHandlerOld implements RequestHandler {
             if(hasValidUUID(request)) {
                 String server = request.getParameter("server");
                 serverHolder.addServer(server, Integer.parseInt(request.getParameter("serverIndex")));
-//                servers.put(server, serverHolder.connect(server, request.getParameter("serverLogin"), request.getParameter("serverPassword")));
+//                servers.put(server, serverHolder.connectAndSend(server, request.getParameter("serverLogin"), request.getParameter("serverPassword")));
             }
             return;
         } else if(request.getDecodedRequestURI().equals("/getServerBaseInfo")) {

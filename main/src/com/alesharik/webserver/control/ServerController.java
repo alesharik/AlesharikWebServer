@@ -2,6 +2,7 @@ package com.alesharik.webserver.control;
 
 import java.net.URI;
 
+@Deprecated
 public class ServerController {
 
     public WebSocketClientEndpoint connect(String server, String login, String password) throws Exception {

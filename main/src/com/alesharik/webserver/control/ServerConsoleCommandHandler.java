@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.HashMap;
 
 
-//TODO send it to plugin
+@Deprecated
 public class ServerConsoleCommandHandler {
     private HashMap<String, IServerConsoleCommand> commands = new HashMap<>();
     File rootFolder;

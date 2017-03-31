@@ -5,6 +5,7 @@ import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+@Deprecated
 public class ServerHolder {
     private AdminDataStorageImpl holder;
     private ArrayList<String> servers = new ArrayList<>();
