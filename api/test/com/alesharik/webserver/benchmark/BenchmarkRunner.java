@@ -93,6 +93,9 @@ public final class BenchmarkRunner {
                     runAll = false;
                     break;
                 }
+                default:
+                    System.out.println("WTF! Argument not expected!");
+                    break;
             }
         }
     }

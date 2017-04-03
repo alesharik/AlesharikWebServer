@@ -27,8 +27,7 @@ public class FileManagerBenchmark {
 
     private static File root;
     private static final FileManager fileManager;
-
-    public static final byte[] TEST_FILE_BYTES = "test".getBytes(Charsets.UTF8_CHARSET);
+    private static final byte[] TEST_FILE_BYTES = "test".getBytes(Charsets.UTF8_CHARSET);
 
     static {
         try {
