@@ -34,9 +34,9 @@ class WebsocketSender {
      * @param {string} message
      */
     send(message) {
-        if (this.websocket.readyState == 0) {
+        if (this.websocket.readyState === 0) {
             this.queue.push(message);
-        } else if (this.websocket.readyState == 1) {
+        } else if (this.websocket.readyState === 1) {
             this.websocket.send(message);
         } else {
             throw new Error("Socket closed!");
@@ -49,7 +49,7 @@ let ready = false;
 
 onmessage = (e) => {
     let data = e.data;
-    if (data.cause == "message") {
+    if (data.cause === "message") {
         if (!ready) {
             sender.useWebsocket(new WebSocket("ws" + new RegExp(":\/{2}[^\/]*").exec(self.location.href) + "/dashboard"));
             ready = true;

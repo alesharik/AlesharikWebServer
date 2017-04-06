@@ -29,6 +29,7 @@ import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -408,7 +409,7 @@ public final class Logger {
         return SYSTEM_ERR;
     }
 
-    static void disable() {
+    public static void disable() {
         LOGGER.setLevel(Level.OFF);
         listenerThread.disable();
     }
@@ -895,13 +896,13 @@ public final class Logger {
          */
         private static final int ERROR = 2;
 
-        private final ThreadLocal<String> lineBuffer;
+        private final AtomicReference<String> lineBuffer;
         private final AtomicInteger state;
 
         public LoggerErrorPrintStream(OutputStream out) {
             super(out);
             state = new AtomicInteger(0);
-            lineBuffer = new ThreadLocal<>();
+            lineBuffer = new AtomicReference<>();
             lineBuffer.set("");
         }
 

@@ -20,7 +20,7 @@ onmessage = (e) => {
 
 function addParser(message, parser) {
     let v = messagingData.get(message);
-    if (v == undefined) {
+    if (v === undefined) {
         v = [];
         messagingData.set(message, v);
     }
@@ -33,7 +33,7 @@ function addParser(message, parser) {
  */
 function removeParser(message, parser) {
     let v = messagingData.get(message);
-    if (v == undefined) {
+    if (v === undefined) {
         return;
     }
     v.splice(v.indexOf(parser), 1);
@@ -42,7 +42,7 @@ function removeParser(message, parser) {
 function parse(message) {
     let parts = message.split(":");
     let v = messagingData.get(parts[0]);
-    if (v == undefined || v.length == 0) {
+    if (v === undefined || v.length === 0) {
         return;
     }
     let results = [];

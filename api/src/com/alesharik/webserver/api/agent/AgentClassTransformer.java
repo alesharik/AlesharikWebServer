@@ -32,7 +32,7 @@ final class AgentClassTransformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        if(VM.isSystemDomainLoader(loader) || className.toLowerCase().contains("nashorn") || className.toLowerCase().startsWith("org/apache/commons/".toLowerCase())) {
+        if(VM.isSystemDomainLoader(loader) || className.toLowerCase().contains("nashorn") || className.toLowerCase().startsWith("org/apache/".toLowerCase())) {
             return classfileBuffer;
         }
         CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);

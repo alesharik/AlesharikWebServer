@@ -24,5 +24,5 @@ public @interface WSApplication {
     /**
      * {@link WSChecker} class
      */
-    Class<?> checker() default WSChecker.class;
+    Class<?> checker() default WSChecker.Enabled.class;
 }

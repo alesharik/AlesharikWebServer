@@ -2,7 +2,6 @@ package com.alesharik.webserver.api.messages;
 
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Logger;
-import com.lmax.disruptor.dsl.Disruptor;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,8 +40,6 @@ public final class Messages {
     private static final ConcurrentHashMap<String, ConcurrentHashMap<String, Holder>> factories = new ConcurrentHashMap<>();
     private static final ExecutorService executor = Executors.newCachedThreadPool();
     private static final MessageHandlers handlers = new MessageHandlers();
-
-    private static Disruptor<Message> disruptor;
 
     private Messages() {
 

@@ -4,6 +4,7 @@ class Dashboard {
         if (!window.Worker) {
             alert("Workers ot supported! Please update your browser!");
         }
+        MessagingManager.sendMessage("hello"); //Login in WebSocket
 
         this.navbarTop = new NavbarTop();
         this.contentLoader = new ContentLoader();
@@ -24,7 +25,7 @@ class Dashboard {
 
         this.currentCompInfo = new ComputerInfo();
         MessagingManager.addParser("currentCompInfo", this.currentCompInfo);
-        MessagingUtils.enableRecievingComputerInfo();
+        MessagingUtils.enableReceivingComputerInfo();
         // this.webSocketManager.enableCurrentComputerInfo();
     }
 
@@ -38,14 +39,14 @@ class Dashboard {
      * @param {function} onEnded call on load ended. Receive created element.
      */
     loadJSFile(file, onEnded = () => {
-    }) {
+               }) {
         let request = new XMLHttpRequest();
         request.open("GET", file);
         request.onreadystatechange = () => {
-            if (request.readyState == 4) {
+            if (request.readyState === 4) {
                 let scriptElement = document.createElement("script");
                 scriptElement.type = "text/javascript";
-                if (request.status != 200) {
+                if (request.status !== 200) {
                     scriptElement.src = file;
                 } else {
                     scriptElement.innerHTML = request.responseText;
@@ -63,7 +64,7 @@ class Dashboard {
      * @param {function} onEnded call on load ended. Receive created element.
      */
     loadCSSFile(file, onEnded = () => {
-    }) {
+                }) {
         let request = new XMLHttpRequest();
         request.open("GET", file);
         request.onreadystatechange = () => {
@@ -303,7 +304,7 @@ class MessagingUtils {
     }
 
 
-    static enableRecievingComputerInfo() {
+    static enableReceivingComputerInfo() {
         if (!computerInfoEnabled) {
             MessagingManager.sendMessage("currentCompInfo:start");
             computerInfoEnabled = true;

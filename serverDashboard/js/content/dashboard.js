@@ -969,6 +969,7 @@ events.addEventListener("loadingContentEnded", () => {
     let lastIForCompressedClassSpace = 0;
     let lastIForPSEdenSpace = 0;
 
+    let lastJvmCpuValue;
     let jvmChartsUpdate = () => {
         let elapsedTime = (dashboard.currentCompInfo.java.uptime - lastJvmUptime) * 1000000;
 
@@ -987,8 +988,8 @@ events.addEventListener("loadingContentEnded", () => {
             //
             // }
             let currentJvmCpuValue = elapsedTime > 0 ? Math.round(Math.min(1000 * currentElapsedCpuTime / elapsedTime, 1000) * 100) / 100 : 0;
-            if (currentJvmCpuValue < 0) {
-                currentJvmCpuValue = 0;
+            if (currentJvmCpuValue <= 0) {
+                currentJvmCpuValue = lastJvmCpuValue;
             }
             jvmCpuChart.data.datasets[0].data.push(currentJvmCpuValue);
             jvmCpuChart.data.labels.push((labelIForCPU % 5 == 0) ? moment().format("hh:mm:ss") : "");
@@ -1007,6 +1008,7 @@ events.addEventListener("loadingContentEnded", () => {
             jvmCpuChart.update();
 
             lastJvmCpuData = dashboard.currentCompInfo.java.cpuUsage.data;
+            lastJvmCpuValue = currentJvmCpuValue;
         }
 
         if (jvmGCEnabled) {

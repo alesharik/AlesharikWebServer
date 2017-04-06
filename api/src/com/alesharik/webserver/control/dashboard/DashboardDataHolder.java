@@ -1,5 +1,7 @@
 package com.alesharik.webserver.control.dashboard;
 
+import com.alesharik.webserver.configuration.Layer;
+import com.alesharik.webserver.configuration.Module;
 import com.alesharik.webserver.control.dashboard.elements.menu.Menu;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuDropdown;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuItem;
@@ -9,10 +11,13 @@ import com.alesharik.webserver.control.dashboard.elements.menu.TextMenuItem;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.jsoup.Jsoup;
+import org.w3c.dom.Element;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 
-public final class DashboardDataHolder {
+public final class DashboardDataHolder implements Module {
     private final Menu menu;
     private final ArrayList<MenuPlugin> menuPlugins;
 
@@ -78,5 +83,39 @@ public final class DashboardDataHolder {
             array.add(object);
         });
         return array.toJSONString();
+    }
+
+    @Override
+    public void parse(@Nullable Element configNode) {
+        //TODO write
+    }
+
+    @Override
+    public void reload(@Nullable Element configNode) {
+        parse(configNode);
+    }
+
+    @Override
+    public void start() {
+    }
+
+    @Override
+    public void shutdown() {
+    }
+
+    @Override
+    public void shutdownNow() {
+    }
+
+    @Nonnull
+    @Override
+    public String getName() {
+        return "dashboard-data-holder";
+    }
+
+    @Nullable
+    @Override
+    public Layer getMainLayer() {
+        return null;
     }
 }

@@ -6,8 +6,8 @@ import com.alesharik.webserver.configuration.Module;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.control.AdminDataStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
+import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketApplication;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
-import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketApplication;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.ControlHttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -20,11 +20,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
 
 //TODO remove
 public class ControlServerModule implements Module {
     private HttpServer httpServer;
-
+    private FileManager fileManager;
+    private DashboardWebSocketApplication app;
     @Override
     public void parse(@Nullable Element configNode) {
         AdminDataStorage adminDataStorage = XmlHelper.getAdminDataStorage("adminDataStorage", configNode, true);
@@ -33,13 +36,23 @@ public class ControlServerModule implements Module {
         networkListener.registerAddOn(new WebSocketAddOn());
         httpServer.addListener(networkListener);
 
-        FileManager fileManager = new FileManager(new File("./serverDashboard"), FileManager.FileHoldingMode.HOLD_AND_CHECK);
+        fileManager = new FileManager(new File("./serverDashboard"), FileManager.FileHoldingMode.HOLD_AND_CHECK);
 
         ControlHttpHandler controlHttpHandler = new ControlHttpHandler(fileManager, (AdminDataStorageImpl) adminDataStorage, true, new File("./logs/request-log.log"), new ModularErrorPageGenerator(fileManager));
         httpServer.getServerConfiguration().addHttpHandler(controlHttpHandler);
+        DashboardDataHolder dashboardDataHolder = XmlHelper.getDashboardDataHolder("dashboardDataHolder", configNode, true);
+//        app = new DashboardWebSocketApplication(dashboardDataHolder, controlHttpHandler.getControlRequestHandler());
+//        WebSocketEngine.getEngine().register("", "/dashboard", app);
+        List<String> webSocketPlugins = XmlHelper.getList("webSocketPlugins", "plugin", configNode, false);
+        WebSocketEngine.getEngine().register("", "/dashboard", new DashboardWebSocketApplication(new HashSet<>(webSocketPlugins), dashboardDataHolder));
+    }
 
-        DashboardDataHolder dashboardDataHolder = new DashboardDataHolder();
-        WebSocketEngine.getEngine().register("", "/dashboard", new DashboardWebSocketApplication(dashboardDataHolder, controlHttpHandler.getControlRequestHandler()));
+    public FileManager getFileManager() {
+        return fileManager;
+    }
+
+    public HttpServer getHttpServer() {
+        return httpServer;
     }
 
     @Override

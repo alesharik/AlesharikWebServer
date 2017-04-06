@@ -5,8 +5,13 @@ import com.alesharik.webserver.configuration.ConfigurationImpl;
 import com.alesharik.webserver.configuration.Configurator;
 import com.alesharik.webserver.configuration.PluginManagerImpl;
 import com.alesharik.webserver.configuration.XmlHelper;
+import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.module.server.ControlServerModule;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Scanner;
 
@@ -25,10 +30,11 @@ public class Main {
 
     private static final File CONFIG = new File("./configuration.xml");
     private static Configurator configurator;
+    private static Configuration configuration = new ConfigurationImpl();
 
     public static void main(String[] args) throws InterruptedException {
         try {
-            Configuration configuration = new ConfigurationImpl();
+            configuration = new ConfigurationImpl();
             XmlHelper.setConfiguration(configuration);
             configurator = new Configurator(CONFIG, configuration, PluginManagerImpl.class);
             configurator.parse();
@@ -51,6 +57,25 @@ public class Main {
         } catch (Throwable e) {
             e.printStackTrace();
             shutdown();
+        }
+    }
+
+
+    @Nullable //TODO remove
+    public static ControlServerModule getControlServer(String nodeName, Element config, boolean required) {
+        Node nameNode = config.getElementsByTagName(nodeName).item(0);
+        if(nameNode == null) {
+            if(required) {
+                throw new ConfigurationParseError("Node " + nodeName + " not found!");
+            } else {
+                return null;
+            }
+        } else {
+            try {
+                return (ControlServerModule) configuration.getModuleByName(nameNode.getTextContent());
+            } catch (ClassCastException e) {
+                throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
+            }
         }
     }
 

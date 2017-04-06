@@ -1,7 +1,9 @@
 package com.alesharik.webserver.configuration;
 
 import com.alesharik.webserver.logger.Logger;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -106,9 +108,13 @@ public final class ConfigurationImpl implements Configuration {
 
     @Override
     public Module getModuleByName(String name) {
+        modules.forEach((s, moduleHolder) -> System.out.println("Module " + s + " at " + moduleHolder));
+        System.out.println("Trying to load " + name);
         return modules.get(name).getModule();
     }
 
+    @ToString
+    @EqualsAndHashCode
     private static final class ModuleHolder {
         @Getter
         private final Module module;
