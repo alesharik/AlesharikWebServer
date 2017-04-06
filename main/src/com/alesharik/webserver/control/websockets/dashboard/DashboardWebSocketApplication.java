@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
  */
 @Prefixes({"[ServerControl]", "[DashboardWebSocket]", "[DashboardWebSocketApplication]"})
 @WSApplication("/dashboard")
+@Deprecated
 public final class DashboardWebSocketApplication extends WebSocketApplication {
     private static final Pattern uuidPattern = Pattern.compile("UUID=(.*(?=,)|.*$)");
 

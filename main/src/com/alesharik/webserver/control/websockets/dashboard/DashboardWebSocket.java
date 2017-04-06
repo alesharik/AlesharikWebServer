@@ -11,6 +11,7 @@ import org.glassfish.grizzly.websockets.WebSocketListener;
  * This WebSocket used in dashboard for data transfer
  */
 @Prefixes({"[ServerControl]", "[DashboardWebSocket]"})
+@Deprecated
 public final class DashboardWebSocket extends DefaultWebSocket {
     private DashboardWebSocketParser parser;
 

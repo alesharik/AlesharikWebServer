@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Prefixes({"[ServerControl]", "[DashboardWebSocket]", "[DashboardWebSocketParser]"})
+@Deprecated
 final class DashboardWebSocketParser {
     private static final ThreadGroup THREAD_GROUP = new ThreadGroup("DashboardWebSocketThreads");
     private final DashboardWebSocketApplication application;

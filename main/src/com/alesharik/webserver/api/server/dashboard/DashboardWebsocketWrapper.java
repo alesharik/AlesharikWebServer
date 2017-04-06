@@ -5,6 +5,7 @@ import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketAp
 /**
  * This class used for give access to websocket
  */
+@Deprecated
 public final class DashboardWebsocketWrapper {
     private final DashboardWebSocketApplication application;
     private final DashboardWebsocketPlugin plugin;
