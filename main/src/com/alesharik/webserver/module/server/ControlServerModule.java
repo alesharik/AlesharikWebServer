@@ -27,7 +27,7 @@ import java.util.List;
 public class ControlServerModule implements Module {
     private HttpServer httpServer;
     private FileManager fileManager;
-    private DashboardWebSocketApplication app;
+
     @Override
     public void parse(@Nullable Element configNode) {
         AdminDataStorage adminDataStorage = XmlHelper.getAdminDataStorage("adminDataStorage", configNode, true);
@@ -41,8 +41,6 @@ public class ControlServerModule implements Module {
         ControlHttpHandler controlHttpHandler = new ControlHttpHandler(fileManager, (AdminDataStorageImpl) adminDataStorage, true, new File("./logs/request-log.log"), new ModularErrorPageGenerator(fileManager));
         httpServer.getServerConfiguration().addHttpHandler(controlHttpHandler);
         DashboardDataHolder dashboardDataHolder = XmlHelper.getDashboardDataHolder("dashboardDataHolder", configNode, true);
-//        app = new DashboardWebSocketApplication(dashboardDataHolder, controlHttpHandler.getControlRequestHandler());
-//        WebSocketEngine.getEngine().register("", "/dashboard", app);
         List<String> webSocketPlugins = XmlHelper.getList("webSocketPlugins", "plugin", configNode, false);
         WebSocketEngine.getEngine().register("", "/dashboard", new DashboardWebSocketApplication(new HashSet<>(webSocketPlugins), dashboardDataHolder));
     }

@@ -3,6 +3,7 @@ package com.alesharik.webserver.control.dashboard.websocket.plugins;
 import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlugin;
 import com.alesharik.webserver.control.dashboard.websocket.WebSocketSender;
 import com.alesharik.webserver.logger.Prefixes;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import javax.annotation.Nonnull;
 
@@ -19,6 +20,7 @@ public class SystemDashboardWebSocketPlugin extends DashboardWebSocketPlugin {
         return "system";
     }
 
+    @SuppressFBWarnings("DM_GC") //Because I need to call GC
     @Override
     public void receive(@Nonnull String command, @Nonnull String text) {
         switch (command) {

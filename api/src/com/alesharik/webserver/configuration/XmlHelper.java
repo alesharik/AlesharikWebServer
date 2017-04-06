@@ -4,6 +4,7 @@ import com.alesharik.webserver.control.AdminDataStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.module.server.SecuredStoreModule;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.experimental.UtilityClass;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -135,6 +136,7 @@ public class XmlHelper {
      * @param required          if true, throw {@link ConfigurationParseError} if node not found
      * @return modifiable list
      */
+    @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION") //FindBugs bug :(
     @Nonnull
     public List<String> getList(String containerNodeName, String listNode, Element config, boolean required) {
         Element containerNode = (Element) config.getElementsByTagName(containerNodeName).item(0);

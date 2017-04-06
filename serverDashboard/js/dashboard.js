@@ -1,4 +1,5 @@
 'use strict';
+//TODO add support for byte message type
 class Dashboard {
     constructor() {
         if (!window.Worker) {

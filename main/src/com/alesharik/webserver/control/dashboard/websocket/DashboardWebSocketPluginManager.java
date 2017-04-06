@@ -63,12 +63,11 @@ public final class DashboardWebSocketPluginManager {
     @SneakyThrows
     @Nonnull
     public static DashboardWebSocketPlugin newInstanceForName(@Nonnull String name, @Nonnull WebSocketSender webSocketSender) {
-        if(!plugins.containsKey(name)) {
-            throw new PluginNotFoundException(name);
-        }
         try {
-            Constructor<?> constructor;
-            constructor = plugins.get(name).getConstructor(WebSocketSender.class);
+            if(!plugins.containsKey(name)) {
+                throw new PluginNotFoundException(name);
+            }
+            Constructor<?> constructor = plugins.get(name).getConstructor(WebSocketSender.class);
             constructor.setAccessible(true);
             return (DashboardWebSocketPlugin) constructor.newInstance(webSocketSender);
         } catch (InvocationTargetException | InstantiationException e) {
