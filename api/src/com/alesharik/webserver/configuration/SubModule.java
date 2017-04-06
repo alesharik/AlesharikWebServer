@@ -38,4 +38,9 @@ public interface SubModule {
         shutdown();
         start();
     }
+
+    /**
+     * Return <code>true</code> if module started, overwise <code>false</code>
+     */
+    boolean isRunning();
 }
