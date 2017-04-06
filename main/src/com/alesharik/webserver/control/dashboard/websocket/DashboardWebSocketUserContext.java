@@ -115,10 +115,10 @@ final class DashboardWebSocketUserContext implements WebSocketListener {
             if(plugin.isRunning()) {
                 plugin.receive(parts[1], parts[2]);
             } else {
-                System.err.println("Plugin " + parts[1] + " not started!");
+                System.err.println("Plugin " + parts[0] + " not started!");
             }
         } else {
-            System.out.println("Plugin " + parts[1] + " not found!");
+            System.out.println("Plugin " + parts[0] + " not found!");
         }
     }
 

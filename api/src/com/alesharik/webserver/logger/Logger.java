@@ -664,13 +664,13 @@ public final class Logger {
          */
         private static final int ERROR = 2;
 
-        private final ThreadLocal<String> lineBuffer;
+        private final AtomicReference<String> lineBuffer;
         private final AtomicInteger state;
 
         public LoggerPrintStream(OutputStream out) {
             super(out);
             state = new AtomicInteger(0);
-            lineBuffer = new ThreadLocal<>();
+            lineBuffer = new AtomicReference<>();
             lineBuffer.set("");
         }
 
