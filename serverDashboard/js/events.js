@@ -41,6 +41,20 @@ class Events {
      * @param {string} name
      * @param {function} listener
      */
+    addEventListenerOnce(name, listener) {
+        let event = this._events.get(name);
+        if (event) {
+            event.addEventListener(() => {
+                listener();
+                event.removeEventListener(this);
+            });
+        }
+    }
+
+    /**
+     * @param {string} name
+     * @param {function} listener
+     */
     removeEventListener(name, listener) {
         let event = this._events.get(name);
         if (event) {
