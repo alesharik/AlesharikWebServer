@@ -4,18 +4,19 @@ var diskUpdateIntervalId;
 var jvmChartsUpdateIntervalId;
 // var cpuUpdateIntervalId;
 
-/**
- * Background color sets. Count is 6
- * @type {[*]}
- */
-const backgroundColors = ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(75, 192, 192, 0.2)', 'rgba(153, 102, 255, 0.2)', 'rgba(255, 159, 64, 0.2)'];
-/**
- * Border color sets. Count is 6
- * @type {[*]}
- */
-const borderColors = ['rgba(255,99,132,1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'];
-
 events.addEventListener("loadingContentEnded", () => {
+
+    /**
+     * Background color sets. Count is 6
+     * @type {[*]}
+     */
+    const backgroundColors = ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(75, 192, 192, 0.2)', 'rgba(153, 102, 255, 0.2)', 'rgba(255, 159, 64, 0.2)'];
+    /**
+     * Border color sets. Count is 6
+     * @type {[*]}
+     */
+    const borderColors = ['rgba(255,99,132,1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'];
+
     //====================Static functions====================\\
 
     function generateRandomColor() {
@@ -72,15 +73,6 @@ events.addEventListener("loadingContentEnded", () => {
      * @type {Array}
      */
     let cpuData = [];
-
-    /**
-     * Update cpuData
-     */
-    function updateCpuData() {
-        for (let j = 0; j < dashboard.currentCompInfo.cpuCount; j++) {
-            cpuData[j] = generateData(j, lastCpuData[j]);
-        }
-    }
 
     /**
      * Labels for cpu chart
@@ -230,58 +222,89 @@ events.addEventListener("loadingContentEnded", () => {
             borderWidth: 1
         }
     ];
+    cpuChart.update();
+    memoryChart.update();
 
-    /**
-     * Update CPU, RAM chart(including swap)
-     */
     function updateCpuAndRamCharts() {
-        updateCpuData();
-        for (let i = 0, j = 0; i < 7; i++) {
-            if (i === 3) {
-                continue; //Don't add ALL cpu time
+        for (let j = 0; j < cpuCount; j++) {
+            cpuData[j] = generateData(j, lastCpuData[j]);
+        }
+        new Parallel(JSON.stringify({cpuCount: cpuCount, cpuData: cpuData, ram: ram})).spawn(dataString => {
+            let data = JSON.parse(dataString);
+            let cpuCount = data.cpuCount;
+            let cpuData = data.cpuData;
+            let cpuDatasets = [];
+            for (let i = 0; i < 6; i++) {
+                cpuDatasets.push({});
+            }
+            let ram = data.ram;
+
+            for (let i = 0, j = 0; i < 7; i++) {
+                if (i === 3) {
+                    continue; //Don't add ALL cpu time
+                }
+
+                let elem = cpuDatasets[j];
+                let arr = [];
+                for (let k = 0; k < cpuCount; k++) {
+                    arr.push(Math.floor(cpuData[k][i] / cpuData[k][7] * 1000) / 10);
+                }
+                elem.data = arr;
+                j++;
             }
 
-            let elem = cpuChart.data.datasets[j];
-            let arr = [];
-            for (let k = 0; k < cpuCount; k++) {
-                arr.push(Math.floor(cpuData[k][i] / cpuData[k][7] * 1000) / 10);
+            let memoryData = [
+                Math.round(ram[1] / 1048576), //1048576 - 1024 * 1024 - 1mb
+                Math.round(ram[2] / 1048576), //1048576 - 1024 * 1024 - 1mb
+                Math.round(ram[3] / 1048576), //1048576 - 1024 * 1024 - 1mb
+                Math.round((ram[0] - ram[1] - ram[2] - ram[3]) / 1048576) //1048576 - 1024 * 1024 - 1mb
+            ];
+
+            const ramWithIndex4 = ram[4];
+            const ramWithIndex5 = ram[5];
+
+            const ramWithIndex4MinusRamWithIndex5 = (ramWithIndex4 - ramWithIndex5);
+
+            let maxSpace = Math.round(ramWithIndex4 / 1073741824 * 100) / 100;
+            let usedPercent = (ramWithIndex4MinusRamWithIndex5 / ramWithIndex4 * 100);
+            let freePercent = (ramWithIndex5 / ramWithIndex4 * 100);
+            let usedGb = Math.round(ramWithIndex4MinusRamWithIndex5 / 1073741824 * 100) / 100;
+            let freeGb = Math.round(ramWithIndex5 / 1073741824 * 100) / 100;
+
+            return JSON.stringify({
+                cpuDatasets: cpuDatasets,
+                memoryData: memoryData,
+                usedPercent: usedPercent,
+                freePercent: freePercent,
+                maxSpace: maxSpace,
+                usedGb: usedGb,
+                freeGb: freeGb
+            });
+        }).then(dataString => {
+            let data = JSON.parse(dataString);
+            let cpuDatasets = data.cpuDatasets;
+            for (let i = 0; i < 6; i++) {
+                cpuChart.data.datasets[i].data = cpuDatasets[i].data;
             }
-            elem.data = arr;
-            j++;
-        }
+            // cpuChart.data.datasets = data.cpuDatasets;
+            memoryChart.data.datasets[0].data = data.memoryData;
 
-        lastCpuData = cpuData;
+            $("#swapProgressBarUsed").css("width", data.usedPercent + "%");
+            if (data.usedPercent > 30) {
+                $("#swapProgressBarUsed").text(`Used space: ${data.usedGb}G/${data.maxSpace}G`);
+            }
+            $("#swapProgressBarFree").css("width", data.freePercent + "%");
+            if (data.freePercent) {
+                $("#swapProgressBarFree").text(`Free space: ${data.freeGb}G/${data.maxSpace}G`);
+            }
 
-        memoryChart.data.datasets[0].data = [
-            Math.round(ram[1] / 1048576), //1048576 - 1024 * 1024 - 1mb
-            Math.round(ram[2] / 1048576), //1048576 - 1024 * 1024 - 1mb
-            Math.round(ram[3] / 1048576), //1048576 - 1024 * 1024 - 1mb
-            Math.round((ram[0] - ram[1] - ram[2] - ram[3]) / 1048576) //1048576 - 1024 * 1024 - 1mb
-        ];
+            memoryChart.update();
+            cpuChart.update();
 
-        //Update all
-        memoryChart.update();
-        cpuChart.update();
-
-        //Update swap
-        const ramWithIndex4 = ram[4];
-        const ramWithIndex5 = ram[5];
-
-        const ramWithIndex4MinusRamWithIndex5 = (ramWithIndex4 - ramWithIndex5);
-
-        let maxSpace = Math.round(ramWithIndex4 / 1073741824 * 100) / 100;
-        let usedPercent = (ramWithIndex4MinusRamWithIndex5 / ramWithIndex4 * 100);
-        let freePercent = (ramWithIndex5 / ramWithIndex4 * 100);
-
-        $("#swapProgressBarUsed").css("width", usedPercent + "%");
-        if (usedPercent > 30) {
-            $("#swapProgressBarUsed").text(`Used space: ${Math.round(ramWithIndex4MinusRamWithIndex5 / 1073741824 * 100) / 100}G/${maxSpace}G`);
-        }
-        $("#swapProgressBarFree").css("width", freePercent + "%");
-        if (freePercent) {
-            $("#swapProgressBarFree").text(`Free space: ${Math.round(ramWithIndex5 / 1073741824 * 100) / 100}G/${maxSpace}G`);
-        }
+            lastCpuData = cpuData;
+        });
     };
+
 
     const partitions = dashboard.currentCompInfo.partitions;
     /**
@@ -319,11 +342,12 @@ events.addEventListener("loadingContentEnded", () => {
     dashboardCPUPlotIntervalId = setInterval(updateCpuAndRamCharts, 2000);
     diskUpdateIntervalId = setInterval(diskUpdate, 10 * 1000);
 
-
     const java = dashboard.currentCompInfo.java;
 
     const jvmCpuEnabled = java.cpuUsage.isSupported;
     const jvmGCEnabled = java.gc.length > 0;
+
+    //====================All Max hold values and it's setters====================\\
 
     let jvmCpuMaxHold = 60;
     let jvmGCMaxHold = 60;
@@ -376,6 +400,12 @@ events.addEventListener("loadingContentEnded", () => {
         document.querySelector("#JVMPSEdenSpaceButtons > button").innerHTML = event.target.innerHTML;
     });
 
+    //====================End====================\\
+
+    /**
+     * Cpu chart
+     * @type {Chart | undefined}
+     */
     let jvmCpuChart;
 
     let lastJvmUptime = 0;
