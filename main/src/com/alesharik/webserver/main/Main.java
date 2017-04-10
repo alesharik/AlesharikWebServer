@@ -39,6 +39,8 @@ public class Main {
             configurator = new Configurator(CONFIG, configuration, PluginManagerImpl.class);
             configurator.parse();
 
+            Runtime.getRuntime().addShutdownHook(new Thread(Main::shutdown));
+
             Scanner scanner = new Scanner(System.in, "UTF-8");
             while(true) {
                 if(!scanner.hasNextLine()) {
