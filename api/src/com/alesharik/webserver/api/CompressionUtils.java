@@ -1,22 +1,39 @@
 package com.alesharik.webserver.api;
 
+import lombok.experimental.UtilityClass;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+/**
+ * This class compress and decompress <code>byte</code> arrays
+ */
+@UtilityClass
 public final class CompressionUtils {
     private static final Deflater deflater = new Deflater();
     private static final Inflater inflater = new Inflater();
 
-    private CompressionUtils() {
-    }
-
+    /**
+     * Compress <code>byte</code> array with default compression level
+     *
+     * @param bytes <code>byte</code> array to compress
+     * @return compressed <code>byte</code> array
+     * @throws IOException if anything happens
+     */
     public static byte[] compress(byte[] bytes) throws IOException {
         return compress(bytes, CompressLevel.DEFAULT_COMPRESSION.getValue());
     }
 
+    /**
+     * Compress <code>byte</code> array
+     * @param bytes <code>byte</code> array to compress
+     * @param level compress level. See {@link CompressLevel}
+     * @return compressed <code>byte</code> array
+     * @throws IOException if anything happens
+     */
     public static byte[] compress(byte[] bytes, int level) throws IOException {
         deflater.setInput(bytes);
         deflater.setLevel(level);
@@ -36,6 +53,13 @@ public final class CompressionUtils {
         return output;
     }
 
+    /**
+     * Decompress <code>byte</code> array
+     * @param bytes <code>byte</code> array to decompress
+     * @return decompressed <code>byte</code> array
+     * @throws DataFormatException if anything happens
+     * @throws IOException if anything happens
+     */
     public static byte[] decompress(byte[] bytes) throws DataFormatException, IOException {
         inflater.setInput(bytes);
 
@@ -53,10 +77,25 @@ public final class CompressionUtils {
         return output;
     }
 
+    /**
+     * Compression level enum
+     */
     public enum CompressLevel {
+        /**
+         * Do not compress. This does not mean what same array return after compression!
+         */
         NO_COMPRESSION(0),
+        /**
+         * Compress with best speed
+         */
         BEST_SPEED(1),
+        /**
+         * Compress with best compression
+         */
         BEST_COMPRESSION(9),
+        /**
+         * Default value
+         */
         DEFAULT_COMPRESSION(-1);
 
         private final int value;
@@ -65,6 +104,9 @@ public final class CompressionUtils {
             this.value = value;
         }
 
+        /**
+         * Return int value for {@link #compress(byte[], int)} or {@link Deflater}
+         */
         public int getValue() {
             return value;
         }
