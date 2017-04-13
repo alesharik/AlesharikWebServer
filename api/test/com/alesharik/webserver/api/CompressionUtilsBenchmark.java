@@ -12,16 +12,14 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.DataFormatException;
 
 @BenchmarkTest("CompressionUtils")
-@Measurement(timeUnit = TimeUnit.MICROSECONDS, iterations = 10)
+@Measurement(timeUnit = TimeUnit.MICROSECONDS)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Warmup(iterations = 5)
 @State(Scope.Benchmark)
 public class CompressionUtilsBenchmark {
 
@@ -38,32 +36,32 @@ public class CompressionUtilsBenchmark {
     @BenchmarkMode(Mode.Throughput)
     @Group("CompressionUtils")
     @GroupThreads(2)
-    public byte[] testCompressDefault() throws IOException {
-        return CompressionUtils.compress(base, CompressionUtils.CompressLevel.DEFAULT_COMPRESSION.getValue());
+    public void testCompressDefault() throws IOException {
+        CompressionUtils.compress(base, CompressionUtils.CompressLevel.DEFAULT_COMPRESSION.getValue());
     }
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Group("CompressionUtils")
     @GroupThreads(2)
-    public byte[] testCompressFast() throws IOException {
-        return CompressionUtils.compress(base, CompressionUtils.CompressLevel.BEST_SPEED.getValue());
+    public void testCompressFast() throws IOException {
+        CompressionUtils.compress(base, CompressionUtils.CompressLevel.BEST_SPEED.getValue());
     }
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Group("CompressionUtils")
     @GroupThreads(2)
-    public byte[] testCompressGood() throws IOException {
-        return CompressionUtils.compress(base, CompressionUtils.CompressLevel.BEST_COMPRESSION.getValue());
+    public void testCompressGood() throws IOException {
+        CompressionUtils.compress(base, CompressionUtils.CompressLevel.BEST_COMPRESSION.getValue());
     }
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Group("CompressionUtils")
     @GroupThreads(2)
-    public byte[] testCompressNoCompress() throws IOException {
-        return CompressionUtils.compress(base, CompressionUtils.CompressLevel.NO_COMPRESSION.getValue());
+    public void testCompressNoCompress() throws IOException {
+        CompressionUtils.compress(base, CompressionUtils.CompressLevel.NO_COMPRESSION.getValue());
     }
 
     @Benchmark
