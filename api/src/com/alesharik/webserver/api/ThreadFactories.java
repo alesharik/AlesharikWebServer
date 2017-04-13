@@ -43,8 +43,22 @@ public final class ThreadFactories {
      */
     @Nonnull
     public static Supplier<String> incrementalSupplier(@Nonnull String name) {
-        AtomicInteger counter = new AtomicInteger(0);
-        return () -> name.concat(String.valueOf(counter.getAndIncrement()));
+        return new IncrementalSupplier(name);
+    }
+
+    private static final class IncrementalSupplier implements Supplier<String> {
+        private final String name;
+        private final AtomicInteger counter;
+
+        private IncrementalSupplier(String name) {
+            this.name = name;
+            this.counter = new AtomicInteger(0);
+        }
+
+        @Override
+        public String get() {
+            return name + counter.getAndIncrement();
+        }
     }
 
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
