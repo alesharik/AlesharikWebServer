@@ -1,14 +1,21 @@
 package com.alesharik.webserver.api;
 
-import javax.management.openmbean.KeyAlreadyExistsException;
-import java.util.HashMap;
+import com.alesharik.webserver.exceptions.MIMETypeAlreadyExistsException;
+import lombok.experimental.UtilityClass;
+
+import javax.annotation.concurrent.ThreadSafe;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class holds all of existing MIME types
  */
+@UtilityClass
+@ThreadSafe
 public final class MIMETypes {
-    private static final HashMap<String, String> types = new HashMap<>();
+    static final ConcurrentHashMap<String, String> types = new ConcurrentHashMap<>();
 
     static {
         addTypeWithReverseArguments("application/vnd.hzn-3d-crossword", ".x3d");
@@ -698,9 +705,6 @@ public final class MIMETypes {
         addTypeWithReverseArguments("application/vnd.zzazz.deck+xml", ".zaz");
     }
 
-    private MIMETypes() {
-    }
-
     private static void addTypeWithReverseArguments(String mimetype, String fileExtension) {
         types.put(fileExtension, mimetype);
     }
@@ -708,32 +712,45 @@ public final class MIMETypes {
     /**
      * Add type to MIME types list
      *
-     * @param fileExtension extension of file(example - .txt)
-     * @param mimeType      MIME type of this extension
+     * @param fileExtension extension of file like <code>.txt</code>
+     * @param mimeType      MIME type of this extension like <code>text/plain</code>
+     * @throws MIMETypeAlreadyExistsException if fileExtension already defined
      */
     public static void addType(String fileExtension, String mimeType) {
         if(contains(fileExtension)) {
-            throw new KeyAlreadyExistsException();
+            throw new MIMETypeAlreadyExistsException(mimeType, fileExtension);
         }
         types.put(fileExtension, mimeType);
     }
 
     /**
-     * Return all values as set
+     * Return all mime types(not file extensions!)
+     * @return unmodifiable set
      */
     public static Set<String> getMIMETypes() {
-        return (Set<String>) types.values();
+        return Collections.unmodifiableSet(new HashSet<>(types.values()));
+    }
+
+    /**
+     * Return all defined file extensions
+     *
+     * @return unmodifiable set
+     */
+    public static Set<String> getFileExtensions() {
+        return Collections.unmodifiableSet(types.keySet());
     }
 
     /**
      * Find MIME type by file extension
+     * @param fileExtension extension of file like <code>.txt</code>
      */
     public static String findType(String fileExtension) {
         return types.get(fileExtension);
     }
 
     /**
-     * Check is list contains specific MIME type
+     * Check for MIME type
+     * @param fileExtension extension of file like <code>.txt</code>
      */
     public static boolean contains(String fileExtension) {
         return types.containsKey(fileExtension);

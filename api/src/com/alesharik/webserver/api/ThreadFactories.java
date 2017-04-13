@@ -1,5 +1,7 @@
 package com.alesharik.webserver.api;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
@@ -12,35 +14,42 @@ import java.util.function.Supplier;
  */
 @UtilityClass
 public final class ThreadFactories {
+    @Nonnull
     public static ThreadFactory newThreadFactory(@Nonnull ThreadGroup threadGroup) {
         return new GroupThreadFactory(threadGroup);
     }
 
+    @Nonnull
     public static ThreadFactory newThreadFactory(@Nonnull ThreadGroup threadGroup, @Nonnull Thread.UncaughtExceptionHandler exceptionHandler) {
         return new GroupThreadFactoryWithUncaughtExceptionHandler(threadGroup, exceptionHandler);
     }
 
+    @Nonnull
     public static ThreadFactory newThreadFactory(@Nonnull ThreadGroup threadGroup, @Nonnull Supplier<String> nameSupplier) {
         return new NamedGroupThreadFactory(threadGroup, nameSupplier);
     }
 
-    public static Supplier<String> incrementalSupplier(String name) {
-        return new Supplier<String>() {
-            private final AtomicInteger counter = new AtomicInteger(0);
-
-            @Override
-            public String get() {
-                return name.concat(String.valueOf(counter.getAndIncrement()));
-            }
-        };
+    @Nonnull
+    public static ThreadFactory newThreadFactory(@Nonnull Supplier<String> nameSupplier) {
+        return new NamedThreadFactory(nameSupplier);
     }
 
+    /**
+     * Create supplier with counter. It will supply <code>name + counter.get()</code> string and increment counter on every step.
+     * Supplier is thread-safe. Counter starts form 0
+     *
+     * @param name the name
+     * @return supplier
+     */
+    @Nonnull
+    public static Supplier<String> incrementalSupplier(@Nonnull String name) {
+        AtomicInteger counter = new AtomicInteger(0);
+        return () -> name.concat(String.valueOf(counter.getAndIncrement()));
+    }
+
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     private static class GroupThreadFactory implements ThreadFactory {
         private final ThreadGroup threadGroup;
-
-        GroupThreadFactory(ThreadGroup threadGroup) {
-            this.threadGroup = threadGroup;
-        }
 
         @Override
         public Thread newThread(Runnable r) {
@@ -48,18 +57,26 @@ public final class ThreadFactories {
         }
     }
 
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     private static class NamedGroupThreadFactory implements ThreadFactory {
         private final ThreadGroup threadGroup;
         private final Supplier<String> nameSupplier;
 
-        private NamedGroupThreadFactory(ThreadGroup threadGroup, Supplier<String> nameSupplier) {
-            this.threadGroup = threadGroup;
-            this.nameSupplier = nameSupplier;
-        }
-
         @Override
         public Thread newThread(Runnable r) {
             Thread thread = new Thread(threadGroup, r);
+            thread.setName(nameSupplier.get());
+            return thread;
+        }
+    }
+
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    private static class NamedThreadFactory implements ThreadFactory {
+        private final Supplier<String> nameSupplier;
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r);
             thread.setName(nameSupplier.get());
             return thread;
         }
