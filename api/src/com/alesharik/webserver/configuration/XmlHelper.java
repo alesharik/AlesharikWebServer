@@ -155,4 +155,50 @@ public class XmlHelper {
             return list;
         }
     }
+
+
+    /**
+     * Get {@link Element} form xml config
+     *
+     * @param nodeName name of node
+     * @param config   config node
+     * @param required if true, throw {@link ConfigurationParseError} if node not found
+     * @return null if required == false and value not found, overwise {@link Element} instance
+     */
+    @Nullable
+    public static Element getXmlElement(String nodeName, Element config, boolean required) {
+        Node nameNode = config.getElementsByTagName(nodeName).item(0);
+        if(nameNode == null) {
+            if(required) {
+                throw new ConfigurationParseError("Node " + nodeName + " not found!");
+            } else {
+                return null;
+            }
+        } else {
+            return (Element) nameNode;
+        }
+    }
+
+
+    /**
+     * Get string content form xml config
+     *
+     * @param nodeName name of node
+     * @param config   config node
+     * @param required if true, throw {@link ConfigurationParseError} if node not found
+     * @return null if required == false and value not found, overwise {@link String}
+     */
+    @Nullable
+    public static String getString(String nodeName, Element config, boolean required) {
+        Node nameNode = config.getElementsByTagName(nodeName).item(0);
+        if(nameNode == null) {
+            if(required) {
+                throw new ConfigurationParseError("Node " + nodeName + " not found!");
+            } else {
+                return null;
+            }
+        } else {
+            return nameNode.getTextContent();
+        }
+    }
 }

@@ -80,6 +80,9 @@ final class CustomOutputFormat extends AbstractOutputFormat {
         for(RunResult runResult : runResults) {
             BenchmarkParams bp = runResult.getParams();
             for(String k : bp.getParamsKeys()) {
+                if(k.length() > 20) {
+                    k = k.substring(0, 17).concat("...");
+                }
                 params.add(k);
                 Integer len = paramLengths.get(k);
                 if(len == null) {
@@ -137,9 +140,6 @@ final class CustomOutputFormat extends AbstractOutputFormat {
 
                 for(String k : params) {
                     String v = res.getParams().getParam(k);
-                    if(v != null && v.length() > k.length()) {
-                        v = v.substring(0, k.length() - 3).concat("..."); //3 - for '.'
-                    }
                     out.printf("%" + paramLengths.get(k) + "s", (v == null) ? "N/A" : v);
                 }
 
