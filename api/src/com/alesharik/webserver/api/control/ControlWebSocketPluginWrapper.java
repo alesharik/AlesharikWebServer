@@ -5,6 +5,7 @@ import java.io.Serializable;
 /**
  * Class, implementing this interface, used only for send messages from ControlWebSocket
  */
+@Deprecated
 public interface ControlWebSocketPluginWrapper {
     /**
      * Return name of {@link ControlWebSocketPlugin}

@@ -100,8 +100,6 @@ public class ControlRequestHandler implements RequestHandler {
     }
 
     private void loginSuccess(Response response, boolean remember, String logpass) throws IOException {
-//        response.setStatus(HttpStatus.FOUND_302);
-//        response.addHeader(Header.Location, "/dashboard.html");
         UUID uuid = UUID.randomUUID();
         Cookie uuidCookie = new Cookie("UUID", uuid.toString());
         uuidCookie.setHttpOnly(true);

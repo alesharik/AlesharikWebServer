@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.HashMap;
 
 //TODO send it to plugin
+@Deprecated
 public interface IServerConsoleCommand {
 
     String handle(String params);

@@ -6,6 +6,7 @@ import com.alesharik.webserver.control.websockets.control.WebSocketController;
 
 import java.io.Serializable;
 
+@Deprecated
 public class ControlWebSocketWrapper implements ControlWebSocketPluginWrapper {
     private final WebSocketController webSocketController;
     private final ControlWebSocketPlugin plugin;

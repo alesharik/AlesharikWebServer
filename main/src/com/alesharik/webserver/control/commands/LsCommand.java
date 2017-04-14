@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 
+@Deprecated
 public class LsCommand implements IServerConsoleCommand {
     private File root;
     private File main;

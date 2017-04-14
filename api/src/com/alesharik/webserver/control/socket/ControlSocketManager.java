@@ -7,8 +7,4 @@ public interface ControlSocketManager {
     void registerNewControlSocketHandlerFactory(String name, ControlSocketHandlerFactory factory);
 
     void unregisterControlSocketHandlerFactory(String name, ControlSocketHandlerFactory factory);
-
-    void connect(String url);
-
-    void disconnect(String url);
 }

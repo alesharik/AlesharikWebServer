@@ -3,6 +3,7 @@ package com.alesharik.webserver.api.control;
 /**
  * Class, implementing this interface, used for receive messages form ControlWebSocket
  */
+@Deprecated
 public interface ControlWebSocketPlugin {
     /**
      * Return unique name of this plugin.<br>

@@ -5,6 +5,7 @@ import com.alesharik.webserver.control.IServerConsoleCommand;
 import java.io.File;
 import java.util.HashMap;
 
+@Deprecated
 public class CdCommand implements IServerConsoleCommand {
     File root;
     File main;

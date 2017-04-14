@@ -10,6 +10,7 @@ import org.glassfish.grizzly.websockets.WebSocketListener;
 /**
  * This class represent WebSocket, which control the server
  */
+@Deprecated
 //TODO rewrite this
 public final class ServerControllerWebSocket extends DefaultWebSocket {
     private ServerControllerWebSocketApplication application;

@@ -12,6 +12,7 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 import java.net.URI;
 
+@Deprecated
 @ClientEndpoint
 public class WebSocketClientEndpoint {
     Session userSession = null;

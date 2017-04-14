@@ -17,6 +17,7 @@ import java.util.HashMap;
 /**
  * This is controller of ControlWebSocketPluginWrapper
  */
+@Deprecated
 public final class WebSocketController {//TODO rewrite
     private final HashMap<String, ControlWebSocketWrapper> wrappers = new HashMap<>();
     private final URI uri;

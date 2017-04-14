@@ -5,6 +5,7 @@ import com.alesharik.webserver.logger.Logger;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+@Deprecated
 class MessageParser extends Thread {
     private final ServerControllerWebSocketApplication application;
     private final BlockingDeque<String> queue = new LinkedBlockingDeque<>();

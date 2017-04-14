@@ -9,6 +9,7 @@ import org.glassfish.grizzly.websockets.WebSocketListener;
 
 import java.io.File;
 
+@Deprecated
 //TODO delete this
 public class ServerControllerWebSocket extends DefaultWebSocket {
     private String logpass;

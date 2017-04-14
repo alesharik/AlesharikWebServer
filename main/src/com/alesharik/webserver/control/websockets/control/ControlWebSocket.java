@@ -18,6 +18,7 @@ import java.net.URI;
 /**
  * This class used for control {@link MainServer} with WebSockets
  */
+@Deprecated
 @ClientEndpoint
 public final class ControlWebSocket {
     private final MessageParser messageParser;

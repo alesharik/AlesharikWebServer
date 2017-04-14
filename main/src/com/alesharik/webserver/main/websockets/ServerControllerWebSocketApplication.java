@@ -19,6 +19,7 @@ import java.util.HashMap;
 /**
  * This class represent {@link WebSocketApplication} for control {@link MainServer} with WebSockets
  */
+@Deprecated
 public final class ServerControllerWebSocketApplication extends WebSocketApplication {
     private final HashMap<String, ControlWebSocketWrapper> wrappers = new HashMap<>();
     private final Broadcaster broadcaster = new OptimizedBroadcaster();

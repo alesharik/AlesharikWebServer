@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * This {@link RequestHandler} used for handle specific requests in control mode
  */
+@Deprecated
 @SuppressFBWarnings("UWF_UNWRITTEN_FIELD")
 public final class ControlRequestHandlerOld implements RequestHandler {
     private final ConcurrentLiveArrayList<UUID> sessions = new ConcurrentLiveArrayList<>();

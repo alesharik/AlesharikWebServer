@@ -47,6 +47,7 @@ import static com.alesharik.webserver.main.Main.USER_DIR;
  * This class used fo run and shutdown server.In this class load configuration, initialize FileManager, OldPluginManager
  * and setup server
  */
+@Deprecated
 @Prefix("[ServerController]")
 public final class ServerController {
     private final ConfigValues configValues = new ConfigValues();

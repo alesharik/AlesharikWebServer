@@ -4,6 +4,7 @@ import com.alesharik.webserver.control.IServerConsoleCommand;
 
 import java.util.HashMap;
 
+@Deprecated
 public class DirCommand implements IServerConsoleCommand {
     private HashMap<String, String> map;
 

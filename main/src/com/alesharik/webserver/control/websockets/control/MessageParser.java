@@ -7,6 +7,7 @@ import one.nio.serial.SerializerNotFoundException;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+@Deprecated
 class MessageParser extends Thread {
     private final ControlWebSocket controlWebSocket;
     private final BlockingDeque<String> queue = new LinkedBlockingDeque<>();

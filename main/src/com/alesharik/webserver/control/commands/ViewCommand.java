@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 
+@Deprecated
 public class ViewCommand implements IServerConsoleCommand {
     private File root;
     private File main;
