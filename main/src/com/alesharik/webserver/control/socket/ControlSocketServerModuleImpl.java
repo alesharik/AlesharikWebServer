@@ -128,7 +128,7 @@ public class ControlSocketServerModuleImpl implements ControlSocketServerModule 
 
             for(String host : hosts) {
                 SSLServerSocket serverSocket = (SSLServerSocket) socketFactory.createServerSocket(port, 0, Inet4Address.getByName(host));
-                ControlSocketServerConnectionManager connectionManager = new ControlSocketServerConnectionManager(serverSocket, new ThreadGroup(""), login, password);
+                ControlSocketServerConnectionManager connectionManager = new ControlSocketServerConnectionManager(serverSocket, login, password);
                 connectionManagers.put(host, connectionManager);
             }
         } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyManagementException e) {
