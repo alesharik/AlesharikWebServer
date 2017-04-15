@@ -4,6 +4,7 @@ import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnecti
 import com.alesharik.webserver.configuration.Module;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 
 public interface ControlSocketClientModule extends Module, ControlSocketClientModuleMXBean {
     @Nonnull
@@ -12,5 +13,5 @@ public interface ControlSocketClientModule extends Module, ControlSocketClientMo
         return "control-web-socket-client";
     }
 
-    ControlSocketClientConnection newConnection(String host, int port, ControlSocketClientConnection.Authenticator authenticator);
+    ControlSocketClientConnection newConnection(String host, int port, ControlSocketClientConnection.Authenticator authenticator) throws IOException;
 }

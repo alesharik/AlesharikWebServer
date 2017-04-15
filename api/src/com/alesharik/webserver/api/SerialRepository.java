@@ -143,12 +143,14 @@ public final class SerialRepository {
      * Deserialize and add serializer to {@link Repository}
      *
      * @param serialized base64 {@link DataStream} with serializer
+     * @return new serializer
      */
-    public static void addSerializedSerializer(String serialized) {
+    public static Serializer addSerializedSerializer(String serialized) {
         Serializer serializer = deserializeSerializer(serialized);
         if(serializer != null) {
             Repository.provideSerializer(serializer);
         }
+        return serializer;
     }
 
     @Prefix("[SnapshotThread]")
