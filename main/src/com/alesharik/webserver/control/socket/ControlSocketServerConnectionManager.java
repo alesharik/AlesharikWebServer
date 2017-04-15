@@ -29,7 +29,7 @@ class ControlSocketServerConnectionManager extends Thread {
     };
 
     private final SSLServerSocket sslServerSocket;
-    private final ThreadGroup threadGroup;
+    private final ThreadGroup threadGroup = new ThreadGroup("ControlSocketServerConnectionWorkers");
 
     private final String login;
     private final String password;
