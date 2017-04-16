@@ -10,7 +10,7 @@ public interface ControlSocketClientModule extends Module, ControlSocketClientMo
     @Nonnull
     @Override
     default String getName() {
-        return "control-web-socket-client";
+        return "control-socket-client";
     }
 
     ControlSocketClientConnection newConnection(String host, int port, ControlSocketClientConnection.Authenticator authenticator) throws IOException;

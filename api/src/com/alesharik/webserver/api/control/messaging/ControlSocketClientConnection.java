@@ -14,6 +14,8 @@ public interface ControlSocketClientConnection extends ControlSocketConnection {
 
     boolean containsListener(Listener listener);
 
+    void awaitConnection();
+
     /**
      * Listen received messages
      */

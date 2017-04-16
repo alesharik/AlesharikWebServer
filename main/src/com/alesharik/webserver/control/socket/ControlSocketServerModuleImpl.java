@@ -109,15 +109,15 @@ public class ControlSocketServerModuleImpl implements ControlSocketServerModule 
 
     @Override
     public void start() {
-        KeyStore keyStore = null;
+        KeyStore keyStore;
         try {
             keyStore = KeyStore.getInstance("JKS");
             keyStore.load(new FileInputStream(keystoreFile), keystorePassword.toCharArray());
 
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("X509");
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
             keyManagerFactory.init(keyStore, keystorePassword.toCharArray());
 
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("X509");
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
             trustManagerFactory.init(keyStore);
 
             SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -129,6 +129,7 @@ public class ControlSocketServerModuleImpl implements ControlSocketServerModule 
             for(String host : hosts) {
                 SSLServerSocket serverSocket = (SSLServerSocket) socketFactory.createServerSocket(port, 0, Inet4Address.getByName(host));
                 ControlSocketServerConnectionManager connectionManager = new ControlSocketServerConnectionManager(serverSocket, login, password);
+                connectionManager.start();
                 connectionManagers.put(host, connectionManager);
             }
         } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyManagementException e) {

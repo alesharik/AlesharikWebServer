@@ -9,6 +9,6 @@ public interface ControlSocketServerModule extends Module, ControlSocketServerMo
     @Nonnull
     @Override
     default String getName() {
-        return "control-web-socket-server";
+        return "control-socket-server";
     }
 }

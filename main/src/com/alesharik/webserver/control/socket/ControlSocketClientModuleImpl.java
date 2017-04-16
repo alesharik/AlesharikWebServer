@@ -84,10 +84,10 @@ public class ControlSocketClientModuleImpl implements ControlSocketClientModule 
             KeyStore keyStore = KeyStore.getInstance("JKS");
             keyStore.load(new FileInputStream(keystoreFile), keystorePassword.toCharArray());
 
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("X509");
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
             keyManagerFactory.init(keyStore, keystorePassword.toCharArray());
 
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("X509");
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
             trustManagerFactory.init(keyStore);
 
             SSLContext sslContext = SSLContext.getInstance("TLS");

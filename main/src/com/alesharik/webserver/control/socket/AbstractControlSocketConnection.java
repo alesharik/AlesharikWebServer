@@ -36,7 +36,7 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
     private final ControlSocketClientConnection.Authenticator authenticator;
 
     private final Map<Long, ByteBuffer> awaitSerializers = new ConcurrentHashMap<>();
-    private final AtomicBoolean isAuthenticated = new AtomicBoolean(false);
+    protected final AtomicBoolean isAuthenticated = new AtomicBoolean(false);
 
 
     @Override
@@ -73,8 +73,11 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
                 byte[] buffer = new byte[1024];
                 int nRead;
                 ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream();
-                while((nRead = inputStream.read(buffer)) != -1) {
+                while((nRead = inputStream.read(buffer)) != 0) {
                     dataBuffer.write(buffer, 0, nRead);
+                    if(inputStream.available() < 1) {
+                        break;
+                    }
                 }
 
                 byte[] data = dataBuffer.toByteArray();
@@ -132,6 +135,9 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
     }
 
     private void authenticate() {
+        if(isAuthenticated.get()) {
+            return;
+        }
         DataStream send = new DataStream(256);
         send.writeByte(AUTHENTICATION_REQUESTED);
         send.writeUTF(authenticator.getLogin());
@@ -185,6 +191,7 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
 
     private void parseMessage(DataStream dataStream) throws IOException, ClassNotFoundException {
         ControlSocketMessage message = (ControlSocketMessage) dataStream.readObject();
+        parseMessageObject(message);
     }
 
     protected abstract boolean processAuthentication(String login, String password);
@@ -255,6 +262,6 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
     }
 
     public boolean isConnected() {
-        return sslSocket.isConnected() && isAuthenticated.get();
+        return !sslSocket.isClosed() && sslSocket.isConnected() && isAuthenticated.get();
     }
 }
