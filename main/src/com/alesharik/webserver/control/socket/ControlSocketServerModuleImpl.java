@@ -112,7 +112,9 @@ public class ControlSocketServerModuleImpl implements ControlSocketServerModule 
         KeyStore keyStore;
         try {
             keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(new FileInputStream(keystoreFile), keystorePassword.toCharArray());
+            try (FileInputStream stream = new FileInputStream(keystoreFile);) {
+                keyStore.load(stream, keystorePassword.toCharArray());
+            }
 
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
             keyManagerFactory.init(keyStore, keystorePassword.toCharArray());
