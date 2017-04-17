@@ -17,6 +17,9 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+/**
+ * Connection pool for client
+ */
 class ControlSocketClientConnectionPool {
     private final ExecutorService executorService;
     private final SSLSocketFactory sslSocketFactory;
@@ -41,11 +44,6 @@ class ControlSocketClientConnectionPool {
         connections.add(controlSocketClientConnection);
 
         executorService.submit(controlSocketClientConnection);
-//
-//        Cleaner.create(controlSocketClientConnection, () -> {
-//            controlSocketClientConnection.close();
-//            connections.remove(controlSocketClientConnection);
-//        });
 
         return controlSocketClientConnection;
     }

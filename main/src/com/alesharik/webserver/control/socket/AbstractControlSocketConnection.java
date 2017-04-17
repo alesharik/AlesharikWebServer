@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Implementation of {@link ControlSocketConnection}
+ */
 @NotThreadSafe
 @AllArgsConstructor
 abstract class AbstractControlSocketConnection implements ControlSocketConnection, Runnable {
@@ -34,10 +37,9 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
 
     private final Socket sslSocket;
     private final ControlSocketClientConnection.Authenticator authenticator;
-
     private final Map<Long, ByteBuffer> awaitSerializers = new ConcurrentHashMap<>();
-    protected final AtomicBoolean isAuthenticated = new AtomicBoolean(false);
 
+    protected final AtomicBoolean isAuthenticated = new AtomicBoolean(false);
 
     @Override
     public String getRemoteHost() {
@@ -63,6 +65,7 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
     @Override
     @SneakyThrows
     public void run() {
+        Thread.currentThread().setName("ControlSocketConnection-" + getRemoteHost() + ':' + getRemotePort());
         while(!sslSocket.isConnected()) {
             Thread.sleep(1); //Wait for socket opening
         }
@@ -124,6 +127,7 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
                         System.err.println("Unexpected control byte(" + Byte.toString(command) + ") from " + getRemoteHost() + ":" + getRemotePort() + "! Closing...");
                         writeError();
                         close();
+                        Thread.currentThread().setName("ControlSocketConnection-empty");
                         return;
                 }
 
@@ -132,7 +136,28 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
                 e.printStackTrace();
             }
         }
+        Thread.currentThread().setName("ControlSocketConnection-empty");
     }
+
+    public void close() {
+        try {
+            sslSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isClosed() {
+        return sslSocket.isClosed();
+    }
+
+    public boolean isConnected() {
+        return !sslSocket.isClosed() && sslSocket.isConnected() && isAuthenticated.get();
+    }
+
+    protected abstract boolean processAuthentication(String login, String password);
+
+    protected abstract void parseMessageObject(ControlSocketMessage controlSocketMessage);
 
     private void authenticate() {
         if(isAuthenticated.get()) {
@@ -194,10 +219,6 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
         parseMessageObject(message);
     }
 
-    protected abstract boolean processAuthentication(String login, String password);
-
-    protected abstract void parseMessageObject(ControlSocketMessage controlSocketMessage);
-
     private void sendSerializer(DataStream dataStream) {
         try {
             long id = dataStream.readLong();
@@ -249,19 +270,4 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
         }
     }
 
-    public void close() {
-        try {
-            sslSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public boolean isClosed() {
-        return sslSocket.isClosed();
-    }
-
-    public boolean isConnected() {
-        return !sslSocket.isClosed() && sslSocket.isConnected() && isAuthenticated.get();
-    }
 }

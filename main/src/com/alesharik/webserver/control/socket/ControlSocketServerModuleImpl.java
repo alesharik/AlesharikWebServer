@@ -1,11 +1,13 @@
 package com.alesharik.webserver.control.socket;
 
 import com.alesharik.webserver.api.control.ControlSocketServerModule;
+import com.alesharik.webserver.api.control.ControlSocketServerModuleMXBean;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Prefixes;
 import one.nio.lock.RWLock;
+import one.nio.mgt.Management;
 import org.w3c.dom.Element;
 
 import javax.annotation.Nullable;
@@ -31,11 +33,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Prefixes({"[ControlSocket]", "[ControlSocketServer]"})
 @ThreadSafe
 public class ControlSocketServerModuleImpl implements ControlSocketServerModule {
+    private static final AtomicInteger COUNTER = new AtomicInteger(0);
+
     private final RWLock lock = new RWLock();
+    private final int id = COUNTER.getAndIncrement();
 
     private String login;
     private String password;
@@ -109,6 +115,7 @@ public class ControlSocketServerModuleImpl implements ControlSocketServerModule 
 
     @Override
     public void start() {
+        Management.registerMXBean(this, ControlSocketServerModuleMXBean.class, "ControlSocketServer-" + id);
         KeyStore keyStore;
         try {
             keyStore = KeyStore.getInstance("JKS");
@@ -143,11 +150,13 @@ public class ControlSocketServerModuleImpl implements ControlSocketServerModule 
     @Override
     public void shutdown() {
         connectionManagers.values().forEach(ControlSocketServerConnectionManager::shutdown);
+        Management.unregisterMXBean("ControlSocketServer-" + id);
     }
 
     @Override
     public void shutdownNow() {
         connectionManagers.values().forEach(ControlSocketServerConnectionManager::shutdownNow);
+        Management.unregisterMXBean("ControlSocketServer-" + id);
     }
 
     @Nullable

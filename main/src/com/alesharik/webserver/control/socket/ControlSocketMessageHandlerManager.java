@@ -11,6 +11,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * This class holds all {@link ControlSocketMessageHandler}s and listen it
+ */
 @ClassPathScanner
 @UtilityClass
 public class ControlSocketMessageHandlerManager {
@@ -33,6 +36,11 @@ public class ControlSocketMessageHandlerManager {
         }
     }
 
+    /**
+     * Return handler for message class
+     *
+     * @param clazz message class
+     */
     public static Optional<ControlSocketMessageHandler> getHandlerFor(Class<?> clazz) {
         return Optional.ofNullable(handlers.get(clazz));
     }

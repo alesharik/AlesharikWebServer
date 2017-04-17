@@ -13,6 +13,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Connection pool for server
+ */
 @AllArgsConstructor
 class ControlSocketServerConnectionManager extends Thread {
     private static final ControlSocketClientConnection.Authenticator authenticator = new ControlSocketClientConnection.Authenticator() {
@@ -48,11 +51,6 @@ class ControlSocketServerConnectionManager extends Thread {
                 connections.add(controlSocketServerConnection);
 
                 executorService.submit(controlSocketServerConnection);
-
-//                Cleaner.create(controlSocketServerConnection, () -> {
-//                    controlSocketServerConnection.close();
-//                    connections.remove(controlSocketServerConnection);
-//                });
             } catch (IOException e) {
                 e.printStackTrace();
             }
