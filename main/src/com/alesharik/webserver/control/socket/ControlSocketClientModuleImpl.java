@@ -1,12 +1,14 @@
 package com.alesharik.webserver.control.socket;
 
 import com.alesharik.webserver.api.control.ControlSocketClientModule;
+import com.alesharik.webserver.api.control.ControlSocketClientModuleMXBean;
 import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnection;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Prefixes;
 import one.nio.lock.RWLock;
+import one.nio.mgt.Management;
 import org.w3c.dom.Element;
 
 import javax.annotation.Nullable;
@@ -29,7 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ControlSocketClientModuleImpl implements ControlSocketClientModule {
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
     private final RWLock lock = new RWLock();
-    private final ThreadGroup workerThreadGroup = new ThreadGroup("ControlSocketClientWorkers-" + COUNTER.getAndIncrement());
+    private final int id = COUNTER.getAndIncrement();
+    private final ThreadGroup workerThreadGroup = new ThreadGroup("ControlSocketClientWorkers-" + id);
 
     private File keystoreFile;
     private String keystorePassword;
@@ -69,6 +72,7 @@ public class ControlSocketClientModuleImpl implements ControlSocketClientModule 
 
     @Override
     public void start() {
+        Management.registerMXBean(this, ControlSocketClientModuleMXBean.class, "ControlSocketClient-" + id);
         File keystoreFile;
         String keystorePassword;
 
@@ -82,12 +86,14 @@ public class ControlSocketClientModuleImpl implements ControlSocketClientModule 
 
         try {
             KeyStore keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(new FileInputStream(keystoreFile), keystorePassword.toCharArray());
+            try (FileInputStream stream = new FileInputStream(keystoreFile)) {
+                keyStore.load(stream, keystorePassword.toCharArray());
+            }
 
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("X509");
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
             keyManagerFactory.init(keyStore, keystorePassword.toCharArray());
 
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("X509");
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
             trustManagerFactory.init(keyStore);
 
             SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -103,11 +109,13 @@ public class ControlSocketClientModuleImpl implements ControlSocketClientModule 
     @Override
     public void shutdown() {
         connectionPool.shutdown();
+        Management.unregisterMXBean("ControlSocketClient-" + id);
     }
 
     @Override
     public void shutdownNow() {
         connectionPool.shutdown();
+        Management.unregisterMXBean("ControlSocketClient-" + id);
     }
 
     @Nullable

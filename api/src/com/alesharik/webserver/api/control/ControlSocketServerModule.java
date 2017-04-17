@@ -6,9 +6,12 @@ import javax.annotation.Nonnull;
 
 public interface ControlSocketServerModule extends Module, ControlSocketServerModuleMXBean {
 
+    /**
+     * Return "control-socket-server" - name of module
+     */
     @Nonnull
     @Override
     default String getName() {
-        return "control-web-socket-server";
+        return "control-socket-server";
     }
 }

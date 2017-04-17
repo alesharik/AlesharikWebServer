@@ -4,7 +4,6 @@ import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
-import com.alesharik.webserver.control.websockets.control.WebSocketController;
 import com.alesharik.webserver.server.api.RequestHandler;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.glassfish.grizzly.http.Cookie;
@@ -19,7 +18,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This {@link RequestHandler} used for handle specific requests in control mode
@@ -30,7 +28,6 @@ public final class ControlRequestHandlerOld implements RequestHandler {
     private final ConcurrentLiveArrayList<UUID> sessions = new ConcurrentLiveArrayList<>();
     private final FileManager fileManager;
     private final AdminDataStorageImpl adminDataStorageImpl;
-    private final ConcurrentHashMap<String, WebSocketController> servers = new ConcurrentHashMap<>();
 
     private ServerConsoleCommandHandler serverConsoleCommandHandler;
     private ServerHolder serverHolder;
@@ -112,15 +109,6 @@ public final class ControlRequestHandlerOld implements RequestHandler {
 //                servers.put(server, serverHolder.connectAndSend(server, request.getParameter("serverLogin"), request.getParameter("serverPassword")));
             }
             return;
-        } else if(request.getDecodedRequestURI().equals("/getServerBaseInfo")) {
-            if(hasValidUUID(request)) {
-                WebSocketController endpoint = servers.get(serverHolder.getServer(Integer.parseInt(request.getParameter("serverIndex"))));
-                String responsee = endpoint.sendMessageAndGetResponse("getBaseInfo");
-                response.setContentLength(responsee.length());
-                response.setContentType(MIMETypes.findType(".txt"));
-                response.getWriter().write(responsee);
-                return;
-            }
         } else if(request.getDecodedRequestURI().equals("/isServerConnected")) {
             if(hasValidUUID(request)) {
                 response.setContentType(MIMETypes.findType(".txt"));
@@ -138,15 +126,6 @@ public final class ControlRequestHandlerOld implements RequestHandler {
         } else if(request.getDecodedRequestURI().equals("/deleteServer")) {
             if(hasValidUUID(request)) {
                 serverHolder.removeServer(Integer.parseInt(request.getParameter("serverIndex")));
-            }
-        } else if(request.getDecodedRequestURI().equals("/remoteServerCommand")) {
-            if(hasValidUUID(request)) {
-                WebSocketController websocket = servers.get(serverHolder.getServer(Integer.parseInt(request.getParameter("serverIndex"))));
-                String responsee = websocket.sendMessageAndGetResponse("Command=" + request.getParameter("command") + "=Params=" + request.getParameter("params"));
-                response.setContentType(MIMETypes.findType(".txt"));
-                response.setContentLength(responsee.length());
-                response.getWriter().write(responsee);
-                return;
             }
         } else if(request.getDecodedRequestURI().equals("/downloadPlugin")) {
             if(hasValidUUID(request)) {

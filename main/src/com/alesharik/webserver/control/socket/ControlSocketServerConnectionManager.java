@@ -5,7 +5,6 @@ import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnecti
 import com.alesharik.webserver.api.control.messaging.ControlSocketMessage;
 import com.alesharik.webserver.api.control.messaging.ControlSocketServerConnection;
 import lombok.AllArgsConstructor;
-import sun.misc.Cleaner;
 
 import javax.net.ssl.SSLServerSocket;
 import java.io.IOException;
@@ -14,6 +13,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Connection pool for server
+ */
 @AllArgsConstructor
 class ControlSocketServerConnectionManager extends Thread {
     private static final ControlSocketClientConnection.Authenticator authenticator = new ControlSocketClientConnection.Authenticator() {
@@ -44,16 +46,11 @@ class ControlSocketServerConnectionManager extends Thread {
             try {
                 Socket client = sslServerSocket.accept();
 
-                ControlSocketServerConnectionImpl controlSocketServerConnection = new ControlSocketServerConnectionImpl(client, authenticator, login, password);
+                ControlSocketServerConnectionImpl controlSocketServerConnection = new ControlSocketServerConnectionImpl(client, authenticator, login, password, connections);
 
                 connections.add(controlSocketServerConnection);
 
                 executorService.submit(controlSocketServerConnection);
-
-                Cleaner.create(controlSocketServerConnection, () -> {
-                    controlSocketServerConnection.close();
-                    connections.remove(controlSocketServerConnection);
-                });
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -77,11 +74,14 @@ class ControlSocketServerConnectionManager extends Thread {
     private static final class ControlSocketServerConnectionImpl extends AbstractControlSocketConnection implements ControlSocketServerConnection {
         private final String login;
         private final String password;
+        private final CopyOnWriteArrayList<ControlSocketServerConnectionImpl> connections;
 
-        public ControlSocketServerConnectionImpl(Socket sslSocket, ControlSocketClientConnection.Authenticator authenticator, String login, String password) {
+        public ControlSocketServerConnectionImpl(Socket sslSocket, ControlSocketClientConnection.Authenticator authenticator, String login, String password, CopyOnWriteArrayList<ControlSocketServerConnectionImpl> connections) {
             super(sslSocket, authenticator);
             this.login = login;
             this.password = password;
+            this.connections = connections;
+            this.isAuthenticated.set(true);
         }
 
 
@@ -94,7 +94,13 @@ class ControlSocketServerConnectionManager extends Thread {
         @Override
         protected void parseMessageObject(ControlSocketMessage controlSocketMessage) {
             ControlSocketMessageHandlerManager.getHandlerFor(controlSocketMessage.getClass())
-                    .ifPresent(controlSocketMessageHandler -> controlSocketMessageHandler.handleMessage(controlSocketMessage));
+                    .ifPresent(controlSocketMessageHandler -> controlSocketMessageHandler.handleMessage(controlSocketMessage, this));
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            connections.remove(this);
         }
     }
 }

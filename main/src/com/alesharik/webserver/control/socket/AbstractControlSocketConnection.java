@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Implementation of {@link ControlSocketConnection}
+ */
 @NotThreadSafe
 @AllArgsConstructor
 abstract class AbstractControlSocketConnection implements ControlSocketConnection, Runnable {
@@ -34,10 +37,9 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
 
     private final Socket sslSocket;
     private final ControlSocketClientConnection.Authenticator authenticator;
-
     private final Map<Long, ByteBuffer> awaitSerializers = new ConcurrentHashMap<>();
-    private final AtomicBoolean isAuthenticated = new AtomicBoolean(false);
 
+    protected final AtomicBoolean isAuthenticated = new AtomicBoolean(false);
 
     @Override
     public String getRemoteHost() {
@@ -63,6 +65,7 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
     @Override
     @SneakyThrows
     public void run() {
+        Thread.currentThread().setName("ControlSocketConnection-" + getRemoteHost() + ':' + getRemotePort());
         while(!sslSocket.isConnected()) {
             Thread.sleep(1); //Wait for socket opening
         }
@@ -73,8 +76,11 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
                 byte[] buffer = new byte[1024];
                 int nRead;
                 ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream();
-                while((nRead = inputStream.read(buffer)) != -1) {
+                while((nRead = inputStream.read(buffer)) != 0) {
                     dataBuffer.write(buffer, 0, nRead);
+                    if(inputStream.available() < 1) {
+                        break;
+                    }
                 }
 
                 byte[] data = dataBuffer.toByteArray();
@@ -121,6 +127,7 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
                         System.err.println("Unexpected control byte(" + Byte.toString(command) + ") from " + getRemoteHost() + ":" + getRemotePort() + "! Closing...");
                         writeError();
                         close();
+                        Thread.currentThread().setName("ControlSocketConnection-empty");
                         return;
                 }
 
@@ -129,9 +136,33 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
                 e.printStackTrace();
             }
         }
+        Thread.currentThread().setName("ControlSocketConnection-empty");
     }
 
+    public void close() {
+        try {
+            sslSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isClosed() {
+        return sslSocket.isClosed();
+    }
+
+    public boolean isConnected() {
+        return !sslSocket.isClosed() && sslSocket.isConnected() && isAuthenticated.get();
+    }
+
+    protected abstract boolean processAuthentication(String login, String password);
+
+    protected abstract void parseMessageObject(ControlSocketMessage controlSocketMessage);
+
     private void authenticate() {
+        if(isAuthenticated.get()) {
+            return;
+        }
         DataStream send = new DataStream(256);
         send.writeByte(AUTHENTICATION_REQUESTED);
         send.writeUTF(authenticator.getLogin());
@@ -185,11 +216,8 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
 
     private void parseMessage(DataStream dataStream) throws IOException, ClassNotFoundException {
         ControlSocketMessage message = (ControlSocketMessage) dataStream.readObject();
+        parseMessageObject(message);
     }
-
-    protected abstract boolean processAuthentication(String login, String password);
-
-    protected abstract void parseMessageObject(ControlSocketMessage controlSocketMessage);
 
     private void sendSerializer(DataStream dataStream) {
         try {
@@ -242,19 +270,4 @@ abstract class AbstractControlSocketConnection implements ControlSocketConnectio
         }
     }
 
-    public void close() {
-        try {
-            sslSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public boolean isClosed() {
-        return sslSocket.isClosed();
-    }
-
-    public boolean isConnected() {
-        return sslSocket.isConnected() && isAuthenticated.get();
-    }
 }

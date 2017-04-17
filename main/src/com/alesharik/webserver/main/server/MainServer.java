@@ -8,7 +8,6 @@ import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.main.ServerController;
-import com.alesharik.webserver.main.websockets.ServerControllerWebSocketApplication;
 import com.alesharik.webserver.server.api.RequestHandler;
 import com.alesharik.webserver.server.api.RequestHandlerList;
 import org.glassfish.grizzly.http.server.CompressionLevel;
@@ -71,7 +70,6 @@ public final class MainServer extends WebServer {
 
         WebSocketAddOn addOn = new WebSocketAddOn();
         networkListener.registerAddOn(addOn);
-        registerNewWebSocket(new ServerControllerWebSocketApplication(this), "", "/serverControl");
     }
 
     @Override
