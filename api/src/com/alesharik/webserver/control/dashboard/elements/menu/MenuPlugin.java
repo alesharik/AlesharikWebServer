@@ -32,7 +32,7 @@ public final class MenuPlugin extends JSClass {
     public MenuPlugin(String name) {
         super(name, "MenuPlugin");
         if(name.lastIndexOf("Plugin") == -1) {
-            this.name += "Plugin";
+//            this.name += "Plugin";
         }
     }
 
