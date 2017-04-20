@@ -1,21 +1,21 @@
 package com.alesharik.webserver.api.fileManager;
 
 import com.alesharik.webserver.benchmark.BenchmarkTest;
+import com.alesharik.webserver.logger.Logger;
 import org.glassfish.grizzly.utils.Charsets;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Group;
-import org.openjdk.jmh.annotations.GroupThreads;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -24,35 +24,32 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 @BenchmarkTest("FileManager")
 public class FileManagerBenchmark {
+    private FileManager fileManager;
+    private final byte[] TEST_FILE_BYTES = "test".getBytes(Charsets.UTF8_CHARSET);
 
-    private static File root;
-    private static final FileManager fileManager;
-    private static final byte[] TEST_FILE_BYTES = "test".getBytes(Charsets.UTF8_CHARSET);
-
-    static {
+    @Setup
+    public void setupLogger() {
         try {
-            root = Files.createTempDirectory("fgdgasdasd").toFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            File file = new File(root.getAbsolutePath() + "/test.txt");
+            Logger.setupLogger(File.createTempFile("dsfgsdfdsafasd", "hdgsdfdsgsadf"), 0);
+            Logger.disable();
+            File root = Files.createTempDirectory("fgdgasdasd").toFile();
+            File file = new File(root.getAbsolutePath() + "test.txt");
             if(!file.createNewFile()) {
                 throw new Error();
             }
-            Files.write(file.toPath(), TEST_FILE_BYTES, StandardOpenOption.DELETE_ON_CLOSE);
+            Files.write(file.toPath(), TEST_FILE_BYTES);
+            fileManager = new FileManager(root, FileManager.FileHoldingMode.HOLD_AND_CHECK);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        fileManager = new FileManager(root, FileManager.FileHoldingMode.HOLD_AND_CHECK);
+
     }
 
 
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @Group("read")
-    @GroupThreads(2)
-    public void readTest() {
-        assert Arrays.equals(fileManager.readFile("text.txt"), TEST_FILE_BYTES);
+    public boolean readTest() {
+        return Arrays.equals(fileManager.readFile("text.txt"), TEST_FILE_BYTES);
     }
 }

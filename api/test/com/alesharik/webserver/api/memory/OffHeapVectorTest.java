@@ -124,7 +124,7 @@ public class OffHeapVectorTest {
 
     @Test
     public void shrinkTest() throws Exception {
-        array.shrink(address);
+        address = array.shrink(address);
         assertEquals(array.size(address), array.getMax(address));
     }
 }

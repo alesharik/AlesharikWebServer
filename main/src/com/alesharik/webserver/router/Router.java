@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * This is a router client. The clients connect to router server.
+ * This is a router client. The clients connectAndSend to router server.
  * This class used only in microservices.
  *
  * @see RouterServer

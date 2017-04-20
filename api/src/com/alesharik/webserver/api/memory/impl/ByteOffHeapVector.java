@@ -13,7 +13,7 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
         return INSTANCE;
     }
 
-    public long fromByteArray(byte[] arr) {
+    public long fromByteArray(byte[] arr) { //TODO use Bits class
         int length = arr.length;
         long address = unsafe.allocateMemory(length + META_SIZE);
         unsafe.copyMemory(arr, BYTE_ARRAY_BASE_OFFSET, null, address + META_SIZE, length);
