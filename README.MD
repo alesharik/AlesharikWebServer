@@ -1,15 +1,17 @@
 AlesharikWebServer
 ==================
 
-![Travis-ci](https://api.travis-ci.org/alesharik/AlesharikWebServer.svg?branch=master)
+Master: ![Travis-ci](https://api.travis-ci.org/alesharik/AlesharikWebServer.svg?branch=master)
 
-AlesharikWebServer is a web server with unique plugin system.
+Develop: ![Travis-ci](https://travis-ci.org/alesharik/AlesharikWebServer.svg?branch=develop)
+
+AlesharikWebServer is a web server with unique module system.
 WARNING! This server might not work work on windows/mac!
 
 Build
 =====
-1. Clone repository into folder
-2. Run 'mvn clean install'
-3. Take result in 'out' directory
-4. Try to start server. If server not started try to execute "./compileNative" and restart server
+1. `git clone https://github.com/alesharik/AlesharikWebServer.git`
+2. `mvn clean install`
+3. Copy `alesharikwebserver-main-VERSION-jar-with-dependencies.jar` and `alesharikwebserver-api-VERSION-jar-with-dependencies.jar` from `out/production`
+4. For Linux users: `sudo -s java -javaagent:alesharikwebserver-api-VERSION-jar-with-dependencies.jar -jar alesharikwebserver-main-VERSION-jar-with-dependencies.jar`
   
