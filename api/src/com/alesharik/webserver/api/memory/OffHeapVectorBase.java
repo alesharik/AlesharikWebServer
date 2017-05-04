@@ -122,7 +122,7 @@ public abstract class OffHeapVectorBase {
     public long shrink(long address) {
         long size = size(address);
         if(getMax(address) > size) {
-            resize(address, META_SIZE + getElementSize() * size);
+            resize(address, size);
         }
         return address;
     }

@@ -42,8 +42,13 @@
 /test.xml
 /text.svg
 /text.txt
+/agent.jar
+/configuration.xml
+/keystore
+/.directory
 
 /pluginSources/
 /reporting/
 /main/reporting/
 /api/reporting/
+
