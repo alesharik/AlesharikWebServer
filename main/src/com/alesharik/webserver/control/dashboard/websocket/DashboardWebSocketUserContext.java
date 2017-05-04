@@ -32,11 +32,9 @@ final class DashboardWebSocketUserContext implements WebSocketListener {
     private final AtomicBoolean isClosed;
     private final Map<String, DashboardWebSocketPlugin> plugins;
     private final Sender sender;
-    private final DashboardDataHolder dashboardDataHolder;
     private WebSocket webSocket;
 
-    public DashboardWebSocketUserContext(Set<String> plugins, DashboardDataHolder dashboardDataHolder) {
-        this.dashboardDataHolder = dashboardDataHolder;
+    public DashboardWebSocketUserContext(@Nonnull Set<String> plugins, @Nonnull DashboardDataHolder dashboardDataHolder, @Nonnull DashboardWebSocketApplication.ListenerManager listenerManager) {
         this.isClosed = new AtomicBoolean(true);
         this.sender = new Sender();
         this.plugins = plugins.stream()
@@ -44,6 +42,7 @@ final class DashboardWebSocketUserContext implements WebSocketListener {
                     try {
                         DashboardWebSocketPlugin dashboardWebSocketPlugin = DashboardWebSocketPluginManager.newInstanceForName(s, sender);
                         dashboardWebSocketPlugin.setDashboardDataHolder(dashboardDataHolder);
+                        listenerManager.listen(dashboardWebSocketPlugin);
                         return dashboardWebSocketPlugin;
                     } catch (PluginNotFoundException e) {
                         System.err.println("DashboardWebSocketPlugin " + e.getPlugin() + " not found! Skipping...");
