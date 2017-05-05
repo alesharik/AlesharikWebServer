@@ -12,8 +12,6 @@ import org.glassfish.grizzly.websockets.WebSocketApplication;
 import org.glassfish.grizzly.websockets.WebSocketListener;
 
 import javax.annotation.Nonnull;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,25 +55,14 @@ public class DashboardWebSocketApplication extends WebSocketApplication {
 
     @Prefixes({"[DashboardWebSocket]", "[DashboardWebSocketApplication]", "[Listener]"})
     static final class ListenerManager {
-        private static final Method ON_CREATE_METHOD;
-
-        static {
-            try {
-                ON_CREATE_METHOD = DashboardWebSocketPluginListener.class.getDeclaredMethod("onCreate", Object.class);
-                ON_CREATE_METHOD.setAccessible(true);
-            } catch (NoSuchMethodException e) {
-                throw new Error(e);
-            }
-        }
-
-        private final Map<String, List<Pair<Class<?>, DashboardWebSocketPluginListener<?>>>> listeners;
+        private final Map<String, List<Pair<Class<?>, DashboardWebSocketPluginListener>>> listeners;
 
         public ListenerManager() {
             listeners = new ConcurrentHashMap<>();
         }
 
         <T extends DashboardWebSocketPlugin> void addListener(@Nonnull String name, @Nonnull Class<T> clazz, @Nonnull DashboardWebSocketPluginListener<T> listener) {
-            List<Pair<Class<?>, DashboardWebSocketPluginListener<?>>> listenerList;
+            List<Pair<Class<?>, DashboardWebSocketPluginListener>> listenerList;
             if(!listeners.containsKey(name)) {
                 listenerList = new CopyOnWriteArrayList<>();
                 listeners.put(name, listenerList);
@@ -87,18 +74,19 @@ public class DashboardWebSocketApplication extends WebSocketApplication {
 
         <T extends DashboardWebSocketPlugin> void removeListener(@Nonnull String name, @Nonnull DashboardWebSocketPluginListener<T> listener) {
             if(listeners.containsKey(name)) {
-                List<Pair<Class<?>, DashboardWebSocketPluginListener<?>>> listenerList = listeners.get(name);
+                List<Pair<Class<?>, DashboardWebSocketPluginListener>> listenerList = listeners.get(name);
                 listenerList.removeIf(next -> next.getRight().equals(listener));
             }
         }
 
+        @SuppressWarnings("unchecked")
         void listen(@Nonnull DashboardWebSocketPlugin plugin) {
-            List<Pair<Class<?>, DashboardWebSocketPluginListener<?>>> listenerList = listeners.get(plugin.getName());
+            List<Pair<Class<?>, DashboardWebSocketPluginListener>> listenerList = listeners.get(plugin.getName());
             if(listenerList != null) {
                 listenerList.forEach(pair -> {
                     try {
-                        ON_CREATE_METHOD.invoke(pair.getRight(), pair.getLeft().cast(plugin));
-                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        pair.getRight().onCreate(pair.getLeft().cast(plugin));
+                    } catch (ClassCastException e) {
                         e.printStackTrace();
                     }
                 });
