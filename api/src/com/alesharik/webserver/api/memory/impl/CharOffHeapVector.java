@@ -5,7 +5,7 @@ import com.alesharik.webserver.api.memory.OffHeapVectorBase;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-public class CharOffHeapVector extends OffHeapVectorBase {
+public final class CharOffHeapVector extends OffHeapVectorBase {
     private static final long CHAR_SIZE = 2L; //sizeof(char)
     private static final long CHAR_ARRAY_BASE_OFFSET = unsafe.arrayBaseOffset(char[].class);
     private static final CharOffHeapVector INSTANCE = new CharOffHeapVector();
@@ -42,7 +42,7 @@ public class CharOffHeapVector extends OffHeapVectorBase {
      */
     public char get(long address, long i) {
         if(i < 0) {
-            throw new IllegalArgumentException();
+            throw new ArrayIndexOutOfBoundsException();
         }
 
         long count = size(address);
@@ -50,7 +50,7 @@ public class CharOffHeapVector extends OffHeapVectorBase {
             throw new ArrayIndexOutOfBoundsException();
         }
 
-        return unsafe.getChar(address + META_SIZE + i * getElementSize());
+        return unsafe.getChar(address + META_SIZE + i * 2);
     }
 
     /**
@@ -64,7 +64,7 @@ public class CharOffHeapVector extends OffHeapVectorBase {
         long next = size(address);
         address = checkBounds(address, next);
 
-        unsafe.putChar(address + META_SIZE + next * getElementSize(), t);
+        unsafe.putChar(address + META_SIZE + next * 2, t);
         incrementSize(address);
 
         return address;
@@ -90,42 +90,45 @@ public class CharOffHeapVector extends OffHeapVectorBase {
             if(Character.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
+            lastAddress += 2;
         }
         return -1;
     }
 
     public long lastIndexOf(long address, char t) {
         long size = size(address);
-        long lastAddress = address + META_SIZE;
-        for(long i = size - 1; i >= 0; i++) {
-            char element = unsafe.getChar(lastAddress);
+        long addr = address + META_SIZE;
+        for(long i = size - 1; i >= 0; i--) {
+            char element = unsafe.getChar(addr + i * 2);
             if(Character.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
         }
         return -1;
     }
 
-    public char set(long address, char t, long i) {
+    public char set(long address, long i, char t) {
         checkIndexBounds(address, i);
 
-        char last = unsafe.getChar(address + META_SIZE + i * getElementSize());
-        unsafe.putChar(address + META_SIZE + i * getElementSize(), t);
+        char last = unsafe.getChar(address + META_SIZE + i * 2);
+        unsafe.putChar(address + META_SIZE + i * 2, t);
         return last;
     }
 
-    public void remove(long address, char obj) {
+    public boolean remove(long address, char obj) {
         long index = indexOf(address, obj);
         if(index >= 0) {
-            remove(address, index);
+            unsafe.copyMemory(address + META_SIZE + 2 * (index + 1), address + META_SIZE + 2 * index, 2 * (size(address) - index));
+            decrementSize(address);
+            return true;
+        } else {
+            return false;
         }
     }
 
     @Override
     protected long getElementSize() {
-        return 8L; //sizeof(char)
+        return 2L; //sizeof(char)
     }
 
     private class Iter implements Iterator<Character> {

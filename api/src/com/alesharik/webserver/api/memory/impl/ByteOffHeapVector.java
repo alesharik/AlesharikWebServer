@@ -41,12 +41,12 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
      */
     public byte get(long address, long i) {
         if(i < 0) {
-            throw new IllegalArgumentException();
+            throw new ArrayIndexOutOfBoundsException(String.valueOf(i));
         }
 
         long count = size(address);
         if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
+            throw new ArrayIndexOutOfBoundsException("i = " + i + ", count = " + count);
         }
 
         return unsafe.getByte(address + META_SIZE + i);
@@ -96,18 +96,17 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
 
     public long lastIndexOf(long address, byte t) {
         long size = size(address);
-        long lastAddress = address + META_SIZE;
-        for(long i = size - 1; i >= 0; i++) {
-            byte element = unsafe.getByte(lastAddress);
+        long addr = address + META_SIZE;
+        for(long i = size - 1; i >= 0; i--) {
+            byte element = unsafe.getByte(addr + i);
             if(Byte.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress++;
         }
         return -1;
     }
 
-    public byte set(long address, byte t, long i) {
+    public byte set(long address, long i, byte t) {
         checkIndexBounds(address, i);
 
         byte last = unsafe.getByte(address + META_SIZE + i);
@@ -115,10 +114,14 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
         return last;
     }
 
-    public void remove(long address, byte obj) {
+    public boolean remove(long address, byte obj) {
         long index = indexOf(address, obj);
         if(index >= 0) {
-            remove(address, index);
+            unsafe.copyMemory(address + META_SIZE + getElementSize() * (index + 1), address + META_SIZE + getElementSize() * index, getElementSize() * (size(address) - index));
+            decrementSize(address);
+            return true;
+        } else {
+            return false;
         }
     }
 

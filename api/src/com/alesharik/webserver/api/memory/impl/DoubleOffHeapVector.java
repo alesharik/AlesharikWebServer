@@ -5,7 +5,7 @@ import com.alesharik.webserver.api.memory.OffHeapVectorBase;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-public class DoubleOffHeapVector extends OffHeapVectorBase {
+public final class DoubleOffHeapVector extends OffHeapVectorBase {
     private static final long DOUBLE_SIZE = 8L; //sizeof(double)
     private static final long DOUBLE_ARRAY_BASE_OFFSET = unsafe.arrayBaseOffset(double[].class);
     private static final DoubleOffHeapVector INSTANCE = new DoubleOffHeapVector();
