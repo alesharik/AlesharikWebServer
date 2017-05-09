@@ -18,7 +18,7 @@ import java.util.concurrent.locks.LockSupport;
  *
  * @param <V>
  */
-public final class ConcurrentCompletableFuture<V> implements Future<V> {
+public class ConcurrentCompletableFuture<V> implements Future<V> {
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
     private final AtomicBoolean isDone = new AtomicBoolean(false);
     private volatile V value = null;
@@ -29,7 +29,7 @@ public final class ConcurrentCompletableFuture<V> implements Future<V> {
     /**
      * @param mayInterruptIfRunning don't used
      */
-    @Override
+    @Override //TODO rewrite
     public boolean cancel(boolean mayInterruptIfRunning) {
         isCancelled.set(true);
         return true;
