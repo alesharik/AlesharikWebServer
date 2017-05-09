@@ -1,15 +1,15 @@
 package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.api.control.ControlSocketClientModule;
-import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnection;
 import com.alesharik.webserver.api.control.messaging.ControlSocketMessage;
 import com.alesharik.webserver.api.control.messaging.ControlSocketMessageHandler;
 import com.alesharik.webserver.api.control.messaging.ControlSocketServerConnection;
 import com.alesharik.webserver.api.control.messaging.WireControlSocketMessage;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.Module;
-import com.alesharik.webserver.configuration.XmlHelper;
+import com.alesharik.webserver.control.dashboard.websocket.plugins.MenuDashboardWebSocketPlugin;
 import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.module.server.ControlServerModule;
 import lombok.AllArgsConstructor;
 import org.w3c.dom.Element;
 
@@ -22,7 +22,9 @@ public class TestModule implements Module {
 
     @Override
     public void parse(@Nullable Element configNode) {
-        clientModule = XmlHelper.getControlSocketClient("controlSocketClient", configNode, true);
+//        clientModule = XmlHelper.getControlSocketClient("controlSocketClient", configNode, true);
+        ControlServerModule controlServerModule = Main.getControlServer("controlServer", configNode, true);
+        controlServerModule.addDashboardWebSocketPluginListener("menu", MenuDashboardWebSocketPlugin.class, System.out::println);
     }
 
     @Override
@@ -32,35 +34,35 @@ public class TestModule implements Module {
 
     @Override
     public void start() {
-        try {
-            ControlSocketClientConnection connection = clientModule.newConnection("0.0.0.0", 1400, new ControlSocketClientConnection.Authenticator() {
-                @Override
-                public String getPassword() {
-                    return "admin";
-                }
-
-                @Override
-                public String getLogin() {
-                    return "admin";
-                }
-            });
-            connection.addListener(new ControlSocketClientConnection.Listener() {
-                @Override
-                public boolean canListen(Class<?> messageClazz) {
-                    return TestMessage.class.isAssignableFrom(messageClazz);
-                }
-
-                @Override
-                public void listen(ControlSocketMessage message) {
-                    System.out.println(((TestMessage) message).test());
-                }
-            });
-            connection.awaitConnection();
-            connection.sendMessage(new TestMessage("test"));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            ControlSocketClientConnection connection = clientModule.newConnection("0.0.0.0", 1400, new ControlSocketClientConnection.Authenticator() {
+//                @Override
+//                public String getPassword() {
+//                    return "admin";
+//                }
+//
+//                @Override
+//                public String getLogin() {
+//                    return "admin";
+//                }
+//            });
+//            connection.addListener(new ControlSocketClientConnection.Listener() {
+//                @Override
+//                public boolean canListen(Class<?> messageClazz) {
+//                    return TestMessage.class.isAssignableFrom(messageClazz);
+//                }
+//
+//                @Override
+//                public void listen(ControlSocketMessage message) {
+//                    System.out.println(((TestMessage) message).test());
+//                }
+//            });
+//            connection.awaitConnection();
+//            connection.sendMessage(new TestMessage("test"));
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override

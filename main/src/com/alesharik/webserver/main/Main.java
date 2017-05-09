@@ -62,7 +62,7 @@ public class Main {
         }
     }
 
-
+    @Deprecated
     @Nullable //TODO remove
     public static ControlServerModule getControlServer(String nodeName, Element config, boolean required) {
         Node nameNode = config.getElementsByTagName(nodeName).item(0);

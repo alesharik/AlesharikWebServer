@@ -104,7 +104,7 @@ public abstract class OffHeapVectorBase {
     public void remove(long address, long i) {
         long count = size(address);
         if(i < 0) {
-            throw new IllegalArgumentException();
+            throw new ArrayIndexOutOfBoundsException();
         }
         if(i >= count) {
             throw new ArrayIndexOutOfBoundsException();
@@ -188,10 +188,10 @@ public abstract class OffHeapVectorBase {
     protected void checkIndexBounds(long address, long i) {
         long count = size(address);
         if(i < 0) {
-            throw new IllegalArgumentException();
+            throw new ArrayIndexOutOfBoundsException(String.valueOf(i));
         }
         if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
+            throw new ArrayIndexOutOfBoundsException("i = " + i + ", count = " + count);
         }
     }
 

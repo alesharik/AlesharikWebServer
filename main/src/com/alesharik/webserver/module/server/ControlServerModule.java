@@ -2,11 +2,13 @@ package com.alesharik.webserver.module.server;
 
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.configuration.Layer;
-import com.alesharik.webserver.configuration.Module;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.control.AdminDataStorage;
+import com.alesharik.webserver.control.ControlServer;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketApplication;
+import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlugin;
+import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPluginListener;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.ControlHttpHandler;
@@ -24,9 +26,10 @@ import java.util.HashSet;
 import java.util.List;
 
 //TODO remove
-public class ControlServerModule implements Module {
+public class ControlServerModule implements ControlServer {
     private HttpServer httpServer;
     private FileManager fileManager;
+    private DashboardWebSocketApplication webSocketApplication;
 
     @Override
     public void parse(@Nullable Element configNode) {
@@ -42,7 +45,8 @@ public class ControlServerModule implements Module {
         httpServer.getServerConfiguration().addHttpHandler(controlHttpHandler);
         DashboardDataHolder dashboardDataHolder = XmlHelper.getDashboardDataHolder("dashboardDataHolder", configNode, true);
         List<String> webSocketPlugins = XmlHelper.getList("webSocketPlugins", "plugin", configNode, false);
-        WebSocketEngine.getEngine().register("", "/dashboard", new DashboardWebSocketApplication(new HashSet<>(webSocketPlugins), dashboardDataHolder));
+        webSocketApplication = new DashboardWebSocketApplication(new HashSet<>(webSocketPlugins), dashboardDataHolder);
+        WebSocketEngine.getEngine().register("", "/dashboard", webSocketApplication);
     }
 
     public FileManager getFileManager() {
@@ -89,5 +93,15 @@ public class ControlServerModule implements Module {
     @Override
     public Layer getMainLayer() {
         return null;
+    }
+
+    @Override
+    public <T extends DashboardWebSocketPlugin> void addDashboardWebSocketPluginListener(@Nonnull String name, @Nonnull Class<T> pluginClazz, @Nonnull DashboardWebSocketPluginListener<T> listener) {
+        webSocketApplication.addDashboardWebSocketPluginListener(name, pluginClazz, listener);
+    }
+
+    @Override
+    public <T extends DashboardWebSocketPlugin> void removeDashboardWebSocketPluginListener(@Nonnull String name, @Nonnull DashboardWebSocketPluginListener<T> listener) {
+        webSocketApplication.removeDashboardWebSocketPluginListener(name, listener);
     }
 }

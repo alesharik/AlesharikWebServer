@@ -107,7 +107,7 @@ public class OffHeapVectorTest {
 
     @Test
     public void set() throws Exception {
-        array.set(address, (byte) 0x01, 1);
+        array.set(address, 1, (byte) 0x01);
         assertEquals((byte) array.get(address, 1), (byte) 0x01);
     }
 
