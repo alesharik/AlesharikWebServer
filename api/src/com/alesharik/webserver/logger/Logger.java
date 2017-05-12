@@ -10,6 +10,7 @@ import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jctools.queues.atomic.MpscAtomicArrayQueue;
 import sun.misc.SharedSecrets;
+import sun.misc.VM;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
@@ -116,6 +117,24 @@ public final class Logger {
             log(getPrefixLocation(2), message, textFormatter);
         } else {
             log(prefix, message, textFormatter);
+        }
+    }
+
+    private static void logFromStream(String message, TextFormatter textFormatter) {
+        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[5]);
+        if(prefix.isEmpty()) {
+            log(getPrefixLocation(5), message, textFormatter);
+        } else {
+            log(prefix, message, textFormatter);
+        }
+    }
+
+    private static void logFromStream(String message) {
+        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[5]);
+        if(prefix.isEmpty()) {
+            log(getPrefixLocation(5), message);
+        } else {
+            log(prefix, message);
         }
     }
 
@@ -380,6 +399,9 @@ public final class Logger {
 
     private static String getConfiguredPrefixes(Class<?> clazz) {
         ClassLoader classLoader = clazz.getClassLoader();
+        if(VM.isSystemDomainLoader(classLoader))
+            return "";
+
         if(classLoaders.stream().noneMatch(classLoaderWeakReference -> classLoader.equals(classLoaderWeakReference.get()))) {
             loadConfigurations(classLoader);
         }
@@ -676,7 +698,7 @@ public final class Logger {
 
         @Override
         public void flush() {
-            Logger.log(lineBuffer.get());
+            Logger.logFromStream(lineBuffer.get());
             lineBuffer.set("");
         }
 
@@ -908,7 +930,7 @@ public final class Logger {
 
         @Override
         public void flush() {
-            Logger.log(lineBuffer.get(), FORMATTER);
+            Logger.logFromStream(lineBuffer.get(), FORMATTER);
             lineBuffer.set("");
         }
 
