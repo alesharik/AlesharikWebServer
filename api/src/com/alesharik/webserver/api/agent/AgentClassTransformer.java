@@ -3,6 +3,7 @@ package com.alesharik.webserver.api.agent;
 import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.Transform;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
+import com.alesharik.webserver.logger.Prefixes;
 import sun.misc.VM;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -12,6 +13,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -21,6 +23,7 @@ import java.util.stream.Stream;
 /**
  * Transform classes with {@link com.alesharik.webserver.api.agent.transformer.ClassTransformer} annotated classes
  */
+@Prefixes({"[Agent]", "[AgentClassTransformer]"})
 final class AgentClassTransformer implements ClassFileTransformer {
     private static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = MethodHandles.lookup();
     /**
@@ -32,27 +35,38 @@ final class AgentClassTransformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        if(VM.isSystemDomainLoader(loader) || className.toLowerCase().contains("nashorn") || className.toLowerCase().startsWith("org/apache/".toLowerCase())) {
-            return classfileBuffer;
-        }
-        CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
-        if(transformers != null) {
-            for(MethodHolder transformer : transformers) {
+        try {
+            byte[] first = classfileBuffer;
+            if(className == null || VM.isSystemDomainLoader(loader) || className.toLowerCase().contains("nashorn") || className.toLowerCase().startsWith("org/apache/".toLowerCase())) {
+                return null;
+            }
+            CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
+            if(transformers != null) {
+                for(MethodHolder transformer : transformers) {
+                    try {
+                        classfileBuffer = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+                    } catch (Throwable throwable) {
+                        throwable.printStackTrace();
+                    }
+                }
+            }
+            for(MethodHolder transformer : allTransformers) {
                 try {
                     classfileBuffer = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
                 }
             }
-        }
-        for(MethodHolder transformer : allTransformers) {
-            try {
-                classfileBuffer = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
+            return Arrays.equals(first, classfileBuffer) ? null : classfileBuffer;
+        } catch (Throwable e) {
+            System.err.println("Error in transforming class " + className + ", classloader = " + loader);
+            e.printStackTrace();
+            if(e instanceof Error) {
+                System.err.println("Error detected! Stopping application...");
+                System.exit(1);
             }
+            return null;
         }
-        return classfileBuffer;
     }
 
 

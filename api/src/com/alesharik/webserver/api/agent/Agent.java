@@ -3,6 +3,7 @@ package com.alesharik.webserver.api.agent;
 import com.alesharik.webserver.logger.Prefix;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
@@ -11,16 +12,19 @@ import java.util.Set;
 /**
  * Java Agent of AlesharikWebServer
  *
- * @implNote If you create custom server, you MUST call {@link #premain(String, Instrumentation)} method!
+ * @implNote If you create custom server, you MUST use this agent
  */
 @Prefix("[Agent]")
 public final class Agent {
     private static Instrumentation instrumentation;
 
     /**
-     * @param agentArgs might be null
+     * DO NOT CALL IT AFTER MAIN!
+     * @implNote you need to call this in premain
      */
-    public static void premain(String agentArgs, Instrumentation inst) {
+    public static void premain(@Nullable String agentArgs, @Nonnull Instrumentation inst) {
+        if(instrumentation != null)
+            throw new IllegalStateException("WTF ARE YOU DOING?");
         instrumentation = inst;
 
         inst.addTransformer(new ClassPathScannerTransformer(), false);
@@ -55,10 +59,16 @@ public final class Agent {
         return ClassPathScannerTransformer.getClassLoaders();
     }
 
+    /**
+     * Scan custom classloader
+     */
     public static void tryScanClassLoader(@Nonnull ClassLoader classLoader) {
         ClassPathScannerTransformer.tryScanClassLoader(classLoader);
     }
 
+    /**
+     * Return <code>true</code> if ClassPathScanner scanning some classloaders
+     */
     public static boolean isScanning() {
         return !ClassPathScannerTransformer.isFree();
     }

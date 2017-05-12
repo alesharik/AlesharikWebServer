@@ -26,8 +26,7 @@ final class ClassPathScannerTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
         tryScanClassLoader(loader);
-
-        return classfileBuffer;
+        return null;
     }
 
     /**

@@ -7,8 +7,7 @@ import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
 import com.alesharik.webserver.api.collections.ConcurrentTripleHashMap;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.LoggerUncaughtExceptionHandler;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import lombok.SneakyThrows;
 
@@ -28,7 +27,7 @@ import java.util.stream.Stream;
 /**
  * This thread find annotated classes
  */
-@Prefix("[ClassPathScannerThread]")
+@Prefixes({"[Agent]", "[ClassPathScannerThread]"})
 final class ClassPathScannerThread extends Thread {
     private static final AtomicInteger taskCount = new AtomicInteger(0);
     /**
@@ -45,8 +44,6 @@ final class ClassPathScannerThread extends Thread {
     public ClassPathScannerThread() {
         setName("ClassPath scanner thread");
         setDaemon(true);
-
-        setDefaultUncaughtExceptionHandler(LoggerUncaughtExceptionHandler.INSTANCE);
 
         workerPool = new ForkJoinPool(PARALLELISM);
         classLoaderQueue = new LinkedBlockingQueue<>();
@@ -68,9 +65,9 @@ final class ClassPathScannerThread extends Thread {
                     .scanAsync(workerPool, PARALLELISM)
                     .get();
 
-            workerPool.submit(new ClassLoaderScanTask(listeners, Collections.singleton(classLoader), workerPool));
+            new ClassLoaderScanTask(listeners, Collections.singleton(classLoader), workerPool).run();
             classLoaders.add(classLoader);
-            workerPool.submit(new ClassLoaderScanTask(newListeners, classLoaders, workerPool));
+            new ClassLoaderScanTask(newListeners, classLoaders, workerPool).run();
             listeners.putAll(newListeners);
             taskCount.decrementAndGet();
         }
