@@ -120,7 +120,7 @@ public final class FileManager {
 
     private void check() {
         if(holdingMode != FileHoldingMode.NO_HOLD) {
-            if(FileUtils.sizeOfDirectory(this.rootFolder) > Runtime.getRuntime().freeMemory()) {
+            if(FileUtils.sizeOfDirectory(this.rootFolder) > Runtime.getRuntime().maxMemory()) {
                 throw new OutOfMemoryException("Can't allocate memory on file holding!");
             }
         }
