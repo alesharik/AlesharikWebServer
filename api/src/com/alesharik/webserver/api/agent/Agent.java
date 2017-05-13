@@ -1,6 +1,6 @@
 package com.alesharik.webserver.api.agent;
 
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -14,7 +14,7 @@ import java.util.Set;
  *
  * @implNote If you create custom server, you MUST use this agent
  */
-@Prefix("[Agent]")
+@Prefixes("[Agent]")
 public final class Agent {
     private static Instrumentation instrumentation;
 
