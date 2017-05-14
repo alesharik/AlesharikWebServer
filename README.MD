@@ -5,6 +5,8 @@ Master: ![Travis-ci](https://api.travis-ci.org/alesharik/AlesharikWebServer.svg?
 
 Develop: ![Travis-ci](https://travis-ci.org/alesharik/AlesharikWebServer.svg?branch=develop)
 
+Status: [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8dc12bb283444998223d228061fa7a2)](https://www.codacy.com/app/alesharik/AlesharikWebServer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=alesharik/AlesharikWebServer&amp;utm_campaign=Badge_Grade)
+
 AlesharikWebServer is a web server with unique module system.
 WARNING! This server might not work work on windows/mac!
 
