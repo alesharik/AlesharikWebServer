@@ -1,14 +1,11 @@
-package com.alesharik.webserver.logger;
+package com.alesharik.webserver.api.documentation.test;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE, ElementType.PACKAGE})
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Prefixes {
-    String[] value();
-
-    boolean requireDebugPrefix() default false;
+public @interface LongTest {
 }

@@ -103,6 +103,29 @@ public final class Utils {
         }
     }
 
+    public static String sliceString(String[] arr, int count) {
+        if(count > arr.length)
+            throw new ArrayIndexOutOfBoundsException();
+        StringBuilder stringBuilder = new StringBuilder();
+        for(int i = 0; i < count; i++) {
+            stringBuilder.append(arr[i]);
+        }
+        return stringBuilder.toString();
+    }
+
+    public static String sliceString(String[] arr, int count, boolean reverse) {
+        if(count > arr.length)
+            throw new ArrayIndexOutOfBoundsException();
+        if(!reverse)
+            return sliceString(arr, count);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for(int i = arr.length - 1; i < (arr.length - count); i--) {
+            stringBuilder.append(arr[i]);
+        }
+        return stringBuilder.toString();
+    }
+
     public static int getCoresCount() {
         if(isSupportedOs()) {
             return getCoresCount0();

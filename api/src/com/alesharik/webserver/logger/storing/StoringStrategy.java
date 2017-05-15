@@ -1,4 +1,4 @@
-package com.alesharik.webserver.logger.storingStrategies;
+package com.alesharik.webserver.logger.storing;
 
 import java.io.File;
 import java.io.IOException;

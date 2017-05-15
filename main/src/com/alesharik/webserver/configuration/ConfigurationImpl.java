@@ -1,6 +1,7 @@
 package com.alesharik.webserver.configuration;
 
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.Prefixes;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Prefixes("[Configuration]")
 public final class ConfigurationImpl implements Configuration {
     private final AtomicBoolean isInitialized;
     /**

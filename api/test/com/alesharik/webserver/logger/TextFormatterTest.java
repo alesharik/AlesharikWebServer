@@ -3,19 +3,17 @@ package com.alesharik.webserver.logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class TextFormatterTest {
     private static final Logger.ForegroundColor test_foreground = Logger.ForegroundColor.BLACK;
     private static final Logger.BackgroundColor test_background = Logger.BackgroundColor.BLUE;
 
     private Logger.TextFormatter textFormatter;
-    private Logger.TextFormatter textFormatterWithWholeMessage;
 
     @Before
     public void setUp() throws Exception {
-        textFormatter = new Logger.TextFormatter(test_foreground, test_background, false);
-        textFormatterWithWholeMessage = new Logger.TextFormatter(test_foreground, test_background, true);
+        textFormatter = new Logger.TextFormatter(test_foreground, test_background);
     }
 
     @Test
@@ -32,12 +30,4 @@ public class TextFormatterTest {
     public void getBackgroundColor() throws Exception {
         assertEquals(textFormatter.getBackgroundColor(), test_background);
     }
-
-    @Test
-    public void isWholeMessage() throws Exception {
-        assertTrue(textFormatterWithWholeMessage.isWholeMessage());
-        assertFalse(textFormatter.isWholeMessage());
-    }
-
-
 }

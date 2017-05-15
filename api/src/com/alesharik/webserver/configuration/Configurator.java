@@ -3,7 +3,6 @@ package com.alesharik.webserver.configuration;
 import com.alesharik.webserver.api.agent.Agent;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
 import com.alesharik.webserver.logger.Prefixes;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -29,7 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Prefix("[Configurator]")
+@Prefixes("[Configurator]")
 public class Configurator {
     /**
      * Default value of <code>logger.listenerQueueCapacity</code>
@@ -49,7 +48,7 @@ public class Configurator {
         Objects.requireNonNull(configuration);
         Objects.requireNonNull(file);
         if(file.isDirectory() || !file.exists()) {
-            throw new IllegalArgumentException("File is a folder or does not exists!");
+            throw new IllegalArgumentException("File " + file + " is a folder or does not exists!");
         }
 
         this.file = file;

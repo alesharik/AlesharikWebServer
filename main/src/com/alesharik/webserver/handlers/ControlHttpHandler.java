@@ -8,7 +8,7 @@ import com.alesharik.webserver.control.ControlRequestHandler;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.NamedLogger;
-import com.alesharik.webserver.logger.storingStrategies.WriteOnLogStoringStrategy;
+import com.alesharik.webserver.logger.storing.WriteOnLogStoringStrategy;
 import com.alesharik.webserver.server.api.RequestHandler;
 import com.alesharik.webserver.server.api.RequestHandlerList;
 import org.glassfish.grizzly.http.Cookie;

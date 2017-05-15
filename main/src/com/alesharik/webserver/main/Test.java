@@ -1,9 +1,6 @@
 package com.alesharik.webserver.main;
 
-import org.glassfish.grizzly.http.util.Base64Utils;
-
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
@@ -81,10 +78,11 @@ public class Test {
 //        Logger.setupLogger(File.createTempFile("adgsdf", "sdfgsadf"), 10);
 //        System.out.println("Hi!");
 //        System.err.println("Hi!");
-//        System.out.println("df");
-        byte[] bytes = new byte[1024];
-        new SecureRandom().nextBytes(bytes);
-        System.out.println(Base64Utils.encodeToString(bytes, false));
+////        System.out.println("df");
+//        byte[] bytes = new byte[1024];
+//        new SecureRandom().nextBytes(bytes);
+//        System.out.println(Base64Utils.encodeToString(bytes, false));
+        Package p = Test.class.getPackage();
     }
 
     private static String generateLogName() {

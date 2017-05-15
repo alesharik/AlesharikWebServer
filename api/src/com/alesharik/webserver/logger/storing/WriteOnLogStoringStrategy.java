@@ -1,4 +1,4 @@
-package com.alesharik.webserver.logger.storingStrategies;
+package com.alesharik.webserver.logger.storing;
 
 import com.alesharik.webserver.logger.Logger;
 import org.glassfish.grizzly.utils.Charsets;

@@ -179,7 +179,7 @@ public class ConcurrentLiveHashMap<K, V> extends HashMapWrapper<K, V> implements
     public V remove(Object key) {
         try {
             lock.lockWrite();
-            return (V) map.remove((K) key);
+            return map.remove((K) key);
         } finally {
             lock.unlockWrite();
         }
@@ -332,6 +332,15 @@ public class ConcurrentLiveHashMap<K, V> extends HashMapWrapper<K, V> implements
         }
     }
 
+    public void setTime(K k, long time) {
+        try {
+            lock.lockWrite();
+            map.put(k, map.get(k), time);
+        } finally {
+            lock.unlockWrite();
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public V getOrDefault(Object key, V defaultValue) {
@@ -474,14 +483,19 @@ public class ConcurrentLiveHashMap<K, V> extends HashMapWrapper<K, V> implements
     }
 
     void updateMap(long period) {
-        forEach0((k, v, aLong) -> {
-            long current = aLong - period;
-            if(current < 0) {
-                remove(k);
-            } else {
-                replace(k, v, v, current);
-            }
-        });
+        try {
+            lock.lockWrite();
+            map.forEach((k, v, aLong) -> {
+                long current = aLong - period;
+                if(current <= 0) {
+                    map.remove(k);
+                } else {
+                    map.replace(k, v, v, current);
+                }
+            });
+        } finally {
+            lock.unlockWrite();
+        }
     }
 
     public void start() {

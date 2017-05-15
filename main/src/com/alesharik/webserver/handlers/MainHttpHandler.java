@@ -7,7 +7,7 @@ import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.NamedLogger;
-import com.alesharik.webserver.logger.storingStrategies.WriteOnLogStoringStrategy;
+import com.alesharik.webserver.logger.storing.WriteOnLogStoringStrategy;
 import com.alesharik.webserver.server.api.HttpHandler;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;

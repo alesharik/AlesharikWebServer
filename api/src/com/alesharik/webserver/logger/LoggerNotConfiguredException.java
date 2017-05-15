@@ -7,6 +7,6 @@ import java.io.File;
  */
 public class LoggerNotConfiguredException extends RuntimeException {
     public LoggerNotConfiguredException() {
-        super("Logger not initialized!");
+        super("Logger not configured!");
     }
 }

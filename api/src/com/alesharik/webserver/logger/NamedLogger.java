@@ -1,15 +1,15 @@
 package com.alesharik.webserver.logger;
 
-import com.alesharik.webserver.logger.storingStrategies.DisabledStoringStrategy;
-import com.alesharik.webserver.logger.storingStrategies.StoringStrategy;
-import com.alesharik.webserver.logger.storingStrategies.StoringStrategyFactory;
+import com.alesharik.webserver.logger.storing.DisabledStoringStrategy;
+import com.alesharik.webserver.logger.storing.StoringStrategy;
+import com.alesharik.webserver.logger.storing.StoringStrategyFactory;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import sun.misc.Cleaner;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.alesharik.webserver.logger.Logger.getPrefixLocation;
 
@@ -17,9 +17,8 @@ import static com.alesharik.webserver.logger.Logger.getPrefixLocation;
  * This logger used for write data in the main log and the specific log. It use specific prefix.
  * Creation: {@link Logger}.createNewNamedLogger(String name, File file)
  */
+@Prefixes("[NamedLogger]")
 public final class NamedLogger {
-    private static final Finalizer FINALIZER = new Finalizer();
-
     private final String name;
     private final File file;
 
@@ -33,6 +32,7 @@ public final class NamedLogger {
     NamedLogger(String name, File file) {
         this.name = name;
         this.file = file;
+        Cleaner.create(this, this::close);
     }
 
     public <T extends StoringStrategy> void setStoringStrategyFactory(StoringStrategyFactory<T> factory) {
@@ -114,38 +114,6 @@ public final class NamedLogger {
     private void checkIfClosed() {
         if(isClosed) {
             throw new IllegalStateException("Logger was closed!");
-        }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        FINALIZER.addLogger(this);
-        super.finalize();
-    }
-
-    private static class Finalizer extends Thread {
-        private LinkedBlockingQueue<NamedLogger> loggers = new LinkedBlockingQueue<>();
-
-        public Finalizer() {
-            this.setDaemon(true);
-            this.setName("NamedLoggerFinalizer");
-            this.start();
-        }
-
-        @SneakyThrows
-        public void run() {
-            while(isAlive()) {
-                NamedLogger next = loggers.poll();
-                if(next == null) {
-                    Thread.sleep(1);
-                } else {
-                    next.close();
-                }
-            }
-        }
-
-        public void addLogger(NamedLogger namedLogger) {
-            loggers.add(namedLogger);
         }
     }
 }

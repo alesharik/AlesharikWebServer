@@ -7,6 +7,7 @@ import com.alesharik.webserver.configuration.PluginManagerImpl;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.module.server.ControlServerModule;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -19,6 +20,7 @@ import java.util.Scanner;
 //TODO add more prefixes to java
 //TODO написать профилирование базы данных и реквестов
 
+@Prefixes("[MAIN]")
 public class Main {
     private static final MainLoggerConfiguration c = new MainLoggerConfiguration();
 
@@ -38,6 +40,8 @@ public class Main {
             XmlHelper.setConfiguration(configuration);
             configurator = new Configurator(CONFIG, configuration, PluginManagerImpl.class);
             configurator.parse();
+
+            System.out.println("Server successfully loaded!");
 
             Runtime.getRuntime().addShutdownHook(new Thread(Main::shutdown));
 
@@ -86,7 +90,7 @@ public class Main {
     }
 
     public synchronized static void shutdown() {
-        Logger.log("[MAIN]", "Stopping...");
+        Logger.log("Stopping...");
         configurator.shutdown();
         System.exit(0);
     }

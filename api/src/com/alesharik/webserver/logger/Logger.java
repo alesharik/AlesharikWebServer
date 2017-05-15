@@ -1,17 +1,27 @@
 package com.alesharik.webserver.logger;
 
+import com.alesharik.webserver.api.collections.ConcurrentLiveHashMap;
+import com.alesharik.webserver.api.reflection.ParentPackageIterator;
 import com.alesharik.webserver.logger.configuration.LoggerConfiguration;
 import com.alesharik.webserver.logger.configuration.LoggerConfigurationBasePackage;
 import com.alesharik.webserver.logger.configuration.LoggerConfigurationPrefix;
 import com.alesharik.webserver.logger.handlers.InfoConsoleHandler;
 import com.alesharik.webserver.logger.handlers.WarningConsoleHandler;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.ToString;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.jctools.queues.MpscLinkedQueue;
+import org.jctools.queues.MpscLinkedQueue7;
 import org.jctools.queues.atomic.MpscAtomicArrayQueue;
 import sun.misc.SharedSecrets;
 import sun.misc.VM;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +32,8 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
@@ -51,8 +61,9 @@ import java.util.stream.Stream;
  * basePackage = "test"<br>
  * mainPackage = "*.main" = "test.main"<br>
  */
-@Prefix("[LOGGER]")
+@Prefixes("[LOGGER]")
 public final class Logger {
+
     static final HashMap<String, WeakReference<NamedLogger>> loggers = new HashMap<>();
     /**
      * Default Java System.out
@@ -72,6 +83,12 @@ public final class Logger {
     private static AtomicBoolean isConfigured = new AtomicBoolean(false);
     private static LoggerListenerThread listenerThread;
 
+    /**
+     * message : caller : location prefix
+     */
+    private static MpscLinkedQueue<Message> messageQueue;
+    private static final LoggerThread loggerThread = new LoggerThread();
+
     static {
         LOGGER.setLevel(Level.ALL);
     }
@@ -88,132 +105,195 @@ public final class Logger {
         return "[" + element.getFileName() + ":" + element.getLineNumber() + "]";
     }
 
-    private static void log(String message, int depth) {
-        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[depth]);
-        if(prefix.isEmpty()) {
-            log(getPrefixLocation(depth), message);
-        } else {
-            log(prefix, message);
+    /**
+     * Add message to messageQueue. Do not throw {@link LoggerNotConfiguredException} and do not execute {@link #checkState()} method.
+     * You need to execute it before call this method!
+     *
+     * @param message the message
+     * @param depth   caller class stack depth
+     */
+    @SuppressWarnings("unchecked")
+    private static void logMessageUnsafe(String message, int depth) {
+        messageQueue.add(new Message("", message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1)));
+
+        synchronized (loggerThread.synchronizerLock) {
+            loggerThread.synchronizerLock.notifyAll();
         }
+    }
+
+    /**
+     * Add message to messageQueue. Do not throw {@link LoggerNotConfiguredException} and do not execute {@link #checkState()} method.
+     * You need to execute it before call this method!
+     *
+     * @param prefixes user-defined message prefixes
+     * @param message  the message
+     * @param depth    caller class stack depth
+     */
+    @SuppressWarnings("unchecked")
+    private static void logMessageUnsafe(String prefixes, String message, int depth) {
+        messageQueue.add(new Message(prefixes, message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1)));
+
+        synchronized (loggerThread.synchronizerLock) {
+            loggerThread.synchronizerLock.notifyAll();
+        }
+    }
+
+    /**
+     * Add throwable to messageQueue
+     *
+     * @param throwable the throwable
+     * @param depth     caller class stack depth
+     * @throws LoggerNotConfiguredException if logger not already configured
+     */
+    private static void logThrowable(Throwable throwable, int depth) {
+        checkState();
+
+        depth++;
+
+        logMessageUnsafe(throwable.toString(), depth);
+        for(StackTraceElement stackTraceElement : throwable.getStackTrace()) {
+            logMessageUnsafe(stackTraceElement.toString(), depth);
+        }
+    }
+
+    /**
+     * Add throwable to messageQueue
+     *
+     * @param prefixes  user-defined message prefixes
+     * @param throwable the throwable
+     * @param depth     caller class stack depth
+     * @throws LoggerNotConfiguredException if logger not already configured
+     */
+    private static void logThrowable(String prefixes, Throwable throwable, int depth) {
+        checkState();
+
+        depth++;
+
+        logMessageUnsafe(prefixes, throwable.toString(), depth);
+        for(StackTraceElement stackTraceElement : throwable.getStackTrace()) {
+            logMessageUnsafe(prefixes, stackTraceElement.toString(), depth);
+        }
+    }
+
+    /**
+     * Add throwable to messageQueue
+     *
+     * @param throwable     the throwable
+     * @param depth         caller class stack depth
+     * @param textFormatter the text formatter
+     * @throws LoggerNotConfiguredException if logger not already configured
+     */
+    private static void logThrowable(Throwable throwable, int depth, TextFormatter textFormatter) {
+        checkState();
+
+        depth++;
+
+        logMessageUnsafe(textFormatter.format(throwable.toString()), depth);
+        for(StackTraceElement stackTraceElement : throwable.getStackTrace()) {
+            logMessageUnsafe(textFormatter.format(stackTraceElement.toString()), depth);
+        }
+    }
+
+    /**
+     * Add throwable to messageQueue
+     *
+     * @param prefixes      user-defined message prefixes
+     * @param throwable     the throwable
+     * @param depth         caller class stack depth
+     * @param textFormatter the text formatter
+     * @throws LoggerNotConfiguredException if logger not already configured
+     */
+    private static void logThrowable(Throwable throwable, int depth, TextFormatter textFormatter, String... prefixes) {
+        checkState();
+
+        depth++;
+        String prefs = String.join("", prefixes);
+        if(!prefs.isEmpty())
+            prefs = textFormatter.format(prefs);
+        logMessageUnsafe(prefs, textFormatter.format(throwable.toString()), depth);
+        for(StackTraceElement stackTraceElement : throwable.getStackTrace()) {
+            logMessageUnsafe(prefs, textFormatter.format(stackTraceElement.toString()), depth);
+        }
+    }
+
+    @Deprecated
+    private static void log(String message, int depth) {
+//        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[depth]);
+//        if(prefix.isEmpty()) {
+//            log(getPrefixLocation(depth), message);
+//        } else {
+//            log(prefix, message);
+//        }
+//        logMessageUnsafe(message, depth);
     }
 
     public static void log(String message) {
-        log(message, 2);
+        checkState();
+
+        logMessageUnsafe(message, 2);
     }
 
     public static void log(Throwable throwable) {
-        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
-        if(prefix.isEmpty()) {
-            log(getPrefixLocation(2), throwable);
-        } else {
-            log(prefix + '[' + getPrefixLocation(2) + ']', throwable);
-        }
+        logThrowable(throwable, 2);
     }
 
-    //WARNING! Don't works in JDK9
-    public static void log(String message, TextFormatter textFormatter) {
-        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
-        if(prefix.isEmpty()) {
-            log(getPrefixLocation(2), message, textFormatter);
-        } else {
-            log(prefix, message, textFormatter);
-        }
+    public static void log(@Nonnull String message, @Nonnull TextFormatter textFormatter) {
+        checkState();
+
+        logMessageUnsafe(textFormatter.format(message), 2);
     }
 
     private static void logFromStream(String message, TextFormatter textFormatter) {
-        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[5]);
-        if(prefix.isEmpty()) {
-            log(getPrefixLocation(5), message, textFormatter);
-        } else {
-            log(prefix, message, textFormatter);
-        }
+        logMessageUnsafe(textFormatter.format(message), 5);
     }
 
     private static void logFromStream(String message) {
-        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[5]);
-        if(prefix.isEmpty()) {
-            log(getPrefixLocation(5), message);
-        } else {
-            log(prefix, message);
-        }
+        logMessageUnsafe(message, 5);
     }
 
-    public static void log(Throwable throwable, TextFormatter textFormatter) {
-        String prefix = getPrefixFromClass(CallingClass.INSTANCE.getCallingClasses()[2]);
-        if(prefix.isEmpty()) {
-            log(getPrefixLocation(2), throwable, textFormatter);
-        } else {
-            log(prefix + '[' + getPrefixLocation(2) + ']', throwable, textFormatter);
-        }
+    public static void log(@Nonnull Throwable throwable, @Nonnull TextFormatter textFormatter) {
+        logThrowable(throwable, 2, textFormatter);
     }
 
-    public static void log(String message, String... prefixes) {
-        log(String.join("", prefixes), message);
+    public static void log(@Nonnull String message, String... prefixes) {
+        checkState();
+
+        logMessageUnsafe(String.join("", prefixes), message, 2);
     }
 
-    public static void log(Throwable throwable, String... prefixes) {
-        log(String.join("", prefixes), throwable);
+    public static void log(@Nonnull Throwable throwable, String... prefixes) {
+        logThrowable(String.join("", prefixes), throwable, 2);
     }
 
-    public static void log(String message, TextFormatter textFormatter, String... prefixes) {
-        log(String.join("", prefixes), message, textFormatter);
+    public static void log(@Nonnull String message, @Nonnull TextFormatter textFormatter, String... prefixes) {
+        checkState();
+
+        String prefs = String.join("", prefixes);
+        logMessageUnsafe(prefs.isEmpty() ? "" : textFormatter.format(prefs), textFormatter.format(message), 2);
     }
 
-    public static void log(Throwable throwable, TextFormatter textFormatter, String... prefixes) {
-        log(String.join("", prefixes), throwable, textFormatter);
+    public static void log(@Nonnull Throwable throwable, @Nonnull TextFormatter textFormatter, String... prefixes) {
+        logThrowable(throwable, 2, textFormatter, prefixes);
     }
 
     public static void log(String prefix, String message) {
         checkState();
 
-        LOGGER.log(Level.INFO, prefix + ": " + message);
-        if(listenerThread != null) {
-            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, message));
-        }
+        logMessageUnsafe(prefix, message, 2);
     }
 
-    public static void log(String prefix, Throwable throwable) {
+    public static void log(@Nonnull String prefix, @Nonnull Throwable throwable) {
+        logThrowable(prefix, throwable, 2);
+    }
+
+    public static void log(@Nonnull String prefix, @Nonnull String message, @Nonnull TextFormatter textFormatter) {
         checkState();
 
-//        throwable.printStackTrace();
-        LOGGER.log(Level.WARNING, prefix + ": " + throwable.toString());
-        if(listenerThread != null)
-            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, throwable.toString()));
-        Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> {
-            LOGGER.log(Level.WARNING, prefix + ": " + stackTraceElement.toString());
-            if(listenerThread != null) {
-                listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, stackTraceElement.toString()));
-            }
-        });
+        logMessageUnsafe(prefix.isEmpty() ? "" : textFormatter.format(prefix), textFormatter.format(message), 2);
     }
 
-    public static void log(String prefix, String message, TextFormatter textFormatter) {
-        if(textFormatter.wholeMessage) {
-            LOGGER.log(Level.INFO, textFormatter.format(prefix + ": " + message));
-        } else {
-            LOGGER.log(Level.INFO, prefix + ": " + textFormatter.format(message));
-        }
-
-        if(listenerThread != null) {
-            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, message));
-        }
-    }
-
-    public static void log(String prefix, Throwable throwable, TextFormatter textFormatter) {
-        throwable.printStackTrace();
-        if(textFormatter.wholeMessage) {
-            LOGGER.log(Level.WARNING, textFormatter.format(prefix + ": " + throwable.toString()));
-        } else {
-            LOGGER.log(Level.WARNING, prefix + ": " + textFormatter.format(throwable.toString()));
-        }
-        if(listenerThread != null)
-            listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, throwable.toString()));
-        Arrays.asList(throwable.getStackTrace()).forEach(stackTraceElement -> {
-            LOGGER.log(Level.WARNING, prefix + ": " + stackTraceElement.toString());
-            if(listenerThread != null) {
-                listenerThread.sendMessage(new LoggerListenerThread.Message(prefix, stackTraceElement.toString()));
-            }
-        });
+    public static void log(@Nonnull String prefix, @Nonnull Throwable throwable, @Nonnull TextFormatter textFormatter) {
+        logThrowable(throwable, 2, textFormatter, prefix);
     }
 
     public static void setupLogger(File log, int listenerQueueCapacity) {
@@ -231,6 +311,9 @@ public final class Logger {
                 LOGGER.addHandler(new WarningConsoleHandler());
 
                 loadConfigurations(ClassLoader.getSystemClassLoader());
+
+                messageQueue = new MpscLinkedQueue7<>();
+                loggerThread.start();
 
                 listenerThread = new LoggerListenerThread(listenerQueueCapacity);
                 listenerThread.start();
@@ -523,6 +606,144 @@ public final class Logger {
         }
     }
 
+    private static final class LoggerThread extends Thread {
+        private final Object synchronizerLock;
+
+        private final LoggerThreadCache cache;
+
+        public LoggerThread() {
+            setName("LoggerThread");
+            setDaemon(true);
+
+            cache = new LoggerThreadCache();
+            synchronizerLock = new Object();
+        }
+
+        @Override
+        public void run() {
+            try {
+                while(!isInterrupted()) {
+                    while(messageQueue.isEmpty()) {
+                        try {
+                            synchronized (synchronizerLock) {
+                                synchronizerLock.wait();
+                            }
+                        } catch (InterruptedException e) {
+                            Logger.LOGGER.finest("Logger thread was receive interrupt signal! Stopping logging...");
+                        }
+                    }
+                    Message message = messageQueue.poll();
+                    if(message == null) continue;
+
+                    Class<?> clazz = message.getCaller();
+                    String prefix = cache.get(clazz);
+                    if(prefix == null) {
+                        prefix = generatePrefixes(clazz);
+                        cache.add(clazz, prefix);
+                    }
+                    String prefixes = prefix + message.getPrefixes() + message.getLocationPrefix();
+                    String msg = prefixes + ": " + message.getMessage();
+                    Logger.LOGGER.log(Level.INFO, msg);
+                    Logger.listenerThread.sendMessage(new LoggerListenerThread.Message(prefixes, msg));
+                }
+            } catch (Throwable e) {
+                Logger.LOGGER.finest(e.toString());
+                for(StackTraceElement stackTraceElement : e.getStackTrace())
+                    Logger.LOGGER.finest(stackTraceElement.toString());
+                if(e instanceof Error) {
+                    Logger.LOGGER.finest("Logger error detected! Stopping server required!");
+                    throw e;
+                } else
+                    Logger.LOGGER.finest("Logger thread was shutdown! Stopping logging...");
+            }
+        }
+
+        /**
+         * Return method prefixes and debug prefix
+         *
+         * @param clazz the class
+         * @return prefixes or empty line
+         */
+        private String getDebugPrefix(Class<?> clazz, String debugPrefixString) {
+            boolean debugPrefix = false;
+
+            Prefix prefixAnnotation = clazz.getAnnotation(Prefix.class); //TODO remove
+            if(prefixAnnotation != null)
+                debugPrefix = prefixAnnotation.requireDebugPrefix();
+
+            Prefixes prefixes = clazz.getAnnotation(Prefixes.class);
+            if(prefixes != null)
+                debugPrefix = prefixes.requireDebugPrefix();
+
+            if(prefixAnnotation == null && prefixes == null)
+                debugPrefix = true;
+
+            if(debugPrefix)
+                return debugPrefixString;
+            else
+                return "";
+        }
+
+        @Nullable
+        private String generatePrefixes(Class<?> clazz) {
+            Iterator<Package> iter = ParentPackageIterator.forPackage(clazz.getName().substring(0, clazz.getName().lastIndexOf(".")));
+            StringBuilder ret = new StringBuilder();
+            while(iter.hasNext()) {
+                Package next = iter.next();
+                if(next.isAnnotationPresent(Prefixes.class))
+                    for(String s : next.getAnnotation(Prefixes.class).value())
+                        ret.append(s);
+            }
+            return ret.toString();
+        }
+    }
+
+    static final class LoggerThreadCache {
+        static final int CONTAINS_TIME = 60 * 1000;
+        static final int UPDATE_DELAY = 1000;
+
+        private final ConcurrentLiveHashMap<Class<?>, String> prefixes;
+
+        LoggerThreadCache() {
+            prefixes = new ConcurrentLiveHashMap<>(UPDATE_DELAY);
+            prefixes.start();
+        }
+
+        @Nullable
+        public String get(Class<?> clazz) {
+            String prefix = prefixes.get(clazz);
+            if(prefix != null)
+                prefixes.setTime(clazz, CONTAINS_TIME);
+            return prefix;
+        }
+
+        public void add(Class<?> clazz, String str) {
+            prefixes.put(clazz, str, CONTAINS_TIME);
+        }
+    }
+
+    @ToString
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    @Getter
+    static final class Message {
+        private final String prefixes;
+        private final String message;
+        private final Class<?> caller;
+        private final String locationPrefix;
+
+        public String getLocationPrefix() {
+            Prefixes annotation;
+            if((annotation = caller.getAnnotation(Prefixes.class)) != null && annotation.requireDebugPrefix())
+                return locationPrefix;
+            else if(annotation == null)
+                return locationPrefix;
+            else
+                return "";
+        }
+    }
+
+    @Deprecated
     private static final class LoggerListenerThread extends Thread {
         private final MpscAtomicArrayQueue<Message> messages;
         private final CopyOnWriteArrayList<LoggerListener> loggerListeners;
@@ -626,15 +847,10 @@ public final class Logger {
 
         protected final ForegroundColor foregroundColor;
         protected final BackgroundColor backgroundColor;
-        protected final boolean wholeMessage;
 
-        /**
-         * @param wholeMessage if true color all message with prefix and etc, overwise color only user message
-         */
-        public TextFormatter(ForegroundColor foregroundColor, BackgroundColor backgroundColor, boolean wholeMessage) {
+        public TextFormatter(ForegroundColor foregroundColor, BackgroundColor backgroundColor) {
             this.foregroundColor = foregroundColor;
             this.backgroundColor = backgroundColor;
-            this.wholeMessage = wholeMessage;
         }
 
         /**
@@ -643,7 +859,7 @@ public final class Logger {
          * @param str the string
          * @return colored string
          */
-        public String format(String str) {
+        public String format(@Nonnull String str) {
             return PREFIX +
                     foregroundColor.getCode() +
                     SEPARATOR +
@@ -663,10 +879,6 @@ public final class Logger {
 
         public BackgroundColor getBackgroundColor() {
             return backgroundColor;
-        }
-
-        public boolean isWholeMessage() {
-            return wholeMessage;
         }
     }
 
@@ -906,7 +1118,7 @@ public final class Logger {
      */
     @ThreadSafe
     private static final class LoggerErrorPrintStream extends PrintStream {
-        private static final TextFormatter FORMATTER = new TextFormatter(ForegroundColor.RED, BackgroundColor.NONE, true);
+        private static final TextFormatter FORMATTER = new TextFormatter(ForegroundColor.RED, BackgroundColor.NONE);
         private static final int NEW_LINE_INDEX = '\n';
 
         /**

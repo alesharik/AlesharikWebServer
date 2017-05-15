@@ -9,9 +9,15 @@ import java.lang.annotation.Target;
 /**
  * This annotation used by logger for retrieve class prefix
  */
-@Target(ElementType.TYPE)
+@Deprecated
+@Target({ElementType.TYPE, ElementType.PACKAGE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Prefix {
     String value();
+
+    /**
+     * If true, logger add [className:line] prefix
+     */
+    boolean requireDebugPrefix() default false;
 }
