@@ -13,7 +13,7 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
         return INSTANCE;
     }
 
-    public long fromByteArray(byte[] arr) { //TODO use Bits class
+    public long fromByteArray(byte[] arr) {
         int length = arr.length;
         long address = unsafe.allocateMemory(length + META_SIZE);
         unsafe.copyMemory(arr, BYTE_ARRAY_BASE_OFFSET, null, address + META_SIZE, length);
@@ -40,14 +40,7 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      */
     public byte get(long address, long i) {
-        if(i < 0) {
-            throw new ArrayIndexOutOfBoundsException(String.valueOf(i));
-        }
-
-        long count = size(address);
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException("i = " + i + ", count = " + count);
-        }
+        checkIndexBounds(address, i);
 
         return unsafe.getByte(address + META_SIZE + i);
     }

@@ -5,7 +5,7 @@ import com.alesharik.webserver.api.memory.OffHeapVectorBase;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-public class ShortOffHeapVector extends OffHeapVectorBase {
+public final class ShortOffHeapVector extends OffHeapVectorBase {
     private static final long SHORT_SIZE = 2L; //sizeof(long)
     private static final long SHORT_ARRAY_BASE_OFFSET = unsafe.arrayBaseOffset(short[].class);
     private static final ShortOffHeapVector INSTANCE = new ShortOffHeapVector();
@@ -41,14 +41,7 @@ public class ShortOffHeapVector extends OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      */
     public short get(long address, long i) {
-        if(i < 0) {
-            throw new IllegalArgumentException();
-        }
-
-        long count = size(address);
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
+        checkIndexBounds(address, i);
 
         return unsafe.getShort(address + META_SIZE + i * SHORT_SIZE);
     }
@@ -90,25 +83,24 @@ public class ShortOffHeapVector extends OffHeapVectorBase {
             if(Short.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
+            lastAddress += SHORT_SIZE;
         }
         return -1;
     }
 
     public long lastIndexOf(long address, short t) {
         long size = size(address);
-        long lastAddress = address + META_SIZE;
-        for(long i = size - 1; i >= 0; i++) {
-            short element = unsafe.getShort(lastAddress);
+        long addr = address + META_SIZE;
+        for(long i = size - 1; i >= 0; i--) {
+            short element = unsafe.getShort(addr + i * SHORT_SIZE);
             if(Short.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
         }
         return -1;
     }
 
-    public short set(long address, short t, long i) {
+    public short set(long address, long i, short t) {
         checkIndexBounds(address, i);
 
         short last = unsafe.getShort(address + META_SIZE + i * getElementSize());
@@ -116,10 +108,14 @@ public class ShortOffHeapVector extends OffHeapVectorBase {
         return last;
     }
 
-    public void remove(long address, short obj) {
+    public boolean remove(long address, short obj) {
         long index = indexOf(address, obj);
         if(index >= 0) {
-            remove(address, index);
+            unsafe.copyMemory(address + META_SIZE + SHORT_SIZE * (index + 1), address + META_SIZE + SHORT_SIZE * index, SHORT_SIZE * (size(address) - index));
+            decrementSize(address);
+            return true;
+        } else {
+            return false;
         }
     }
 

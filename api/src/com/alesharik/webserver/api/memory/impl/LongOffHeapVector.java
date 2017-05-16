@@ -5,7 +5,10 @@ import com.alesharik.webserver.api.memory.OffHeapVectorBase;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-public class LongOffHeapVector extends OffHeapVectorBase {
+/**
+ * You need to use {@link #remove(long, Long)} with {@link Long} type for long object removal
+ */
+public final class LongOffHeapVector extends OffHeapVectorBase {
     private static final long LONG_SIZE = 8L; //sizeof(long)
     private static final long LONG_ARRAY_BASE_OFFSET = unsafe.arrayBaseOffset(long[].class);
     private static final LongOffHeapVector INSTANCE = new LongOffHeapVector();
@@ -18,7 +21,7 @@ public class LongOffHeapVector extends OffHeapVectorBase {
         int length = arr.length;
         long address = unsafe.allocateMemory(length * LONG_SIZE + META_SIZE);
         unsafe.copyMemory(arr, LONG_ARRAY_BASE_OFFSET, null, address + META_SIZE, length * LONG_SIZE);
-        unsafe.putLong(address, 4L);
+        unsafe.putLong(address, LONG_SIZE);
         unsafe.putLong(address + BASE_FIELD_SIZE, length);
         unsafe.putLong(address + BASE_FIELD_SIZE + COUNT_FIELD_SIZE, length);
         return address;
@@ -41,14 +44,7 @@ public class LongOffHeapVector extends OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      */
     public long get(long address, long i) {
-        if(i < 0) {
-            throw new IllegalArgumentException();
-        }
-
-        long count = size(address);
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
+        checkIndexBounds(address, i);
 
         return unsafe.getLong(address + META_SIZE + i * getElementSize());
     }
@@ -90,25 +86,24 @@ public class LongOffHeapVector extends OffHeapVectorBase {
             if(Long.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
+            lastAddress += LONG_SIZE;
         }
         return -1;
     }
 
     public long lastIndexOf(long address, long t) {
         long size = size(address);
-        long lastAddress = address + META_SIZE;
-        for(long i = size - 1; i >= 0; i++) {
-            long element = unsafe.getLong(lastAddress);
+        long addr = address + META_SIZE;
+        for(long i = size - 1; i >= 0; i--) {
+            long element = unsafe.getLong(addr + i * LONG_SIZE);
             if(Long.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
         }
         return -1;
     }
 
-    public long set(long address, long t, long i) {
+    public long set(long address, long i, long t) {
         checkIndexBounds(address, i);
 
         long last = unsafe.getLong(address + META_SIZE + i * getElementSize());
@@ -116,10 +111,14 @@ public class LongOffHeapVector extends OffHeapVectorBase {
         return last;
     }
 
-    public void remove(long address, long obj) {
+    public boolean remove(long address, Long obj) {
         long index = indexOf(address, obj);
         if(index >= 0) {
-            remove(address, index);
+            unsafe.copyMemory(address + META_SIZE + LONG_SIZE * (index + 1), address + META_SIZE + LONG_SIZE * index, LONG_SIZE * (size(address) - index));
+            decrementSize(address);
+            return true;
+        } else {
+            return false;
         }
     }
 

@@ -41,14 +41,7 @@ public final class CharOffHeapVector extends OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      */
     public char get(long address, long i) {
-        if(i < 0) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
-        long count = size(address);
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
+        checkIndexBounds(address, i);
 
         return unsafe.getChar(address + META_SIZE + i * 2);
     }

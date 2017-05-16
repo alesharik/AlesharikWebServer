@@ -5,7 +5,8 @@ import com.alesharik.webserver.api.memory.OffHeapVectorBase;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-public class IntegerOffHeapVector extends OffHeapVectorBase {
+public final class IntegerOffHeapVector extends OffHeapVectorBase {
+    private static final long INT_SIZE = 4L;
     private static final long INT_ARRAY_BASE_OFFSET = unsafe.arrayBaseOffset(int[].class);
     private static final IntegerOffHeapVector INSTANCE = new IntegerOffHeapVector();
 
@@ -15,9 +16,9 @@ public class IntegerOffHeapVector extends OffHeapVectorBase {
 
     public long fromIntArray(int[] arr) {
         int length = arr.length;
-        long address = unsafe.allocateMemory(length * 4L + META_SIZE);
-        unsafe.copyMemory(arr, INT_ARRAY_BASE_OFFSET, null, address + META_SIZE, length * 4L);
-        unsafe.putLong(address, 4L);
+        long address = unsafe.allocateMemory(length * INT_SIZE + META_SIZE);
+        unsafe.copyMemory(arr, INT_ARRAY_BASE_OFFSET, null, address + META_SIZE, length * INT_SIZE);
+        unsafe.putLong(address, INT_SIZE);
         unsafe.putLong(address + BASE_FIELD_SIZE, length);
         unsafe.putLong(address + BASE_FIELD_SIZE + COUNT_FIELD_SIZE, length);
         return address;
@@ -29,7 +30,7 @@ public class IntegerOffHeapVector extends OffHeapVectorBase {
     public int[] toIntArray(long address) {
         long s = size(address);
         int[] arr = new int[(int) s];
-        unsafe.copyMemory(null, address + META_SIZE, arr, INT_ARRAY_BASE_OFFSET, arr.length * 4L);
+        unsafe.copyMemory(null, address + META_SIZE, arr, INT_ARRAY_BASE_OFFSET, arr.length * INT_SIZE);
         return arr;
     }
 
@@ -40,16 +41,9 @@ public class IntegerOffHeapVector extends OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      */
     public int get(long address, long i) {
-        if(i < 0) {
-            throw new IllegalArgumentException();
-        }
+        checkIndexBounds(address, i);
 
-        long count = size(address);
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
-        return unsafe.getInt(address + META_SIZE + i * getElementSize());
+        return unsafe.getInt(address + META_SIZE + i * INT_SIZE);
     }
 
     /**
@@ -63,7 +57,7 @@ public class IntegerOffHeapVector extends OffHeapVectorBase {
         long next = size(address);
         address = checkBounds(address, next);
 
-        unsafe.putInt(address + META_SIZE + next * getElementSize(), t);
+        unsafe.putInt(address + META_SIZE + next * INT_SIZE, t);
         incrementSize(address);
 
         return address;
@@ -89,42 +83,45 @@ public class IntegerOffHeapVector extends OffHeapVectorBase {
             if(Integer.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
+            lastAddress += INT_SIZE;
         }
         return -1;
     }
 
     public long lastIndexOf(long address, int t) {
         long size = size(address);
-        long lastAddress = address + META_SIZE;
-        for(long i = size - 1; i >= 0; i++) {
-            int element = unsafe.getInt(lastAddress);
+        long addr = address + META_SIZE;
+        for(long i = size - 1; i >= 0; i--) {
+            int element = unsafe.getInt(addr + i * INT_SIZE);
             if(Integer.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
         }
         return -1;
     }
 
-    public int set(long address, int t, long i) {
+    public int set(long address, long i, int t) {
         checkIndexBounds(address, i);
 
-        int last = unsafe.getInt(address + META_SIZE + i * getElementSize());
-        unsafe.putInt(address + META_SIZE + i * getElementSize(), t);
+        int last = unsafe.getInt(address + META_SIZE + i * INT_SIZE);
+        unsafe.putInt(address + META_SIZE + i * INT_SIZE, t);
         return last;
     }
 
-    public void remove(long address, int obj) {
+    public boolean remove(long address, int obj) {
         long index = indexOf(address, obj);
         if(index >= 0) {
-            remove(address, index);
+            unsafe.copyMemory(address + META_SIZE + INT_SIZE * (index + 1), address + META_SIZE + INT_SIZE * index, INT_SIZE * (size(address) - index));
+            decrementSize(address);
+            return true;
+        } else {
+            return false;
         }
     }
 
     @Override
     protected long getElementSize() {
-        return 4L; //sizeof(int)
+        return INT_SIZE;
     }
 
     private class Iter implements Iterator<Integer> {

@@ -5,7 +5,7 @@ import com.alesharik.webserver.api.memory.OffHeapVectorBase;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-public class FloatOffHeapVector extends OffHeapVectorBase {
+public final class FloatOffHeapVector extends OffHeapVectorBase {
     private static final long FLOAT_SIZE = 4L; //sizeof(float)
     private static final long FLOAT_ARRAY_BASE_OFFSET = unsafe.arrayBaseOffset(float[].class);
     private static final FloatOffHeapVector INSTANCE = new FloatOffHeapVector();
@@ -14,7 +14,6 @@ public class FloatOffHeapVector extends OffHeapVectorBase {
         return INSTANCE;
     }
 
-    @SuppressWarnings("Duplicates")
     public long fromFloatArray(float[] arr) {
         int length = arr.length;
         long address = unsafe.allocateMemory(length * FLOAT_SIZE + META_SIZE);
@@ -42,16 +41,9 @@ public class FloatOffHeapVector extends OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      */
     public float get(long address, long i) {
-        if(i < 0) {
-            throw new IllegalArgumentException();
-        }
+        checkIndexBounds(address, i);
 
-        long count = size(address);
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
-        return unsafe.getFloat(address + META_SIZE + i * getElementSize());
+        return unsafe.getFloat(address + META_SIZE + i * FLOAT_SIZE);
     }
 
     /**
@@ -65,7 +57,7 @@ public class FloatOffHeapVector extends OffHeapVectorBase {
         long next = size(address);
         address = checkBounds(address, next);
 
-        unsafe.putFloat(address + META_SIZE + next * getElementSize(), t);
+        unsafe.putFloat(address + META_SIZE + next * FLOAT_SIZE, t);
         incrementSize(address);
 
         return address;
@@ -91,36 +83,39 @@ public class FloatOffHeapVector extends OffHeapVectorBase {
             if(Float.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
+            lastAddress += FLOAT_SIZE;
         }
         return -1;
     }
 
     public long lastIndexOf(long address, float t) {
         long size = size(address);
-        long lastAddress = address + META_SIZE;
-        for(long i = size - 1; i >= 0; i++) {
-            float element = unsafe.getFloat(lastAddress);
+        long addr = address + META_SIZE;
+        for(long i = size - 1; i >= 0; i--) {
+            float element = unsafe.getFloat(addr + i * FLOAT_SIZE);
             if(Float.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
         }
         return -1;
     }
 
-    public float set(long address, float t, long i) {
+    public float set(long address, long i, float t) {
         checkIndexBounds(address, i);
 
-        float last = unsafe.getFloat(address + META_SIZE + i * getElementSize());
-        unsafe.putFloat(address + META_SIZE + i * getElementSize(), t);
+        float last = unsafe.getFloat(address + META_SIZE + i * FLOAT_SIZE);
+        unsafe.putFloat(address + META_SIZE + i * FLOAT_SIZE, t);
         return last;
     }
 
-    public void remove(long address, float obj) {
+    public boolean remove(long address, float obj) {
         long index = indexOf(address, obj);
         if(index >= 0) {
-            remove(address, index);
+            unsafe.copyMemory(address + META_SIZE + FLOAT_SIZE * (index + 1), address + META_SIZE + FLOAT_SIZE * index, FLOAT_SIZE * (size(address) - index));
+            decrementSize(address);
+            return true;
+        } else {
+            return false;
         }
     }
 

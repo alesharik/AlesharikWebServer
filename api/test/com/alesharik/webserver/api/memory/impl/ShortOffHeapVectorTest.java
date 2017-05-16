@@ -9,15 +9,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
-public class CharOffHeapVectorTest {
-    private static final char FIRST_VALUE = 'a';
-    private static final char SECOND_VALUE = 'b';
-    private static final char THIRD_VALUE = 'c';
-    private static final char FOURTH_VALUE = 'a';
-    private static final char DUDE = 'x';
-    private static final char NOT_EXISTS = 'y';
+public class ShortOffHeapVectorTest {
+    private static final short FIRST_VALUE = 6234;
+    private static final short SECOND_VALUE = 621;
+    private static final short THIRD_VALUE = 6112;
+    private static final short FOURTH_VALUE = 6234;
+    private static final short DUDE = 987;
+    private static final short NOT_EXISTS = 562;
 
-    private static final CharOffHeapVector array = new CharOffHeapVector();
+    private static final ShortOffHeapVector array = new ShortOffHeapVector();
     private long address;
 
     @Before
@@ -37,23 +37,23 @@ public class CharOffHeapVectorTest {
 
     @Test
     public void instanceTest() throws Exception {
-        CharOffHeapVector v = CharOffHeapVector.instance();
+        ShortOffHeapVector v = ShortOffHeapVector.instance();
         long address = v.allocate();
         v.add(address, FIRST_VALUE);
-        assertEquals(v.get(address, 0), FIRST_VALUE);
+        assertEquals(FIRST_VALUE, v.get(address, 0), 0);
         v.free(address);
     }
 
     @Test
     public void formCharArray() throws Exception {
-        char[] arr = {FIRST_VALUE, SECOND_VALUE, THIRD_VALUE, FOURTH_VALUE};
+        short[] arr = {FIRST_VALUE, SECOND_VALUE, THIRD_VALUE, FOURTH_VALUE};
         long addr = 0;
         try {
-            addr = array.fromCharArray(arr);
-            assertEquals(array.get(addr, 0), FIRST_VALUE);
-            assertEquals(array.get(addr, 1), SECOND_VALUE);
-            assertEquals(array.get(addr, 2), THIRD_VALUE);
-            assertEquals(array.get(addr, 3), FOURTH_VALUE);
+            addr = array.fromShortArray(arr);
+            assertEquals(FIRST_VALUE, array.get(addr, 0), 0);
+            assertEquals(SECOND_VALUE, array.get(addr, 1), 0);
+            assertEquals(THIRD_VALUE, array.get(addr, 2), 0);
+            assertEquals(FOURTH_VALUE, array.get(addr, 3), 0);
         } finally {
             array.free(addr);
         }
@@ -61,11 +61,11 @@ public class CharOffHeapVectorTest {
 
     @Test
     public void toCharArray() throws Exception {
-        char[] arr = array.toCharArray(address);
-        assertEquals(arr[0], FIRST_VALUE);
-        assertEquals(arr[1], SECOND_VALUE);
-        assertEquals(arr[2], THIRD_VALUE);
-        assertEquals(arr[3], FOURTH_VALUE);
+        short[] arr = array.toShortArray(address);
+        assertEquals(arr[0], FIRST_VALUE, 0);
+        assertEquals(SECOND_VALUE, arr[1], 0);
+        assertEquals(THIRD_VALUE, arr[2], 0);
+        assertEquals(FOURTH_VALUE, arr[3], 0);
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
@@ -80,10 +80,10 @@ public class CharOffHeapVectorTest {
 
     @Test
     public void getNormal() throws Exception {
-        assertSame(array.get(address, 0), FIRST_VALUE);
-        assertSame(array.get(address, 1), SECOND_VALUE);
-        assertSame(array.get(address, 2), THIRD_VALUE);
-        assertSame(array.get(address, 3), FOURTH_VALUE);
+        assertEquals(FIRST_VALUE, array.get(address, 0), 0);
+        assertEquals(SECOND_VALUE, array.get(address, 1), 0);
+        assertEquals(THIRD_VALUE, array.get(address, 2), 0);
+        assertEquals(FOURTH_VALUE, array.get(address, 3), 0);
     }
 
     @Test
@@ -102,15 +102,15 @@ public class CharOffHeapVectorTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void iteratorTest() throws Exception {
-        Iterator<Character> iter = array.iterator(address);
+        Iterator<Short> iter = array.iterator(address);
         assertTrue(iter.hasNext());
-        assertSame(iter.next(), FIRST_VALUE);
+        assertEquals(iter.next(), FIRST_VALUE, 0);
 
         assertTrue(iter.hasNext());
-        assertSame(iter.next(), SECOND_VALUE);
+        assertEquals(iter.next(), SECOND_VALUE, 0);
 
         assertTrue(iter.hasNext());
-        assertSame(iter.next(), THIRD_VALUE);
+        assertEquals(iter.next(), THIRD_VALUE, 0);
 
         assertTrue(iter.hasNext());
 
@@ -126,33 +126,33 @@ public class CharOffHeapVectorTest {
     @Test
     public void forEachTest() throws Exception {
         AtomicInteger counter = new AtomicInteger(0);
-        array.forEach(address, aByte -> counter.getAndIncrement());
+        array.forEach(address, aDouble -> counter.getAndIncrement());
         assertTrue(counter.get() > 3);
     }
 
     @Test
     public void indexOfExists() throws Exception {
-        assertEquals(array.indexOf(address, FIRST_VALUE), 0);
-        assertEquals(array.indexOf(address, SECOND_VALUE), 1);
-        assertEquals(array.indexOf(address, THIRD_VALUE), 2);
-        assertEquals(array.indexOf(address, FOURTH_VALUE), 0);
+        assertEquals(0, array.indexOf(address, FIRST_VALUE));
+        assertEquals(1, array.indexOf(address, SECOND_VALUE));
+        assertEquals(2, array.indexOf(address, THIRD_VALUE));
+        assertEquals(0, array.indexOf(address, FOURTH_VALUE));
     }
 
     @Test
     public void indexOfNotExists() throws Exception {
-        assertEquals(array.indexOf(address, NOT_EXISTS), -1);
+        assertEquals(-1, array.indexOf(address, NOT_EXISTS));
     }
 
     @Test
     public void lastIndexOfExists() throws Exception {
-        assertEquals(array.lastIndexOf(address, FOURTH_VALUE), 3);
-        assertEquals(array.lastIndexOf(address, SECOND_VALUE), 1);
-        assertEquals(array.lastIndexOf(address, THIRD_VALUE), 2);
+        assertEquals(3, array.lastIndexOf(address, FOURTH_VALUE));
+        assertEquals(1, array.lastIndexOf(address, SECOND_VALUE));
+        assertEquals(2, array.lastIndexOf(address, THIRD_VALUE));
     }
 
     @Test
     public void lastIndexOfNotExists() throws Exception {
-        assertEquals(array.lastIndexOf(address, NOT_EXISTS), -1);
+        assertEquals(-1, array.lastIndexOf(address, NOT_EXISTS));
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
@@ -168,7 +168,7 @@ public class CharOffHeapVectorTest {
     @Test
     public void setNormal() throws Exception {
         array.set(address, 4, SECOND_VALUE);
-        assertEquals(SECOND_VALUE, array.get(address, 4));
+        assertEquals(SECOND_VALUE, array.get(address, 4), 0);
     }
 
     @Test
@@ -183,6 +183,6 @@ public class CharOffHeapVectorTest {
 
     @Test
     public void getElementSizeTest() throws Exception {
-        assertEquals(array.getElementSize(), 2L);
+        assertEquals(2L, array.getElementSize());
     }
 }

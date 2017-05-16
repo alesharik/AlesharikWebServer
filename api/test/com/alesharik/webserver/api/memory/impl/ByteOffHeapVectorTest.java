@@ -36,6 +36,15 @@ public class ByteOffHeapVectorTest {
     }
 
     @Test
+    public void instanceTest() throws Exception {
+        ByteOffHeapVector v = ByteOffHeapVector.instance();
+        long address = v.allocate();
+        v.add(address, FIRST_VALUE);
+        assertEquals(v.get(address, 0), FIRST_VALUE);
+        v.free(address);
+    }
+
+    @Test
     public void formByteArray() throws Exception {
         byte[] arr = {FIRST_VALUE, SECOND_VALUE, THIRD_VALUE, FOURTH_VALUE};
         long addr = 0;
@@ -109,6 +118,8 @@ public class ByteOffHeapVectorTest {
         iter.forEachRemaining(a -> counter.incrementAndGet());
         assertTrue(counter.get() > 0);
 
+        assertNull(iter.next());
+
         iter.remove();
     }
 
@@ -160,6 +171,7 @@ public class ByteOffHeapVectorTest {
         assertEquals(SECOND_VALUE, array.get(address, 4));
     }
 
+    @Test
     public void removeExists() throws Exception {
         assertTrue(array.remove(address, DUDE));
     }

@@ -14,7 +14,6 @@ public final class DoubleOffHeapVector extends OffHeapVectorBase {
         return INSTANCE;
     }
 
-    @SuppressWarnings("Duplicates")
     public long fromDoubleArray(double[] arr) {
         int length = arr.length;
         long address = unsafe.allocateMemory(length * DOUBLE_SIZE + META_SIZE);
@@ -42,16 +41,9 @@ public final class DoubleOffHeapVector extends OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      */
     public double get(long address, long i) {
-        if(i < 0) {
-            throw new IllegalArgumentException();
-        }
+        checkIndexBounds(address, i);
 
-        long count = size(address);
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
-        return unsafe.getDouble(address + META_SIZE + i * getElementSize());
+        return unsafe.getDouble(address + META_SIZE + i * DOUBLE_SIZE);
     }
 
     /**
@@ -65,7 +57,7 @@ public final class DoubleOffHeapVector extends OffHeapVectorBase {
         long next = size(address);
         address = checkBounds(address, next);
 
-        unsafe.putDouble(address + META_SIZE + next * getElementSize(), t);
+        unsafe.putDouble(address + META_SIZE + next * DOUBLE_SIZE, t);
         incrementSize(address);
 
         return address;
@@ -91,36 +83,39 @@ public final class DoubleOffHeapVector extends OffHeapVectorBase {
             if(Double.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
+            lastAddress += DOUBLE_SIZE;
         }
         return -1;
     }
 
     public long lastIndexOf(long address, double t) {
         long size = size(address);
-        long lastAddress = address + META_SIZE;
-        for(long i = size - 1; i >= 0; i++) {
-            double element = unsafe.getDouble(lastAddress);
+        long addr = address + META_SIZE;
+        for(long i = size - 1; i >= 0; i--) {
+            double element = unsafe.getDouble(addr + i * DOUBLE_SIZE);
             if(Double.compare(element, t) == 0) {
                 return i;
             }
-            lastAddress += getElementSize();
         }
         return -1;
     }
 
-    public double set(long address, double t, long i) {
+    public double set(long address, long i, double t) {
         checkIndexBounds(address, i);
 
-        double last = unsafe.getDouble(address + META_SIZE + i * getElementSize());
-        unsafe.putDouble(address + META_SIZE + i * getElementSize(), t);
+        double last = unsafe.getDouble(address + META_SIZE + i * DOUBLE_SIZE);
+        unsafe.putDouble(address + META_SIZE + i * DOUBLE_SIZE, t);
         return last;
     }
 
-    public void remove(long address, double obj) {
+    public boolean remove(long address, double obj) {
         long index = indexOf(address, obj);
         if(index >= 0) {
-            remove(address, index);
+            unsafe.copyMemory(address + META_SIZE + DOUBLE_SIZE * (index + 1), address + META_SIZE + DOUBLE_SIZE * index, DOUBLE_SIZE * (size(address) - index));
+            decrementSize(address);
+            return true;
+        } else {
+            return false;
         }
     }
 

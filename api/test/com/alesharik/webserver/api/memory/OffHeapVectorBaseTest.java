@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
-public class OffHeapVectorTest {
+public class OffHeapVectorBaseTest {
     private static final ByteOffHeapVector array = new ByteOffHeapVector();
     private long address;
 
@@ -126,5 +126,27 @@ public class OffHeapVectorTest {
     public void shrinkTest() throws Exception {
         address = array.shrink(address);
         assertEquals(array.size(address), array.getMax(address));
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void checkBoundsTestIMinus() throws Exception {
+        array.checkIndexBounds(address, -1);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void checkIndexBoundsIMoreThanSize() throws Exception {
+        array.checkIndexBounds(address, Integer.MAX_VALUE);
+    }
+
+
+    @Test
+    public void removeExists() throws Exception {
+        assertTrue(array.remove(address, 0));
+    }
+
+    @Test
+    public void removeNotExists() throws Exception {
+        assertFalse(array.remove(address, Integer.MAX_VALUE));
+        assertFalse(array.remove(address, -1));
     }
 }

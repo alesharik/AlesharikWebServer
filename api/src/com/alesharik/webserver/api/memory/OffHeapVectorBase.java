@@ -101,16 +101,15 @@ public abstract class OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      * @param i       element index
      */
-    public void remove(long address, long i) {
+    public boolean remove(long address, long i) {
         long count = size(address);
-        if(i < 0) {
-            throw new ArrayIndexOutOfBoundsException();
+        if(i < 0 || i >= count) {
+            return false;
         }
-        if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
+
         unsafe.copyMemory(address + META_SIZE + getElementSize() * (i + 1), address + META_SIZE + getElementSize() * i, getElementSize() * (count - i));
         decrementSize(address);
+        return true;
     }
 
     /**
@@ -191,7 +190,7 @@ public abstract class OffHeapVectorBase {
             throw new ArrayIndexOutOfBoundsException(String.valueOf(i));
         }
         if(i >= count) {
-            throw new ArrayIndexOutOfBoundsException("i = " + i + ", count = " + count);
+            throw new ArrayIndexOutOfBoundsException(i + " >= " + count);
         }
     }
 
