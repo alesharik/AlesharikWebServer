@@ -1,0 +1,83 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+def deployDir = new File("./deploy/")
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+subprojects {
+    apply plugin: 'jacoco'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        jcenter()
+    }
+}
+
+clean.doFirst {
+    deployDir.deleteDir()
+}
+
+task checkDeployDir {
+    if(!deployDir.exists())
+        deployDir.mkdirs()
+}
+
+task copyArtifacts(dependsOn: [checkDeployDir, project("alesharikwebserver-api").task('build'), project("alesharikwebserver-main").task('build')], type: Copy) {
+    from('./api/out/libs/') {
+        exclude 'alesharikwebserver-api.jar'
+    }
+    from './main/out/libs/'
+    rename('alesharikwebserver-api-all.jar', 'agent.jar')
+    into deployDir.toString()
+}
+
+task generateConfig(dependsOn: copyArtifacts) {
+    def config = new File(deployDir.toString() + "/configuration.xml")
+    config.text = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+            "<configuration>\n" +
+            "    <api>\n" +
+            "        <config>\n" +
+            "            <fileCheckEnabled>true</fileCheckEnabled> <!-- REQUIRED. Enable config file hot reload -->\n" +
+            "        </config>\n" +
+            "        <logger>\n" +
+            "            <listenerQueueCapacity>128</listenerQueueCapacity>\n" +
+            "            <logFile>./logs/log-{\$time}.log</logFile>\n" +
+            "        </logger>\n" +
+            "        <pluginManager>\n" +
+            "            <folder>./plugins/</folder>\n" +
+            "            <hotReload>false</hotReload>\n" +
+            "        </pluginManager>\n" +
+            "    </api>\n" +
+            "    <modules>\n" +
+            "\n" +
+            "    </modules>\n" +
+            "    <main>\n" +
+            "        <init>\n" +
+            "\n" +
+            "        </init>\n" +
+            "    </main>\n" +
+            "</configuration>"
+}
+
+task generateStartScript(dependsOn: copyArtifacts) {
+    def startScript = new File(deployDir.toString() + "/start.sh")
+    startScript.text = "sudo -s java -javaagent:agent.jar -jar main.jar"
+}
+
+task copyServerDashboard(dependsOn: checkDeployDir, type: Copy) {
+    from(rootProject.projectDir.toString() + "/serverDashboard/")
+    into(deployDir.toString() + "/serverDashboard/")
+}
+
+task prepareDeploy(dependsOn: [clean, generateStartScript, generateConfig, copyServerDashboard]) {
+    println 'Take server at deploy folder'
+}
+

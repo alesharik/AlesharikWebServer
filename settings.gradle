@@ -1,0 +1,4 @@
+include 'api', 'main'
+rootProject.name = 'alesharikwebserver'
+project(':api').name = 'alesharikwebserver-api'
+project(':main').name = 'alesharikwebserver-main'

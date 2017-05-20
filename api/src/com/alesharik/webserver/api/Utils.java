@@ -1,9 +1,7 @@
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.logger.Logger;
 import one.nio.util.ByteArrayBuilder;
 import one.nio.util.Hex;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.annotation.concurrent.Immutable;
 import java.io.ByteArrayOutputStream;
@@ -169,7 +167,7 @@ public final class Utils {
             }
             is.close();
         } catch (IOException e) {
-            Logger.log(e);
+            e.printStackTrace();
         }
         return byteArrayOutputStream.toByteArray();
     }
@@ -295,6 +293,8 @@ public final class Utils {
         }
     }
 
+    private static final String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,./?><;:\'\"[{]}-_=+!@#$%^&*()\\|~`";
+
     /**
      * Generate random string with fixed or random length
      *
@@ -306,6 +306,12 @@ public final class Utils {
             length = SECURE_RANDOM.nextInt();
         }
 
-        return RandomStringUtils.random(length, true, true);
+        StringBuilder stringBuilder = new StringBuilder();
+        SecureRandom rnd = new SecureRandom();
+        for(int i = 0; i < length; i++) {
+            int c = rnd.nextInt(chars.length());
+            stringBuilder.append(chars.charAt(c));
+        }
+        return stringBuilder.toString();
     }
 }

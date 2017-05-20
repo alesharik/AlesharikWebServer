@@ -1,5 +1,6 @@
 package com.alesharik.webserver.control.dashboard;
 
+import com.alesharik.webserver.api.GsonUtils;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.Module;
 import com.alesharik.webserver.control.dashboard.elements.menu.Menu;
@@ -8,8 +9,9 @@ import com.alesharik.webserver.control.dashboard.elements.menu.MenuItem;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuPlugin;
 import com.alesharik.webserver.control.dashboard.elements.menu.MenuPluginBuilder;
 import com.alesharik.webserver.control.dashboard.elements.menu.TextMenuItem;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import org.jsoup.Jsoup;
 import org.w3c.dom.Element;
 
@@ -76,13 +78,13 @@ public final class DashboardDataHolder implements Module {
 
     //TODO send minimized code
     public String getAllMenuPluginsAsJSONArray() {
-        JSONArray array = new JSONArray();
+        JsonArray array = new JsonArray();
         menuPlugins.forEach(menuPlugin -> {
-            JSONObject object = new JSONObject();
-            object.put("value", menuPlugin.getCode());
+            JsonObject object = new JsonObject();
+            object.add("value", new JsonPrimitive(menuPlugin.getCode()));
             array.add(object);
         });
-        return array.toJSONString();
+        return GsonUtils.getGson().toJson(array);
     }
 
     @Override
