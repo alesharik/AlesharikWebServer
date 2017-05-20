@@ -36,6 +36,7 @@ task copyArtifacts(dependsOn: [checkDeployDir, project("alesharikwebserver-api")
     }
     from './main/out/libs/'
     rename('alesharikwebserver-api-all.jar', 'agent.jar')
+    rename('alesharikwebserver-main.jar', 'main.jar')
     into deployDir.toString()
 }
 
