@@ -70,7 +70,18 @@ task generateConfig(dependsOn: copyArtifacts) {
 
 task generateStartScript(dependsOn: copyArtifacts) {
     def startScript = new File(deployDir.toString() + "/start.sh")
-    startScript.text = "sudo -s java -javaagent:agent.jar -jar main.jar"
+    startScript.text = "#!/usr/bin/env bash\n" +
+            "if type -p java; then\n" +
+            "    echo found java executable in PATH\n" +
+            "    _java=java\n" +
+            "elif [[ -n \"\$JAVA_HOME\" ]] && [[ -x \"\$JAVA_HOME/bin/java\" ]];  then\n" +
+            "    echo found java executable in JAVA_HOME\n" +
+            "    _java=\"\$JAVA_HOME/bin/java\"\n" +
+            "else\n" +
+            "    echo \"no java found!\"\n" +
+            "    exit 1\n" +
+            "fi\n" +
+            "sudo -s \${_java} -javaagent:agent.jar -jar main.jar"
 }
 
 task copyServerDashboard(dependsOn: checkDeployDir, type: Copy) {
