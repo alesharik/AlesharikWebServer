@@ -17,7 +17,7 @@ import java.util.function.Function;
  * This map updates only on method call.
  * If method has no lifeTime, it set DEFAULT_LIFE_TIME as lifeTime
  */
-public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
+public class CachedHashMap<K, V> extends HashMapWrapper<K, V> implements Cloneable {
     private static final long DEFAULT_LIFE_TIME = 60 * 1000;
 
     private TripleHashMap<K, V, Long> map;
@@ -153,7 +153,7 @@ public class CachedHashMap<K, V> extends HashMapWrapper<K, V> {
     }
 
     @Override
-    protected Object clone() throws CloneNotSupportedException {
+    public Object clone() throws CloneNotSupportedException {
         update();
         CachedHashMap map = ((CachedHashMap) super.clone());
         map.map = this.map;

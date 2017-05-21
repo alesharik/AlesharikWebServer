@@ -158,8 +158,9 @@ public class HashMapWrapper<K, V> implements Map<K, V>, Cloneable, Serializable 
         return hashMap.merge(key, value, remappingFunction);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected Object clone() throws CloneNotSupportedException {
+    public Object clone() throws CloneNotSupportedException {
         HashMap<K, V> map = (HashMap<K, V>) super.clone();
         map.putAll(hashMap);
         return map;

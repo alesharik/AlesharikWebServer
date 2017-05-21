@@ -23,7 +23,7 @@ import java.util.function.Function;
  * Map updates every set delay in {@link TickingPool}(default or not) => concurrently
  */
 //TODO write configurable pool
-public class ConcurrentLiveHashMap<K, V> extends HashMapWrapper<K, V> implements Tickable {
+public class ConcurrentLiveHashMap<K, V> extends HashMapWrapper<K, V> implements Tickable, Cloneable {
     private static final OneThreadTickingPool DEFAULT_POOL = new OneThreadTickingPool();
     private static final long DEFAULT_LIFE_TIME = 60 * 1000;
     private static final long DEFAULT_DELAY = 1000;
@@ -299,7 +299,7 @@ public class ConcurrentLiveHashMap<K, V> extends HashMapWrapper<K, V> implements
 
     @Override
     //TODO check if it works
-    protected Object clone() throws CloneNotSupportedException {
+    public Object clone() throws CloneNotSupportedException {
         try {
             lock.lockRead();
             ConcurrentLiveHashMap map = ((ConcurrentLiveHashMap) super.clone());

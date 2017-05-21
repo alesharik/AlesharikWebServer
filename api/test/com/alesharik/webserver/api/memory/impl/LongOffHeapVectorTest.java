@@ -173,12 +173,12 @@ public class LongOffHeapVectorTest {
 
     @Test
     public void removeExists() throws Exception {
-        assertTrue(array.remove(address, new Long(DUDE)));
+        assertTrue(array.remove(address, Long.valueOf(DUDE)));
     }
 
     @Test
     public void removeNotExists() throws Exception {
-        assertFalse(array.remove(address, new Long(NOT_EXISTS)));
+        assertFalse(array.remove(address, Long.valueOf(NOT_EXISTS)));
     }
 
     @Test

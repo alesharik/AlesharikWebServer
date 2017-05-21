@@ -22,7 +22,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 //TODO write configurable pool
-public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements Tickable {
+public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements Tickable, Cloneable {
     private static final OneThreadTickingPool DEFAULT_POOL = new OneThreadTickingPool();
     private static final int DEFAULT_LIFE_TIME = 60 * 1000;
     private static final long DEFAULT_DELAY = 1000;

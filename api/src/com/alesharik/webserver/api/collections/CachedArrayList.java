@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * This list updates only on method call.
  * If method has no lifeTime, it set DEFAULT_LIFE_TIME as lifeTime
  */
-public class CachedArrayList<V> extends ArrayListWrapper<V> {
+public class CachedArrayList<V> extends ArrayListWrapper<V> implements Cloneable {
     private static final int DEFAULT_LIFE_TIME = 60 * 1000;
 
     private ArrayList<Long> times;
@@ -316,7 +316,7 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> {
     public Object clone() throws CloneNotSupportedException {
         update();
         CachedArrayList list = ((CachedArrayList) super.clone());
-        list.times = times;
+        list.times = new ArrayList<>(times);
         return list;
     }
 

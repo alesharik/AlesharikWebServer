@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * The concurrent version of {@link TripleHashMap}
  */
-public class ConcurrentTripleHashMap<K, V, A> extends TripleHashMap<K, V, A> {
+public class ConcurrentTripleHashMap<K, V, A> extends TripleHashMap<K, V, A> implements Cloneable {
     private final RWLock lock = new RWLock();
 
     @Override

@@ -73,7 +73,7 @@ public class ConcurrentLiveArrayListTest {
 
     @Test
     public void addWithPosition() throws Exception {
-        wr.add(401, new Integer(1002));
+        wr.add(401, Integer.valueOf(1002));
     }
 
     @Test
@@ -202,7 +202,7 @@ public class ConcurrentLiveArrayListTest {
     public void retainAll1() throws Exception {
         List<Integer> c = new ArrayList<>();
         c.addAll(wr);
-        c.remove(new Integer(310));
+        c.remove(Integer.valueOf(310));
         assertTrue(wrDouble.retainAll(c, 60_000L));
         assertFalse(wrDouble.contains(310));
     }
