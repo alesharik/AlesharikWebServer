@@ -181,3 +181,32 @@ task codeCoverageReport(dependsOn: test, type: JacocoReport) {
     sourceDirectories = files(sourceSets.main.java.srcDirs)
     classDirectories = fileTree(buildDir.toString() + '/classes/')
 }
+
+javadoc.destinationDir = new File(buildDir.toString() + '/javadoc/')
+
+
+task packageJavadoc(type: Jar, dependsOn: javadoc) {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+task packageSources(type: Jar, dependsOn: classes) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId 'com.alesharik'
+            artifactId 'alesharikwebserver-main'
+            version '1.0-SNAPSHOT'
+
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-sources.jar', classifier: 'src', extension: 'zip'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-javadoc.jar', classifier: 'javadoc', extension: 'zip'
+
+            from components.java
+        }
+    }
+}
+
+publishToMavenLocal.dependsOn(packageJavadoc, processResources)

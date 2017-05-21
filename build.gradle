@@ -10,6 +10,7 @@ repositories {
 
 subprojects {
     apply plugin: 'jacoco'
+    apply plugin: 'maven-publish'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -92,4 +93,6 @@ task copyServerDashboard(dependsOn: checkDeployDir, type: Copy) {
 task prepareDeploy(dependsOn: [clean, generateStartScript, generateConfig, copyServerDashboard]) {
     println 'Take server at deploy folder'
 }
+
+task publishArtifacts(dependsOn: [':alesharikwebserver-main:publishToMavenLocal', ':alesharikwebserver-main:publishToMavenLocal']) {}
 
