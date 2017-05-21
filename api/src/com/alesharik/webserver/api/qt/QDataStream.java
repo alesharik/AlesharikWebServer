@@ -10,6 +10,9 @@ import javax.annotation.Nonnull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -302,6 +305,22 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
         return strategy.readString(U, this);
     }
 
+    public void writeObject(QSerializable o) {
+        strategy.writeObject(U, o, this);
+    }
+
+    /**
+     * @throws RuntimeException with {@link InstantiationException}
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends Object & Serializable> T readObject(Class<?> clazz) {
+        try {
+            return strategy.readObject(U, clazz, this);
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private long read(long count) {
         long addr = address.get() + readCursor.getAndAdd(count);
         if(readCursor.get() > size.get())
@@ -349,6 +368,26 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
             public void writeString(Unsafe unsafe, String s, QDataStream dataStream) {
                 dataStream.writeUnsignedInt(s.length());
                 dataStream.write(s.getBytes("UTF-16LE"));
+            }
+
+            @Override
+            public void writeObject(Unsafe unsafe, QSerializable serializable, QDataStream stream) {
+                serializable.write(stream);
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public <T extends QSerializable> T readObject(Unsafe unsafe, Class<?> clazz, QDataStream stream) throws InstantiationException {
+                T instance;
+                try {
+                    Constructor<?> emptyConstructor = clazz.getDeclaredConstructor();
+                    emptyConstructor.setAccessible(true);
+                    instance = (T) emptyConstructor.newInstance();
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                    instance = (T) unsafe.allocateInstance(clazz);
+                }
+                instance.read(stream);
+                return instance;
             }
         }
     }
