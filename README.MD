@@ -10,10 +10,15 @@ Status: [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8dc12bb2834
 AlesharikWebServer is a web server with unique module system.
 WARNING! This server might not work work on windows/mac!
 
-Build
-=====
-1. `git clone https://github.com/alesharik/AlesharikWebServer.git`
-2. `mvn clean install`
-3. Copy `alesharikwebserver-main-VERSION-jar-with-dependencies.jar` and `alesharikwebserver-api-VERSION-jar-with-dependencies.jar` from `out/production`
-4. For Linux users: `sudo -s java -javaagent:alesharikwebserver-api-VERSION-jar-with-dependencies.jar -jar alesharikwebserver-main-VERSION-jar-with-dependencies.jar`
-  
+Build server
+============
+1. `git clone -b develop https://github.com/alesharik/AlesharikWebServer.git`
+2. `sudo chmod +x ./gradlew`
+3. `./gradlew prepareDeploy`<br>
+You can start server by executing `start.sh` script in `deploy` folder
+
+Setup artifact
+==============
+1. `git clone -b develop https://github.com/alesharik/AlesharikWebServer.git`
+2. `sudo chmod +x ./gradlew`
+3. `./gradlew publishArtifacts`
