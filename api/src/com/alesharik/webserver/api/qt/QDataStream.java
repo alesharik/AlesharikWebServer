@@ -226,6 +226,13 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
         readCursor.addAndGet(delta);
     }
 
+    public long read(byte[] b, int off, int len) {
+        long delta = Math.min(len, (size.get() - readCursor.get()));
+        U.copyMemory(null, address.get() + readCursor.get(), b, JavaInternals.byteArrayOffset + (long) off, delta);
+        readCursor.addAndGet(delta);
+        return delta;
+    }
+
     @Override
     public int skipBytes(int n) {
         long delta = Math.min((size.get() - readCursor.get()), n);
