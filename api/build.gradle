@@ -198,10 +198,11 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             groupId 'com.alesharik'
-            artifactId 'alesharikwebserver-main'
+            artifactId 'alesharikwebserver-api'
             version '1.0-SNAPSHOT'
 
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-sources.jar', classifier: 'src', extension: 'zip'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-all.jar', classifier: 'src'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-sources.jar', classifier: 'sources', extension: 'zip'
             artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-javadoc.jar', classifier: 'javadoc', extension: 'zip'
 
             from components.java
@@ -209,4 +210,5 @@ publishing {
     }
 }
 
-publishToMavenLocal.dependsOn(packageJavadoc, processResources)
+jar.dependsOn(packageJavadoc, processResources)
+jar.dependsOn(packageJavadoc, packageSources)

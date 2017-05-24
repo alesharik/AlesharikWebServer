@@ -81,7 +81,8 @@ publishing {
             artifactId 'alesharikwebserver-main'
             version '1.0-SNAPSHOT'
 
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-main-sources.jar', classifier: 'src', extension: 'zip'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-main.jar', classifier: 'src'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-main-sources.jar', classifier: 'sources', extension: 'zip'
             artifact source: buildDir.toString() + '/libs/alesharikwebserver-main-javadoc.jar', classifier: 'javadoc', extension: 'zip'
 
             from components.java
@@ -89,4 +90,5 @@ publishing {
     }
 }
 
-publishToMavenLocal.dependsOn(packageJavadoc, packageSources)
+jar.dependsOn(packageJavadoc, packageSources)
+jar.dependsOn(packageJavadoc, packageSources)

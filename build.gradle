@@ -94,5 +94,5 @@ task prepareDeploy(dependsOn: [clean, generateStartScript, generateConfig, copyS
     println 'Take server at deploy folder'
 }
 
-task publishArtifacts(dependsOn: [':alesharikwebserver-main:publishToMavenLocal', ':alesharikwebserver-main:publishToMavenLocal']) {}
+task publishArtifacts(dependsOn: [':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal']) {}
 
