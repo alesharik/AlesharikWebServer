@@ -82,7 +82,8 @@ task checkDirs {
         nativeLibsDir.mkdirs()
 }
 
-build.dependsOn(checkDirs)
+build.dependsOn checkDirs
+build.dependsOn test
 
 task generateJavaHeaders(dependsOn: compileJava, type: Exec) {
     def classesDir = sourceSets.main.output.classesDir
@@ -183,7 +184,6 @@ task codeCoverageReport(dependsOn: test, type: JacocoReport) {
 }
 
 javadoc.destinationDir = new File(buildDir.toString() + '/javadoc/')
-
 
 task packageJavadoc(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir

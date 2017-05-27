@@ -20,6 +20,16 @@ subprojects {
         mavenLocal()
         jcenter()
     }
+
+    compileJava {
+        options.compilerArgs << '-XDignore.symbol.file'
+        options.fork = true
+        options.forkOptions.executable = 'javac'
+    }
+
+    tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
 }
 
 clean.doFirst {
