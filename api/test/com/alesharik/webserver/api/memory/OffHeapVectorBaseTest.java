@@ -4,6 +4,7 @@ import com.alesharik.webserver.api.memory.impl.ByteOffHeapVector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import sun.misc.SharedSecrets;
 
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,7 +56,7 @@ public class OffHeapVectorBaseTest {
         }
 
         for(int i = 0; i < 128; i++) {
-            assertEquals((byte) array.get(arrAddress, i), (byte) 0x10);
+            assertEquals(array.get(arrAddress, i), (byte) 0x10);
         }
 
         array.free(arrAddress);
@@ -148,5 +149,22 @@ public class OffHeapVectorBaseTest {
     public void removeNotExists() throws Exception {
         assertFalse(array.remove(address, Integer.MAX_VALUE));
         assertFalse(array.remove(address, -1));
+    }
+
+    @Test
+    public void reserveUnreserveMemoryTest() throws Exception {
+        long first = SharedSecrets.getJavaNioAccess().getDirectBufferPool().getMemoryUsed();
+
+        long addr = array.allocate();
+        long second = SharedSecrets.getJavaNioAccess().getDirectBufferPool().getMemoryUsed();
+        assertEquals(first + OffHeapVectorBase.META_SIZE + OffHeapVectorBase.DEFAULT_INITIAL_COUNT, second);
+
+        addr = array.resize(addr, 32);
+        long third = SharedSecrets.getJavaNioAccess().getDirectBufferPool().getMemoryUsed();
+        assertEquals(first + OffHeapVectorBase.META_SIZE + 32, third);
+
+        array.free(addr);
+        long fourth = SharedSecrets.getJavaNioAccess().getDirectBufferPool().getMemoryUsed();
+        assertEquals(first, fourth);
     }
 }

@@ -1,5 +1,6 @@
 package com.alesharik.webserver.api.memory;
 
+import com.alesharik.webserver.MemoryReserveUtils;
 import one.nio.util.JavaInternals;
 import sun.misc.Unsafe;
 
@@ -66,6 +67,8 @@ public abstract class OffHeapVectorBase {
      * @return memory address
      */
     public long allocate() {
+        MemoryReserveUtils.reserveMemory(META_SIZE + (initialCount * getElementSize()));
+
         long address = unsafe.allocateMemory(META_SIZE + (initialCount * getElementSize())); //malloc
         unsafe.putLong(address, getElementSize()); //put BASE(element size)
         unsafe.putLong(address + BASE_FIELD_SIZE, 0L); //put COUNT(array size) == 0
@@ -79,6 +82,9 @@ public abstract class OffHeapVectorBase {
      * @param address array pointer (array memory block address)
      */
     public void free(long address) {
+        long max = getMax(address);
+        MemoryReserveUtils.unreserveMemory(META_SIZE + (max * getElementSize()));
+
         unsafe.freeMemory(address);
     }
 
@@ -134,7 +140,11 @@ public abstract class OffHeapVectorBase {
      * @return new array pointer
      */
     protected final long resize(long address, long elementCount) {
+        long lastMax = getMax(address);
+        MemoryReserveUtils.unreserveMemory(META_SIZE + lastMax * getElementSize());
+
         address = unsafe.reallocateMemory(address, META_SIZE + elementCount * getElementSize());
+        MemoryReserveUtils.reserveMemory(META_SIZE + elementCount * getElementSize());
         setMax(address, elementCount);
         return address;
     }
