@@ -90,5 +90,7 @@ publishing {
     }
 }
 
-jar.dependsOn(packageJavadoc, packageSources)
-jar.dependsOn(packageJavadoc, packageSources)
+jar.dependsOn packageJavadoc
+jar.dependsOn packageSources
+jar.dependsOn packageSources
+jar.dependsOn test
