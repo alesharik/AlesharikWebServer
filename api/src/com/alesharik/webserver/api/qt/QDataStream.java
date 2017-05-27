@@ -1,5 +1,8 @@
 package com.alesharik.webserver.api.qt;
 
+import com.alesharik.webserver.api.ByteOrderUtils;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import net.jcip.annotations.NotThreadSafe;
 import one.nio.util.JavaInternals;
@@ -13,8 +16,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Use OffHeap for work
@@ -22,27 +25,32 @@ import java.util.concurrent.atomic.AtomicLong;
 @NotThreadSafe
 public class QDataStream implements DataInput, DataOutput, AutoCloseable {
     private static final int DEFAULT_SIZE = 16;
-
     private static final Unsafe U = JavaInternals.getUnsafe();
 
     private QDataStreamStrategy strategy;
-    private final AtomicLong address;
-    private final AtomicLong size;
+    @Setter
+    @Getter
+    private ByteOrder order;
 
-    private final AtomicLong readCursor;
-    private final AtomicLong writeCursor;
+    private long address;
+    private long size;
+
+    private long readCursor;
+    private long writeCursor;
 
     public QDataStream() {
         this(DEFAULT_SIZE);
     }
 
     public QDataStream(int capacity, @Nonnull QDataStreamStrategy streamStrategy) {
-        address = new AtomicLong(U.allocateMemory(capacity));
-        size = new AtomicLong(capacity);
-        readCursor = new AtomicLong(0);
-        writeCursor = new AtomicLong(0);
-        strategy = streamStrategy;
-        Cleaner.create(this, () -> U.freeMemory(address.get()));
+        this.address = U.allocateMemory(capacity);
+        this.size = capacity;
+        this.readCursor = 0;
+        this.writeCursor = 0;
+        this.strategy = streamStrategy;
+        this.order = ByteOrder.nativeOrder();
+
+        Cleaner.create(this, () -> U.freeMemory(address));
     }
 
     public QDataStream(int capacity) {
@@ -55,17 +63,21 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
     }
 
     public long skip(long n) {
-        long delta = Math.min(n, (size.get() - readCursor.get()));
-        readCursor.addAndGet(delta);
+        long delta = Math.min(n, (size - readCursor));
+        readCursor += delta;
         return delta;
     }
 
-    public int available() {
-        return (int) (size.get() - readCursor.get());
+    public long availableRead() {
+        return size - readCursor;
+    }
+
+    public long availableWrite() {
+        return size - writeCursor;
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public void write(int b) {
         writeByte(b);
     }
 
@@ -77,11 +89,6 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
     @Override
     public void write(byte[] b, int off, int len) {
         U.copyMemory(b, JavaInternals.byteArrayOffset + off, null, allocFor(len), len);
-    }
-
-    @Override
-    public void writeBoolean(boolean v) {
-        U.putByte(allocFor(1), (byte) (v ? 0x1 : 0x0));
     }
 
     /**
@@ -99,11 +106,31 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
         U.putByte(allocFor(1), b);
     }
 
+    @Override
+    public byte readByte() {
+        return U.getByte(read(1));
+    }
+
     /**
      * quint8
      */
     public void writeUnsignedByte(int b) {
-        U.putByte(allocFor(1), (byte) Integer.reverseBytes(b));
+        U.putByte(allocFor(1), (byte) (b & 0xFF));
+    }
+
+    @Override
+    public int readUnsignedByte() {
+        return U.getByte(read(1)) & 0xFF;
+    }
+
+    @Override
+    public void writeBoolean(boolean v) {
+        U.putByte(allocFor(1), (byte) (v ? 0x1 : 0x0));
+    }
+
+    @Override
+    public boolean readBoolean() {
+        return U.getByte(read(1)) == 0x1;
     }
 
     /**
@@ -111,34 +138,45 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
      */
     @Override
     public void writeShort(int v) {
-        U.putShort(allocFor(2), (short) v);
+        U.putShort(allocFor(2), ByteOrderUtils.format((short) v, order));
     }
 
     /**
      * qint16
      */
     public void writeShort(short s) {
-        U.putShort(allocFor(2), s);
+        U.putShort(allocFor(2), ByteOrderUtils.format(s, order));
+    }
+
+    @Override
+    public short readShort() throws IOException {
+        return ByteOrderUtils.format(U.getShort(read(2)), order);
     }
 
     /**
      * quint16
      */
     public void writeUnsignedShort(short s) {
-        U.putShort(allocFor(2), Short.reverseBytes(s));
+        U.putShort(allocFor(2), ByteOrderUtils.format((short) (s & 0xffff), order));
+    }
+
+    @Override
+    public int readUnsignedShort() throws IOException {
+        return ByteOrderUtils.format((short) (U.getShort(read(2)) & 0xffff), order);
     }
 
     @Override
     public void writeChar(int v) throws IOException {
-        U.putChar(allocFor(2), (char) v);
+        U.putChar(allocFor(2), ByteOrderUtils.format((char) v, order));
     }
 
     public void writeChar(char c) {
-        U.putChar(allocFor(2), c);
+        U.putChar(allocFor(2), ByteOrderUtils.format(c, order));
     }
 
-    public void writeUnsignedChar(char c) {
-        U.putChar(allocFor(2), Character.reverseBytes(c));
+    @Override
+    public char readChar() throws IOException {
+        return U.getChar(read(2));
     }
 
     /**
@@ -146,14 +184,23 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
      */
     @Override
     public void writeInt(int v) {
-        U.putInt(allocFor(4), v);
+        U.putInt(allocFor(4), ByteOrderUtils.format(v, order));
+    }
+
+    @Override
+    public int readInt() {
+        return ByteOrderUtils.format(U.getInt(read(4)), order);
     }
 
     /**
      * quint32
      */
     public void writeUnsignedInt(int v) {
-        U.putInt(allocFor(4), Integer.reverseBytes(v));
+        U.putInt(allocFor(4), ByteOrderUtils.format((int) (v & 0xffffffffL), order));
+    }
+
+    public int readUnsignedInt() {
+        return ByteOrderUtils.format((int) (U.getInt(read(4)) & 0xffffffffL), order);
     }
 
     /**
@@ -161,24 +208,34 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
      */
     @Override
     public void writeLong(long v) {
-        U.putLong(allocFor(8), v);
-    }
-
-    /**
-     * quint32
-     */
-    public void writeUnsignedLong(long l) {
-        U.putLong(allocFor(8), Long.reverseBytes(l));
+        U.putLong(allocFor(8), ByteOrderUtils.format(v, order));
     }
 
     @Override
+    public long readLong() {
+        return ByteOrderUtils.format(U.getLong(read(8)), order);
+    }
+
+    /**
+     * quint64
+     */
+    public void writeUnsignedLong(long l) {
+        U.putLong(allocFor(8), ByteOrderUtils.format(l, order));
+    }
+
+    public long readUnsignedLong() {
+        return ByteOrderUtils.format(U.getLong(read(8)), order);
+    }
+
+
+    @Override
     public void writeFloat(float v) {
-        U.putFloat(allocFor(4), v);
+        U.putFloat(allocFor(4), ByteOrderUtils.format(v, order));
     }
 
     @Override
     public void writeDouble(double v) {
-        U.putDouble(allocFor(8), v);
+        U.putDouble(allocFor(8), ByteOrderUtils.format(v, order));
     }
 
     @Override
@@ -210,8 +267,8 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
      */
     @Override
     public void close() {
-        U.freeMemory(address.get());
-        address.set(0);
+        U.freeMemory(address);
+        address = 0;
     }
 
     @Override
@@ -221,91 +278,43 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
 
     @Override
     public void readFully(byte[] b, int off, int len) {
-        long delta = Math.min(len, (size.get() - readCursor.get()));
-        U.copyMemory(null, address.get() + readCursor.get(), b, JavaInternals.byteArrayOffset + (long) off, delta);
-        readCursor.addAndGet(delta);
+        long delta = Math.min(len, (size - readCursor));
+        U.copyMemory(null, address + readCursor, b, JavaInternals.byteArrayOffset + (long) off, delta);
+        readCursor += delta;
     }
 
     public long read(byte[] b, int off, int len) {
-        long delta = Math.min(len, (size.get() - readCursor.get()));
-        U.copyMemory(null, address.get() + readCursor.get(), b, JavaInternals.byteArrayOffset + (long) off, delta);
-        readCursor.addAndGet(delta);
+        long delta = Math.min(len, (size - readCursor));
+        U.copyMemory(null, address + readCursor, b, JavaInternals.byteArrayOffset + (long) off, delta);
+        readCursor += delta;
         return delta;
     }
 
     public long size() {
-        return size.get();
+        return size;
     }
 
     @Override
     public int skipBytes(int n) {
-        long delta = Math.min((size.get() - readCursor.get()), n);
-        readCursor.addAndGet(delta);
+        long delta = Math.min((size - readCursor), n);
+        readCursor += delta;
         return (int) delta;
     }
 
-    @Override
-    public boolean readBoolean() {
-        return U.getByte(read(1)) == 0x1;
-    }
-
-    @Override
-    public byte readByte() {
-        return U.getByte(read(1));
-    }
-
-    @Override
-    public int readUnsignedByte() {
-        return Integer.reverseBytes(U.getByte(read(1)));
-    }
-
-    @Override
-    public short readShort() throws IOException {
-        return U.getShort(read(2));
-    }
-
-    @Override
-    public int readUnsignedShort() throws IOException {
-        return Short.reverseBytes(U.getShort(read(2)));
-    }
-
-    public char readUnsignedChar() {
-        return Character.reverseBytes(U.getChar(read(2)));
-    }
-
-    @Override
-    public char readChar() throws IOException {
-        return U.getChar(read(2));
-    }
-
-    public int readUnsignedInt() {
-        return Integer.reverseBytes(U.getInt(read(4)));
-    }
-
-    @Override
-    public int readInt() {
-        return U.getInt(read(4));
-    }
-
-    public long readUnsignedLong() {
-        return Long.reverseBytes(U.getLong(read(8)));
-    }
-
-    @Override
-    public long readLong() {
-        return U.getLong(read(8));
-    }
 
     @Override
     public float readFloat() {
-        return U.getFloat(read(4));
+        return ByteOrderUtils.format(U.getFloat(read(4)), order);
     }
 
     @Override
     public double readDouble() {
-        return U.getDouble(read(8));
+        return ByteOrderUtils.format(U.getDouble(read(8)), order);
     }
 
+    /**
+     * Return same as {@link #readUTF()}
+     */
     @Override
     public String readLine() {
         return readUTF();
@@ -332,34 +341,51 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
         }
     }
 
+    /**
+     * Return memory address for read next block
+     *
+     * @param count how many your block require
+     * @return memory address
+     * @throws IllegalStateException if this instance doesn't have something for read
+     */
     private long read(long count) {
-        long addr = address.get() + readCursor.getAndAdd(count);
-        if(readCursor.get() > size.get())
+        long addr = address + readCursor;
+        if(readCursor + count > size)
             throw new IllegalStateException("Read end");
-        return addr;
-    }
-
-    private long allocFor(int count) {
-        allocateRequired(count);
-        long addr = address.get() + writeCursor.getAndAdd(count);
-        if(writeCursor.get() > size.get())
-            throw new IllegalStateException("Write end");
+        readCursor += count;
         return addr;
     }
 
     /**
+     * Return memory address for block to write. Can reallocate memory
+     * @param count how many space you need
+     * @return memory address
+     */
+    private long allocFor(int count) {
+        allocateRequired(count);
+        long address = this.address + writeCursor;
+        writeCursor += count;
+        return address;
+    }
+
+    /**
      * Allocate only needed space
+     * @param count how many space you need
      */
     private void allocateRequired(long count) {
-        long required = (size.get() - writeCursor.get() - count) * -1;
+        long required = (size - writeCursor - count) * -1;
         if(required > 0) {
-            allocate(size.get() + required);
+            allocate(size + required);
         }
     }
 
+    /**
+     * Allocate memory and set new size
+     * @param count new memory byte count
+     */
     private void allocate(long count) {
-        address.set(U.reallocateMemory(address.get(), count));
-        size.set(count);
+        address = U.reallocateMemory(address, count);
+        size = count;
     }
 
     public enum FormatStrategy implements QDataStreamStrategy {
