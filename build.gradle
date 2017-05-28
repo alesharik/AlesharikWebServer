@@ -25,6 +25,7 @@ subprojects {
         options.compilerArgs << '-XDignore.symbol.file'
         options.fork = true
         options.forkOptions.executable = 'javac'
+        options.encoding = "UTF-8"
     }
 
     tasks.withType(Javadoc) {

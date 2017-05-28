@@ -161,6 +161,11 @@ jar {
                 'Can-Retransform-Classes': 'true'
         )
     }
+    from {
+        configurations.compile
+                .filter { it.toString().contains("one-nio") }
+                .collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
 
 test {
@@ -201,7 +206,7 @@ publishing {
             artifactId 'alesharikwebserver-api'
             version '1.0-SNAPSHOT'
 
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-all.jar', classifier: 'src'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-api.jar', classifier: 'src'
             artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-sources.jar', classifier: 'sources', extension: 'zip'
             artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-javadoc.jar', classifier: 'javadoc', extension: 'zip'
 
