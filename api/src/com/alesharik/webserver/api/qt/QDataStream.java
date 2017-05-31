@@ -393,18 +393,21 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
             @Override
             public String readString(Unsafe unsafe, QDataStream dataStream) {
                 int size = dataStream.readUnsignedInt();
+                if(size == 0xFFFFFFFF)
+                    return "";
+
                 byte[] data = new byte[size];
                 for(int i = 0; i < size; i++) {
                     data[i] = dataStream.readByte();
                 }
-                return new String(data, Charset.forName("UTF-16LE"));
+                return new String(data, Charset.forName("UTF-8")).replaceAll("\u0000", "");
             }
 
             @SneakyThrows
             @Override
             public void writeString(Unsafe unsafe, String s, QDataStream dataStream) {
-                dataStream.writeUnsignedInt(s.length());
-                dataStream.write(s.getBytes("UTF-16LE"));
+                dataStream.writeUnsignedInt(s.length() == 0 ? 0xFFFFFFFF : s.length());
+                dataStream.write(s.getBytes("UTF-8"));
             }
 
             @Override

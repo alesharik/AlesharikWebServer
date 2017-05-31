@@ -1,12 +1,19 @@
 package com.alesharik.webserver.logger;
 
 import com.alesharik.webserver.api.collections.ConcurrentLiveHashMap;
+import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.api.reflection.ParentPackageIterator;
+import com.alesharik.webserver.api.statistics.FuzzyTimeCountStatistics;
+import com.alesharik.webserver.api.statistics.TimeCountStatistics;
 import com.alesharik.webserver.logger.configuration.LoggerConfiguration;
 import com.alesharik.webserver.logger.configuration.LoggerConfigurationBasePackage;
 import com.alesharik.webserver.logger.configuration.LoggerConfigurationPrefix;
-import com.alesharik.webserver.logger.handlers.InfoConsoleHandler;
-import com.alesharik.webserver.logger.handlers.WarningConsoleHandler;
+import com.alesharik.webserver.logger.logger.FileLoggerHandler;
+import com.alesharik.webserver.logger.logger.LoggerDateFormatter;
+import com.alesharik.webserver.logger.logger.PrintStreamErrorManager;
+import com.alesharik.webserver.logger.logger.PrintStreamLoggerHandler;
+import com.alesharik.webserver.logger.mx.LoggerListenerThreadMXBean;
+import com.alesharik.webserver.logger.mx.LoggerMXBean;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -27,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -38,19 +46,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.FileHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.stream.Stream;
 
 /**
  * This class used for log messages in AlesharikWebServer.<br>
  * You can set prefix by:<ul>
- * <li>{@link Prefix} - used for setup one prefix</li>
  * <li>{@link Prefixes} - used for setup multiple prefixes</li>
- * <li>Configuration - used for setup prefixes</li>
+ * <li>Configuration - used for setup prefixes for folders, files and etc</li>
  * </ul>
  * Configuration:<br>
  * To create configuration you need to mark class with @{@link LoggerConfiguration}.
@@ -63,6 +72,7 @@ import java.util.stream.Stream;
  */
 @Prefixes("[LOGGER]")
 public final class Logger {
+    private static final LoggerMXBean bean = new LoggerMXBeanImpl();
 
     static final HashMap<String, WeakReference<NamedLogger>> loggers = new HashMap<>();
     /**
@@ -74,13 +84,14 @@ public final class Logger {
      */
     private static final PrintStream SYSTEM_ERR = System.err;
 
-    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("AlesharikWebServerMainLogger");
+    private static final CopyOnWriteArrayList<Handler> loggerHandlers = new CopyOnWriteArrayList<>();
     /**
      * Class : Prefixes
      */
     private static final HashMap<String, ArrayList<String>> configuredPrefixes = new HashMap<>();
     private static final ArrayList<WeakReference<ClassLoader>> classLoaders = new ArrayList<>();
     private static AtomicBoolean isConfigured = new AtomicBoolean(false);
+    private static File logFile;
     private static LoggerListenerThread listenerThread;
 
     /**
@@ -88,10 +99,6 @@ public final class Logger {
      */
     private static MpscLinkedQueue<Message> messageQueue;
     private static final LoggerThread loggerThread = new LoggerThread();
-
-    static {
-        LOGGER.setLevel(Level.ALL);
-    }
 
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
@@ -272,6 +279,7 @@ public final class Logger {
         logMessageUnsafe(prefs.isEmpty() ? "" : textFormatter.format(prefs), textFormatter.format(message), 2);
     }
 
+
     public static void log(@Nonnull Throwable throwable, @Nonnull TextFormatter textFormatter, String... prefixes) {
         logThrowable(throwable, 2, textFormatter, prefixes);
     }
@@ -302,15 +310,33 @@ public final class Logger {
                 if(log.exists()) {
                     log = new File(log.getPath() + 1);
                 }
+                logFile = log;
 
-                LoggerFormatter formatter = new LoggerFormatter();
-                FileHandler fileHandler = new FileHandler(log.getPath());
+                LoggerDateFormatter formatter = new LoggerDateFormatter();
+                PrintStreamErrorManager errorManager = new PrintStreamErrorManager(SYSTEM_ERR);
+
+                FileLoggerHandler fileHandler = new FileLoggerHandler(log);
                 fileHandler.setFormatter(formatter);
-                LOGGER.addHandler(fileHandler);
-                LOGGER.addHandler(new InfoConsoleHandler());
-                LOGGER.addHandler(new WarningConsoleHandler());
+                fileHandler.setErrorManager(errorManager);
+                loggerHandlers.add(fileHandler);
 
-                loadConfigurations(ClassLoader.getSystemClassLoader());
+                PrintStreamLoggerHandler infoHandler = new PrintStreamLoggerHandler();
+                infoHandler.setOutputStream(SYSTEM_OUT);
+                infoHandler.setEncoding("UTF-8");
+                infoHandler.setLevel(Level.INFO);
+                infoHandler.setErrorManager(errorManager);
+                infoHandler.setFormatter(formatter);
+                loggerHandlers.add(infoHandler);
+
+                PrintStreamLoggerHandler warningHandler = new PrintStreamLoggerHandler();
+                warningHandler.setOutputStream(SYSTEM_ERR);
+                warningHandler.setEncoding("UTF-8");
+                warningHandler.setLevel(Level.WARNING);
+                warningHandler.setErrorManager(errorManager);
+                warningHandler.setFormatter(formatter);
+                loggerHandlers.add(warningHandler);
+
+//                loadConfigurations(ClassLoader.getSystemClassLoader());
 
                 messageQueue = new MpscLinkedQueue7<>();
                 loggerThread.start();
@@ -319,12 +345,16 @@ public final class Logger {
                 listenerThread.start();
 
                 isConfigured.set(true);
-                log("Logger successfully setup!");
+                log("Logger successfully initialized");
 
                 System.setOut(new LoggerPrintStream(SYSTEM_OUT));
                 System.setErr(new LoggerErrorPrintStream(SYSTEM_ERR));
-            } catch (SecurityException | IOException e) {
-                e.printStackTrace(System.out);
+
+                log("Default print streams replaced");
+                MXBeanManager.registerMXBean(bean, LoggerMXBean.class, "com.alesharik.webserver.logger:type=Logger");
+                log("Logger successfully started");
+            } catch (SecurityException | UnsupportedEncodingException e) {
+                e.printStackTrace(SYSTEM_ERR);
             }
         } else {
             Logger.log("Oops! Someone try to reconfigure logger! ");
@@ -349,6 +379,7 @@ public final class Logger {
         listenerThread.removeListener(loggerListener);
     }
 
+    @Deprecated
     @SneakyThrows
     //TODO write asm loader
     private static void loadConfigurations(ClassLoader classLoader) {
@@ -362,6 +393,7 @@ public final class Logger {
         classLoaders.add(new WeakReference<>(classLoader));
     }
 
+    @Deprecated
     @SneakyThrows
     private static void parseConfiguration(Class<?> clazz) {
         if(clazz.isInterface() || clazz.isEnum() || clazz.isAnnotation()) {
@@ -515,7 +547,8 @@ public final class Logger {
     }
 
     public static void disable() {
-        LOGGER.setLevel(Level.OFF);
+        loggerHandlers.forEach(Handler::close);
+        loggerHandlers.clear();
         listenerThread.disable();
     }
 
@@ -608,8 +641,8 @@ public final class Logger {
 
     private static final class LoggerThread extends Thread {
         private final Object synchronizerLock;
-
         private final LoggerThreadCache cache;
+        private final TimeCountStatistics statistics;
 
         public LoggerThread() {
             setName("LoggerThread");
@@ -617,6 +650,8 @@ public final class Logger {
 
             cache = new LoggerThreadCache();
             synchronizerLock = new Object();
+
+            statistics = new FuzzyTimeCountStatistics(1, TimeUnit.SECONDS);
         }
 
         @Override
@@ -629,9 +664,11 @@ public final class Logger {
                                 synchronizerLock.wait();
                             }
                         } catch (InterruptedException e) {
-                            Logger.LOGGER.finest("Logger thread was receive interrupt signal! Stopping logging...");
+                            Logger.SYSTEM_ERR.println("Logger thread was received interrupt signal! Stopping logging...");
+                            return;
                         }
                     }
+
                     Message message = messageQueue.poll();
                     if(message == null) continue;
 
@@ -641,47 +678,31 @@ public final class Logger {
                         prefix = generatePrefixes(clazz);
                         cache.add(clazz, prefix);
                     }
-                    String prefixes = prefix + message.getPrefixes() + message.getLocationPrefix();
+                    String prefixes = prefix + message.getPrefixes() + message.getClassPrefix();
                     String msg = prefixes + ": " + message.getMessage();
-                    Logger.LOGGER.log(Level.INFO, msg);
-                    Logger.listenerThread.sendMessage(new LoggerListenerThread.Message(prefixes, msg));
+
+                    LogRecord record = new LogRecord(Level.INFO, msg);
+                    record.setMillis(System.currentTimeMillis());
+                    record.setLoggerName("Logger");
+                    loggerHandlers.forEach(handler -> handler.publish(record));
+
+                    Logger.listenerThread.sendMessage(message);
+
+                    statistics.measure(1);
                 }
-            } catch (Throwable e) {
-                Logger.LOGGER.finest(e.toString());
+            } catch (Error e) {
+                Logger.SYSTEM_ERR.println(e.toString());
                 for(StackTraceElement stackTraceElement : e.getStackTrace())
-                    Logger.LOGGER.finest(stackTraceElement.toString());
-                if(e instanceof Error) {
-                    Logger.LOGGER.finest("Logger error detected! Stopping server required!");
-                    throw e;
-                } else
-                    Logger.LOGGER.finest("Logger thread was shutdown! Stopping logging...");
+                    Logger.SYSTEM_ERR.println(stackTraceElement.toString());
+
+                Logger.SYSTEM_ERR.println("Logger error detected! Server reboot required!");
+                throw e;
+            } catch (Throwable e) {
+                Logger.SYSTEM_ERR.println(e.toString());
+                for(StackTraceElement stackTraceElement : e.getStackTrace())
+                    Logger.SYSTEM_ERR.println(stackTraceElement.toString());
+                Logger.SYSTEM_ERR.println("Logger thread was interrupted! Stopping logging...");
             }
-        }
-
-        /**
-         * Return method prefixes and debug prefix
-         *
-         * @param clazz the class
-         * @return prefixes or empty line
-         */
-        private String getDebugPrefix(Class<?> clazz, String debugPrefixString) {
-            boolean debugPrefix = false;
-
-            Prefix prefixAnnotation = clazz.getAnnotation(Prefix.class); //TODO remove
-            if(prefixAnnotation != null)
-                debugPrefix = prefixAnnotation.requireDebugPrefix();
-
-            Prefixes prefixes = clazz.getAnnotation(Prefixes.class);
-            if(prefixes != null)
-                debugPrefix = prefixes.requireDebugPrefix();
-
-            if(prefixAnnotation == null && prefixes == null)
-                debugPrefix = true;
-
-            if(debugPrefix)
-                return debugPrefixString;
-            else
-                return "";
         }
 
         @Nullable
@@ -695,6 +716,11 @@ public final class Logger {
                         ret.append(s);
             }
             return ret.toString();
+        }
+
+        public long getMessagePerSecond() {
+            statistics.update();
+            return statistics.getCount();
         }
     }
 
@@ -732,33 +758,45 @@ public final class Logger {
         private final Class<?> caller;
         private final String locationPrefix;
 
-        public String getLocationPrefix() {
+        /**
+         * Return class prefix and debug prefix if needed
+         *
+         * @return prefixes or empty string
+         */
+        @Nonnull
+        public String getClassPrefix() {
             Prefixes annotation;
             if((annotation = caller.getAnnotation(Prefixes.class)) != null && annotation.requireDebugPrefix())
-                return locationPrefix;
-            else if(annotation == null)
-                return locationPrefix;
+                return String.join("", annotation.value()) + locationPrefix;
+            else if(annotation != null)
+                return String.join("", annotation.value());
             else
-                return "";
+                return locationPrefix;
         }
     }
 
-    @Deprecated
-    private static final class LoggerListenerThread extends Thread {
+    private static final class LoggerListenerThread extends Thread implements LoggerListenerThreadMXBean {
         private final MpscAtomicArrayQueue<Message> messages;
         private final CopyOnWriteArrayList<LoggerListener> loggerListeners;
+        private final Object synchronizerLock;
+        private final TimeCountStatistics statistics;
 
-        private final AtomicBoolean disabled = new AtomicBoolean(false);
+        private final AtomicBoolean enabled = new AtomicBoolean(true);
 
         public LoggerListenerThread(int listenerQueueCapacity) {
             messages = new MpscAtomicArrayQueue<>(listenerQueueCapacity);
             loggerListeners = new CopyOnWriteArrayList<>();
+            synchronizerLock = new Object();
+            statistics = new FuzzyTimeCountStatistics(1, TimeUnit.SECONDS);
             setName("LoggerListenerThread");
             setDaemon(true);
+
+            MXBeanManager.registerMXBean(this, LoggerListenerThreadMXBean.class, "com.alesharik.webserver.logger:type=LoggerListener");
         }
 
         public void disable() {
-            disabled.set(true);
+            enabled.set(false);
+            MXBeanManager.unregisterMXBean("LoggerListener");
         }
 
         public void addListener(LoggerListener loggerListener) {
@@ -770,70 +808,48 @@ public final class Logger {
         }
 
         public void sendMessage(Message message) {
-            if(disabled.get()) {
+            if(!enabled.get()) {
                 return;
             }
             messages.add(message);
+            synchronized (synchronizerLock) {
+                synchronizerLock.notifyAll();
+            }
         }
 
         public void run() {
-            while(true) {
+            while(!isInterrupted() && enabled.get()) {
                 Message message = messages.poll();
+
                 if(message != null) {
                     loggerListeners.forEach(loggerListener -> loggerListener.listen(message.getPrefixes(), message.getMessage()));
+                    statistics.measure(1);
                 } else {
                     try {
-                        Thread.sleep(1);
+                        synchronized (synchronizerLock) {
+                            synchronizerLock.wait();
+                        }
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        Logger.SYSTEM_ERR.println("Logger Listener thread was received interrupt signal! Stopping listening...");
                     }
                 }
             }
         }
 
-        public static final class Message {
-            private final String message;
-            private final String prefixes;
+        @Override
+        public int getListenerCount() {
+            return loggerListeners.size();
+        }
 
-            public Message(String prefixes, String message) {
-                this.message = message;
-                this.prefixes = prefixes;
-            }
+        @Override
+        public long getMessagesPerSecond() {
+            statistics.update();
+            return statistics.getCount();
+        }
 
-            public String getMessage() {
-                return message;
-            }
-
-            public String getPrefixes() {
-                return prefixes;
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if(this == o) return true;
-                if(!(o instanceof Message)) return false;
-
-                Message message1 = (Message) o;
-
-                if(getMessage() != null ? !getMessage().equals(message1.getMessage()) : message1.getMessage() != null)
-                    return false;
-                return getPrefixes() != null ? getPrefixes().equals(message1.getPrefixes()) : message1.getPrefixes() == null;
-            }
-
-            @Override
-            public int hashCode() {
-                int result = getMessage() != null ? getMessage().hashCode() : 0;
-                result = 31 * result + (getPrefixes() != null ? getPrefixes().hashCode() : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "Message{" +
-                        "message='" + message + '\'' +
-                        ", prefixes='" + prefixes + '\'' +
-                        '}';
-            }
+        @Override
+        public boolean isEnabled() {
+            return enabled.get();
         }
     }
 
@@ -1341,7 +1357,29 @@ public final class Logger {
         public void write(byte[] b) throws IOException {
             write(b, 0, b.length);
         }
+    }
 
+    private static final class LoggerMXBeanImpl implements LoggerMXBean {
+
+        @Override
+        public String getLogFile() {
+            return Logger.logFile.getPath();
+        }
+
+        @Override
+        public int getMessageQueueCapacity() {
+            return Logger.messageQueue.capacity();
+        }
+
+        @Override
+        public int getNamedLoggerCount() {
+            return Logger.loggers.size();
+        }
+
+        @Override
+        public long getMessagesParsedPerSecond() {
+            return Logger.loggerThread.getMessagePerSecond();
+        }
     }
 }
 

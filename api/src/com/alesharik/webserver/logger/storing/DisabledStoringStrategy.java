@@ -9,16 +9,13 @@ public final class DisabledStoringStrategy extends StoringStrategy {
 
     @Override
     public void open() {
-
     }
 
     @Override
     public void publish(String prefix, String message) {
-
     }
 
     @Override
     public void close() {
-
     }
 }
