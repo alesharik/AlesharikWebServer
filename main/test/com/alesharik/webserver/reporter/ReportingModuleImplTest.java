@@ -151,7 +151,7 @@ public class ReportingModuleImplTest {
     public void tryGetNotExistingReporter() throws ParserConfigurationException, IOException, SAXException, InterruptedException, ExecutionException {
         ConcurrentCompletableFuture<Boolean> isOk = new ConcurrentCompletableFuture<>();
 
-        Logger.addListener((prefixes, message) -> {
+        Logger.addListener((prefixes, message, c) -> {
             if(prefixes.equals("[ReportingModule]")) {
                 if(message.equals("Reporter none not found! Skipping...")) {
                     isOk.set(true);
