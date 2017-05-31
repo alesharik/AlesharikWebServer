@@ -6,10 +6,11 @@ package com.alesharik.webserver.js.execution.javaScript;
  * The docs located in this folder in file named <code>Mutex.js</code>
  */
 public final class Mutex {
-    private boolean isLocked = false;
+    private boolean isLocked;
     private Thread owner;
 
     public Mutex() {
+        isLocked = false;
     }
 
     public synchronized void lock() {

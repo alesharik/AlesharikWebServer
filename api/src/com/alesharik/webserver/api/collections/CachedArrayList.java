@@ -240,10 +240,10 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> implements Cloneable
             sb.append(v);
             sb.append(", time=");
             sb.append(times);
-            sb.append(";");
+            sb.append(';');
         });
         sb.replace(sb.lastIndexOf(";"), sb.lastIndexOf(";"), "");
-        sb.append("}");
+        sb.append('}');
         return sb.toString();
     }
 

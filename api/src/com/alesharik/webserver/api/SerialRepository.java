@@ -9,6 +9,7 @@ import one.nio.serial.Serializer;
 import one.nio.serial.SerializerNotFoundException;
 import org.glassfish.grizzly.http.util.Base64Utils;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -20,9 +21,10 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * This class used for serialize and deserialize classes using one-nio method
  */
+//TODO use own serialization
 public final class SerialRepository {
     private static final ReentrantLock snapshotLock = new ReentrantLock();
-    private volatile static File snapshotFile = null;
+    private volatile static File snapshotFile;
     private volatile static long updateTime = 1000;
     private static final AtomicBoolean isSnapshotEnabled = new AtomicBoolean(true);
 
@@ -38,7 +40,7 @@ public final class SerialRepository {
     /**
      * DO NOT USE IT
      */
-    public static void setSnapshotFile(File file) {
+    public static void setSnapshotFile(@Nonnull File file) {
         snapshotFile = file;
         snapshotLock.unlock();
     }

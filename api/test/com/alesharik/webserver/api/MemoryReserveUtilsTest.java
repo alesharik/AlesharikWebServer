@@ -1,6 +1,5 @@
-package com.alesharik.webserver;
+package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.api.MemoryReserveUtils;
 import org.junit.Test;
 import sun.misc.Cleaner;
 import sun.misc.SharedSecrets;

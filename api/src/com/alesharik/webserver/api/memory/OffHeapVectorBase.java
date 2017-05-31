@@ -195,10 +195,11 @@ public abstract class OffHeapVectorBase {
     }
 
     protected void checkIndexBounds(long address, long i) {
-        long count = size(address);
         if(i < 0) {
             throw new ArrayIndexOutOfBoundsException(String.valueOf(i));
         }
+
+        long count = size(address);
         if(i >= count) {
             throw new ArrayIndexOutOfBoundsException(i + " >= " + count);
         }

@@ -21,7 +21,7 @@ import java.util.concurrent.locks.LockSupport;
 public class ConcurrentCompletableFuture<V> implements Future<V> {
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
     private final AtomicBoolean isDone = new AtomicBoolean(false);
-    private volatile V value = null;
+    private volatile V value;
 
     public ConcurrentCompletableFuture() {
     }

@@ -155,6 +155,8 @@ void *getCpuLoad(int cpu, long *ret) {
         ret[4] = iowait;
         ret[5] = irq;
         ret[6] = softirq;
+
+        free(str);
     }
 }
 

@@ -17,7 +17,7 @@ public final class BasicErrorPageConstructor implements ErrorPageConstructor {
         }
         if(exception != null) {
             if(content.length() > 0) {
-                content.append("\n");
+                content.append('\n');
             }
             content.append(ExceptionUtils.getMessage(exception));
         }

@@ -139,8 +139,6 @@ public final class CpuReporter extends Reporter {
         JsonObject object = new JsonObject();
         object.add("time", new JsonPrimitive(date.toString()));
         for(int i = 0; i < ComputerData.INSTANCE.getCoreCount(); i++) {
-            JsonObject toAdd = new JsonObject();
-
             int zeroCount = 0;
             for(ComputerData.CoreLoadType coreLoadType : ComputerData.CoreLoadType.values()) {
                 long coreTime = ComputerData.INSTANCE.getCoreTime(i, coreLoadType);
@@ -153,6 +151,7 @@ public final class CpuReporter extends Reporter {
                 return;
             }
 
+            JsonObject toAdd = new JsonObject();
             toAdd.add("user", new JsonPrimitive(ComputerData.INSTANCE.getCoreTime(i, ComputerData.CoreLoadType.USER)));
             toAdd.add("nice", new JsonPrimitive(ComputerData.INSTANCE.getCoreTime(i, ComputerData.CoreLoadType.NICE)));
             toAdd.add("system", new JsonPrimitive(ComputerData.INSTANCE.getCoreTime(i, ComputerData.CoreLoadType.SYSTEM)));

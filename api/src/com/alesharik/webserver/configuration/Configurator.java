@@ -77,8 +77,6 @@ public class Configurator {
             return;
         }
 
-        Element config = (Element) node.getElementsByTagName("config").item(0);
-
         //====================Logger setup====================\\
         int listenerThreadQueueCapacity = LOGGER_LISTENER_QUEUE_CAPACITY;
         File logFile = null;
@@ -112,6 +110,7 @@ public class Configurator {
         //====================End logger setup====================\\
 
         //====================Configurator setup====================\\
+        Element config = (Element) node.getElementsByTagName("config").item(0);
         Node fileCheckEnabled = config.getElementsByTagName("fileCheckEnabled").item(0);
         boolean isConfigFileCheckEnabled = Boolean.valueOf(fileCheckEnabled.getTextContent());
         if(isConfigFileCheckEnabled && !isFileCheckerRunning.get() && fileChecker == null) {
@@ -128,7 +127,6 @@ public class Configurator {
         //====================Plugin manager setup====================\\
         Element pluginManagerNode = (Element) node.getElementsByTagName("pluginManager").item(0);
         if(pluginManagerNode != null) {
-            Node pluginFolderNode = pluginManagerNode.getElementsByTagName("folder").item(0);
             if(pluginManagerNode == null) {
                 throw new ConfigurationParseError("plugin.folder node not found");
             }
@@ -139,6 +137,7 @@ public class Configurator {
                 hotReload = Boolean.valueOf(pluginHotReloadNode.getTextContent());
             }
 
+            Node pluginFolderNode = pluginManagerNode.getElementsByTagName("folder").item(0);
             File pluginFolder = new File(pluginFolderNode.getTextContent());
             if(pluginFolder.isFile()) {
                 throw new ConfigurationParseError("Selected plugin folder is file");

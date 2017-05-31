@@ -412,7 +412,7 @@ public final class ComputerData {
         stringBuilder.append(", \"inodesFree\": ");
         stringBuilder.append(partition.getInodeFree());
 
-        stringBuilder.append("}");
+        stringBuilder.append('}');
         return stringBuilder.toString();
     }
 

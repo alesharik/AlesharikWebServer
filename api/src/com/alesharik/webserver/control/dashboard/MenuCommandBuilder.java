@@ -12,13 +12,13 @@ public class MenuCommandBuilder {
     public MenuCommandBuilder setMenu(Menu menu) {
         stringBuilder.append("menu:set:");
         stringBuilder.append(GsonUtils.getGson().toJson(menu));
-        stringBuilder.append("\n");
+        stringBuilder.append('\n');
         return this;
     }
 
     public MenuCommandBuilder render() {
         stringBuilder.append("menu:render");
-        stringBuilder.append("\n");
+        stringBuilder.append('\n');
         return this;
     }
 

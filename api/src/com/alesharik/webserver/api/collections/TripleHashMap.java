@@ -23,23 +23,22 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     private static final int MAXIMUM_CAPACITY = 1 << 30;
 
     private Entry<K, V, A>[] entries;
-    private int size = 0;
-    private int sizeLimit = 32;
+    private int size;
+    private int sizeLimit;
 
-    @SuppressWarnings("unchecked")
     public TripleHashMap() {
-        entries = new Entry[DEFAULT_CAPACITY];
+        this(DEFAULT_CAPACITY);
+    }
+
+    public TripleHashMap(Map<K, V> m) {
+        this(m.size());
+        this.putAll(m);
     }
 
     @SuppressWarnings("unchecked")
     public TripleHashMap(int initialCapacity) {
-        entries = new Entry[initialCapacity];
-    }
-
-    @SuppressWarnings("unchecked")
-    public TripleHashMap(Map m) {
-        this.entries = new Entry[m.size()];
-        this.putAll(m);
+        this.entries = new Entry[initialCapacity];
+        this.sizeLimit = 32;
     }
 
     public int size() {
@@ -52,18 +51,16 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     public V get(Object key) {
         int bucket = getBucket(hash(key));
-        V value = null;
         Entry<K, V, A> entry = entries[bucket];
         if(entry == null) {
             return null;
         }
         do {
             if(Integer.compare(entry.getHash(), hash(key)) == 0 && entry.getKey().equals(key)) {
-                value = entry.getValue();
-                break;
+                return entry.getValue();
             }
         } while((entry = entry.next) != null);
-        return value;
+        return null;
     }
 
     public A getAddition(Object key) {
@@ -82,18 +79,16 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     public boolean containsKey(Object key) {
         int bucket = getBucket(hash(key));
 
-        boolean contains = false;
         Entry entry = entries[bucket];
         if(entry == null) {
             return false;
         }
         do {
             if(Integer.compare(entry.getHash(), hash(key)) == 0 && entry.getKey().equals(key)) {
-                contains = true;
-                break;
+                return true;
             }
         } while((entry = entry.next) != null);
-        return contains;
+        return false;
     }
 
     public boolean containsValue(Object value) {

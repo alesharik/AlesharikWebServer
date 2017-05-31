@@ -387,10 +387,10 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
             sb.append(v);
             sb.append(", time=");
             sb.append(times);
-            sb.append(";");
+            sb.append(';');
         });
         sb.replace(sb.lastIndexOf(";"), sb.lastIndexOf(";"), "");
-        sb.append("}");
+        sb.append('}');
         return sb.toString();
     }
 

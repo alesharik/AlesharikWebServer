@@ -47,18 +47,20 @@ public final class NamedLogger implements Closeable, NamedLoggerMXBean {
     private String defaultPrefix;
     private StoringStrategy storingStrategy;
 
-    private boolean isClosed = false;
+    private boolean isClosed;
 
     NamedLogger(@Nonnull String name, File file) {
         this.name = name;
         this.file = file;
         this.defaultPrefix = "";
-        MXBeanManager.registerMXBean(this, NamedLoggerMXBean.class, "NamedLogger-" + name);
+        this.isClosed = false;
+
+        MXBeanManager.registerMXBean(this, NamedLoggerMXBean.class, "com.alesharik.webserver.logger:type=NamedLogger,name=" + name);
         Cleaner.create(this, () -> {
             isClosed = true;
             tryCloseStrategy();
             Logger.loggers.remove(name);
-            MXBeanManager.unregisterMXBean("NamedLogger-" + name);
+            MXBeanManager.unregisterMXBean("com.alesharik.webserver.logger:type=NamedLogger,name=" + name);
         });
     }
 
@@ -74,7 +76,7 @@ public final class NamedLogger implements Closeable, NamedLoggerMXBean {
         if(storingStrategy != null)
             storingStrategy.close();
         Logger.loggers.remove(name);
-        MXBeanManager.unregisterMXBean("NamedLogger-" + name);
+        MXBeanManager.unregisterMXBean("com.alesharik.webserver.logger:type=NamedLogger,name=" + name);
     }
 
     public void log(String message) {

@@ -349,9 +349,9 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
      * @throws IllegalStateException if this instance doesn't have something for read
      */
     private long read(long count) {
-        long addr = address + readCursor;
         if(readCursor + count > size)
             throw new IllegalStateException("Read end");
+        long addr = address + readCursor;
         readCursor += count;
         return addr;
     }
