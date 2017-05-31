@@ -49,7 +49,7 @@ public final class NamedLogger implements Closeable, NamedLoggerMXBean {
 
     private boolean isClosed = false;
 
-    NamedLogger(String name, File file) {
+    NamedLogger(@Nonnull String name, File file) {
         this.name = name;
         this.file = file;
         this.defaultPrefix = "";
@@ -157,6 +157,9 @@ public final class NamedLogger implements Closeable, NamedLoggerMXBean {
 
     @Override
     public String getStoringStrategy() {
+        if(storingStrategy == null)
+            return "";
+
         String canonicalName = storingStrategy.getClass().getCanonicalName();
         if(canonicalName == null)
             return storingStrategy.getClass().getName();

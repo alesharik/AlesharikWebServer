@@ -74,7 +74,7 @@ public final class FileLoggerHandler extends LoggerHandler {
     }
 
     @Override
-    public String getEncoding() {
+    public synchronized String getEncoding() {
         if(this.charset == null)
             this.charset = new AtomicReference<>(Charsets.UTF8_CHARSET);
         if(this.charset.get() == null)

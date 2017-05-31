@@ -1,14 +1,15 @@
 package com.alesharik.webserver.logger;
 
 /**
- * LoggerListener listen all {@link Logger} or {@link NamedLogger} messages. Use LoggerListenerThread for execution.
+ * This listener listen {@link Logger} and all {@link NamedLogger}s messages. It will call in Logger Listener Thread
  */
 public interface LoggerListener {
     /**
-     * Listen {@link Logger} or {@link NamedLogger} message. Executes in LoggerListenerThread.
+     * Listen message
      *
      * @param prefixes message prefixes
      * @param message  the message
+     * @param caller class, which call logger
      */
-    void listen(String prefixes, String message);
+    void listen(String prefixes, String message, Class<?> caller);
 }

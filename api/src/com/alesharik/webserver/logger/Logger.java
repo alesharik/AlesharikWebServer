@@ -661,7 +661,8 @@ public final class Logger {
                     while(messageQueue.isEmpty()) {
                         try {
                             synchronized (synchronizerLock) {
-                                synchronizerLock.wait();
+                                if(messageQueue.isEmpty())
+                                    synchronizerLock.wait();
                             }
                         } catch (InterruptedException e) {
                             Logger.SYSTEM_ERR.println("Logger thread was received interrupt signal! Stopping logging...");
@@ -753,9 +754,13 @@ public final class Logger {
     @AllArgsConstructor
     @Getter
     static final class Message {
+        @Nonnull
         private final String prefixes;
+        @Nonnull
         private final String message;
+        @Nonnull
         private final Class<?> caller;
+        @Nonnull
         private final String locationPrefix;
 
         /**
@@ -822,12 +827,13 @@ public final class Logger {
                 Message message = messages.poll();
 
                 if(message != null) {
-                    loggerListeners.forEach(loggerListener -> loggerListener.listen(message.getPrefixes(), message.getMessage()));
+                    loggerListeners.forEach(loggerListener -> loggerListener.listen(message.getPrefixes(), message.getMessage(), message.getCaller()));
                     statistics.measure(1);
                 } else {
                     try {
                         synchronized (synchronizerLock) {
-                            synchronizerLock.wait();
+                            if(loggerListeners.isEmpty())
+                                synchronizerLock.wait();
                         }
                     } catch (InterruptedException e) {
                         Logger.SYSTEM_ERR.println("Logger Listener thread was received interrupt signal! Stopping listening...");

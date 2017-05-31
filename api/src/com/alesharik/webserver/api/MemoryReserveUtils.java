@@ -1,4 +1,4 @@
-package com.alesharik.webserver;
+package com.alesharik.webserver.api;
 
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;

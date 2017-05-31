@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.logging.ErrorManager;
@@ -58,8 +59,8 @@ public class PrintStreamErrorManagerTest {
     private static final class PrintStreamSpy extends PrintStream {
         private final Deque<String> messages;
 
-        public PrintStreamSpy() {
-            super(System.out);
+        public PrintStreamSpy() throws UnsupportedEncodingException {
+            super(System.out, false, "UTF-8");
             this.messages = new ArrayDeque<>();
         }
 

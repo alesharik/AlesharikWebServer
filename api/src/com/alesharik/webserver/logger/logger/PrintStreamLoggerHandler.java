@@ -84,7 +84,7 @@ public final class PrintStreamLoggerHandler extends LoggerHandler {
     }
 
     @Override
-    public String getEncoding() {
+    public synchronized String getEncoding() {
         return charset.toString();
     }
 }
