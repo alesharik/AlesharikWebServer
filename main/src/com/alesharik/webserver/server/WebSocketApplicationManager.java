@@ -9,6 +9,7 @@ import lombok.experimental.UtilityClass;
 import org.glassfish.grizzly.websockets.WebSocketApplication;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -26,7 +27,7 @@ public class WebSocketApplicationManager {
     public static void listenWebsocketApplication(Class<?> clazz) {
         if(WebSocketApplication.class.isAssignableFrom(clazz)) {
             try {
-                Constructor<?> constructor = clazz.getConstructor();
+                Constructor<?> constructor = clazz.getDeclaredConstructor();
                 constructor.setAccessible(true);
                 WebSocketApplication app = (WebSocketApplication) constructor.newInstance();
                 applications.add(app);
@@ -41,7 +42,9 @@ public class WebSocketApplicationManager {
                 if(wsChecker.enabled()) {
 //                    WebSocketEngine.getEngine().register(application.contextPath(), application.value(), app); //TODO rewrite
                 }
-            } catch (Exception e) {
+            } catch (NoSuchMethodException e) {
+                System.err.println("Class " + clazz.getCanonicalName() + " doesn't have empty constructor!");
+            } catch (SecurityException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         } else {

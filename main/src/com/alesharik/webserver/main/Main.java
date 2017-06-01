@@ -46,7 +46,7 @@ public class Main {
             Console console = System.console();
             if(console == null) {
                 System.out.println("Server has no input console! Falling to input stream...");
-                consoleReader = new ConsoleOrBufferedReader.BufferedReaderWrapper(new BufferedReader(new InputStreamReader(System.in)));
+                consoleReader = new ConsoleOrBufferedReader.BufferedReaderWrapper(new BufferedReader(new InputStreamReader(System.in, "UTF-8")));
             } else {
                 consoleReader = new ConsoleOrBufferedReader.ConsoleWrapper(console);
             }
