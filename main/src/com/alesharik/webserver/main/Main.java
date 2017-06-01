@@ -22,8 +22,6 @@ import java.util.Scanner;
 
 @Prefixes("[MAIN]")
 public class Main {
-    private static final MainLoggerConfiguration c = new MainLoggerConfiguration();
-
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
     @Deprecated
     public static final File WWW = new File(USER_DIR + "/www");
