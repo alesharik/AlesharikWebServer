@@ -1,7 +1,7 @@
 package com.alesharik.webserver.api;
 
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import lombok.SneakyThrows;
 import one.nio.serial.DataStream;
 import one.nio.serial.Repository;
@@ -155,7 +155,7 @@ public final class SerialRepository {
         return serializer;
     }
 
-    @Prefix("[SnapshotThread]")
+    @Prefixes("[SnapshotThread]")
     private static final class SnapshotThread extends Thread {
         private RandomAccessFile file;
 

@@ -4,7 +4,7 @@ import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import org.glassfish.grizzly.http.util.Base64Utils;
 import org.glassfish.grizzly.utils.Charsets;
 import org.w3c.dom.Element;
@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Prefix("[SecuredStoreModule]")
+@Prefixes("[SecuredStoreModule]")
 public class SecuredStoreModuleImpl implements SecuredStoreModule {
     private final Map<String, SecuredStoreAccessController> accessControllers;
     private File store;

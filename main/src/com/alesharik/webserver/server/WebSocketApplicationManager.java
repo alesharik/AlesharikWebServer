@@ -2,7 +2,7 @@ package com.alesharik.webserver.server;
 
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.server.api.WSApplication;
 import com.alesharik.webserver.server.api.WSChecker;
 import lombok.experimental.UtilityClass;
@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 @ClassPathScanner
 @UtilityClass
-@Prefix("[WebSocketApplicationManager]")
+@Prefixes("[WebSocketApplicationManager]")
 public class WebSocketApplicationManager {
     private static final Set<WebSocketApplication> applications = new CopyOnWriteArraySet<>();
 

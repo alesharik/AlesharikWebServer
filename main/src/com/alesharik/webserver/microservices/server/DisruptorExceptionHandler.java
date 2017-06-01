@@ -1,10 +1,10 @@
 package com.alesharik.webserver.microservices.server;
 
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.lmax.disruptor.ExceptionHandler;
 
-@Prefix("[MicroserviceServerDisruptor]")
+@Prefixes("[MicroserviceServerDisruptor]")
 class DisruptorExceptionHandler<T> implements ExceptionHandler<T> {
     @Override
     public void handleEventException(Throwable ex, long sequence, Object event) {

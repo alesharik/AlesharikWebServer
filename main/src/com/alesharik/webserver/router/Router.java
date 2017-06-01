@@ -2,7 +2,7 @@ package com.alesharik.webserver.router;
 
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -19,7 +19,7 @@ import java.util.concurrent.Future;
  *
  * @see RouterServer
  */
-@Prefix("[RouterClient]")
+@Prefixes("[RouterClient]")
 public final class Router {
     private static final Executor EXECUTOR = Executors.newCachedThreadPool(r -> {
         Thread thread = new Thread(r);

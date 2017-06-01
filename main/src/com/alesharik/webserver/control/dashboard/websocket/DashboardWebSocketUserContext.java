@@ -3,7 +3,7 @@ package com.alesharik.webserver.control.dashboard.websocket;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.exceptions.PluginNotFoundException;
 import com.alesharik.webserver.exceptions.WebSocketNotConnectedException;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import lombok.Setter;
 import org.glassfish.grizzly.http.util.Base64Utils;
 import org.glassfish.grizzly.websockets.DataFrame;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * byte type      name     command  Base64 encoded byte array<br>
  * byte    : messaging : command :          Base64<br>
  */
-@Prefix("[DashboardWebSocketUserContext]")
+@Prefixes("[DashboardWebSocketUserContext]")
 final class DashboardWebSocketUserContext implements WebSocketListener {
     private final AtomicBoolean isClosed;
     private final Map<String, DashboardWebSocketPlugin> plugins;

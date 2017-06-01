@@ -2,7 +2,7 @@ package com.alesharik.webserver.microservices.client;
 
 import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.microservices.api.MicroserviceEvent;
 import com.alesharik.webserver.microservices.server.MicroserviceServer;
 import com.alesharik.webserver.router.Router;
@@ -10,7 +10,7 @@ import com.alesharik.webserver.router.Router;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-@Prefix("[MicroserviceClient]")
+@Prefixes("[MicroserviceClient]")
 public class MicroserviceClient {
     private MicroserviceClientExecutorPool pool;
     private MicroserviceServer server;

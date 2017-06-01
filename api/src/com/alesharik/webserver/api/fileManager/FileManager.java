@@ -3,7 +3,7 @@ package com.alesharik.webserver.api.fileManager;
 import com.alesharik.webserver.api.CompressionUtils;
 import com.alesharik.webserver.exceptions.FileFoundException;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import one.nio.mem.OutOfMemoryException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AbstractFileFilter;
@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
-@Prefix("[FileManager]")
+@Prefixes("[FileManager]")
 //TODO fix NO_HOLD mode
 public final class FileManager {
     /**
@@ -448,7 +448,7 @@ public final class FileManager {
         return plugin;
     }
 
-    @Prefix("[FileChecker]")
+    @Prefixes("[FileChecker]")
     private class FileChecker extends Thread {
         private boolean isRunning = true;
 

@@ -12,7 +12,7 @@ import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.main.server.ControlServer;
 import com.alesharik.webserver.main.server.MainServer;
 import com.alesharik.webserver.microservices.client.MicroserviceClient;
@@ -48,7 +48,7 @@ import static com.alesharik.webserver.main.Main.USER_DIR;
  * and setup server
  */
 @Deprecated
-@Prefix("[ServerController]")
+@Prefixes("[ServerController]")
 public final class ServerController {
     private final ConfigValues configValues = new ConfigValues();
 

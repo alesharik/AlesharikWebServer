@@ -4,7 +4,7 @@ import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.ModuleManager;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.server.api.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Prefix("[GrizzlyHttpServerModule]")
+@Prefixes("[GrizzlyHttpServerModule]")
 public final class GrizzlyHttpServerModule implements HttpServerModule {
     private final ArrayList<NetworkListener> networkListeners;
 

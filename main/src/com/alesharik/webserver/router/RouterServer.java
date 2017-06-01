@@ -1,7 +1,7 @@
 package com.alesharik.webserver.router;
 
 import com.alesharik.webserver.api.server.Server;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <li>remove - return 200 if server removed, 404 if server not found, 5oo - internal error</li>
  * </ol>
  */
-@Prefix("[RouterServer]")
+@Prefixes("[RouterServer]")
 public final class RouterServer extends Server {
     static final String OK = "200";
     static final String NOT_FOUND = "404";

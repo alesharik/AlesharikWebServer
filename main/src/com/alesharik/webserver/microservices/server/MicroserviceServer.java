@@ -2,7 +2,7 @@ package com.alesharik.webserver.microservices.server;
 
 import com.alesharik.webserver.api.server.Server;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.microservices.api.Microservice;
 import com.alesharik.webserver.microservices.client.MicroserviceClient;
 import com.lmax.disruptor.RingBuffer;
@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Prefix("[MicroserviceServer]")
+@Prefixes("[MicroserviceServer]")
 public class MicroserviceServer extends Server implements Runnable {
     private MicroserviceClient client;
     private ConcurrentHashMap<String, Microservice> microservices = new ConcurrentHashMap<>();

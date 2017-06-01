@@ -7,7 +7,7 @@ import com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool;
 import com.alesharik.webserver.api.ticking.TickingPool;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.reporting.Reporter;
 import com.alesharik.webserver.reporting.ReportingModule;
 import org.w3c.dom.Element;
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @ClassPathScanner
-@Prefix("[ReportingModule]")
+@Prefixes("[ReportingModule]")
 public final class ReportingModuleImpl implements ReportingModule {
     private static final int DEFAULT_THREAD_COUNT = 10;
     private static final long DEFAULT_PERIOD = 1000; //1 sec //TODO fix it

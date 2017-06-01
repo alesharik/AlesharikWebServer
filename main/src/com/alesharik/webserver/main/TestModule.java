@@ -8,7 +8,7 @@ import com.alesharik.webserver.api.control.messaging.WireControlSocketMessage;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.Module;
 import com.alesharik.webserver.control.dashboard.websocket.plugins.MenuDashboardWebSocketPlugin;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.module.server.ControlServerModule;
 import lombok.AllArgsConstructor;
 import org.w3c.dom.Element;
@@ -97,7 +97,7 @@ public class TestModule implements Module {
     }
 
     @WireControlSocketMessage(TestMessage.class)
-    @Prefix("[Server]")
+    @Prefixes("[Server]")
     private static final class TestMessageHandler implements ControlSocketMessageHandler<TestMessage> {
         public TestMessageHandler() {
         }

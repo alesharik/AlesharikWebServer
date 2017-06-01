@@ -6,7 +6,7 @@ import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.server.api.RequestHandler;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
@@ -16,7 +16,7 @@ import org.glassfish.grizzly.http.util.HttpStatus;
 import java.io.IOException;
 import java.util.UUID;
 
-@Prefix("[ServerControl]")
+@Prefixes("[ServerControl]")
 public class ControlRequestHandler implements RequestHandler {
     private final ConcurrentLiveArrayList<UUID> sessions = new ConcurrentLiveArrayList<>();
     private final AdminDataStorageImpl holder;

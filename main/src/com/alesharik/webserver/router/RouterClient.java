@@ -2,7 +2,7 @@ package com.alesharik.webserver.router;
 
 import com.alesharik.webserver.api.ConcurrentCompletableFuture;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import one.nio.net.Socket;
 import org.glassfish.grizzly.utils.Charsets;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * This class is the router client thread. Used for interact with socket
  */
-@Prefix("[RouterClientThread]")
+@Prefixes("[RouterClientThread]")
 class RouterClient extends Thread {
     private final int port;
     private final String host;

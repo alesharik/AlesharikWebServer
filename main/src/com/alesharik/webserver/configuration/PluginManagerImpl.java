@@ -3,7 +3,7 @@ package com.alesharik.webserver.configuration;
 import com.alesharik.webserver.api.ThreadFactories;
 import com.alesharik.webserver.api.agent.Agent;
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import one.nio.mgt.Management;
 import sun.misc.Cleaner;
 
@@ -25,7 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-@Prefix("[PluginManager]")
+@Prefixes("[PluginManager]")
 public final class PluginManagerImpl extends PluginManager {
     private final Map<File, ClassLoader> classLoaders;
     private final ExecutorService executor;

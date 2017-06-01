@@ -1,7 +1,7 @@
 package com.alesharik.webserver.router;
 
 import com.alesharik.webserver.logger.Logger;
-import com.alesharik.webserver.logger.Prefix;
+import com.alesharik.webserver.logger.Prefixes;
 import one.nio.net.Socket;
 import org.glassfish.grizzly.utils.Charsets;
 
@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Prefix("[RouterServerRequestProcessor]")
+@Prefixes("[RouterServerRequestProcessor]")
 class RouterServerRequestProcessor extends Thread {
     private final int port;
     private final String host;
