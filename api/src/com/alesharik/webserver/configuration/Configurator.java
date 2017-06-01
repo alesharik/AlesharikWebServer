@@ -55,7 +55,7 @@ public class Configurator {
         this.configuration = configuration;
         this.pluginManagerClass = pluginManagerClass;
         this.isFileCheckerRunning = new AtomicBoolean(false);
-        isApiSetup = new AtomicBoolean(false);
+        this.isApiSetup = new AtomicBoolean(false);
     }
 
     public synchronized void parse() throws ParserConfigurationException, IOException, SAXException {
@@ -175,7 +175,7 @@ public class Configurator {
         }
     }
 
-    public void shutdown() {
+    public void shutdownFileChecker() {
         if(isFileCheckerRunning.get() && fileChecker != null) {
             try {
                 isFileCheckerRunning.set(false);
@@ -187,6 +187,17 @@ public class Configurator {
                 Logger.log(e);
             }
         }
+    }
+
+    public void shutdown() {
+        shutdownFileChecker();
+        configuration.shutdown();
+    }
+
+    public void shutdownNow() {
+        if(fileChecker != null)
+            fileChecker.interrupt();
+        configuration.shutdownNow();
     }
 
     private static final class PluginManagerFreeSignaller implements ForkJoinPool.ManagedBlocker {

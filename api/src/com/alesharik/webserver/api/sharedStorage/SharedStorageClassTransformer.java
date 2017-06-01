@@ -8,13 +8,12 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.lang.instrument.IllegalClassFormatException;
-import java.security.ProtectionDomain;
 
 @ClassTransformer
 public final class SharedStorageClassTransformer {
 
     @TransformAll
-    public static byte[] transform(@Param(Param.Type.CLASS_LOADER) ClassLoader loader, @Param(Param.Type.CLASS_NAME) String className, @Param(Param.Type.CLASS_BEING_REDEFINED) Class<?> classBeingRedefined, @Param(Param.Type.PROTECTION_DOMAIN) ProtectionDomain protectionDomain, @Param(Param.Type.CLASSFILE_BUFFER) byte[] classfileBuffer) throws IllegalClassFormatException {
+    public static byte[] transform(@Param(Param.Type.CLASS_NAME) String className, @Param(Param.Type.CLASSFILE_BUFFER) byte[] classfileBuffer) throws IllegalClassFormatException {
         try {
             ClassNode classNode = new ClassNode();
             ClassReader classReader = new ClassReader(classfileBuffer);
@@ -26,8 +25,8 @@ public final class SharedStorageClassTransformer {
             if(e.getCause() instanceof ClassNotFoundException) {
                 return classfileBuffer;
             }
+            System.err.println("Problem in class " + className);
             e.printStackTrace();
-            System.out.println(className);
         }
         return classfileBuffer;
     }

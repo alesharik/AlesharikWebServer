@@ -12,55 +12,133 @@ import com.alesharik.webserver.module.server.ControlServerModule;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
-import java.util.Scanner;
-
-//TODO rewrite site as green terminal
-//TODO add more prefixes to java
-//TODO написать профилирование базы данных и реквестов
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 @Prefixes("[MAIN]")
 public class Main {
     public static final File USER_DIR = new File(System.getProperty("user.dir"));
-    @Deprecated
-    public static final File WWW = new File(USER_DIR + "/www");
-    @Deprecated
-    public static final File SERVER_DASHBOARD = new File(USER_DIR + "/serverDashboard");
 
     private static final File CONFIG = new File("./configuration.xml");
+
     private static Configurator configurator;
-    private static Configuration configuration = new ConfigurationImpl();
+    private static Configuration configuration;
 
     public static void main(String[] args) throws InterruptedException {
         try {
             configuration = new ConfigurationImpl();
             XmlHelper.setConfiguration(configuration);
+
             configurator = new Configurator(CONFIG, configuration, PluginManagerImpl.class);
             configurator.parse();
 
             System.out.println("Server successfully loaded!");
 
-            Runtime.getRuntime().addShutdownHook(new Thread(Main::shutdown));
+            Runtime.getRuntime().addShutdownHook(new Thread(Main::shutdownNow));
 
-            Scanner scanner = new Scanner(System.in, "UTF-8");
+            ConsoleOrBufferedReader consoleReader;
+
+            Console console = System.console();
+            if(console == null) {
+                System.out.println("Server has no input console! Falling to input stream...");
+                consoleReader = new ConsoleOrBufferedReader.BufferedReaderWrapper(new BufferedReader(new InputStreamReader(System.in)));
+            } else {
+                consoleReader = new ConsoleOrBufferedReader.ConsoleWrapper(console);
+            }
+
+            System.out.println("Server is listening terminal commands...");
             while(true) {
-                if(!scanner.hasNextLine()) {
-                    Thread.sleep(1);
-                    continue;
+                String command = consoleReader.nextLine();
+                if(command == null) {
+                    System.out.println("Console listener was reached end of stream! Stopping console listening...");
+                    return;
                 }
-                String command = scanner.nextLine();
+
                 switch (command) {
                     case "exit":
                         shutdown();
                         return;
                     default:
-                        System.out.println("WTF");
+                        System.out.println("Command " + command + " not found!");
                 }
             }
+        } catch (ConfigurationParseError e) {
+            System.err.println("Configuration error occurs! Stopping...");
+            shutdown();
+        } catch (Error e) {
+            e.printStackTrace();
+            shutdownNow();
         } catch (Throwable e) {
             e.printStackTrace();
             shutdown();
+        }
+    }
+
+    private abstract static class ConsoleOrBufferedReader {
+        /**
+         * Null means that we reached end of stream
+         */
+        @Nullable
+        public abstract String nextLine();
+
+        public abstract boolean supportPasswordEnter();
+
+        @Nonnull
+        public abstract char[] readPassword();
+
+        private static final class ConsoleWrapper extends ConsoleOrBufferedReader {
+            private final Console console;
+
+            public ConsoleWrapper(@Nonnull Console console) {
+                this.console = console;
+            }
+
+            @Override
+            public String nextLine() {
+                return console.readLine();
+            }
+
+            @Override
+            public boolean supportPasswordEnter() {
+                return true;
+            }
+
+            @Override
+            public char[] readPassword() {
+                return console.readPassword();
+            }
+        }
+
+        private static final class BufferedReaderWrapper extends ConsoleOrBufferedReader {
+            private final BufferedReader stream;
+
+            public BufferedReaderWrapper(@Nonnull BufferedReader stream) {
+                this.stream = stream;
+            }
+
+            @Override
+            public String nextLine() {
+                try {
+                    return stream.readLine();
+                } catch (IOException e) {
+                    return null;
+                }
+            }
+
+            @Override
+            public boolean supportPasswordEnter() {
+                return false;
+            }
+
+            @Override
+            public char[] readPassword() {
+                return new char[0];
+            }
         }
     }
 
@@ -83,6 +161,10 @@ public class Main {
         }
     }
 
+    /**
+     * Return server configuration file
+     */
+    @Nonnull
     public static File getConfigurationFile() {
         return CONFIG;
     }
@@ -90,6 +172,12 @@ public class Main {
     public synchronized static void shutdown() {
         Logger.log("Stopping...");
         configurator.shutdown();
+        System.exit(0);
+    }
+
+    private synchronized static void shutdownNow() {
+        System.err.println("Critical error detected! Stopping...");
+        configurator.shutdownNow();
         System.exit(0);
     }
 }

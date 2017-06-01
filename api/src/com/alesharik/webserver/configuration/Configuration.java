@@ -13,4 +13,16 @@ public interface Configuration {
     void parseMain(Element main);
 
     Module getModuleByName(String name);
+
+    /**
+     * Executes after fatal error. All modules must be stopped by calling {@link Module#shutdownNow()} method. All throwables
+     * must not interrupt other modules stopping procedure
+     */
+    void shutdownNow();
+
+    /**
+     * Executes after exit code received. All modules must be stopped by calling {@link Module#shutdown()} method.
+     * All throwables must not interrupt other modules stopping procedure
+     */
+    void shutdown();
 }

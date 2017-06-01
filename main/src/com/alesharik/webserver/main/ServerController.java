@@ -19,7 +19,6 @@ import com.alesharik.webserver.microservices.client.MicroserviceClient;
 import com.alesharik.webserver.microservices.server.MicroserviceServer;
 import com.alesharik.webserver.router.RouterServer;
 import lombok.SneakyThrows;
-import one.nio.mem.OutOfMemoryException;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -133,30 +132,7 @@ public final class ServerController {
     }
 
     private void initFileManager() {
-        if(isEnabled(IS_CONTROL_SERVER_FLAG)) {
-            checkServerDashboard();
-            try {
-                mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.HOLD_AND_CHECK,
-                        FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                        FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
-            } catch (OutOfMemoryException e) {
-                Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
-                mainFileManager = new FileManager(Main.SERVER_DASHBOARD, FileManager.FileHoldingMode.NO_HOLD,
-                        FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                        FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
-            }
-        } else {
-            try {
-                mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.HOLD_AND_CHECK,
-                        FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                        FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
-            } catch (OutOfMemoryException e) {
-                Logger.log("Can't initialize file manager with holding! Cause: " + e.getLocalizedMessage());
-                mainFileManager = new FileManager(Main.WWW, FileManager.FileHoldingMode.NO_HOLD,
-                        FileManager.FileHoldingParams.IGNORE_HIDDEN_FILES,
-                        FileManager.FileHoldingParams.DISABLE_IGNORE_LOGS_FOLDER);
-            }
-        }
+
     }
 
     private void initWebServer() throws IOException, ConfigurationException {
