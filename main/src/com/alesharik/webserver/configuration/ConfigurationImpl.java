@@ -9,9 +9,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 @Prefixes("[Configuration]")
 public final class ConfigurationImpl implements Configuration {
@@ -104,64 +106,104 @@ public final class ConfigurationImpl implements Configuration {
                 .filter(stringModuleHolderEntry -> stringModuleHolderEntry.getValue().mainIsChecked())
                 .forEach(stringModuleHolderEntry -> {
                     stringModuleHolderEntry.getValue().shutdown();
-                    Logger.log("Module " + stringModuleHolderEntry.getKey() + " with type " + stringModuleHolderEntry.getValue().getType() + " shutdown!");
+                    Logger.log("Module " + stringModuleHolderEntry.getKey() + " with type " + stringModuleHolderEntry.getValue().getType() + " was shutdown!");
                 });
     }
 
     @Override
     public Module getModuleByName(String name) {
-        modules.forEach((s, moduleHolder) -> System.out.println("Module " + s + " at " + moduleHolder));
         System.out.println("Trying to load " + name);
         return modules.get(name).getModule();
     }
 
+    @Override
+    public void shutdownNow() {
+        modules.values().forEach(moduleHolder -> {
+            try {
+                moduleHolder.shutdownNow();
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void shutdown() {
+        modules.values().forEach(moduleHolder -> {
+            try {
+                moduleHolder.shutdown();
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        });
+    }
+
     @ToString
     @EqualsAndHashCode
-    private static final class ModuleHolder {
+    static final class ModuleHolder {
+        private static final AtomicIntegerFieldUpdater<ModuleHolder> stateUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleHolder.class, "state");
+
+        private static final int CHECKED = 1;
+        private static final int MAIN_CHECKED = 2;
+        private static final int STARTED = 4;
+
         @Getter
         private final Module module;
-        private final AtomicBoolean isStarted;
-        private final AtomicBoolean isChecked;
-        private final AtomicBoolean isMainChecked;
         @Getter
         private final String name;
 
-        public ModuleHolder(Module module, String name) {
+        private volatile int state;
+
+        public ModuleHolder(@Nonnull Module module, @Nonnull String name) {
             this.module = module;
-            isStarted = new AtomicBoolean(false);
-            isChecked = new AtomicBoolean(false);
-            isMainChecked = new AtomicBoolean(false);
             this.name = name;
+            this.state = 0;
         }
 
         public void start() {
-            if(!isStarted.get()) {
-                isStarted.set(true);
+            int value;
+            if((value = stateUpdater.get(this) & STARTED) != STARTED) {
                 module.start();
+                stateUpdater.set(this, value | STARTED);
             }
         }
 
         public void shutdown() {
-            if(isStarted.get()) {
-                isStarted.set(false);
+            int value;
+            if((value = stateUpdater.get(this) & STARTED) == STARTED) {
                 module.shutdown();
+                stateUpdater.set(this, value & ~STARTED);
+            }
+        }
+
+        public void shutdownNow() {
+            int value;
+            if((value = stateUpdater.get(this) & STARTED) == STARTED) {
+                module.shutdownNow();
+                stateUpdater.set(this, value & ~STARTED);
             }
         }
 
         public boolean isRunning() {
-            return isStarted.get();
+            return (stateUpdater.get(this) & STARTED) == STARTED;
         }
 
         public void check() {
-            isChecked.set(true);
+            int value = stateUpdater.get(this);
+            while(!stateUpdater.compareAndSet(this, value, value | CHECKED)) {
+                value = stateUpdater.get(this);
+            }
         }
 
         public void uncheck() {
-            isChecked.set(false);
+            int value = stateUpdater.get(this);
+            while(!stateUpdater.compareAndSet(this, value, value & ~CHECKED)) {
+                value = stateUpdater.get(this);
+            }
         }
 
         public boolean isChecked() {
-            return isChecked.get();
+            return (stateUpdater.get(this) & CHECKED) == CHECKED;
         }
 
         public String getType() {
@@ -169,15 +211,21 @@ public final class ConfigurationImpl implements Configuration {
         }
 
         public void mainCheck() {
-            isMainChecked.set(true);
+            int value = stateUpdater.get(this);
+            while(!stateUpdater.compareAndSet(this, value, value | MAIN_CHECKED)) {
+                value = stateUpdater.get(this);
+            }
         }
 
         public void mainUncheck() {
-            isMainChecked.set(false);
+            int value = stateUpdater.get(this);
+            while(!stateUpdater.compareAndSet(this, value, value & ~MAIN_CHECKED)) {
+                value = stateUpdater.get(this);
+            }
         }
 
         public boolean mainIsChecked() {
-            return isMainChecked.get();
+            return (stateUpdater.get(this) & MAIN_CHECKED) == MAIN_CHECKED;
         }
     }
 }
