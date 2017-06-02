@@ -340,7 +340,7 @@ public class ConcurrentLiveArrayListTest {
             list.add(i, (long) i);
         }
         list.start();
-        Thread.sleep(200);
+        Thread.sleep(500);
         assertTrue(list.isEmpty());
     }
 }
