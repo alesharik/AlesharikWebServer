@@ -8,6 +8,8 @@ import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
+import com.alesharik.webserver.main.console.ConsoleCommand;
+import com.alesharik.webserver.main.console.ConsoleCommandManager;
 import com.alesharik.webserver.module.server.ControlServerModule;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -51,20 +53,37 @@ public class Main {
                 consoleReader = new ConsoleOrBufferedReader.ConsoleWrapper(console);
             }
 
+            System.out.println("Found " + ConsoleCommandManager.getCommands().size() + " console commands");
             System.out.println("Server is listening terminal commands...");
             while(true) {
-                String command = consoleReader.nextLine();
+                String command = consoleReader.readLine();
                 if(command == null) {
                     System.out.println("Console listener was reached end of stream! Stopping console listening...");
                     return;
                 }
+                if(command.isEmpty()) {
+                    System.out.println("Please enter correct command!");
+                    continue;
+                }
 
-                switch (command) {
-                    case "exit":
-                        shutdown();
-                        return;
-                    default:
-                        System.out.println("Command " + command + " not found!");
+                if(command.equals("help")) {
+                    System.out.println("help list - display all possible commands");
+                    System.out.println("help <command> - display command help");
+                } else if(command.equals("help list")) {
+                    for(ConsoleCommand consoleCommand : ConsoleCommandManager.getCommands())
+                        System.out.println(consoleCommand.getName() + " -- " + consoleCommand.getDescription());
+                } else if(command.startsWith("help ")) {
+                    String cmdName = command.substring("help ".length());
+                    ConsoleCommand cmd = ConsoleCommandManager.getCommand(cmdName);
+                    if(cmd != null)
+                        cmd.printHelp(System.out);
+                    else
+                        System.out.println("Command " + cmdName + " not found!");
+                } else if(ConsoleCommandManager.containsCommand(command)) {
+                    ConsoleCommand consoleCommand = ConsoleCommandManager.getCommand(command);
+                    consoleCommand.handle(command, System.out, consoleReader);
+                } else {
+                    System.out.println("Command " + command + " not found!");
                 }
             }
         } catch (ConfigurationParseError e) {
@@ -72,6 +91,7 @@ public class Main {
             shutdown();
         } catch (Error e) {
             e.printStackTrace();
+            System.err.println("Critical error detected! Stopping...");
             shutdownNow();
         } catch (Throwable e) {
             e.printStackTrace();
@@ -79,14 +99,14 @@ public class Main {
         }
     }
 
-    private abstract static class ConsoleOrBufferedReader {
+    private abstract static class ConsoleOrBufferedReader implements ConsoleCommand.Reader {
         /**
          * Null means that we reached end of stream
          */
         @Nullable
-        public abstract String nextLine();
+        public abstract String readLine();
 
-        public abstract boolean supportPasswordEnter();
+        public abstract boolean passwordSupported();
 
         @Nonnull
         public abstract char[] readPassword();
@@ -99,12 +119,12 @@ public class Main {
             }
 
             @Override
-            public String nextLine() {
+            public String readLine() {
                 return console.readLine();
             }
 
             @Override
-            public boolean supportPasswordEnter() {
+            public boolean passwordSupported() {
                 return true;
             }
 
@@ -122,7 +142,7 @@ public class Main {
             }
 
             @Override
-            public String nextLine() {
+            public String readLine() {
                 try {
                     return stream.readLine();
                 } catch (IOException e) {
@@ -131,13 +151,13 @@ public class Main {
             }
 
             @Override
-            public boolean supportPasswordEnter() {
+            public boolean passwordSupported() {
                 return false;
             }
 
             @Override
             public char[] readPassword() {
-                return new char[0];
+                return null;
             }
         }
     }
@@ -175,8 +195,7 @@ public class Main {
         System.exit(0);
     }
 
-    private synchronized static void shutdownNow() {
-        System.err.println("Critical error detected! Stopping...");
+    public synchronized static void shutdownNow() {
         configurator.shutdownNow();
         System.exit(0);
     }

@@ -3,6 +3,7 @@ package com.alesharik.webserver.api;
 import com.alesharik.webserver.logger.Logger;
 import one.nio.lock.RWLock;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.GarbageCollectorMXBean;
@@ -16,7 +17,6 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -82,11 +82,10 @@ public final class ComputerData {
      * @param type load type
      * @return core time
      */
-    public long getCoreTime(int core, CoreLoadType type) {
+    public long getCoreTime(int core, @Nonnull CoreLoadType type) {
         if(core < 0 || core >= coreLoad.length) {
             throw new IllegalArgumentException("Core id must be positive and less than online core count!");
         }
-        Objects.requireNonNull(type);
 
         try {
             lock.lockRead();
@@ -96,9 +95,7 @@ public final class ComputerData {
         }
     }
 
-    public long getRam(RamType type) {
-        Objects.requireNonNull(type);
-
+    public long getRam(@Nonnull RamType type) {
         try {
             lock.lockRead();
             return ram[type.ordinal()];
@@ -123,7 +120,7 @@ public final class ComputerData {
     public String stringify() {
         try {
             lock.lockRead();
-            StringBuilder stringBuilder = new StringBuilder();
+            StringBuilder stringBuilder = new StringBuilder(1000);
             stringBuilder.append('{');
 
             stringBuilder.append("\"processorCount\": ");
@@ -262,79 +259,53 @@ public final class ComputerData {
 
     //int - 10
     private String serializeThreadInfo(ThreadInfo threadInfo) {
-        StringBuilder stringBuilder = new StringBuilder(246);
-
-        stringBuilder.append('{');
-
-        stringBuilder.append("\"id\": ");
-        stringBuilder.append(threadInfo.getThreadId());
-
-        stringBuilder.append(", \"name\": \"");
-        stringBuilder.append(threadInfo.getThreadName());
-        stringBuilder.append('\"');
-
-        stringBuilder.append(", \"state\": ");
-        stringBuilder.append(threadInfo.getThreadState().ordinal());
-
-        stringBuilder.append(", \"blockedTime\": ");
-        stringBuilder.append(threadInfo.getBlockedTime());
-
-        stringBuilder.append(", \"blockedCount\": ");
-        stringBuilder.append(threadInfo.getBlockedCount());
-
-        stringBuilder.append(", \"waitTime\": ");
-        stringBuilder.append(threadInfo.getWaitedTime());
-
-        stringBuilder.append(", \"waitCount\": ");
-        stringBuilder.append(threadInfo.getWaitedCount());
-
-        stringBuilder.append(", \"isInNative\": ");
-        stringBuilder.append(threadInfo.isInNative());
-
-        stringBuilder.append('}');
-        return stringBuilder.toString();
+        return "{" +
+                "\"id\": " +
+                threadInfo.getThreadId() +
+                ", \"name\": \"" +
+                threadInfo.getThreadName() +
+                '\"' +
+                ", \"state\": " +
+                threadInfo.getThreadState().ordinal() +
+                ", \"blockedTime\": " +
+                threadInfo.getBlockedTime() +
+                ", \"blockedCount\": " +
+                threadInfo.getBlockedCount() +
+                ", \"waitTime\": " +
+                threadInfo.getWaitedTime() +
+                ", \"waitCount\": " +
+                threadInfo.getWaitedCount() +
+                ", \"isInNative\": " +
+                threadInfo.isInNative() +
+                '}';
     }
 
     private String serializeGCMXBean(GarbageCollectorMXBean garbageCollectorMXBean) {
-        StringBuilder stringBuilder = new StringBuilder(115);
-        stringBuilder.append('{');
-
-        stringBuilder.append("\"gcTime\": ");
-        stringBuilder.append(garbageCollectorMXBean.getCollectionTime());
-
-        stringBuilder.append(", \"gcCount\": ");
-        stringBuilder.append(garbageCollectorMXBean.getCollectionCount());
-
-        stringBuilder.append(", \"isValid\": ");
-        stringBuilder.append(garbageCollectorMXBean.isValid());
-
-        stringBuilder.append(", \"name\": \"");
-        stringBuilder.append(garbageCollectorMXBean.getName());
-        stringBuilder.append('\"');
-
-        stringBuilder.append('}');
-        return stringBuilder.toString();
+        return "{" +
+                "\"gcTime\": " +
+                garbageCollectorMXBean.getCollectionTime() +
+                ", \"gcCount\": " +
+                garbageCollectorMXBean.getCollectionCount() +
+                ", \"isValid\": " +
+                garbageCollectorMXBean.isValid() +
+                ", \"name\": \"" +
+                garbageCollectorMXBean.getName() +
+                '\"' +
+                '}';
     }
 
     //123 chars
     private String serializeMemoryUsage(MemoryUsage memoryUsage) {
-        StringBuilder stringBuilder = new StringBuilder(123);
-        stringBuilder.append('{');
-
-        stringBuilder.append("\"committed\": ");
-        stringBuilder.append(memoryUsage.getCommitted());
-
-        stringBuilder.append(", \"init\": ");
-        stringBuilder.append(memoryUsage.getInit());
-
-        stringBuilder.append(", \"used\": ");
-        stringBuilder.append(memoryUsage.getUsed());
-
-        stringBuilder.append(", \"max\": ");
-        stringBuilder.append(memoryUsage.getMax());
-
-        stringBuilder.append('}');
-        return stringBuilder.toString();
+        return "{" +
+                "\"committed\": " +
+                memoryUsage.getCommitted() +
+                ", \"init\": " +
+                memoryUsage.getInit() +
+                ", \"used\": " +
+                memoryUsage.getUsed() +
+                ", \"max\": " +
+                memoryUsage.getMax() +
+                '}';
     }
 
     private String serializeMemoryPoolMXBean(MemoryPoolMXBean memoryPoolMXBean) {
@@ -390,30 +361,21 @@ public final class ComputerData {
     //String - 20 chars
     //long - 20 chars
     private String serializePartition(Utils.Partition partition) {
-        StringBuilder stringBuilder = new StringBuilder(223);
-        stringBuilder.append("{\"name\": \"");
-        stringBuilder.append(partition.getName());
-
-        stringBuilder.append("\", \"addr\": \"");
-        stringBuilder.append(partition.getAddress());
-
-        stringBuilder.append("\", \"type\": \"");
-        stringBuilder.append(partition.getType());
-
-        stringBuilder.append("\", \"max\": ");
-        stringBuilder.append(partition.getMax());
-
-        stringBuilder.append(", \"free\": ");
-        stringBuilder.append(partition.getFree());
-
-        stringBuilder.append(", \"inodes\": ");
-        stringBuilder.append(partition.getInodeMax());
-
-        stringBuilder.append(", \"inodesFree\": ");
-        stringBuilder.append(partition.getInodeFree());
-
-        stringBuilder.append('}');
-        return stringBuilder.toString();
+        return "{\"name\": \"" +
+                partition.getName() +
+                "\", \"addr\": \"" +
+                partition.getAddress() +
+                "\", \"type\": \"" +
+                partition.getType() +
+                "\", \"max\": " +
+                partition.getMax() +
+                ", \"free\": " +
+                partition.getFree() +
+                ", \"inodes\": " +
+                partition.getInodeMax() +
+                ", \"inodesFree\": " +
+                partition.getInodeFree() +
+                '}';
     }
 
     public enum RamType {
