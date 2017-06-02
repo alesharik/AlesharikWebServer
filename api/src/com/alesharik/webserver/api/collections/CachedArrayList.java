@@ -343,22 +343,12 @@ public class CachedArrayList<V> extends ArrayListWrapper<V> implements Cloneable
 
     @Override
     public boolean equals(Object o) {
-        update();
-        if(this == o) return true;
-        if(!(o instanceof CachedArrayList)) return false;
-        if(!super.equals(o)) return false;
-
-        CachedArrayList<?> list = (CachedArrayList<?>) o;
-
-        return times != null ? times.equals(list.times) : list.times == null;
+        return this == o || o instanceof CachedArrayList && super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        update();
-        int result = super.hashCode();
-        result = 31 * result + (times != null ? times.hashCode() : 0);
-        return result;
+        return super.hashCode();
     }
 
     private void update() {

@@ -103,12 +103,12 @@ public class Main {
         /**
          * Null means that we reached end of stream
          */
-        @Nullable
+        @Nonnull
         public abstract String readLine();
 
         public abstract boolean passwordSupported();
 
-        @Nonnull
+        @Nullable
         public abstract char[] readPassword();
 
         private static final class ConsoleWrapper extends ConsoleOrBufferedReader {
