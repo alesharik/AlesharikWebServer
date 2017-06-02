@@ -1,94 +1,4 @@
 'use strict';
-//TODO add support for byte message type
-class Dashboard {
-    constructor() {
-        if (!window.Worker) {
-            alert("Workers ot supported! Please update your browser!");
-        }
-        MessagingManager.sendMessage("hello"); //Login in WebSocket
-
-        this.navbarTop = new NavbarTop();
-        this.contentLoader = new ContentLoader();
-        this.navigator = new Navigator(this.contentLoader);
-        MessagingManager.addParser("menu", this.navigator);
-        MessagingUtils.updateMenu();
-        // this.webSocketManager = new WebSocketManager(this);
-        this.sliderRightHandler = new SliderRightHandler();
-        // this.webSocketManager.updateMenu();
-
-        this.messageHandler = new MessageHandler();
-
-        MenuUtils.setupMenu();
-        this.menuPluginHandler = new MenuPluginHandler();
-        MessagingManager.addParser("menuPlugins", this.menuPluginHandler);
-
-        // this.webSocketManager.updateMenuPlugins();
-
-        this.currentCompInfo = new ComputerInfo();
-        MessagingManager.addParser("currentCompInfo", this.currentCompInfo);
-        MessagingUtils.enableReceivingComputerInfo();
-        // this.webSocketManager.enableCurrentComputerInfo();
-    }
-
-    onMessageClick(event) {
-        this.navbarTop.onMessageClick(event);
-    }
-
-    /**
-     * Load js file as <script>
-     * @param {string} file local or internet file address
-     * @param {function} onEnded call on load ended. Receive created element.
-     */
-    loadJSFile(file, onEnded = () => {
-               }) {
-        let request = new XMLHttpRequest();
-        request.open("GET", file);
-        request.onreadystatechange = () => {
-            if (request.readyState === 4) {
-                let scriptElement = document.createElement("script");
-                scriptElement.type = "text/javascript";
-                if (request.status !== 200) {
-                    scriptElement.src = file;
-                } else {
-                    scriptElement.innerHTML = request.responseText;
-                }
-                onEnded(scriptElement);
-                document.getElementsByTagName("head")[0].appendChild(scriptElement);
-            }
-        };
-        request.send();
-    }
-
-    /**
-     * Load css file as <style> or as <link>
-     * @param file local or internet file address
-     * @param {function} onEnded call on load ended. Receive created element.
-     */
-    loadCSSFile(file, onEnded = () => {
-                }) {
-        let request = new XMLHttpRequest();
-        request.open("GET", file);
-        request.onreadystatechange = () => {
-            if (request.readyState == 4) {
-                if (request.status != 200) {
-                    let link = document.createElement("link");
-                    link.rel = "stylesheet";
-                    link.type = "text/css";
-                    link.href = file;
-                    onEnded(link);
-                    document.getElementsByTagName("head")[0].appendChild(link);
-                } else {
-                    let style = document.createElement("style");
-                    style.innerHTML = request.responseText;
-                    onEnded(style);
-                    document.getElementsByTagName("head")[0].appendChild(style);
-                }
-            }
-        };
-        request.send();
-    }
-}
-
 //====================Message api====================\\
 
 /**<pre>
@@ -881,6 +791,10 @@ class ContentLoader {
         this.contentHolder = document.querySelector("#contentHolder");
         this.header = document.querySelector("#contentHeader");
 
+        /**
+         * Loaded head elements
+         * @type {Array}
+         */
         this.elements = [];
 
         events.newEvent("finalizeContent");
@@ -891,70 +805,110 @@ class ContentLoader {
      * @param {string} id
      */
     load(id) {
-        events.sendEvent("finalizeContent");
+        events.sendEvent("finalizeContent"); //Request content finalization
+
+        //Remove head elements
         this.elements.forEach((element) => {
             element.parentNode.removeChild(element);
         });
         this.elements = [];
 
-        let that = this;
-
+        //Request new page
         let request = new XMLHttpRequest();
         request.open("GET", "/content/" + id + ".html");
         request.onreadystatechange = () => {
-            if (request.readyState == 4) {
-                if (request.status != 200) {
-                    ContentLoader.staticLoadError(request.status, that);
-                } else {
-                    let headers = new RegExp("<title>(.*?)</title>").exec(request.responseText);
-                    if (headers == null || headers == undefined || headers.length < 2) {
-                        that.header.innerHTML = id;
-                    } else {
-                        that.header.innerHTML = headers[1];
-                    }
-                    that.contentHolder.innerHTML = request.responseText.replace("<link rel=\"stylesheet\".*>", "");
+            if (request.readyState === 4) {
+                if (request.status !== 200) { //Can't load page
+                    this.loadError(request.status);
+                } else { //Page loaded
 
-                    let extensions = [];
-                    let ext;
-                    let text = that.contentHolder.innerHTML;
-                    while ((ext = new RegExp("<meta type=\"extension\".*>").exec(text)) != null) {
-                        extensions.push(ext[0]);
-                        text = text.replace(ext[0], "");
+                    let headers = new RegExp("<title>(.*?)</title>").exec(request.responseText); //Extract title
+                    if (headers === null) { //Page doesn't have <title> tag
+                        this.header.innerHTML = id;
+                    } else { //Page has <title> tag
+                        this.header.innerHTML = headers[1]; //Load first <title> tag
                     }
-                    if (extensions != null) {
+
+                    this.contentHolder.innerHTML = request.responseText.replace(/<link rel="stylesheet" .*/, ""); //Delete all invalid linked stylesheets
+                    //and put result in content holder
+
+                    /**
+                     * <meta type="extension"> tags
+                     * @type {Array}
+                     */
+                    let extensions = [];
+                    /**
+                     *
+                     * @type {string}
+                     */
+                    let text = this.contentHolder.innerHTML;
+
+                    /**
+                     * Temporary storage for extension tag extraction
+                     * @type {Array}
+                     */
+                    let ext;
+                    while ((ext = /<meta type="extension".*>/.exec(text)) !== null) { //While document has <meta type="extension"> tags
+                        extensions.push(ext[0]); //Add tag to array
+                        text = text.replace(ext[0], ""); //Remove tag from text
+                    }
+
+                    if (extensions.length > 0) { //Document has extensions to load
+                        /**
+                         * Extensions, which require step loading
+                         * @type {Array}
+                         */
                         let stepExtensions = [];
                         extensions.forEach((extension) => {
-                            let href = extension.substring(extension.indexOf("href=\"") + 6, extension.lastIndexOf("\">"));
-                            let step = extension.indexOf("steploading=\"true\"") != -1;
-                            href.lastIndexOf(".css") == -1 ?
-                                step ? stepExtensions.push(href) : dashboard.loadJSFile(href, (element) => {
-                                    that.elements.push(element);
-                                }) :
-                                dashboard.loadCSSFile(href, (element) => {
-                                    that.elements.push(element);
+                            /**
+                             * @type {string}
+                             */
+                            let href = extension.substring(extension.indexOf("href=\"") + 6, extension.lastIndexOf("\">")); //Get href of extension
+
+                            //Is extension require step loading
+                            /**
+                             * @type {boolean}
+                             */
+                            let isStepLoading = (extension.indexOf("steploading=\"true\"") !== -1 || extension.indexOf("stepLoading=\"true\"") !== -1);
+                            /**
+                             * @type {boolean}
+                             */
+                            let isJavaScript = href.lastIndexOf(".css") === -1;
+                            if (isJavaScript) {
+                                if (isStepLoading) {
+                                    stepExtensions.push(href);
+                                } else {
+                                    dashboard.loadJSFile(href).then((e) => {
+                                        this.elements.push(e);
+                                        if (extensions.length === this.elements.length) {
+                                            events.sendEvent("loadingContentEnded");
+                                        }
+                                    });
+                                }
+                            } else { //Do not support step loading for css files
+                                dashboard.loadCSSFile(href).then((e) => {
+                                    this.elements.push(e);
+                                    if (extensions.length === this.elements.length) {
+                                        events.sendEvent("loadingContentEnded");
+                                    }
                                 });
+                            }
                         });
-                        let step = 0;
-                        let stepLoader = (element) => {
-                            that.elements.push(element);
-                            step++;
-                            if (stepExtensions[step] != undefined) {
-                                dashboard.loadJSFile(stepExtensions[step], stepLoader);
-                            }
-                        };
+
                         if (stepExtensions.length > 0) {
-                            dashboard.loadJSFile(stepExtensions[step], stepLoader);
+                            let loader = (element) => {
+                                this.elements.push(element);
+                                let elem = stepExtensions.shift();
+                                if (elem !== undefined) {
+                                    dashboard.loadJSFile(elem).then(loader);
+                                } else if (extensions.length === this.elements.length) { //All extensions loaded
+                                    events.sendEvent("loadingContentEnded");
+                                }
+                            };
+                            dashboard.loadJSFile(stepExtensions.shift()).then(loader);
                         }
-                        let checker = () => {
-                            if (extensions.length == that.elements.length) {
-                                events.sendEvent("loadingContentEnded");
-                            } else {
-                                setTimeout(checker, 1);
-                            }
-                        };
-                        setTimeout(checker, 1);
-                    } else {
-                        events.sendEvent("loadingContentEnded");
+                    } else { //Document doesn't have eny extensions
+                        events.sendEvent("loadingContentEnded"); //Fire "document load complete" event
                     }
                 }
             }
@@ -971,8 +925,8 @@ class ContentLoader {
         let request = new XMLHttpRequest();
         request.open("GET", "/errors/" + errorCode);
         request.onreadystatechange = function () {
-            if (request.readyState == 4) {
-                if (request.status != 200) {
+            if (request.readyState === 4) {
+                if (request.status !== 200) {
                     contentLoader.header.innerHTML = request.status;
                     contentLoader.contentHolder.innerHTML = "Oops! You have network issues or crashed server!";
                 } else {
@@ -980,7 +934,8 @@ class ContentLoader {
                     contentLoader.contentHolder.innerHTML = request.responseText;
                 }
             }
-        }
+        };
+        request.send();
     }
 
     /**
@@ -2005,5 +1960,93 @@ class PushNotificationBuilder {
     }
 }
 //====================Notification API end====================\\
+/**
+ * This is main class of AlesharikWebServer dashboard
+ */
+class Dashboard {
+    constructor() {
+        if (!window.Worker) {
+            alert("Workers ot supported! Please update your browser!");
+        }
 
+        MessagingManager.sendMessage("hello"); //Login in WebSocket
+
+        this.navbarTop = new NavbarTop();
+        this.contentLoader = new ContentLoader();
+        this.navigator = new Navigator(this.contentLoader);
+        MessagingManager.addParser("menu", this.navigator);
+        MessagingUtils.updateMenu();
+        // this.webSocketManager = new WebSocketManager(this);
+        this.sliderRightHandler = new SliderRightHandler();
+        // this.webSocketManager.updateMenu();
+
+        this.messageHandler = new MessageHandler();
+
+        MenuUtils.setupMenu();
+        this.menuPluginHandler = new MenuPluginHandler();
+        MessagingManager.addParser("menuPlugins", this.menuPluginHandler);
+
+        // this.webSocketManager.updateMenuPlugins();
+
+        this.currentCompInfo = new ComputerInfo();
+        MessagingManager.addParser("currentCompInfo", this.currentCompInfo);
+        MessagingUtils.enableReceivingComputerInfo();
+    }
+
+    /**
+     * Load js file as <script>
+     * @param {string} file local or internet file address
+     * @return {Promise} with new element as first argument to resolve
+     */
+    loadJSFile(file) {
+        return new Promise((resolve) => {
+            let request = new XMLHttpRequest();
+            request.open("GET", file);
+            request.onreadystatechange = () => {
+                if (request.readyState === 4) {
+                    let scriptElement = document.createElement("script");
+                    scriptElement.type = "text/javascript";
+                    if (request.status !== 200) {
+                        scriptElement.src = file;
+                    } else {
+                        scriptElement.innerHTML = request.responseText;
+                    }
+                    document.getElementsByTagName("head")[0].appendChild(scriptElement);
+                    resolve(scriptElement);
+                }
+            };
+            request.send();
+        });
+    }
+
+    /**
+     * Load css file as <style> or as <link>
+     * @param file local or internet file address call on load ended. Receive created element.
+     * @return {Promise} with new element as first argument to resolve function
+     */
+    loadCSSFile(file) {
+        return new Promise((resolve) => {
+            let request = new XMLHttpRequest();
+            request.open("GET", file);
+            request.onreadystatechange = () => {
+                if (request.readyState === 4) {
+                    if (request.status !== 200) {
+                        let link = document.createElement("link");
+                        link.rel = "stylesheet";
+                        link.type = "text/css";
+                        link.href = file;
+                        document.getElementsByTagName("head")[0].appendChild(link);
+                        resolve(link);
+                    } else {
+                        let style = document.createElement("style");
+                        style.innerHTML = request.responseText;
+                        document.getElementsByTagName("head")[0].appendChild(style);
+                        resolve(style);
+                    }
+                }
+            };
+            request.send();
+        });
+    }
+}
 

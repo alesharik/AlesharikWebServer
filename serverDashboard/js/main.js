@@ -118,7 +118,7 @@ function goTo(pageID) {
  * Called on click on message in right slider
  */
 function onMessageClick(event) {
-    dashboard.onMessageClick(event);
+    dashboard.navbarTop.onMessageClick(event);
 }
 
 /**
