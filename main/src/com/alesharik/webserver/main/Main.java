@@ -21,6 +21,7 @@ import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 
 @Prefixes("[MAIN]")
 public class Main {
@@ -55,6 +56,7 @@ public class Main {
 
             System.out.println("Found " + ConsoleCommandManager.getCommands().size() + " console commands");
             System.out.println("Server is listening terminal commands...");
+            PrintStream out = Logger.getSystemOut();
             while(true) {
                 String command = consoleReader.readLine();
                 if(command == null) {
@@ -62,28 +64,28 @@ public class Main {
                     return;
                 }
                 if(command.isEmpty()) {
-                    System.out.println("Please enter correct command!");
+                    out.println("Please enter correct command!");
                     continue;
                 }
 
                 if(command.equals("help")) {
-                    System.out.println("help list - display all possible commands");
-                    System.out.println("help <command> - display command help");
+                    out.println("help list - display all possible commands");
+                    out.println("help <command> - display command help");
                 } else if(command.equals("help list")) {
                     for(ConsoleCommand consoleCommand : ConsoleCommandManager.getCommands())
-                        System.out.println(consoleCommand.getName() + " -- " + consoleCommand.getDescription());
+                        out.println(consoleCommand.getName() + " -- " + consoleCommand.getDescription());
                 } else if(command.startsWith("help ")) {
                     String cmdName = command.substring("help ".length());
                     ConsoleCommand cmd = ConsoleCommandManager.getCommand(cmdName);
                     if(cmd != null)
-                        cmd.printHelp(System.out);
+                        cmd.printHelp(out);
                     else
-                        System.out.println("Command " + cmdName + " not found!");
+                        out.println("Command " + cmdName + " not found!");
                 } else if(ConsoleCommandManager.containsCommand(command)) {
                     ConsoleCommand consoleCommand = ConsoleCommandManager.getCommand(command);
-                    consoleCommand.handle(command, System.out, consoleReader);
+                    consoleCommand.handle(command, out, consoleReader);
                 } else {
-                    System.out.println("Command " + command + " not found!");
+                    out.println("Command " + command + " not found!");
                 }
             }
         } catch (ConfigurationParseError e) {
