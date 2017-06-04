@@ -34,15 +34,6 @@ let AFK_TIMEOUT = 60000;
 let timeoutID;
 let isSliderOpen = false;
 let isScreenCleared = false;
-document.onmousemove = function () {
-    clearTimeout(timeoutID);
-    timeoutID = setTimeout(function () {
-        clearScreen()
-    }, AFK_TIMEOUT);
-    if (isScreenCleared) {
-        loadScreen();
-    }
-};
 
 /**
  * Close slider and set #wrapper display to 'none'
@@ -75,20 +66,31 @@ function loadScreen() {
         document.querySelector("#wrapper").style.display = "";
     }
 }
+
+document.onmousemove = function () {
+    clearTimeout(timeoutID);
+    timeoutID = setTimeout(function () {
+        clearScreen()
+    }, AFK_TIMEOUT);
+    if (isScreenCleared) {
+        loadScreen();
+    }
+};
+
 //--------------------AFK Module End--------------------\\
 
 /**
  * Init timer
  */
 let momentTimer = new Timer();
-var dashboard;
+let dashboard;
 
 /**
  * Load all needed
  */
 window.addEventListener("load", () => {
     let logpass = getCookie("Logpass");
-    if (logpass != undefined) {
+    if (logpass !== undefined) {
         localStorage.setItem("logpass", logpass);
     }
 
@@ -133,12 +135,12 @@ function sendMessage() {
  * Used to handle message <input> and send message if enter pressed
  */
 function handleMessageInput(e) {
-    if (e == null || e == undefined) {
+    if (e === null || e === undefined) {
         return;
     }
 
     let keyCode = e.keyCode || e.which;
-    if (keyCode == 13) {
+    if (keyCode === 13) {
         sendMessage();
     }
 }
@@ -156,7 +158,7 @@ function handleMenuItemClick(e, type) {
  * @param input DOM element <input>
  */
 function searchInMenu(input) {
-    if (input.value == "" || input.value == undefined || input.value == null) {
+    if (input.value === "" || input.value === undefined || input.value === null) {
         return;
     }
 
@@ -167,16 +169,16 @@ function searchInMenu(input) {
  * Used for handle pressed enter on menu search <input>
  */
 function handleMenuSearchInput(e) {
-    if (e == null || e == undefined) {
+    if (e === null || e === undefined) {
         return;
     }
 
     let target = e.target || e.srcElement;
 
     let keyCode = e.keyCode || e.width;
-    if (keyCode == 13) {
+    if (keyCode === 13) {
         searchInMenu(target);
-    } else if (keyCode == 27 && dashboard.navigator.hasSearchModeOn) {
+    } else if (keyCode === 27 && dashboard.navigator.hasSearchModeOn) {
         dashboard.navigator.toggleSearchMode();
     }
 }
@@ -187,7 +189,7 @@ function handleMenuSearchInput(e) {
  * @return {*} can be undefined!
  */
 function getCookie(name) {
-    var matches = document.cookie.match(new RegExp(
+    let matches = document.cookie.match(new RegExp(
         "(?:^|; )" + name.replace(/([.$?*|{}()\[\]\\\/+^])/g, '\\$1') + "=([^;]*)"
     ));
     return matches ? decodeURIComponent(matches[1]) : undefined;

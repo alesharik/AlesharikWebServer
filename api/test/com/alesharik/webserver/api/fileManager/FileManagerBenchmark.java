@@ -28,14 +28,14 @@ public class FileManagerBenchmark {
     private final byte[] TEST_FILE_BYTES = "test".getBytes(Charsets.UTF8_CHARSET);
 
     @Setup
-    public void setupLogger() {
+    public void setupLogger() throws IOException {
         try {
             Logger.setupLogger(File.createTempFile("dsfgsdfdsafasd", "hdgsdfdsgsadf"), 0);
             Logger.disable();
             File root = Files.createTempDirectory("fgdgasdasd").toFile();
             File file = new File(root.getAbsolutePath() + "test.txt");
             if(!file.createNewFile()) {
-                throw new Error();
+                throw new IOException();
             }
             Files.write(file.toPath(), TEST_FILE_BYTES);
             fileManager = new FileManager(root, FileManager.FileHoldingMode.HOLD_AND_CHECK);

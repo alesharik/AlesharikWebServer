@@ -55,12 +55,12 @@ public final class CharOffHeapVector extends OffHeapVectorBase {
      */
     public long add(long address, char t) {
         long next = size(address);
-        address = checkBounds(address, next);
+        long addr = checkBounds(address, next);
 
-        unsafe.putChar(address + META_SIZE + next * 2, t);
-        incrementSize(address);
+        unsafe.putChar(addr + META_SIZE + next * 2, t);
+        incrementSize(addr);
 
-        return address;
+        return addr;
     }
 
     public boolean contains(long address, char t) {

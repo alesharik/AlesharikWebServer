@@ -54,12 +54,12 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
      */
     public long add(long address, byte t) {
         long next = size(address);
-        address = checkBounds(address, next);
+        long addr = checkBounds(address, next);
 
-        unsafe.putByte(address + META_SIZE + next, t);
-        incrementSize(address);
+        unsafe.putByte(addr + META_SIZE + next, t);
+        incrementSize(addr);
 
-        return address;
+        return addr;
     }
 
     public boolean contains(long address, byte t) {

@@ -55,12 +55,12 @@ public final class ShortOffHeapVector extends OffHeapVectorBase {
      */
     public long add(long address, short t) {
         long next = size(address);
-        address = checkBounds(address, next);
+        long addr = checkBounds(address, next);
 
-        unsafe.putShort(address + META_SIZE + next * getElementSize(), t);
-        incrementSize(address);
+        unsafe.putShort(addr + META_SIZE + next * getElementSize(), t);
+        incrementSize(addr);
 
-        return address;
+        return addr;
     }
 
     public boolean contains(long address, short t) {

@@ -59,13 +59,16 @@ final class AgentClassTransformer implements ClassFileTransformer {
                 }
             }
             return Arrays.equals(first, classfileBuffer) ? null : classfileBuffer;
+        } catch (Error e) {
+            System.err.println("Error in transforming class " + className + ", classloader = " + loader);
+            e.printStackTrace();
+
+            System.err.println("Error detected! Stopping application...");
+            System.exit(1);
+            return null;
         } catch (Throwable e) {
             System.err.println("Error in transforming class " + className + ", classloader = " + loader);
             e.printStackTrace();
-            if(e instanceof Error) {
-                System.err.println("Error detected! Stopping application...");
-                System.exit(1);
-            }
             return null;
         }
     }

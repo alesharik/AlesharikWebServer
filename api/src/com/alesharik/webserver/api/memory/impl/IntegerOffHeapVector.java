@@ -55,12 +55,12 @@ public final class IntegerOffHeapVector extends OffHeapVectorBase {
      */
     public long add(long address, int t) {
         long next = size(address);
-        address = checkBounds(address, next);
+        long addr = checkBounds(address, next);
 
-        unsafe.putInt(address + META_SIZE + next * INT_SIZE, t);
-        incrementSize(address);
+        unsafe.putInt(addr + META_SIZE + next * INT_SIZE, t);
+        incrementSize(addr);
 
-        return address;
+        return addr;
     }
 
     public boolean contains(long address, int t) {

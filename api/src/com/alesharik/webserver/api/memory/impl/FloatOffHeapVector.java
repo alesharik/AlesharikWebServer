@@ -55,12 +55,12 @@ public final class FloatOffHeapVector extends OffHeapVectorBase {
      */
     public long add(long address, float t) {
         long next = size(address);
-        address = checkBounds(address, next);
+        long addr = checkBounds(address, next);
 
-        unsafe.putFloat(address + META_SIZE + next * FLOAT_SIZE, t);
-        incrementSize(address);
+        unsafe.putFloat(addr + META_SIZE + next * FLOAT_SIZE, t);
+        incrementSize(addr);
 
-        return address;
+        return addr;
     }
 
     public boolean contains(long address, float t) {

@@ -55,12 +55,12 @@ public final class DoubleOffHeapVector extends OffHeapVectorBase {
      */
     public long add(long address, double t) {
         long next = size(address);
-        address = checkBounds(address, next);
+        long addr = checkBounds(address, next);
 
-        unsafe.putDouble(address + META_SIZE + next * DOUBLE_SIZE, t);
-        incrementSize(address);
+        unsafe.putDouble(addr + META_SIZE + next * DOUBLE_SIZE, t);
+        incrementSize(addr);
 
-        return address;
+        return addr;
     }
 
     public boolean contains(long address, double t) {
