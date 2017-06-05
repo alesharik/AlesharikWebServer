@@ -14,6 +14,7 @@
     <script src="js/timer.js"></script>
     <script src="js/pattern.js"></script>
     <script src="js/events.js"></script>
+    <script src="js/workers/api/taskWorkerApi.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/visualizer.js"></script>
 
@@ -209,7 +210,8 @@
                             class="fa fa-gear fa-fw"></i> Settings</a>
                     </li>
                     <li class="divider"></li>
-                    <li><a href="../login.html"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                    <li><!--suppress HtmlUnknownTarget -->
+                        <a href="/logout"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
                     </li>
                 </ul>
                 <!-- /.dropdown-user -->

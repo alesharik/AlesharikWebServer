@@ -11,6 +11,7 @@ import com.alesharik.webserver.server.api.RequestHandler;
 import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
+import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class ControlRequestHandler implements RequestHandler {
     @Override
     public boolean canHandleRequest(Request request) throws IOException {
         String command = request.getDecodedRequestURI();
-        return command.equals("/login") || command.equals("/changeLoginPassword");
+        return "/login".equals(command) || "/changeLoginPassword".equals(command) || "/logout".equals(command);
     }
 
     @Override
@@ -42,6 +43,9 @@ public class ControlRequestHandler implements RequestHandler {
                 break;
             case "/changeLoginPassword":
                 handleLoginPasswordChangeCommand(request, response);
+                break;
+            case "/logout":
+                handleLogoutCommand(request, response);
                 break;
             default:
                 Logger.log("Oops! We have unexpected request!" + command);
@@ -119,5 +123,18 @@ public class ControlRequestHandler implements RequestHandler {
 
     private void loginFailed(Response response) throws IOException {
         response.sendRedirect("/index.html?incorrect=true");
+    }
+
+    private void handleLogoutCommand(Request request, Response response) throws IOException {
+        Cookie uuidCookie = GrizzlyUtils.getCookieForName("UUID", request.getCookies());
+        if(uuidCookie == null || !isSessionValid(UUID.fromString(uuidCookie.getValue()))) {
+            response.setStatus(HttpStatus.FORBIDDEN_403);
+            return;
+        }
+
+        response.setStatus(HttpStatus.FOUND_302);
+        response.setHeader(Header.Location, "/index.html");
+        uuidCookie.setMaxAge(0);
+        response.addCookie(uuidCookie);
     }
 }
