@@ -1,4 +1,59 @@
 'use strict';
+
+const _taskExecutorWorker = new Worker("js/workers/taskWorker.js");
+_taskExecutorWorker.addEventListener("message", (e) => TaskExecutor.onWorkerMessage(e));
+
+const _taskExecutorWorkerTaskMap = new Map();
+let _taskExecutorWorkerTaskIdCounter = 0;
+
+class TaskExecutor {
+    /**
+     * @throws {Error} always
+     */
+    constructor() {
+        throw new Error("TaskExecutor cannot be instantiated!")
+    }
+
+    /**
+     * Executes task. Do return nothing
+     * @param {Task} task
+     * @param {Object|undefined} args
+     */
+    static execute(task, args) {
+        _taskExecutorWorker.postMessage(new TaskWorkerExecuteMessage(task, args));
+    }
+
+    /**
+     * Executes task
+     * @param {Task} task
+     * @param {Object|undefined} args
+     * @return {Promise} Promise, where resolve parameter is object from Task. If task throw any exception, then reject(err.toString()) will be called
+     */
+    static submit(task, args) {
+        return new Promise((resolve, reject) => {
+            let id = _taskExecutorWorkerTaskIdCounter++;
+            _taskExecutorWorkerTaskMap.set(id, {resolve: resolve, reject: reject});
+            _taskExecutorWorker.postMessage(new TaskWorkerSubmitMessage(task, id, args));
+        });
+
+    }
+
+    static onWorkerMessage(msg) {
+        let data = msg.data;
+        let promise = _taskExecutorWorkerTaskMap.get(data.id);
+        if (promise === undefined)
+            return;
+
+        if (data.type === "submitSuccess") {
+            promise.resolve(data.result);
+        } else if (data.type === "submitFailed") {
+            promise.reject(data.error);
+        } else {
+            console.log("[TaskExecutor] Unexpected TaskWorkerMessage type: " + data.type);
+        }
+    }
+}
+
 //====================Message api====================\\
 
 /**<pre>
