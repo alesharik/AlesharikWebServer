@@ -57,3 +57,7 @@
 /AlesharikWebServer.ipr
 /AlesharikWebServer.iws
 /deploy
+
+/pom.xml
+/api/pom.xml
+/main/pom.xml
