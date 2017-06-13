@@ -8,7 +8,35 @@ repositories {
     mavenLocal()
 }
 
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath 'com.github.erizo.gradle:jcstress-gradle-plugin:0.8.0'
+        classpath "gradle.plugin.me.champeau.gradle:jmh-gradle-plugin:0.3.0"
+    }
+}
+
 subprojects {
+    buildscript {
+        repositories {
+            jcenter()
+            maven {
+                url "https://plugins.gradle.org/m2/"
+            }
+        }
+
+        dependencies {
+            classpath 'com.github.erizo.gradle:jcstress-gradle-plugin:0.8.0'
+            classpath "gradle.plugin.me.champeau.gradle:jmh-gradle-plugin:0.3.0"
+        }
+    }
+
     apply plugin: 'jacoco'
     apply plugin: 'maven-publish'
 

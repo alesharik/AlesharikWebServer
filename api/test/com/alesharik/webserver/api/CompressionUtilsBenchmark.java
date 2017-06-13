@@ -36,32 +36,32 @@ public class CompressionUtilsBenchmark {
     @BenchmarkMode(Mode.Throughput)
     @Group("CompressionUtils")
     @GroupThreads(2)
-    public void testCompressDefault() throws IOException {
-        CompressionUtils.compress(base, CompressionUtils.CompressLevel.DEFAULT_COMPRESSION.getValue());
+    public byte[] testCompressDefault() throws IOException {
+        return CompressionUtils.compress(base, CompressionUtils.CompressLevel.DEFAULT_COMPRESSION.getValue());
     }
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Group("CompressionUtils")
     @GroupThreads(2)
-    public void testCompressFast() throws IOException {
-        CompressionUtils.compress(base, CompressionUtils.CompressLevel.BEST_SPEED.getValue());
+    public byte[] testCompressFast() throws IOException {
+        return CompressionUtils.compress(base, CompressionUtils.CompressLevel.BEST_SPEED.getValue());
     }
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Group("CompressionUtils")
     @GroupThreads(2)
-    public void testCompressGood() throws IOException {
-        CompressionUtils.compress(base, CompressionUtils.CompressLevel.BEST_COMPRESSION.getValue());
+    public byte[] testCompressGood() throws IOException {
+        return CompressionUtils.compress(base, CompressionUtils.CompressLevel.BEST_COMPRESSION.getValue());
     }
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Group("CompressionUtils")
     @GroupThreads(2)
-    public void testCompressNoCompress() throws IOException {
-        CompressionUtils.compress(base, CompressionUtils.CompressLevel.NO_COMPRESSION.getValue());
+    public byte[] testCompressNoCompress() throws IOException {
+        return CompressionUtils.compress(base, CompressionUtils.CompressLevel.NO_COMPRESSION.getValue());
     }
 
     @Benchmark
