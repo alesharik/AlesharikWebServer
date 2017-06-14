@@ -1,3 +1,21 @@
+/*
+ *  This file is part of AlesharikWebServer.
+ *
+ *     AlesharikWebServer is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     AlesharikWebServer is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with AlesharikWebServer.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package com.alesharik.webserver.handlers;
 
 import com.alesharik.webserver.api.MIMETypes;
@@ -47,7 +65,7 @@ public class MainHttpHandler extends HttpHandler {
 //                if(requestHandler.canHandleRequest(request)) {
 //                    requestHandler.handleRequest(request, response);
 //                } else {
-                    handleRequest(request, response);
+                handleRequest(request, response);
 //                }
             } catch (Exception e) {
                 response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
