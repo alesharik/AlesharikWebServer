@@ -208,7 +208,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId 'com.alesharik'
             artifactId 'alesharikwebserver-api'
-            version '1.0-SNAPSHOT'
+            version '0.1'
 
             artifact source: buildDir.toString() + '/libs/alesharikwebserver-api.jar', classifier: 'src'
             artifact source: buildDir.toString() + '/libs/alesharikwebserver-api-sources.jar', classifier: 'sources', extension: 'zip'
@@ -218,6 +218,16 @@ publishing {
         }
     }
 }
+
+//install {
+//    repositories.mavenInstaller {
+//        name 'AlesharikWebServer-api'
+//
+//        groupId 'com.alesharik'
+//        artifactId 'alesharikwebserver-api'
+//        version '0.1'
+//    }
+//}
 
 jcstress {
     jvmArgs = '-server -XX:+UnlockDiagnosticVMOptions'

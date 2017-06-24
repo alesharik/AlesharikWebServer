@@ -80,7 +80,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId 'com.alesharik'
             artifactId 'alesharikwebserver-main'
-            version '1.0-SNAPSHOT'
+            version '0.1'
 
             artifact source: buildDir.toString() + '/libs/alesharikwebserver-main.jar', classifier: 'src'
             artifact source: buildDir.toString() + '/libs/alesharikwebserver-main-sources.jar', classifier: 'sources', extension: 'zip'
@@ -90,6 +90,16 @@ publishing {
         }
     }
 }
+
+//install {
+//    repositories.mavenInstaller {
+//        name 'AlesharikWebServer-main'
+//
+//        groupId 'com.alesharik'
+//        artifactId 'alesharikwebserver-main'
+//        version '0.1'
+//    }
+//}
 
 jar.dependsOn packageJavadoc
 jar.dependsOn packageSources
