@@ -24,9 +24,10 @@ import java.util.logging.LogRecord;
 
 /**
  * Format message according to the scheme: <br>
- * <code>[Date: + message date + ] + message + \n</code>
+ * <code>[Date: + message date + ] + fixed message + \n</code>,
+ * where fixed message is message without any ASCII color codes
  */
-public final class LoggerDateFormatter extends Formatter {
+public final class LoggerFormatter extends Formatter {
     /**
      * This date used only for formatting
      */
@@ -35,7 +36,9 @@ public final class LoggerDateFormatter extends Formatter {
     @Override
     public synchronized String format(LogRecord record) {
         date.setTime(record.getMillis());
-        return "[Date: " + date.toString() + ']' + record.getMessage() + "\n";
+        String fixedMessage = record.getMessage()
+                .replaceAll("\033\\[(\\d|;)*m", "");
+        return "[Date: " + date.toString() + ']' + fixedMessage + "\n";
     }
 
     @Override

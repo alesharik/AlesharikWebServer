@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.logger.logger;
 
+import com.alesharik.webserver.logger.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,17 +29,18 @@ import java.util.logging.LogRecord;
 
 import static org.junit.Assert.assertEquals;
 
-public class LoggerDateFormatterTest {
-    private LoggerDateFormatter formatter;
+public class LoggerFormatterTest {
+    private LoggerFormatter formatter;
 
     @Before
     public void setUp() throws Exception {
-        formatter = new LoggerDateFormatter();
+        formatter = new LoggerFormatter();
     }
 
     @Test
     public void format() throws Exception {
-        LogRecord logRecord = new LogRecord(Level.FINE, "test");
+        LogRecord logRecord = new LogRecord(Level.FINE, new Logger.TextFormatter(Logger.ForegroundColor.MAGENTA, Logger.BackgroundColor.BLACK)
+                .format("test"));
 
         long millis = System.currentTimeMillis();
         logRecord.setMillis(millis);
@@ -49,7 +51,8 @@ public class LoggerDateFormatterTest {
 
     @Test
     public void formatMessage() throws Exception {
-        LogRecord logRecord = new LogRecord(Level.FINE, "test");
+        LogRecord logRecord = new LogRecord(Level.FINE, new Logger.TextFormatter(Logger.ForegroundColor.MAGENTA, Logger.BackgroundColor.BLACK)
+                .format("test"));
 
         long millis = System.currentTimeMillis();
         logRecord.setMillis(millis);

@@ -24,7 +24,7 @@ import com.alesharik.webserver.api.reflection.ParentPackageIterator;
 import com.alesharik.webserver.api.statistics.FuzzyTimeCountStatistics;
 import com.alesharik.webserver.api.statistics.TimeCountStatistics;
 import com.alesharik.webserver.logger.logger.FileLoggerHandler;
-import com.alesharik.webserver.logger.logger.LoggerDateFormatter;
+import com.alesharik.webserver.logger.logger.LoggerFormatter;
 import com.alesharik.webserver.logger.logger.PrintStreamErrorManager;
 import com.alesharik.webserver.logger.logger.PrintStreamLoggerHandler;
 import com.alesharik.webserver.logger.mx.LoggerListenerThreadMXBean;
@@ -294,7 +294,7 @@ public final class Logger {
                 }
                 logFile = log;
 
-                LoggerDateFormatter formatter = new LoggerDateFormatter();
+                LoggerFormatter formatter = new LoggerFormatter();
                 PrintStreamErrorManager errorManager = new PrintStreamErrorManager(SYSTEM_ERR);
 
                 FileLoggerHandler fileHandler = new FileLoggerHandler(log);
@@ -357,6 +357,10 @@ public final class Logger {
 
     public static void removeListener(LoggerListener loggerListener) {
         listenerThread.removeListener(loggerListener);
+    }
+
+    public static boolean isListenerThreadEnabled() {
+        return listenerThread.isEnabled();
     }
 
     /**
@@ -585,7 +589,7 @@ public final class Logger {
     @EqualsAndHashCode
     @AllArgsConstructor
     @Getter
-    static final class Message {
+    static class Message {
         @Nonnull
         private final String prefixes;
         @Nonnull
@@ -609,6 +613,22 @@ public final class Logger {
                 return String.join("", annotation.value());
             else
                 return locationPrefix;
+        }
+    }
+
+    static final class MessageWithLogRecord extends Message {
+        private final LogRecord logRecord;
+
+        public MessageWithLogRecord(String prefixes, String message, Class<?> caller, String locationPrefix, LogRecord record) {
+            super(prefixes, message, caller, locationPrefix);
+            this.logRecord = record;
+        }
+
+        public LogRecord copyLogRecord() {
+            LogRecord logRecord = new LogRecord(this.logRecord.getLevel(), this.logRecord.getMessage());
+            logRecord.setLoggerName(this.logRecord.getLoggerName());
+            logRecord.setMillis(this.logRecord.getMillis());
+            return logRecord;
         }
     }
 
@@ -660,6 +680,8 @@ public final class Logger {
 
                 if(message != null) {
                     loggerListeners.forEach(loggerListener -> loggerListener.listen(message.getPrefixes(), message.getMessage(), message.getCaller()));
+                    if(message instanceof MessageWithLogRecord)
+                        loggerListeners.forEach(loggerListener -> loggerListener.postListen(((MessageWithLogRecord) message).copyLogRecord()));
                     statistics.measure(1);
                 } else {
                     try {

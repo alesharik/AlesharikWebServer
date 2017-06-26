@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver.logger;
 
+import java.util.logging.LogRecord;
+
 /**
  * This listener listen {@link Logger} and all {@link NamedLogger}s messages. It will call in Logger Listener Thread
  */
@@ -30,4 +32,7 @@ public interface LoggerListener {
      * @param caller class, which call logger
      */
     void listen(String prefixes, String message, Class<?> caller);
+
+    default void postListen(LogRecord record) {
+    }
 }
