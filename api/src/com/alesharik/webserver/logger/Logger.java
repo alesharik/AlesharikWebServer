@@ -590,13 +590,9 @@ public final class Logger {
     @AllArgsConstructor
     @Getter
     static class Message {
-        @Nonnull
         private final String prefixes;
-        @Nonnull
         private final String message;
-        @Nonnull
         private final Class<?> caller;
-        @Nonnull
         private final String locationPrefix;
 
         /**
@@ -604,7 +600,6 @@ public final class Logger {
          *
          * @return prefixes or empty string
          */
-        @Nonnull
         public String getClassPrefix() {
             Prefixes annotation;
             if((annotation = caller.getAnnotation(Prefixes.class)) != null && annotation.requireDebugPrefix())
@@ -616,6 +611,7 @@ public final class Logger {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
     static final class MessageWithLogRecord extends Message {
         private final LogRecord logRecord;
 
