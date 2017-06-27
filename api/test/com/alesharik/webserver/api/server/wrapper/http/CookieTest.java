@@ -29,10 +29,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class CookieTest {
-    private static final String OLD_DATE;
-    private static final SimpleDateFormat OLD_COOKIE_DATE_FORMAT;
+    private final String OLD_DATE;
+    private final SimpleDateFormat OLD_COOKIE_DATE_FORMAT;
 
-    static {
+    {
         OLD_COOKIE_DATE_FORMAT = new SimpleDateFormat("EEE, dd-MMM-yyyy HH:mm:ss z", Locale.US);
         OLD_COOKIE_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
         OLD_DATE = OLD_COOKIE_DATE_FORMAT.format(new Date(0));

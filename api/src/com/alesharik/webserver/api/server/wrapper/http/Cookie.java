@@ -35,12 +35,14 @@ import java.util.TimeZone;
 @Setter
 public class Cookie implements Cloneable {
     private static final String OLD_DATE;
-    private static final SimpleDateFormat OLD_COOKIE_DATE_FORMAT;
+    private static final ThreadLocal<SimpleDateFormat> OLD_COOKIE_DATE_FORMAT = ThreadLocal.withInitial(() -> {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd-MMM-yyyy HH:mm:ss z", Locale.US);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return dateFormat;
+    }); //Fix DateFormat multithreading issues
 
     static {
-        OLD_COOKIE_DATE_FORMAT = new SimpleDateFormat("EEE, dd-MMM-yyyy HH:mm:ss z", Locale.US);
-        OLD_COOKIE_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-        OLD_DATE = OLD_COOKIE_DATE_FORMAT.format(new Date(0));
+        OLD_DATE = OLD_COOKIE_DATE_FORMAT.get().format(new Date(0));
     }
 
     protected final String name;
@@ -64,7 +66,7 @@ public class Cookie implements Cloneable {
     }
 
     static boolean containsWhiteSpace(String str) {
-        return str.contains(" ") | str.contains("\t") || str.contains("\n") || str.contains("\r") || str.contains("\f");
+        return str.contains(" ") || str.contains("\t") || str.contains("\n") || str.contains("\r") || str.contains("\f");
     }
 
     /**
@@ -108,7 +110,7 @@ public class Cookie implements Cloneable {
                 if(maxAge == 0)
                     stringBuilder.append(OLD_DATE);
                 else
-                    stringBuilder.append(OLD_COOKIE_DATE_FORMAT.format(new Date(System.currentTimeMillis() + maxAge * 1000L)));
+                    stringBuilder.append(OLD_COOKIE_DATE_FORMAT.get().format(new Date(timeStamp + maxAge * 1000L)));
                 stringBuilder.append(';');
             }
         }
@@ -159,5 +161,20 @@ public class Cookie implements Cloneable {
             ret[i] = new Cookie(str[0], str[1]);
         }
         return ret;
+    }
+
+    @Override
+    protected Cookie clone() throws CloneNotSupportedException {
+        super.clone();
+
+        Cookie clone = new Cookie(name, value);
+        clone.comment = comment;
+        clone.domain = domain;
+        clone.maxAge = maxAge;
+        clone.path = path;
+        clone.secure = secure;
+        clone.version = version;
+        clone.isHttpOnly = isHttpOnly;
+        return clone;
     }
 }
