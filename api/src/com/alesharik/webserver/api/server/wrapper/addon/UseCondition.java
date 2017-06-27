@@ -21,14 +21,14 @@ package com.alesharik.webserver.api.server.wrapper.addon;
 import com.alesharik.webserver.api.server.wrapper.NetworkListenerConfiguration;
 
 /**
- * This class used by HttpServerModule for enable required {@link AddOn}s
+ * This class used by HttpServerModule for enable required {@link HttpServerAddOn}s
  */
 public interface UseCondition {
     /**
-     * Check if {@link AddOn} can be used in current {@link NetworkListenerConfiguration}
+     * Check if {@link HttpServerAddOn} can be used in current {@link NetworkListenerConfiguration}
      *
      * @param networkListener configuration
-     * @return true if {@link AddOn} can be used, overwise false
+     * @return true if {@link HttpServerAddOn} can be used, overwise false
      */
     boolean allow(NetworkListenerConfiguration networkListener);
 
