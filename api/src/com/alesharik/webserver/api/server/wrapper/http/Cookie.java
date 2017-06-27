@@ -94,54 +94,51 @@ public class Cookie implements Cloneable {
     }
 
     String toCookieString(long timeStamp) {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(name);
+        StringBuilder stringBuilder = new StringBuilder(127);
+        stringBuilder.append(name);//~5 chars
         stringBuilder.append('=');
-        stringBuilder.append(value);
-        stringBuilder.append(';');
+        stringBuilder.append(value);//~10 chars
+        //~16 chars
 
         if(maxAge >= 0) {
             if(version > 0) {
-                stringBuilder.append(" Max-Age=");
+                stringBuilder.append("; Max-Age=");
                 stringBuilder.append(maxAge);
-                stringBuilder.append(';');
             } else {
-                stringBuilder.append(" Expires=");
+                stringBuilder.append("; Expires=");
                 if(maxAge == 0)
                     stringBuilder.append(OLD_DATE);
                 else
                     stringBuilder.append(OLD_COOKIE_DATE_FORMAT.get().format(new Date(timeStamp + maxAge * 1000L)));
-                stringBuilder.append(';');
             }
         }
+        //~36 chars
 
         if(version > 0 && comment != null && !comment.isEmpty()) {
-            stringBuilder.append(" Comment=");
-            stringBuilder.append(comment);
-            stringBuilder.append(';');
+            stringBuilder.append("; Comment=");
+            stringBuilder.append(comment);//~10 chars
         }
 
         if(domain != null && !domain.isEmpty()) {
-            stringBuilder.append(" Domain=");
-            stringBuilder.append(domain);
-            stringBuilder.append(';');
+            stringBuilder.append("; Domain=");
+            stringBuilder.append(domain);//~10 chars
         }
 
         if(path != null && !path.isEmpty()) {
-            stringBuilder.append(" Path=");
-            stringBuilder.append(path);
-            stringBuilder.append(';');
+            stringBuilder.append("; Path=");
+            stringBuilder.append(path);//~10 chars
         }
 
         if(secure)
-            stringBuilder.append(" Secure;");
+            stringBuilder.append("; Secure");
 
         if(version == 1) {
-            stringBuilder.append(" Version=1;");
+            stringBuilder.append("; Version=1");
         }
         if(isHttpOnly) {
-            stringBuilder.append(" HttpOnly");
+            stringBuilder.append("; HttpOnly");
         }
+        //Sum = ~127
         return stringBuilder.toString();
     }
 
