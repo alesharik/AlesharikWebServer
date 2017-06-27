@@ -31,9 +31,9 @@ public class PortRange implements Serializable {
     private static final long serialVersionUID = 3060816768811688047L;
 
     @Getter
-    private final int lower;
+    protected final int lower;
     @Getter
-    private final int upper;
+    protected final int upper;
 
     /**
      * @param lower from value
