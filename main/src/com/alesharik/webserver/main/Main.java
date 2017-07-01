@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.main;
 
+import com.alesharik.webserver.api.ServerInfo;
 import com.alesharik.webserver.configuration.Configuration;
 import com.alesharik.webserver.configuration.ConfigurationImpl;
 import com.alesharik.webserver.configuration.Configurator;
@@ -51,6 +52,8 @@ public class Main {
     private static Configuration configuration;
 
     public static void main(String[] args) throws InterruptedException {
+        preMain();
+
         try {
             configuration = new ConfigurationImpl();
             XmlHelper.setConfiguration(configuration);
@@ -117,6 +120,10 @@ public class Main {
             e.printStackTrace();
             shutdown();
         }
+    }
+
+    private static void preMain() {
+        ServerInfo.setProvider(new ServerInfoProvider());
     }
 
     private abstract static class ConsoleOrBufferedReader implements ConsoleCommand.Reader {
