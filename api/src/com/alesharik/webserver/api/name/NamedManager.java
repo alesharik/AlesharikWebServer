@@ -22,10 +22,16 @@ import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
 import lombok.experimental.UtilityClass;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * This class listen and holds all classes with {@link Named} annotation
+ *
+ * @see Named
+ */
 @UtilityClass
 @ClassPathScanner
 public class NamedManager {
@@ -38,8 +44,12 @@ public class NamedManager {
         entries.put(clazz, clazz.getAnnotation(Named.class).value());
     }
 
+    /**
+     * @param name name from {@link Named} annotation
+     * @return first listened named class or null
+     */
     @Nullable
-    public static Class<?> getClassForName(@Nullable String name) {
+    public static Class<?> getClassForName(@Nonnull String name) {
         return entries.searchEntries(PARALLELISM.get(), entry -> {
             if(name.equals(entry.getValue()))
                 return entry.getKey();
@@ -48,14 +58,12 @@ public class NamedManager {
     }
 
     /**
-     * Return first listened class for the type
-     *
-     * @param name
-     * @param type
-     * @return
+     * @param name name from {@link Named} annotation
+     * @param type supertype or class type
+     * @return first listened named class with type superclass or null
      */
     @Nullable
-    public static Class<?> getClassForNameAndType(@Nullable String name, @Nullable Class<?> type) {
+    public static Class<?> getClassForNameAndType(@Nonnull String name, @Nonnull Class<?> type) {
         return entries.searchEntries(PARALLELISM.get(), entry -> {
             if(name.equals(entry.getValue()) && type.isAssignableFrom(entry.getKey()))
                 return entry.getKey();
