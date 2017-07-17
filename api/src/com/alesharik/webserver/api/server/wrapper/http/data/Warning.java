@@ -40,7 +40,7 @@ public class Warning {
         this.code = code;
         this.agent = agent;
         this.text = text;
-        this.date = (Date) date.clone();
+        this.date = date == null ? null : (Date) date.clone();
     }
 
     public boolean hasDate() {
@@ -52,7 +52,7 @@ public class Warning {
     }
 
     public Date getDate() {
-        return (Date) date.clone();
+        return date == null ? null : (Date) date.clone();
     }
 
     public static Warning parse(String s) {
