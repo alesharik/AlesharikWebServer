@@ -19,6 +19,7 @@
 package com.alesharik.webserver.api.server.wrapper.http;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.Arrays;
 import java.util.concurrent.locks.StampedLock;
 
 @ThreadSafe
@@ -34,7 +35,7 @@ public class OutputBuffer {
     }
 
     public OutputBuffer(byte[] arr) {
-        this.arr = arr;
+        this.arr = Arrays.copyOf(arr, arr.length);
     }
 
     public OutputBuffer(int count) {

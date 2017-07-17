@@ -296,11 +296,11 @@ import java.util.TreeMap;
  */
 @UtilityClass
 public class HeaderManager {
-    public static final SimpleDateFormat WEB_DATE_FORMAT = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
-
-    static {
-        WEB_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
+    public static final ThreadLocal<SimpleDateFormat> WEB_DATE_FORMAT = ThreadLocal.withInitial(() -> {
+        SimpleDateFormat format = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return format;
+    });
 
     private static final Map<String, Header<?>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -439,7 +439,7 @@ public class HeaderManager {
         @Override
         public Date newInstance(String s) {
             try {
-                return WEB_DATE_FORMAT.parse(s);
+                return WEB_DATE_FORMAT.get().parse(s);
             } catch (ParseException e) {
                 return null;
             }
@@ -447,7 +447,7 @@ public class HeaderManager {
 
         @Override
         public String toString(Date date) {
-            return WEB_DATE_FORMAT.format(date);
+            return WEB_DATE_FORMAT.get().format(date);
         }
     }
 

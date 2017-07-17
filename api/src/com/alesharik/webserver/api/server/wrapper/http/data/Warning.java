@@ -40,7 +40,7 @@ public class Warning {
         this.code = code;
         this.agent = agent;
         this.text = text;
-        this.date = date;
+        this.date = (Date) date.clone();
     }
 
     public boolean hasDate() {
@@ -48,14 +48,18 @@ public class Warning {
     }
 
     public String toHeaderString() {
-        return Short.toString(code.code) + ' ' + agent + " \"" + text + (hasDate() ? "\" \"" + HeaderManager.WEB_DATE_FORMAT.format(date) + "\"" : "\"");
+        return Short.toString(code.code) + ' ' + agent + " \"" + text + (hasDate() ? "\" \"" + HeaderManager.WEB_DATE_FORMAT.get().format(date) + "\"" : "\"");
+    }
+
+    public Date getDate() {
+        return (Date) date.clone();
     }
 
     public static Warning parse(String s) {
         String[] strings = s.split(" ", 4);
         if(strings.length == 4) {
             try {
-                return new Warning(Code.forCode(Short.parseShort(strings[0])), strings[1], strings[2].substring(1, strings[2].length() - 1), HeaderManager.WEB_DATE_FORMAT.parse(strings[3].substring(1, strings[3].length() - 1)));
+                return new Warning(Code.forCode(Short.parseShort(strings[0])), strings[1], strings[2].substring(1, strings[2].length() - 1), HeaderManager.WEB_DATE_FORMAT.get().parse(strings[3].substring(1, strings[3].length() - 1)));
             } catch (ParseException e) {
                 throw new RuntimeException(e);
             }

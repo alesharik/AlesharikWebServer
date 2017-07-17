@@ -27,6 +27,7 @@ import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
 import com.alesharik.webserver.api.server.wrapper.server.HttpRequestHandler;
 import com.alesharik.webserver.api.server.wrapper.server.Sender;
 import com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -159,6 +160,7 @@ final class DispatcherThread extends Thread {
             check();
         }
 
+        @SuppressFBWarnings("DM_DEFAULT_ENCODING")//FindBugs error
         private void check() throws IOException {
             String str = new String(byteBuffer.toByteArray(), CHARSET);
             while(str.startsWith("\r\n"))
@@ -204,8 +206,8 @@ final class DispatcherThread extends Thread {
                 } else if(str.contains("\r\n\r\n")) {
                     int index = str.indexOf("\r\n\r\n");
                     if(index != 0) {
-                        if(builder.containsHeader(""))//TODO use Content-Type!
-                            builder.withBody(str.substring(0, index).getBytes());
+//                        if(builder.containsHeader(""))//TODO use Content-Type!
+//                            builder.withBody(str.substring(0, index).getBytes());
                         str = str.substring(index + 4);
                     }
                     this.state.set(State.ALL);

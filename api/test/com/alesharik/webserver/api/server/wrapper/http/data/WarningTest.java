@@ -42,7 +42,7 @@ public class WarningTest {
 
         Date date = new Date(System.currentTimeMillis());
         Warning warning1 = new Warning(Warning.Code.CODE_110, "tes", "test", date);
-        assertEquals("110 tes \"test\" \"" + HeaderManager.WEB_DATE_FORMAT.format(date) + '\"', warning1.toHeaderString());
+        assertEquals("110 tes \"test\" \"" + HeaderManager.WEB_DATE_FORMAT.get().format(date) + '\"', warning1.toHeaderString());
     }
 
     @Test
@@ -54,7 +54,7 @@ public class WarningTest {
         assertFalse(warning.hasDate());
 
         Date date = new Date(1000);
-        Warning warning1 = Warning.parse("110 tes \"test\" \"" + HeaderManager.WEB_DATE_FORMAT.format(date) + '\"');
+        Warning warning1 = Warning.parse("110 tes \"test\" \"" + HeaderManager.WEB_DATE_FORMAT.get().format(date) + '\"');
         assertEquals(Warning.Code.CODE_110, warning1.getCode());
         assertEquals("tes", warning1.getAgent());
         assertEquals("test", warning1.getText());

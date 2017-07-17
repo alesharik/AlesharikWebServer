@@ -142,7 +142,7 @@ public class NetworkListener implements ServerSocketWrapper {
             ServerSocket serverSocket = channel.socket();
             if(firstPort <= range.getUpper()) {
                 for(int i = firstPort; i <= range.getUpper(); i++) {
-                    serverSocket.bind(new InetSocketAddress(byName, i));
+                    serverSocket.bind(new InetSocketAddress(byName, i), backlog);
                 }
             }
             if(performance)

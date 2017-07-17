@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)
 public class HeaderBenchmark {
-    private final String toParseAcceptCharset = "Accept-Charset: utf-8, iso-8859-1;q=0.5, *;q=0.1";
+    private static final String toParseAcceptCharset = "Accept-Charset: utf-8, iso-8859-1;q=0.5, *;q=0.1";
     private final WeightCharset[] fromBuildAcceptCharset = new WeightCharset[]{
             new WeightCharset(Charsets.UTF8_CHARSET),
             new WeightCharset(Charset.forName("ISO-8859-1"), 0.5F),
@@ -56,7 +56,7 @@ public class HeaderBenchmark {
     };
     private final AcceptCharsetHeader acceptCharsetHeader = new AcceptCharsetHeader();
 
-    private final String toParseAccept = "Accept: text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8";
+    private static final String toParseAccept = "Accept: text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8";
     private final WeightMimeType[] fromBuildAccept = new WeightMimeType[]{
             new WeightMimeType("text", "html"),
             new WeightMimeType("application", "xhtml+xml"),
@@ -65,7 +65,7 @@ public class HeaderBenchmark {
     };
     private final AcceptHeader acceptHeader = new AcceptHeader();
 
-    private final String toParseAcceptEncoding = "Accept-Encoding: br;q=1.0, gzip;q=0.8, *;q=0.1, test;q=0.05";
+    private static final String toParseAcceptEncoding = "Accept-Encoding: br;q=1.0, gzip;q=0.8, *;q=0.1, test;q=0.05";
     private final WeightEncoding[] fromBuildAcceptEncoding = new WeightEncoding[]{
             new WeightEncoding(Encoding.BR),
             new WeightEncoding(Encoding.GZIP, 0.8F),
@@ -73,7 +73,7 @@ public class HeaderBenchmark {
     };
     private final AcceptEncodingHeader acceptEncodingHeader = new AcceptEncodingHeader();
 
-    private final String toParseAcceptLanguage = "Accept-Language: fr-CH, en;q=0.9, *;q=0.5";
+    private static final String toParseAcceptLanguage = "Accept-Language: fr-CH, en;q=0.9, *;q=0.5";
     private final WeightLocale[] fromBuildAcceptLanguage = new WeightLocale[]{
             new WeightLocale(new Locale("en", "US")),
             new WeightLocale(new Locale("fr"), 0.8F),
@@ -81,14 +81,14 @@ public class HeaderBenchmark {
     };
     private final AcceptLanguageHeader acceptLanguageHeader = new AcceptLanguageHeader();
 
-    private final String toParseAcceptRanges = "Accept-Ranges: bytes";
+    private static final String toParseAcceptRanges = "Accept-Ranges: bytes";
     private final AcceptRangesHeader acceptRangesHeader = new AcceptRangesHeader();
 
-    private final String toParseIntHeader = "Test: 1";
+    private static final String toParseIntHeader = "Test: 1";
     private final Integer fromBuildIntHeader = 1;
     private final IntHeader intHeader = new IntHeader("Test");
 
-    private final String toParseListHeader = "ByteOrder: bigEndian, bigEndian, littleEndian, bigEndian";
+    private static final String toParseListHeader = "ByteOrder: bigEndian, bigEndian, littleEndian, bigEndian";
     private final ByteOrder[] fromBuildListHeader = new ByteOrder[]{
             ByteOrder.BIG_ENDIAN,
             ByteOrder.LITTLE_ENDIAN,
@@ -112,12 +112,12 @@ public class HeaderBenchmark {
         }
     });
 
-    private final String toParseStringHeader = "Asd: test";
-    private final String fromBuildStringHeader = "test";
+    private static final String toParseStringHeader = "Asd: test";
+    private static final String fromBuildStringHeader = "test";
     private final StringHeader stringHeader = new StringHeader("Asd");
 
 
-    private final String toParseObjectHeader = "Sdf: big";
+    private static final String toParseObjectHeader = "Sdf: big";
     private final ByteOrder fromBuildObjectHeader = ByteOrder.BIG_ENDIAN;
     private final ObjectHeader<ByteOrder> objectHeader = new ObjectHeader<>("Sdf", new ObjectHeader.Factory<ByteOrder>() {
         @Override
@@ -131,15 +131,15 @@ public class HeaderBenchmark {
         }
     });
 
-    private final String toParseAuthenticateHeader = "WWW-Authenticate: Basic realm=\"Access to the staging site\"";
+    private static final String toParseAuthenticateHeader = "WWW-Authenticate: Basic realm=\"Access to the staging site\"";
     private final Authentication fromBuildAuthenticateHeader = new Authentication(Authentication.Type.BASIC, "Access to the staging site");
     private final AuthenticateHeader authenticateHeader = new AuthenticateHeader("WWW-Authenticate");
 
-    private final String toParseAuthorizationHeader = "Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l";
+    private static final String toParseAuthorizationHeader = "Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l";
     private final Authorization fromBuildAuthorizationHeader = new Authorization(Authentication.Type.BASIC, "YWxhZGRpbjpvcGVuc2VzYW1l");
     private final AuthorizationHeader authorizationHeader = new AuthorizationHeader("Authorization");
 
-    private final String toParseIfETagHeader = "Tess: W/\"test\", \"asd\", *";
+    private static final String toParseIfETagHeader = "Tess: W/\"test\", \"asd\", *";
     private final ETag[] fromBuildIfETagHeader = new ETag[]{
             new ETag("test", true),
             new ETag("asd", false),
