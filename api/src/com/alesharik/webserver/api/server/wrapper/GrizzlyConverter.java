@@ -26,6 +26,7 @@ import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 
+@Deprecated
 @UtilityClass
 public final class GrizzlyConverter {
     public static PortRange getPortRange(org.glassfish.grizzly.PortRange portRange) {

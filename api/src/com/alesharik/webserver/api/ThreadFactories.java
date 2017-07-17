@@ -23,6 +23,12 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.security.AccessControlContext;
+import java.security.ProtectionDomain;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -50,6 +56,44 @@ public final class ThreadFactories {
     @Nonnull
     public static ThreadFactory newThreadFactory(@Nonnull Supplier<String> nameSupplier) {
         return new NamedThreadFactory(nameSupplier);
+    }
+
+    public static ForkJoinPool.ForkJoinWorkerThreadFactory newFJPThreadFactory(@Nonnull ThreadGroup threadGroup) {
+        return new ForkJoinPoolThreadFactory(threadGroup);
+    }
+
+    private static final class ForkJoinPoolThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory {
+        private static final AccessControlContext ACC =
+                new AccessControlContext(
+                        new ProtectionDomain[]{
+                                new ProtectionDomain(null, null)
+                        });
+        private static final Constructor<?> constructor;
+
+        private final ThreadGroup group;
+
+        public ForkJoinPoolThreadFactory(ThreadGroup group) {
+            this.group = group;
+        }
+
+        static {
+            try {
+                constructor = ForkJoinWorkerThread.class.getDeclaredConstructor(ForkJoinPool.class, ThreadGroup.class, AccessControlContext.class);
+                constructor.setAccessible(true);
+            } catch (NoSuchMethodException e) {
+                throw new Error(e);
+            }
+        }
+
+        @Override
+        public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+            try {
+                return (ForkJoinWorkerThread) constructor.newInstance(pool, group, ACC);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
     }
 
     /**

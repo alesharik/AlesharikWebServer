@@ -201,6 +201,35 @@ public class XmlHelper {
         }
     }
 
+    /**
+     * Return list form xml
+     *
+     * @param containerNodeName list container node name
+     * @param listNode          list item node name
+     * @param config            config node
+     * @param required          if true, throw {@link ConfigurationParseError} if node not found
+     * @return modifiable list
+     */
+    @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION") //FindBugs bug :(
+    @Nonnull
+    public List<Element> getElementList(String containerNodeName, String listNode, Element config, boolean required) {
+        Element containerNode = (Element) config.getElementsByTagName(containerNodeName).item(0);
+        if(containerNode == null) {
+            if(required) {
+                throw new ConfigurationParseError("Node " + containerNodeName + " not found!");
+            } else {
+                return Collections.emptyList();
+            }
+        } else {
+            List<Element> list = new ArrayList<>();
+            NodeList elements = containerNode.getElementsByTagName(listNode);
+            for(int i = 0; i < elements.getLength(); i++) {
+                list.add((Element) elements.item(i));
+            }
+            return list;
+        }
+    }
+
 
     /**
      * Get {@link Element} form xml config
@@ -244,6 +273,29 @@ public class XmlHelper {
             }
         } else {
             return nameNode.getTextContent();
+        }
+    }
+
+    /**
+     * Get int content form xml config
+     *
+     * @param nodeName name of node
+     * @param config   config node
+     * @param required if true, throw {@link ConfigurationParseError} if node not found
+     * @return 0 if required == false and value not found, overwise int
+     * @throws NumberFormatException if can't parse number
+     */
+    @Nullable
+    public static int getInteger(String nodeName, Element config, boolean required, int def) {
+        Node nameNode = config.getElementsByTagName(nodeName).item(0);
+        if(nameNode == null) {
+            if(required) {
+                throw new ConfigurationParseError("Node " + nodeName + " not found!");
+            } else {
+                return def;
+            }
+        } else {
+            return Integer.parseInt(nameNode.getTextContent());
         }
     }
 }

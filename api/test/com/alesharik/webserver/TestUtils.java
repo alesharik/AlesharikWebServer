@@ -24,6 +24,7 @@ import java.lang.reflect.Modifier;
 
 public final class TestUtils {
     private TestUtils() {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -52,6 +53,29 @@ public final class TestUtils {
                 if(!(e.getCause() instanceof UnsupportedOperationException)) {
                     throw new AssertionError("Utility class constructor must throw UnsupportedOperationException!");
                 }
+            }
+        }
+    }
+
+    /**
+     * Simply executes {@link Thread#sleep(long)} in executor
+     */
+    public static final class WaitTask implements Runnable {
+        private final long time;
+
+        /**
+         * @param time time in milliseconds
+         */
+        public WaitTask(long time) {
+            this.time = time;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(time);
+            } catch (InterruptedException e) {
+                //Ok :(
             }
         }
     }

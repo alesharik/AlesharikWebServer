@@ -20,6 +20,8 @@ package com.alesharik.webserver.api;
 
 import one.nio.util.ByteArrayBuilder;
 import one.nio.util.Hex;
+import sun.misc.JavaLangAccess;
+import sun.misc.SharedSecrets;
 
 import javax.annotation.concurrent.Immutable;
 import java.io.ByteArrayOutputStream;
@@ -34,6 +36,7 @@ import java.util.Objects;
 import java.util.zip.CRC32;
 
 public final class Utils {
+    private static final JavaLangAccess JAVA_LANG_ACCESS = SharedSecrets.getJavaLangAccess();
     private static final Utils INSTANCE = new Utils();
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -331,5 +334,19 @@ public final class Utils {
             stringBuilder.append(chars.charAt(c));
         }
         return stringBuilder.toString();
+    }
+
+    public static String[] divideStringUnsafe(String str, int pos, int skip) {
+        char[] chars = str.toCharArray();
+        return new String[]{
+                JAVA_LANG_ACCESS.newStringUnsafe(copyOf(chars, 0, pos)),
+                JAVA_LANG_ACCESS.newStringUnsafe(copyOf(chars, pos + skip, chars.length - (pos + skip)))
+        };
+    }
+
+    private static char[] copyOf(char[] arr, int offset, int size) {
+        char[] copy = new char[size];
+        System.arraycopy(arr, offset, copy, 0, size);
+        return copy;
     }
 }

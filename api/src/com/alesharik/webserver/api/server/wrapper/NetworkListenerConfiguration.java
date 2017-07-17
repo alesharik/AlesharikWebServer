@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 @Getter
 public final class NetworkListenerConfiguration {
     private final String name;
