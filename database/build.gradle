@@ -1,6 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 
+buildDir = new File('./out/')
+
 sourceSets {
     main {
         java {
@@ -18,3 +20,31 @@ dependencies {
     compile project(':alesharikwebserver-api')
     compile group: 'javax.transaction', name: 'jta', version: '1.1'
 }
+
+task packageJavadoc(type: Jar, dependsOn: javadoc) {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+task packageSources(type: Jar, dependsOn: classes) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId 'com.alesharik'
+            artifactId 'alesharikwebserver-database'
+            version '0.1'
+
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-database.jar', classifier: 'src'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-database-sources.jar', classifier: 'sources', extension: 'zip'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-database-javadoc.jar', classifier: 'javadoc', extension: 'zip'
+
+            from components.java
+        }
+    }
+}
+
+jar.dependsOn packageJavadoc
+jar.dependsOn packageSources

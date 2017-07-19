@@ -24,7 +24,9 @@ import com.alesharik.database.Schema;
 import com.alesharik.database.Table;
 import com.alesharik.database.entity.TypeTranslator;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.SneakyThrows;
+import org.postgresql.util.PGobject;
 import org.w3c.dom.Node;
 
 import java.net.InetAddress;
@@ -38,6 +40,13 @@ import java.util.List;
 import java.util.UUID;
 
 public final class PostgresDriver extends DBDriver implements TypeTranslator {
+    static {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new Error(e);
+        }
+    }
     public PostgresDriver() {
     }
 
@@ -215,14 +224,27 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
         return null;
     }
 
+    private static final JsonParser JSON_PARSER = new JsonParser();
+
     @SneakyThrows
     @Override
     public Object getObject(ResultSet resultSet, String name, Class<?> type) {
+        if(type == JsonObject.class) {
+            String json = resultSet.getString(name);
+            return type.cast(JSON_PARSER.parse(json));
+        }
         return resultSet.getObject(name, type);
     }
 
+    @SneakyThrows
     @Override
     public Object translate(Object o) {
+        if(o.getClass() == JsonObject.class) {
+            PGobject pGobject = new PGobject();
+            pGobject.setType("json");
+            pGobject.setValue(((JsonObject) o).getAsString());
+            return pGobject;
+        }
         return o;
     }
 }
