@@ -45,4 +45,16 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Column {
     String name();
+
+    boolean primaryKey() default false;
+
+    boolean nullable() default false;
+
+    boolean unique() default false;
+
+    boolean hasIndex() default false;
+
+    boolean foreignKey() default false;
+
+    String refTable() default "";
 }

@@ -68,7 +68,8 @@ public final class TransactionProxyFactory {
                     currentProvider.set(transaction);
                     try {
                         ret = method.invoke(realisation, args);
-                        transaction.commit();
+                        if(currentProvider.get() == transactionProvider)
+                            transaction.commit();
                     } catch (Throwable throwable) {
                         transaction.rollback();
                     } finally {

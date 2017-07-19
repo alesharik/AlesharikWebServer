@@ -16,26 +16,16 @@
  *
  */
 
-package com.alesharik.database;
+package com.alesharik.database.entity;
 
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.sql.ResultSet;
 
-public abstract class DBDriver {
-    protected volatile Connection connection;
+public interface TypeTranslator {
+    String translate(Class<?> clazz);
 
-    public void init() {
-    }
+    Class<?> translate(String s);
 
-    final void setConnection(Connection connection) {
-        this.connection = connection;
-    }
+    Object getObject(ResultSet resultSet, String name, Class<?> type);
 
-    public abstract Schema[] getSchemas() throws SQLException;
-
-    public abstract Schema getSchema(String name, boolean createIfNotExists) throws SQLException;
-
-    public abstract <T> Table<T> getTable(String name, Class<T> entity);
-
-    public abstract <T> Table<T> createTable(String name, Class<T> entity);
+    Object translate(Object o);
 }

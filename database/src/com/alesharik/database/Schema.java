@@ -23,7 +23,5 @@ public interface Schema {
 
     String getOwner();
 
-    Table[] getTables();
-
-    Table getTable(String table);
+    <T> Table<T> getTable(String table, Class<T> entity);
 }

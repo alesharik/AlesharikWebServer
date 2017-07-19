@@ -58,27 +58,9 @@ final class TransactionImpl implements Transaction {
 
     @Override
     public void commit() {
+        commitInternal();
         try {
-            for(Synchronization synchronization : synchronizations) {
-                try {
-                    synchronization.beforeCompletion();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
             connection.commit();
-            for(Transaction transaction : transactions) {
-                if(!transaction.isCommited())
-                    ((TransactionImpl) transaction).commitInternal();
-            }
-            for(Synchronization synchronization : synchronizations) {
-                rollback();
-                try {
-                    synchronization.afterCompletion(Status.STATUS_COMMITTED);
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-            }
         } catch (SQLException e) {
             rollback();
             throw new RuntimeException(e);
@@ -118,6 +100,38 @@ final class TransactionImpl implements Transaction {
     }
 
     private void commitInternal() {
+        for(Synchronization synchronization : synchronizations) {
+            try {
+                synchronization.beforeCompletion();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        for(Transaction transaction : transactions) {
+            if(!transaction.isCommited()) {
+                ((TransactionImpl) transaction).commitInternal();
+            } else if(transaction.isRolledBack()) {
+                for(Transaction transaction1 : transactions) {
+                    transaction1.rollback();
+                    for(Synchronization synchronization : synchronizations) {
+                        try {
+                            synchronization.afterCompletion(Status.STATUS_ROLLEDBACK);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                    this.state.set(STATE_ROLLBACK);
+                }
+                return;
+            }
+        }
+        for(Synchronization synchronization : synchronizations) {
+            try {
+                synchronization.afterCompletion(Status.STATUS_COMMITTED);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+        }
         this.state.set(STATE_COMMITTED);
     }
 
@@ -163,6 +177,6 @@ final class TransactionImpl implements Transaction {
         return state.get() == STATE_ROLLBACK;
     }
 
-    private final int STATE_COMMITTED = 1;
-    private final int STATE_ROLLBACK = 2;
+    private static final int STATE_COMMITTED = 1;
+    private static final int STATE_ROLLBACK = 2;
 }

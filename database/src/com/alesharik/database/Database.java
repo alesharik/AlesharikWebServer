@@ -30,6 +30,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 
+/**
+ * AlesharikWebServer Database API provides simply and fast Database EntityManager and Transaction API. For using real SQL you can get database connection and execute
+ * all SQL requests with it
+ */
 public class Database {
     protected final String dbUrl;
     protected final String user;
@@ -106,6 +110,14 @@ public class Database {
         }
     }
 
+    public <T> Table<T> getTable(String name, Class<T> entity) {
+        return dbDriver.getTable(name, entity);
+    }
+
+    public <T> Table<T> createTable(String name, Class<T> e) {
+        return dbDriver.createTable(name, e);
+    }
+
     public void executeTransaction(TransactionRunnable runnable) {
         if(!transactional)
             throw new IllegalStateException("Database is not transactional!");
@@ -135,5 +147,9 @@ public class Database {
         if(!transactional)
             throw new IllegalStateException();
         return TransactionProxyFactory.newTransactionProxy(iface, real, transactionManager);
+    }
+
+    public Connection getConnection() {
+        return connection;
     }
 }

@@ -18,5 +18,25 @@
 
 package com.alesharik.database;
 
-public interface Table {
+/**
+ * Table is main Entity manager
+ */
+public interface Table<T> {
+    T[] getEntities();
+
+    void add(T t);
+
+    boolean contains(T t);
+
+    boolean remove(T t);
+
+    void update(T t);
+
+    T selectForKey(T incomplete);
+
+    void updateCache();
+
+    void enableCaching();
+
+    void disableCaching();
 }
