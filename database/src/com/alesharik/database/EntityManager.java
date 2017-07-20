@@ -192,7 +192,7 @@ public final class EntityManager {
                         + (annotation.primaryKey() ? " PRIMARY KEY" : "")
                         + (annotation.nullable() ? " NULL" : " NOT NULL")
                         + (annotation.unique() ? " UNIQUE" : "")
-                        + (annotation.foreignKey() ? " FOREIGN KEY REFERENCES " + annotation.refTable() : "");
+                        + (annotation.foreignKey() ? " REFERENCES " + annotation.refTable() : "");
             }
 
             public boolean hasIndex() {
