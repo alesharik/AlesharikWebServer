@@ -26,7 +26,7 @@ public class BasicErrorHandler implements ErrorHandler {
 
     @Override
     public void handleException(Exception e, Request request, Response response, Pool pool) {
-        System.out.println(e);
+        e.printStackTrace();
         //TODO move generators to api!
     }
 }

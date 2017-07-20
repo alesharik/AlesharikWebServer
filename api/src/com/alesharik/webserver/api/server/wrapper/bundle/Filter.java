@@ -33,4 +33,36 @@ public interface Filter {
      * @return true if request passed and can be handled with {@link HttpHandler}, overwise false
      */
     boolean accept(Request request, Response response);
+
+    class Always implements Filter {
+        private static final Always INSTANCE = new Always();
+
+        public static Filter getInstance() {
+            return INSTANCE;
+        }
+
+        private Always() {
+        }
+
+        @Override
+        public boolean accept(Request request, Response response) {
+            return true;
+        }
+    }
+
+    class Never implements Filter {
+        private static final Never INSTANCE = new Never();
+
+        public static Filter getInstance() {
+            return INSTANCE;
+        }
+
+        private Never() {
+        }
+
+        @Override
+        public boolean accept(Request request, Response response) {
+            return false;
+        }
+    }
 }

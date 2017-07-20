@@ -28,7 +28,9 @@ public interface HttpHandler {
     /**
      * Return own HttpHandler filter. This filter CAN'T change response!
      */
-    Filter getFilter();
+    default Filter getFilter() {
+        return Filter.Always.getInstance();
+    }
 
     /**
      * Handle request

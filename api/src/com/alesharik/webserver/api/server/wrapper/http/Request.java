@@ -25,6 +25,8 @@ import lombok.Getter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -69,6 +71,11 @@ public class Request {
         headerMap = new ConcurrentHashMap<>();
         parameters = new ConcurrentHashMap<>();
     }
+
+    protected InetSocketAddress remote;
+    protected InetAddress local;
+    protected boolean secure;
+
 
     public boolean containsHeader(@Nonnull String header) {
         for(String s : headers) {
@@ -180,6 +187,18 @@ public class Request {
         return cookies;
     }
 
+    public InetAddress getLocal() {
+        return local;
+    }
+
+    public InetSocketAddress getRemote() {
+        return remote;
+    }
+
+    public boolean isSecure() {
+        return secure;
+    }
+
     public static final class Builder extends Request {
         private Builder(String firstLine) {
             String[] startLine = firstLine.split(" ");
@@ -203,6 +222,13 @@ public class Request {
 
         public Builder withBody(byte[] body) {
             this.body = body;
+            return this;
+        }
+
+        public Builder withInfo(InetSocketAddress remote, InetAddress local, boolean secure) {
+            this.remote = remote;
+            this.local = local;
+            this.secure = secure;
             return this;
         }
     }

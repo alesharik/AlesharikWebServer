@@ -42,5 +42,13 @@ public @interface HttpBundle {
                 return true;
             }
         }
+
+        class DenyCondition implements Condition {
+
+            @Override
+            public boolean allow(HttpServer server) {
+                return false;
+            }
+        }
     }
 }

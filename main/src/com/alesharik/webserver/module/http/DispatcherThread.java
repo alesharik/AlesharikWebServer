@@ -29,8 +29,10 @@ import com.alesharik.webserver.api.server.wrapper.server.Sender;
 import com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import javax.net.ssl.SSLSocket;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
@@ -174,6 +176,8 @@ final class DispatcherThread extends Thread {
                 str = str.substring(firstLine);
                 this.byteBuffer.reset();
                 this.byteBuffer.write(str.getBytes(CHARSET));
+
+                builder.withInfo(((InetSocketAddress) socket.getRemoteSocketAddress()), socket.getLocalAddress(), socket instanceof SSLSocket);
             }
             int headerEnd = str.indexOf("\r\n\r\n");
             if(headerEnd != -1 && !str.isEmpty() && this.state.get() == State.HEADERS) {
