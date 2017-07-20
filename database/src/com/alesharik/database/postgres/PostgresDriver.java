@@ -155,7 +155,7 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
     @Override
     public String translate(Class<?> testClazz) {
         String s = "";
-        Class<?> clazz = testClazz.getComponentType();
+        Class<?> clazz = testClazz.isArray() ? testClazz.getComponentType() : testClazz;
         if(testClazz == byte[].class || testClazz == Byte[].class)
             s = "bytea";
         else if(clazz == short.class || clazz == Short.class)
@@ -187,7 +187,7 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
         else if(clazz == Date.class)
             s = "date";
 
-        if(clazz.isArray() && !(clazz == byte[].class || clazz == Byte[].class))
+        if(testClazz.isArray() && !(testClazz == byte[].class || testClazz == Byte[].class))
             s += "[]";
         return s;
     }
