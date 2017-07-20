@@ -200,10 +200,7 @@ public final class EntityManager {
             }
 
             public void createIndex(String table, Connection connection) throws SQLException {
-                PreparedStatement preparedStatement = connection.prepareStatement("CREATE UNIQUE INDEX IF NOT EXISTS ? ON ? (?)");
-                preparedStatement.setString(1, name + "_idx");
-                preparedStatement.setString(2, table);
-                preparedStatement.setString(3, name);
+                PreparedStatement preparedStatement = connection.prepareStatement("CREATE UNIQUE INDEX IF NOT EXISTS " + name + "_idx" + " ON " + table + " (" + name + ")");
                 preparedStatement.execute();
             }
 
