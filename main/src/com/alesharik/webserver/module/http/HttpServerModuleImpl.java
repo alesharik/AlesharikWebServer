@@ -90,6 +90,11 @@ public final class HttpServerModuleImpl implements HttpServerModule {
     }
 
     @Override
+    public void addHttpHandlerBundle(HttpHandlerBundle bundle) {
+        bundles.add(bundle);
+    }
+
+    @Override
     public void parse(@Nullable Element configNode) {
         if(configNode == null)
             throw new ConfigurationParseError("HttpServer configuration must have configuration!");

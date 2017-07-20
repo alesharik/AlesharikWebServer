@@ -42,4 +42,6 @@ public interface HttpServer extends HttpServerMXBean {
 
     @Nonnull
     ThreadGroup getServerThreadGroup();
+
+    void addHttpHandlerBundle(HttpHandlerBundle bundle);
 }
