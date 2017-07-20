@@ -30,6 +30,7 @@ import org.postgresql.util.PGobject;
 import org.w3c.dom.Node;
 
 import java.net.InetAddress;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -152,9 +153,12 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
     }
 
     @Override
-    public String translate(Class<?> clazz) {
+    public String translate(Class<?> testClazz) {
         String s = "";
-        if(clazz == short.class || clazz == Short.class)
+        Class<?> clazz = testClazz.getComponentType();
+        if(testClazz == byte[].class || testClazz == Byte[].class)
+            s = "bytea";
+        else if(clazz == short.class || clazz == Short.class)
             s = "smallint";
         else if(clazz == int.class || clazz == Integer.class)
             s = "integer";
@@ -162,8 +166,6 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
             s = "bigint";
         else if(clazz == boolean.class || clazz == Boolean.class)
             s = "boolean";
-        else if(clazz == byte[].class || clazz == Byte[].class)
-            s = "bytea";
         else if(clazz == char.class || clazz == Character.class)
             s = "character";
         else if(clazz == double.class || clazz == Double.class)
@@ -182,6 +184,8 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
             s = "uuid";
         else if(clazz == Node.class)
             s = "xml";
+        else if(clazz == Date.class)
+            s = "date";
 
         if(clazz.isArray() && !(clazz == byte[].class || clazz == Byte[].class))
             s += "[]";
@@ -220,6 +224,8 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
                 return isArray ? UUID[].class : UUID.class;
             case "xml":
                 return isArray ? Node[].class : Node.class;
+            case "date":
+                return isArray ? Date[].class : Date.class;
         }
         return null;
     }
