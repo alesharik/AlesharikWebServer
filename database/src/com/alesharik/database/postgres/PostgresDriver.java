@@ -23,6 +23,7 @@ import com.alesharik.database.EntityManager;
 import com.alesharik.database.Schema;
 import com.alesharik.database.Table;
 import com.alesharik.database.entity.TypeTranslator;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.SneakyThrows;
@@ -41,6 +42,8 @@ import java.util.List;
 import java.util.UUID;
 
 public final class PostgresDriver extends DBDriver implements TypeTranslator {
+    private static final Gson GSON = new Gson();
+
     static {
         try {
             Class.forName("org.postgresql.Driver");
@@ -248,7 +251,7 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
         if(o.getClass() == JsonObject.class) {
             PGobject pGobject = new PGobject();
             pGobject.setType("json");
-            pGobject.setValue(((JsonObject) o).getAsString());
+            pGobject.setValue(GSON.toJson((JsonObject) o));
             return pGobject;
         }
         return o;
