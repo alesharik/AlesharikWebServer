@@ -128,7 +128,6 @@ public class Database {
             savepoint = connection.setSavepoint();
             runnable.run();
             connection.commit();
-            connection.releaseSavepoint(savepoint);
         } catch (Throwable e) {
             if(savepoint != null)
                 try {
@@ -150,7 +149,6 @@ public class Database {
             savepoint = connection.setSavepoint();
             result = callable.call();
             connection.commit();
-            connection.releaseSavepoint(savepoint);
         } catch (Throwable e) {
             if(savepoint != null)
                 try {
