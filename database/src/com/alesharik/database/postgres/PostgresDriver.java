@@ -241,6 +241,8 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
         if(type == JsonObject.class) {
             String json = resultSet.getString(name);
             return type.cast(JSON_PARSER.parse(json));
+        } else if(type == UUID.class) {
+            return UUID.fromString(resultSet.getString(name));
         }
         return resultSet.getObject(name, type);
     }
@@ -253,6 +255,8 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
             pGobject.setType("json");
             pGobject.setValue(GSON.toJson((JsonObject) o));
             return pGobject;
+        } else if(o.getClass() == UUID.class) {
+            return o.toString();
         }
         return o;
     }
