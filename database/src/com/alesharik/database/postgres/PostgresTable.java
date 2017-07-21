@@ -53,6 +53,8 @@ final class PostgresTable<T> implements Table<T> {
         this.schemaName = schemaName;
         this.clazz = clazz;
         this.typeTranslator = typeTranslator;
+
+        enableCaching();
     }
 
     @Override
@@ -225,11 +227,13 @@ final class PostgresTable<T> implements Table<T> {
     @Override
     public void enableCaching() {
         caching.set(true);
+        updateCache();
     }
 
     @Override
     public void disableCaching() {
         caching.set(false);
+        cache = null;
     }
 
     @SuppressWarnings("unchecked")
