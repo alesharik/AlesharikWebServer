@@ -23,8 +23,10 @@ import com.alesharik.database.exception.DatabaseExecutionException;
 import com.alesharik.database.proxy.TransactionProxyFactory;
 import com.alesharik.database.transaction.TransactionManager;
 import com.alesharik.database.transaction.TransactionManagerImpl;
+import com.alesharik.database.transaction.reflect.TransactionCallable;
 import com.alesharik.database.transaction.reflect.TransactionRunnable;
 
+import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -131,10 +133,34 @@ public class Database {
             if(savepoint != null)
                 try {
                     connection.rollback(savepoint);
+                    connection.releaseSavepoint(savepoint);
                 } catch (SQLException e1) {
                     throw new DatabaseExecutionException(e1);
                 }
         }
+    }
+
+    @Nullable
+    public <V> V executeTransaction(TransactionCallable<V> callable) {
+        if(!transactional)
+            throw new IllegalStateException("Database is not transactional!");
+        Savepoint savepoint = null;
+        V result = null;
+        try {
+            savepoint = connection.setSavepoint();
+            result = callable.call();
+            connection.commit();
+            connection.releaseSavepoint(savepoint);
+        } catch (Throwable e) {
+            if(savepoint != null)
+                try {
+                    connection.rollback(savepoint);
+                    connection.releaseSavepoint(savepoint);
+                } catch (SQLException e1) {
+                    throw new DatabaseExecutionException(e1);
+                }
+        }
+        return result;
     }
 
     public TransactionManager getTransactionManager() {
