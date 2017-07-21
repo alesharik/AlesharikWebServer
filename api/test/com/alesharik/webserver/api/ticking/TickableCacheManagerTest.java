@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.ticking;
 
+import com.alesharik.webserver.TestUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -67,5 +68,10 @@ public class TickableCacheManagerTest {
 
         assertNull(weakReference.get());
         assertTrue(weakReference.isEnqueued());
+    }
+
+    @Test
+    public void testUtilityClass() throws Exception {
+        TestUtils.assertUtilityClass(ExecutorPoolBasedTickingPool.TickableCacheManager.class);
     }
 }

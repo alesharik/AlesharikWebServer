@@ -31,6 +31,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+//FIXME move to own http server!
 public @interface WSApplication {
     String contextPath() default "";
 

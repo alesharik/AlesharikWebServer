@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.server;
 
+@Deprecated
 public interface HttpServerModuleMXBean {
     long requestCount();
 

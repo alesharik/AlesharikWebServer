@@ -20,6 +20,7 @@ package com.alesharik.webserver.server.api;
 
 import com.alesharik.webserver.configuration.Module;
 
+@Deprecated
 public abstract class HttpHandler extends org.glassfish.grizzly.http.server.HttpHandler implements Module {
     public HttpHandler() {
 

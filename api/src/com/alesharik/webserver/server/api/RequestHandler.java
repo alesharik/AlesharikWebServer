@@ -24,6 +24,7 @@ import org.glassfish.grizzly.http.server.Response;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 
+@Deprecated
 /**
  * This interface used for provide custom request handler
  */

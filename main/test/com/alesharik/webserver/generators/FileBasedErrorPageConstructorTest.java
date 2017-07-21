@@ -56,7 +56,7 @@ public class FileBasedErrorPageConstructorTest {
             "</html>";
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() throws Exception {//TODO fix
         Logger.setupLogger(File.createTempFile("asdfsdfasfsdf", "sdfasfsdfasd"), 10);
 
         File tmpFolder = Files.createTempDirectory("FileBasedErrorPageConstructorTest").toFile();

@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Deprecated
 @Prefixes("[GrizzlyHttpServerModule]")
 public final class GrizzlyHttpServerModule implements HttpServerModule {
     private final ArrayList<NetworkListener> networkListeners;

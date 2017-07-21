@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("WeakerAccess")
-public class Request {
+public class Request {//TODO how about caching instances?
     protected Cookie[] cookies;
 
     @Getter

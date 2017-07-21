@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -36,7 +38,7 @@ public final class TestUtils {
         if(!Modifier.isFinal(clazz.getModifiers())) {
             throw new AssertionError("Utility class must be final!");
         }
-        Constructor<?>[] constructors = clazz.getConstructors();
+        Constructor<?>[] constructors = ArrayUtils.addAll(clazz.getConstructors(), clazz.getDeclaredConstructors());
         for(Constructor<?> constructor : constructors) {
             if(!Modifier.isPrivate(constructor.getModifiers())) {
                 throw new AssertionError("Utility class must have no public/protected constructors!");

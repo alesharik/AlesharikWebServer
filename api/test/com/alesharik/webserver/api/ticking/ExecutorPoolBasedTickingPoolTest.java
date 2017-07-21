@@ -131,11 +131,10 @@ public class ExecutorPoolBasedTickingPoolTest {
     @Test
     public void isRunning() throws Exception {
         assertTrue("Running tickable is not running!", pool.isRunning(imOK));
-    }
-
-    @Test
-    public void isRunning1() throws Exception {
         assertFalse("Sleeping tickable is running!", pool.isRunning(sleepy));
+
+        assertFalse(pool.isRunning(() -> {
+        }));
     }
 
     @Test
