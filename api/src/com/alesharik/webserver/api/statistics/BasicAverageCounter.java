@@ -20,13 +20,16 @@ package com.alesharik.webserver.api.statistics;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.StampedLock;
 
 public class BasicAverageCounter implements AverageCounter {
+    protected final StampedLock lock = new StampedLock();
+
     protected final AtomicLong delay = new AtomicLong(1000);
 
-    protected final AtomicLong lastTime = new AtomicLong(0);
-    protected final AtomicLong lastAverage = new AtomicLong(0);
-    protected final AtomicLong currentAvg = new AtomicLong(0);
+    protected volatile long lastTime = 0;
+    protected volatile long lastAverage = 0;
+    protected volatile long currentAvg = 0;
 
     @Override
     public void setTimeDelay(long time, TimeUnit unit) {
@@ -35,28 +38,57 @@ public class BasicAverageCounter implements AverageCounter {
 
     @Override
     public long getAverage() {
-        return lastAverage.get();
+        long ret;
+        long stamp = lock.tryOptimisticRead();
+        ret = lastAverage;
+        if(!lock.validate(stamp)) {
+            stamp = lock.readLock();
+            try {
+                ret = lastAverage;
+            } finally {
+                lock.unlockRead(stamp);
+            }
+        }
+        return ret;
     }
 
     @Override
     public void addUnit(long l) {
-        long d = System.currentTimeMillis() - lastTime.get();
-        if(d >= delay.get()) {
-            lastTime.set(System.currentTimeMillis());
-            lastAverage.set(currentAvg.getAndSet(0));
-        }
+        long stamp = lock.writeLock();
+        try {
+            long d = System.currentTimeMillis() - lastTime;
+            if(d >= delay.get()) {
+                lastTime = System.currentTimeMillis();
+                lastAverage = currentAvg;
+                currentAvg = 0;
+            }
 
-        long lastAvg = currentAvg.get();
-        long realAvg = (lastAvg + l) / 2;
-        while(!currentAvg.compareAndSet(lastAvg, realAvg)) {
-            lastAvg = currentAvg.get();
-            realAvg = (lastAvg + l) / 2;
+            currentAvg = currentAvg == 0 ? l : (currentAvg + l) / 2;
+        } finally {
+            lock.unlockWrite(stamp);
         }
     }
 
     @Override
     public void reset() {
-        lastAverage.set(0);
-        currentAvg.set(0);
+        long stamp = lock.writeLock();
+        try {
+            lastAverage = 0;
+            currentAvg = 0;
+        } finally {
+            lock.unlockWrite(stamp);
+        }
+    }
+
+    @Override
+    public void update() {
+        long stamp = lock.writeLock();
+        try {
+            lastTime = System.currentTimeMillis();
+            lastAverage = currentAvg;
+            currentAvg = 0;
+        } finally {
+            lock.unlockWrite(stamp);
+        }
     }
 }

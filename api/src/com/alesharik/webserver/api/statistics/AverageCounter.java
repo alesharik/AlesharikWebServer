@@ -28,4 +28,6 @@ public interface AverageCounter {
     void addUnit(long l);
 
     void reset();
+
+    void update();
 }
