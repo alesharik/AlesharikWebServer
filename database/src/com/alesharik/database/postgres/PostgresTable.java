@@ -242,8 +242,7 @@ final class PostgresTable<T> implements Table<T> {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
-            preparedStatement = connection.prepareStatement("SELECT * FROM ?");
-            preparedStatement.setString(1, getName());
+            preparedStatement = connection.prepareStatement("SELECT * FROM " + getName());
             resultSet = preparedStatement.executeQuery();
             List<T> ret = new ArrayList<>();
             while(resultSet.next()) {
