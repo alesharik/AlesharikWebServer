@@ -18,11 +18,18 @@
 
 package com.alesharik.webserver;
 
+import com.alesharik.webserver.api.server.wrapper.http.HttpStatus;
+import com.alesharik.webserver.api.server.wrapper.http.HttpVersion;
+import com.alesharik.webserver.api.server.wrapper.http.Method;
+import com.alesharik.webserver.api.server.wrapper.http.Request;
+import com.alesharik.webserver.api.server.wrapper.http.Response;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+
+import static org.junit.Assert.assertEquals;
 
 public final class TestUtils {
     private TestUtils() {
@@ -56,6 +63,56 @@ public final class TestUtils {
                     throw new AssertionError("Utility class constructor must throw UnsupportedOperationException!");
                 }
             }
+        }
+    }
+
+    public static Request.Builder newTestRequest() {
+        return newTestRequest("/");
+    }
+
+    public static Request.Builder newTestRequest(String path) {
+        return newTestRequest(path, Method.GET);
+    }
+
+    public static Request.Builder newTestRequest(String path, Method method) {
+        return Request.Builder.start(method.name() + ' ' + path + " HTTP/1.1");
+    }
+
+    public static Response newResponse() {
+        return new ResponseWrapper();
+    }
+
+    public static Response validate(Response response) {
+        if(!(response instanceof ResponseWrapper))
+            throw new Error("Use TestUtils#newResponse for response creation!");
+        return new ResponseValidator((ResponseWrapper) response);
+    }
+
+    private static final class ResponseWrapper extends Response {
+        public HttpVersion getHttpVersion() {
+            return version;
+        }
+
+        public HttpStatus getHttpStatus() {
+            return status;
+        }
+    }
+
+    private static final class ResponseValidator extends Response {//TODO body support and all other methods!
+        private final ResponseWrapper response;
+
+        public ResponseValidator(ResponseWrapper response) {
+            this.response = response;
+        }
+
+        @Override
+        public void setVersion(HttpVersion version) {
+            assertEquals(response.getHttpVersion(), version);
+        }
+
+        @Override
+        public void respond(HttpStatus status) {
+            assertEquals(response.getHttpStatus(), status);
         }
     }
 

@@ -71,4 +71,5 @@ public class HttpStatus {
     public static final HttpStatus SERVICE_UNAVAILABLE_503 = new HttpStatus(503, "Service Unavailable");
     public static final HttpStatus GATEWAY_TIMEOUT_504 = new HttpStatus(504, "Gateway Timeout");
     public static final HttpStatus HTTP_VERSION_NOT_SUPPORTED_505 = new HttpStatus(505, "HTTP Version Not Supported");
+    public static final HttpStatus TOO_MANY_REQUESTS_429 = new HttpStatus(429, "Too Many Requests");
 }

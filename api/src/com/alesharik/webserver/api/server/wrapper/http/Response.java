@@ -39,16 +39,16 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class Response {
     public static final Charset CHARSET = Charset.forName("ISO-8859-1");
 
-    private HttpStatus status;
+    protected HttpStatus status;
     @Setter
-    private HttpVersion version = HttpVersion.HTTP_1_1;
-    private List<String> headers = new CopyOnWriteArrayList<>();
-    private OutputBuffer buffer;
-    private EncodedWriter writer;
+    protected HttpVersion version = HttpVersion.HTTP_1_1;
+    protected List<String> headers = new CopyOnWriteArrayList<>();
+    protected OutputBuffer buffer;
+    protected EncodedWriter writer;
 
-    private final Set<Cookie> cookies = new CopyOnWriteArraySet<>();
+    protected final Set<Cookie> cookies = new CopyOnWriteArraySet<>();
     @Getter
-    private final long creationTime = System.currentTimeMillis();
+    protected final long creationTime = System.currentTimeMillis();
 
     public Response() {
         buffer = new OutputBuffer();
