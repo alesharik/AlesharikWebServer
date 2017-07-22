@@ -21,8 +21,9 @@ package com.alesharik.database;
 /**
  * Table is main Entity manager
  */
-public interface Table<T> {
-    T[] getEntities();
+public interface Table<T> {//TODO add list method!
+
+    Object[] getEntities();
 
     void add(T t);
 

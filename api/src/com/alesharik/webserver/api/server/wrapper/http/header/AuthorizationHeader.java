@@ -36,7 +36,13 @@ public class AuthorizationHeader extends Header<Authorization> {
     @Override
     public Authorization getValue(String str) {
         String s = pattern.matcher(str).replaceFirst("");
-        String[] divide = Utils.divideStringUnsafe(s, s.indexOf(' '), 1);
+        int pos = s.indexOf(' ');
+        if(pos == -1) {
+            pos = s.indexOf(160);
+            if(pos == -1)
+                return null;
+        }
+        String[] divide = Utils.divideStringUnsafe(s, pos, 1);
         return new Authorization(Authentication.Type.parse(divide[0]), divide[1]);
     }
 

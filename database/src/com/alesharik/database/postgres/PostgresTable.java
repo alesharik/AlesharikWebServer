@@ -58,7 +58,7 @@ final class PostgresTable<T> implements Table<T> {
     }
 
     @Override
-    public T[] getEntities() {
+    public Object[] getEntities() {
         if(caching.get() && cacheSync.get())
             return cache.clone();
         if(caching.get()) {
