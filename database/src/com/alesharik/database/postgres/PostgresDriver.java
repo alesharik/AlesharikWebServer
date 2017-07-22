@@ -30,7 +30,11 @@ import lombok.SneakyThrows;
 import org.postgresql.util.PGobject;
 import org.w3c.dom.Node;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.Reader;
 import java.net.InetAddress;
+import java.sql.Array;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -238,13 +242,58 @@ public final class PostgresDriver extends DBDriver implements TypeTranslator {
     @SneakyThrows
     @Override
     public Object getObject(ResultSet resultSet, String name, Class<?> type) {
-        if(type == JsonObject.class) {
-            String json = resultSet.getString(name);
-            return type.cast(JSON_PARSER.parse(json));
-        } else if(type == UUID.class) {
-            return UUID.fromString(resultSet.getString(name));
+        Class<?> component = type.isArray() ? type.getComponentType() : type;
+        if(component == byte[].class || component == Byte[].class) {
+            Array array = resultSet.getArray(name);
+            Object ret = array.getArray();
+            array.free();
+            return ret;
         }
-        return resultSet.getObject(name, type);
+
+
+        if(!type.isArray()) {
+            if(type == short.class || type == Short.class) {
+                return resultSet.getShort(name);
+            } else if(type == int.class || type == Integer.class) {
+                return resultSet.getInt(name);
+            } else if(type == long.class || type == Long.class) {
+                return resultSet.getLong(name);
+            } else if(type == boolean.class || type == Boolean.class) {
+                return resultSet.getBoolean(name);
+            } else if(type == char.class || type == Character.class) {
+                Reader reader = resultSet.getCharacterStream(name);
+                char c = (char) reader.read();
+                reader.close();
+                return c;
+            } else if(type == double.class || type == Double.class) {
+                return resultSet.getDouble(name);
+            } else if(type == float.class || type == Float.class) {
+                return resultSet.getFloat(name);
+            } else if(type == InetAddress.class) {
+                return InetAddress.getByName(resultSet.getString(name));
+            } else if(type == JsonObject.class) {
+                String json = resultSet.getString(name);
+                return type.cast(JSON_PARSER.parse(json));
+            } else if(type == UUID.class) {
+                return UUID.fromString(resultSet.getString(name));
+            } else if(type == String.class) {
+                return resultSet.getString(name);
+            } else if(type == Time.class) {
+                return resultSet.getTime(name);
+            } else if(type == Date.class) {
+                return resultSet.getDate(name);
+            } else if(type == Node.class) {
+                DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                return dBuilder.parse(resultSet.getString(name));
+            }
+        } else {
+            Array array = resultSet.getArray(name);
+            Object ret = array.getArray();
+            array.free();
+            return ret;
+        }
+        return null;
     }
 
     @SneakyThrows
