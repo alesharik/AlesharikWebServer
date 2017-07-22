@@ -143,6 +143,8 @@ public class Request {//TODO how about caching instances?
                     temp.append(c);
                 }
             }
+            if(temp.length() > 0)
+                paramParts.add(temp.toString());
             for(String paramPart : paramParts) {
                 int index = paramPart.indexOf('=');
                 if(index == -1) {
