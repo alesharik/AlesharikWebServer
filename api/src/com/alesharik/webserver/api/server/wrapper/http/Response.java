@@ -30,6 +30,7 @@ import org.glassfish.grizzly.utils.Charsets;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -49,6 +50,11 @@ public class Response {
     protected final Set<Cookie> cookies = new CopyOnWriteArraySet<>();
     @Getter
     protected final long creationTime = System.currentTimeMillis();
+
+    /**
+     * 0 - is Content-Length header set
+     */
+    protected final BitSet marks = new BitSet(8);
 
     public Response() {
         buffer = new OutputBuffer();
@@ -119,6 +125,9 @@ public class Response {
                 addHeader(HeaderManager.getHeaderByName("Set-Cookie", SetCookieHeader.class), cookie);
             }
         }
+        if(!marks.get(0)) {
+            setContentLength(buffer.toByteArray().length);
+        }
     }
 
     public int getResponseCode() {
@@ -143,6 +152,7 @@ public class Response {
 
     public void setContentLength(long length) {
         addHeader(HeaderManager.getHeaderByName("Content-Length", ObjectHeader.class), length);
+        marks.set(0, true);
     }
 
     public void addCookie(Cookie cookie) {
