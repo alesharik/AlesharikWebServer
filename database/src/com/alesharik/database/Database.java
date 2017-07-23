@@ -120,7 +120,7 @@ public class Database {
         return dbDriver.createTable(name, e);
     }
 
-    public void executeTransaction(TransactionRunnable runnable) {
+    public boolean executeTransaction(TransactionRunnable runnable) {
         if(!transactional)
             throw new IllegalStateException("Database is not transactional!");
         Savepoint savepoint = null;
@@ -128,6 +128,7 @@ public class Database {
             savepoint = connection.setSavepoint();
             runnable.run();
             connection.commit();
+            return true;
         } catch (Throwable e) {
             if(savepoint != null)
                 try {
@@ -137,6 +138,7 @@ public class Database {
                     throw new DatabaseExecutionException(e1);
                 }
         }
+        return false;
     }
 
     @Nullable
