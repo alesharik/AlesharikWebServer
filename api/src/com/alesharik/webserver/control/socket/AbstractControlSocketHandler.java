@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.control.socket;
 
+@Deprecated
 public abstract class AbstractControlSocketHandler {
     protected final ControlSocketSender controlSocketSender;
 

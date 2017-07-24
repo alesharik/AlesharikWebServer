@@ -21,6 +21,7 @@ package com.alesharik.webserver.control.socket;
 /**
  * Class, implementing this interface, used only for send message to control socket
  */
+@Deprecated
 public interface ControlSocketSender {
     /**
      * Send {@link String} message

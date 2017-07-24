@@ -18,5 +18,6 @@
 
 package com.alesharik.webserver.control.socket;
 
+@Deprecated
 public interface ControlSocketInfo {
 }
