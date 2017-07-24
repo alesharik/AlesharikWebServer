@@ -18,14 +18,48 @@
 
 package com.alesharik.webserver.api.server.wrapper.server;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 
 /**
  * This class provides registration for server socket
  */
 public interface SocketProvider {
     /**
-     * Register selector for {@link java.nio.channels.SelectionKey#OP_ACCEPT} key. This must attach server socket to SelectionKey!
+     * Register selector for {@link java.nio.channels.SelectionKey#OP_ACCEPT} key. This must attach {@link ServerSocketWrapper} to SelectionKey!
      */
     void registerSelector(Selector selector);
+
+    @AllArgsConstructor
+    @Getter
+    class ServerSocketWrapper {
+        protected final ServerSocketChannel serverSocket;
+        protected final SocketManager socketManager;
+    }
+
+    /**
+     * Manage real {@link java.nio.channels.SocketChannel}
+     */
+    interface SocketManager {
+        SocketManager DEFAULT = new SocketManager() {
+        };
+
+        /**
+         * Called before first socket read. Used to perform handshakes
+         */
+        default void initSocket(SocketChannel socketChannel) {
+        }
+
+        default byte[] wrap(byte[] arr) {
+            return arr;
+        }
+
+        default byte[] unwrap(byte[] arr) {
+            return arr;
+        }
+    }
 }

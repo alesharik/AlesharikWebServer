@@ -20,7 +20,7 @@ package com.alesharik.webserver.api.server.wrapper.server.impl.wrapper;
 
 import com.alesharik.webserver.api.name.Named;
 import com.alesharik.webserver.api.server.wrapper.PortRange;
-import com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper;
+import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import org.w3c.dom.Element;
 
@@ -38,14 +38,14 @@ import java.nio.channels.ServerSocketChannel;
 import static com.alesharik.webserver.configuration.XmlHelper.*;
 
 @Named("network-listener")
-public class NetworkListener implements ServerSocketWrapper {
+public class NetworkListener implements com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper {
     private final ServerSocketConfig config = new ServerSocketConfig();
     private ServerSocketChannel serverSocket;
 
     @Override
     public void registerSelector(Selector selector) {
         try {
-            serverSocket.register(selector, SelectionKey.OP_ACCEPT, serverSocket);
+            serverSocket.register(selector, SelectionKey.OP_ACCEPT, new SocketProvider.ServerSocketWrapper(serverSocket, SocketManager.DEFAULT));
         } catch (ClosedChannelException e) {
             e.printStackTrace();
         }

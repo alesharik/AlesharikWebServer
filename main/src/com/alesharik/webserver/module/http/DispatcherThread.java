@@ -27,6 +27,7 @@ import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
 import com.alesharik.webserver.api.server.wrapper.server.HttpRequestHandler;
 import com.alesharik.webserver.api.server.wrapper.server.Sender;
 import com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper;
+import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import javax.net.ssl.SSLSocket;
@@ -38,7 +39,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -90,7 +90,8 @@ final class DispatcherThread extends Thread {
                 while(iterator.hasNext()) {
                     SelectionKey key = iterator.next();
                     if(key.isAcceptable()) {
-                        SocketChannel socket = ((ServerSocketChannel) key.attachment()).accept();
+                        SocketProvider.ServerSocketWrapper attachment = (SocketProvider.ServerSocketWrapper) key.attachment();
+                        SocketChannel socket = attachment.getServerSocket().accept();
                         if(socket == null)
                             continue;
                         socket.configureBlocking(false);
@@ -98,7 +99,7 @@ final class DispatcherThread extends Thread {
                             continue;
 
                         SelectableChannel socketChannel = socket.configureBlocking(false);
-                        socketChannel.register(selector, SelectionKey.OP_READ, new Session(socket.socket(), httpHandler, executorPool, httpServerStatistics));
+                        socketChannel.register(selector, SelectionKey.OP_READ, new Session(socket.socket(), httpHandler, executorPool, httpServerStatistics, attachment.getSocketManager()));
                     } else if(key.isReadable()) {
                         Session socket = (Session) key.attachment();
                         processSession(socket);
@@ -112,15 +113,19 @@ final class DispatcherThread extends Thread {
     }
 
     private void processSession(Session socket) {
-        try {
-            socket.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        executorPool.executeSelectorTask(() -> {
+            try {
+                socket.read();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private static final class Session implements Sender {
         private static final Charset CHARSET = Charset.forName("ISO-8859-1");
+
+        private final AtomicBoolean firstTry;
         private final Socket socket;
         private final ByteArrayOutputStream byteBuffer;
         private final AtomicReference<State> state;
@@ -128,28 +133,34 @@ final class DispatcherThread extends Thread {
         private final HttpRequestHandler requestHandler;
         private final ExecutorPool pool;
         private final HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics;
+        private final SocketProvider.SocketManager socketManager;
 
         private Request.Builder builder;
 
-        public Session(Socket socket, HttpRequestHandler requestHandler, ExecutorPool pool, HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics) {
+        public Session(Socket socket, HttpRequestHandler requestHandler, ExecutorPool pool, HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics, SocketProvider.SocketManager socketManager) {
             this.socket = socket;
             this.requestHandler = requestHandler;
             this.pool = pool;
             this.serverStatistics = serverStatistics;
+            this.socketManager = socketManager;
             this.byteBuffer = new ByteArrayOutputStream();
             this.state = new AtomicReference<>(State.NOTHING);
             this.buffer = ByteBuffer.allocate(2048);
             this.serverStatistics.aliveConnections.incrementAndGet();
             this.serverStatistics.newConnection();
+            this.firstTry = new AtomicBoolean(true);
         }
 
         public void read() throws IOException {
+            if(firstTry.getAndSet(false))
+                socketManager.initSocket(socket.getChannel());
+
             if(state.get().readEnd())
                 return;
 
             int nRead;
             while((nRead = socket.getChannel().read(buffer)) == 2048) {
-                byteBuffer.write(buffer.array());
+                byteBuffer.write(socketManager.unwrap(buffer.array()));
                 buffer.clear();
             }
             if(nRead == -1) {
@@ -158,7 +169,7 @@ final class DispatcherThread extends Thread {
                 check();
                 return;
             }
-            byteBuffer.write(buffer.array(), 0, nRead);
+            byteBuffer.write(socketManager.unwrap(buffer.array()), 0, nRead);
             check();
         }
 
@@ -236,7 +247,7 @@ final class DispatcherThread extends Thread {
         public void send(Request request, Response response) {
             SocketChannel channel = socket.getChannel();
             byte[] res = response.toByteArray();
-            ByteBuffer byteBuffer = ByteBuffer.wrap(res);
+            ByteBuffer byteBuffer = ByteBuffer.wrap(socketManager.wrap(res));
             int nSend = 0;
             int count = 0;
             try {
