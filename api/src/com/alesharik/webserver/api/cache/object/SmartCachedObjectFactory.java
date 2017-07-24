@@ -27,6 +27,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.StampedLock;
 
+/**
+ * This object factory doesn't track cache object state and it is preferable to use {@link #putInstance(Recyclable)}
+ *
+ * @param <T>
+ */
 public final class SmartCachedObjectFactory<T extends Recyclable> implements CachedObjectFactory<T> {
     private final ObjectFactory<T> factory;
     private final List<T> cache;
