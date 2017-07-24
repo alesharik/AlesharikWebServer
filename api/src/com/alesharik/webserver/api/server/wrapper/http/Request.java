@@ -38,47 +38,41 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("WeakerAccess")
 public class Request implements Recyclable {
+    /**
+     * URI parameters. Stored as Key:Value
+     */
+    protected final Map<String, String> parameters;
+    /**
+     * This is cache for headers
+     */
+    protected final Map<Header, Object> headerMap;
     protected Cookie[] cookies;
-
     @Getter
     protected Method method;
     @Getter
     protected HttpVersion httpVersion;
     @Getter
     protected byte[] body;
-
     /**
      * This is URI without parameters. Null means that URI not parsed yet
      */
     protected String uri = null;
     /**
-     * URI parameters. Stored as Key:Value
-     */
-    protected final Map<String, String> parameters;
-
-    /**
      * This is raw URI
      */
     protected String rawUri;
-
     /**
      * This is header strings
      */
     protected String[] headers;
-    /**
-     * This is cache for headers
-     */
-    protected final Map<Header, Object> headerMap;
+    protected InetSocketAddress remote;
+    protected InetAddress local;
+    protected boolean secure;
 
     {
         headerMap = new ConcurrentHashMap<>();
         parameters = new ConcurrentHashMap<>();
     }
-
-    protected InetSocketAddress remote;
-    protected InetAddress local;
-    protected boolean secure;
-
 
     public boolean containsHeader(@Nonnull String header) {
         for(String s : headers) {
