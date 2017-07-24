@@ -35,7 +35,7 @@ import java.util.concurrent.Executors;
  * Connection pool for server
  */
 @AllArgsConstructor
-class ControlSocketServerConnectionManager extends Thread {
+final class ControlSocketServerConnectionManager extends Thread {
     private static final ControlSocketClientConnection.Authenticator authenticator = new ControlSocketClientConnection.Authenticator() {
         @Override
         public String getPassword() {

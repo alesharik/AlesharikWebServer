@@ -46,7 +46,7 @@ import java.security.cert.CertificateException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Prefixes({"[ControlSocket]", "[ControlSocketClient]"})
-public class ControlSocketClientModuleImpl implements ControlSocketClientModule {
+public final class ControlSocketClientModuleImpl implements ControlSocketClientModule {
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
     private final RWLock lock = new RWLock();
     private final int id = COUNTER.getAndIncrement();

@@ -19,6 +19,7 @@
 package com.alesharik.webserver.configuration;
 
 import com.alesharik.webserver.api.control.ControlSocketClientModule;
+import com.alesharik.webserver.api.control.ControlSocketServerModule;
 import com.alesharik.webserver.api.server.wrapper.server.HttpServer;
 import com.alesharik.webserver.control.AdminDataStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
@@ -145,6 +146,33 @@ public class XmlHelper {
         } else {
             try {
                 return (ControlSocketClientModule) configuration.getModuleByName(nameNode.getTextContent());
+            } catch (ClassCastException e) {
+                throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
+            }
+        }
+    }
+
+
+    /**
+     * Get {@link ControlSocketClientModule} form xml config
+     *
+     * @param nodeName name of node, which contains {@link ControlSocketClientModule} name
+     * @param config   config node
+     * @param required if true, throw {@link ConfigurationParseError} if node not found
+     * @return null if required == false and value not found, overwise {@link ControlSocketClientModule} instance
+     */
+    @Nullable
+    public static ControlSocketServerModule getControlSocketServer(String nodeName, Element config, boolean required) {
+        Node nameNode = config.getElementsByTagName(nodeName).item(0);
+        if(nameNode == null) {
+            if(required) {
+                throw new ConfigurationParseError("Node " + nodeName + " not found!");
+            } else {
+                return null;
+            }
+        } else {
+            try {
+                return (ControlSocketServerModule) configuration.getModuleByName(nameNode.getTextContent());
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }

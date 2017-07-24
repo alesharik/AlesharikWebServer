@@ -38,7 +38,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  * Connection pool for client
  */
-class ControlSocketClientConnectionPool {
+final class ControlSocketClientConnectionPool {
     private final ExecutorService executorService;
     private final SSLSocketFactory sslSocketFactory;
     private final CopyOnWriteArrayList<ControlSocketClientConnectionImpl> connections;

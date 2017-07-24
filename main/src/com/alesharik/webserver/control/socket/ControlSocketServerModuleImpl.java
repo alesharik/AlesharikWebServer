@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Prefixes({"[ControlSocket]", "[ControlSocketServer]"})
 @ThreadSafe
-public class ControlSocketServerModuleImpl implements ControlSocketServerModule {
+public final class ControlSocketServerModuleImpl implements ControlSocketServerModule {
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
 
     private final RWLock lock = new RWLock();
@@ -137,7 +137,7 @@ public class ControlSocketServerModuleImpl implements ControlSocketServerModule 
         KeyStore keyStore;
         try {
             keyStore = KeyStore.getInstance("JKS");
-            try (FileInputStream stream = new FileInputStream(keystoreFile);) {
+            try (FileInputStream stream = new FileInputStream(keystoreFile)) {
                 keyStore.load(stream, keystorePassword.toCharArray());
             }
 
