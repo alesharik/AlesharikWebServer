@@ -19,6 +19,9 @@
 package com.alesharik.webserver.api.server.wrapper.http;
 
 import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.api.cache.object.CachedObjectFactory;
+import com.alesharik.webserver.api.cache.object.Recyclable;
+import com.alesharik.webserver.api.cache.object.SmartCachedObjectFactory;
 import com.alesharik.webserver.api.server.wrapper.http.data.Cookie;
 import com.alesharik.webserver.api.server.wrapper.http.header.CookieHeader;
 import lombok.Getter;
@@ -34,7 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("WeakerAccess")
-public class Request {//TODO how about caching instances?
+public class Request implements Recyclable {
     protected Cookie[] cookies;
 
     @Getter
@@ -201,8 +204,37 @@ public class Request {//TODO how about caching instances?
         return secure;
     }
 
+    @Override
+    public void recycle() {
+        cookies = new Cookie[0];
+        method = null;
+        httpVersion = null;
+        body = new byte[0];
+        parameters.clear();
+        rawUri = null;
+        remote = null;
+        local = null;
+        secure = false;
+        uri = null;
+        headers = new String[0];
+        headerMap.clear();
+    }
+
     public static final class Builder extends Request {
-        private Builder(String firstLine) {
+        private static final CachedObjectFactory<Builder> factory = new SmartCachedObjectFactory<>(Builder::new);
+
+        private Builder() {
+        }
+
+        public static Builder start(String firstLine) {
+            return factory.getInstance().parse(firstLine);
+        }
+
+        public static void delete(Builder builder) {
+            factory.putInstance(builder);
+        }
+
+        private Builder parse(String firstLine) {
             String[] startLine = firstLine.split(" ");
             this.method = Method.valueOf(startLine[0]);
             if(startLine[1].contains("://")) {
@@ -211,10 +243,7 @@ public class Request {//TODO how about caching instances?
                 this.rawUri = startLine[1];
             }
             this.httpVersion = HttpVersion.getValue(startLine[2]);
-        }
-
-        public static Builder start(String firstLine) {
-            return new Builder(firstLine);
+            return this;
         }
 
         public Builder withHeaders(String headers) {

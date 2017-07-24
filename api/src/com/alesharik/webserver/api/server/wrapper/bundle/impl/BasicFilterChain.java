@@ -48,7 +48,7 @@ public class BasicFilterChain implements FilterChain {
     @Nonnull
     @Override
     public Response handleRequest(Request request, HttpHandler[] httpHandlers) {
-        Response response = new Response();
+        Response response = Response.getResponse();
         for(Filter filter : filters) {
             if(!filter.accept(request, response))
                 return response;

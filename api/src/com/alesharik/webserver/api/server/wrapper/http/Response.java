@@ -18,6 +18,9 @@
 
 package com.alesharik.webserver.api.server.wrapper.http;
 
+import com.alesharik.webserver.api.cache.object.CachedObjectFactory;
+import com.alesharik.webserver.api.cache.object.Recyclable;
+import com.alesharik.webserver.api.cache.object.SmartCachedObjectFactory;
 import com.alesharik.webserver.api.server.wrapper.http.data.ContentType;
 import com.alesharik.webserver.api.server.wrapper.http.data.Cookie;
 import com.alesharik.webserver.api.server.wrapper.http.data.MimeType;
@@ -37,7 +40,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 @SuppressWarnings("unchecked")
-public class Response {
+public class Response implements Recyclable {
+    private static final CachedObjectFactory<Response> factory = new SmartCachedObjectFactory<>(Response::new);
+
     public static final Charset CHARSET = Charset.forName("ISO-8859-1");
 
     protected HttpStatus status;
@@ -49,17 +54,30 @@ public class Response {
 
     protected final Set<Cookie> cookies = new CopyOnWriteArraySet<>();
     @Getter
-    protected final long creationTime = System.currentTimeMillis();
+    protected long creationTime = System.currentTimeMillis();
 
     /**
      * 0 - is Content-Length header set
      */
     protected final BitSet marks = new BitSet(8);
 
-    public Response() {
+    private Response() {
         buffer = new OutputBuffer();
         writer = new EncodedWriter(buffer, Charsets.UTF8_CHARSET);
         status = HttpStatus.NOT_IMPLEMENTED_501;
+    }
+
+    public static Response getResponse() {
+        Response instance = factory.getInstance();
+        instance.buffer = new OutputBuffer();
+        instance.writer = new EncodedWriter(instance.buffer, Charsets.UTF8_CHARSET);
+        instance.status = HttpStatus.NOT_IMPLEMENTED_501;
+        instance.creationTime = System.currentTimeMillis();
+        return instance;
+    }
+
+    public static void delete(Response response) {
+        factory.putInstance(response);
     }
 
     public void respond(HttpStatus status) {
@@ -157,5 +175,18 @@ public class Response {
 
     public void addCookie(Cookie cookie) {
         cookies.add(cookie);
+    }
+
+    @Override
+    public void recycle() {
+        status = null;
+        version = HttpVersion.HTTP_1_1;
+        headers.clear();
+        cookies.clear();
+        buffer = null;
+        writer = null;
+        status = null;
+        creationTime = -1;
+        marks.clear();
     }
 }

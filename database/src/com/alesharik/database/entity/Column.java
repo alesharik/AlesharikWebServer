@@ -56,5 +56,5 @@ public @interface Column {
 
     boolean foreignKey() default false;
 
-    String refTable() default "";
+    String refTable() default "";//TODO USE ARRAYS AND REFTABLES UUID-FIRST-SECOND(MANY-TO-MANY TABLE )
 }
