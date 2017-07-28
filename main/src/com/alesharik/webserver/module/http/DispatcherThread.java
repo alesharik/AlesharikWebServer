@@ -23,6 +23,7 @@ import com.alesharik.webserver.api.server.wrapper.http.HttpVersion;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
 import com.alesharik.webserver.api.server.wrapper.http.header.ObjectHeader;
+import com.alesharik.webserver.api.server.wrapper.server.CloseSocketException;
 import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
 import com.alesharik.webserver.api.server.wrapper.server.HttpRequestHandler;
 import com.alesharik.webserver.api.server.wrapper.server.Sender;
@@ -30,12 +31,12 @@ import com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper;
 import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import javax.net.ssl.SSLSocket;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -89,6 +90,12 @@ final class DispatcherThread extends Thread {
                 Iterator<SelectionKey> iterator = keys.iterator();
                 while(iterator.hasNext()) {
                     SelectionKey key = iterator.next();
+
+                    if(!key.isValid()) {
+                        iterator.remove();
+                        continue;
+                    }
+
                     if(key.isAcceptable()) {
                         SocketProvider.ServerSocketWrapper attachment = (SocketProvider.ServerSocketWrapper) key.attachment();
                         SocketChannel socket = attachment.getServerSocket().accept();
@@ -102,10 +109,12 @@ final class DispatcherThread extends Thread {
                         socketChannel.register(selector, SelectionKey.OP_READ, new Session(socket.socket(), httpHandler, executorPool, httpServerStatistics, attachment.getSocketManager()));
                     } else if(key.isReadable()) {
                         Session socket = (Session) key.attachment();
+                        if(socket.isClosed())
+                            key.cancel();
                         processSession(socket);
                     }
-                    iterator.remove();
                 }
+                keys.clear();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -113,6 +122,9 @@ final class DispatcherThread extends Thread {
     }
 
     private void processSession(Session socket) {
+        if(socket.socket.isClosed())
+            return;
+
         executorPool.executeSelectorTask(() -> {
             try {
                 socket.read();
@@ -125,7 +137,6 @@ final class DispatcherThread extends Thread {
     private static final class Session implements Sender {
         private static final Charset CHARSET = Charset.forName("ISO-8859-1");
 
-        private final AtomicBoolean firstTry;
         private final Socket socket;
         private final ByteArrayOutputStream byteBuffer;
         private final AtomicReference<State> state;
@@ -134,6 +145,7 @@ final class DispatcherThread extends Thread {
         private final ExecutorPool pool;
         private final HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics;
         private final SocketProvider.SocketManager socketManager;
+        private final AtomicBoolean isReady = new AtomicBoolean(false);
 
         private Request.Builder builder;
 
@@ -148,28 +160,62 @@ final class DispatcherThread extends Thread {
             this.buffer = ByteBuffer.allocate(2048);
             this.serverStatistics.aliveConnections.incrementAndGet();
             this.serverStatistics.newConnection();
-            this.firstTry = new AtomicBoolean(true);
+
+            pool.executeSelectorTask(() -> {
+                try {
+                    socketManager.initSocket(socket.getChannel());
+                    isReady.set(true);
+                } catch (CloseSocketException e) {
+                    try {
+                        socket.close();
+                        socket.getChannel().close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            });
         }
 
-        public void read() throws IOException {
-            if(firstTry.getAndSet(false))
-                socketManager.initSocket(socket.getChannel());
+        public boolean isClosed() {
+            return socket.isClosed() || !socket.getChannel().isOpen();
+        }
 
+        public synchronized void read() throws IOException {
+            if(!isReady.get() || !socket.getChannel().isConnected())
+                return;
+            if(socket.isClosed() || !socket.getChannel().isOpen()) {
+                if(!socket.isClosed())
+                    socket.close();
+                if(socket.getChannel().isOpen())
+                    socket.getChannel().close();
+                return;
+            }
             if(state.get().readEnd())
                 return;
 
-            int nRead;
-            while((nRead = socket.getChannel().read(buffer)) == 2048) {
-                byteBuffer.write(socketManager.unwrap(buffer.array()));
-                buffer.clear();
+            if(socketManager.hasCustomRW(socket.getChannel())) {
+                try {
+                    byteBuffer.write(socketManager.read(socket.getChannel()));
+                    check();
+                } catch (CloseSocketException | ClosedChannelException e) {
+                    socketManager.listenSocketClose(socket.getChannel());
+                    socket.getChannel().close();
+                }
+            } else {
+                int nRead;
+                while((nRead = socket.getChannel().read(buffer)) == 2048) {
+                    byteBuffer.write(buffer.array());
+                    buffer.clear();
+                }
+                if(nRead == -1) {
+                    serverStatistics.aliveConnections.decrementAndGet();
+                    socketManager.listenSocketClose(socket.getChannel());
+                    socket.getChannel().close();
+                    check();
+                    return;
+                }
+                byteBuffer.write(buffer.array(), 0, nRead);
             }
-            if(nRead == -1) {
-                serverStatistics.aliveConnections.decrementAndGet();
-                socket.close();
-                check();
-                return;
-            }
-            byteBuffer.write(socketManager.unwrap(buffer.array()), 0, nRead);
             check();
         }
 
@@ -188,7 +234,7 @@ final class DispatcherThread extends Thread {
                 this.byteBuffer.reset();
                 this.byteBuffer.write(str.getBytes(CHARSET));
 
-                builder.withInfo(((InetSocketAddress) socket.getRemoteSocketAddress()), socket.getLocalAddress(), socket instanceof SSLSocket);
+                builder.withInfo(((InetSocketAddress) socket.getRemoteSocketAddress()), socket.getLocalAddress(), socketManager.isSecure(socket.getChannel()));
             }
             int headerEnd = str.indexOf("\r\n\r\n");
             if(headerEnd != -1 && !str.isEmpty() && this.state.get() == State.HEADERS) {
@@ -220,12 +266,11 @@ final class DispatcherThread extends Thread {
                     }
                 } else if(str.contains("\r\n\r\n")) {
                     int index = str.indexOf("\r\n\r\n");
-                    if(index != 0) {
+                    if(index != -1) {
 //                        if(builder.containsHeader(""))//TODO use Content-Type!
 //                            builder.withBody(str.substring(0, index).getBytes());
                         str = str.substring(index + 4);
                     }
-                    this.state.set(State.ALL);
                     this.byteBuffer.reset();
                     this.byteBuffer.write(str.getBytes(CHARSET));
                     publish();
@@ -244,26 +289,43 @@ final class DispatcherThread extends Thread {
          * @param request ignored
          */
         @Override
-        public void send(Request request, Response response) {
+        public synchronized void send(Request request, Response response) {
+            if(socket.isClosed())
+                return;
+
             SocketChannel channel = socket.getChannel();
             byte[] res = response.toByteArray();
-            ByteBuffer byteBuffer = ByteBuffer.wrap(socketManager.wrap(res));
-            int nSend = 0;
-            int count = 0;
-            try {
-                while((nSend += channel.write(byteBuffer)) < res.length) {
-                    count++;
-                    if(count > 10) {
-                        System.err.println("SocketChannel to " + socket.getRemoteSocketAddress().toString() + " has problems! Try #" + count);
+            if(socketManager.hasCustomRW(socket.getChannel())) {
+                try {
+                    socketManager.write(socket.getChannel(), res);
+                } catch (CloseSocketException e) {
+                    try {
+                        socketManager.listenSocketClose(socket.getChannel());
+                        socket.getChannel().close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
                     }
                 }
-                socket.getOutputStream().flush();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } else {
+                ByteBuffer byteBuffer = ByteBuffer.wrap(res);
+                int nSend = 0;
+                int count = 0;
+                try {
+                    while((nSend += channel.write(byteBuffer)) < res.length) {
+                        count++;
+                        if(count > 10) {
+                            System.err.println("SocketChannel to " + socket.getRemoteSocketAddress().toString() + " has problems! Try #" + count);
+                        }
+                    }
+                    socket.getOutputStream().flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             if(((request.getHttpVersion() == HttpVersion.HTTP_1_0 || request.getHttpVersion() == HttpVersion.HTTP_0_9) && !request.containsHeader("Connection: keep-alive")) || request.containsHeader("Connection: close")) {
                 try {
-                    socket.close();
+                    socketManager.listenSocketClose(socket.getChannel());
+                    socket.getChannel().close();
                     serverStatistics.aliveConnections.decrementAndGet();
                 } catch (IOException e) {
                     e.printStackTrace();

@@ -67,21 +67,15 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
     @Override
     public T getInstance() {
         suppliedObjects.measure(1);
-        long lock = stampedLock.readLock();
+        long lock = stampedLock.writeLock();//Prevent non-fair sync
         try {
             if(cache.size() > 0) {
-                long writeLock = stampedLock.tryConvertToWriteLock(lock);
-                if(!stampedLock.validate(writeLock)) {
-                    stampedLock.unlockRead(lock);
-                    lock = stampedLock.writeLock();
-                } else
-                    lock = writeLock;
                 retrievedObjects.measure(1);
                 tryOptimise();
                 return cache.remove(0);
             }
         } finally {
-            stampedLock.unlock(lock);
+            stampedLock.unlockWrite(lock);
         }
         createdObjects.measure(1);
         return factory.newInstance();

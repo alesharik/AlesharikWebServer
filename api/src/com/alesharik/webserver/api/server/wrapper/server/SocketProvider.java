@@ -34,6 +34,10 @@ public interface SocketProvider {
      */
     void registerSelector(Selector selector);
 
+    default void setExecutorPool(ExecutorPool executorPool) {
+
+    }
+
     @AllArgsConstructor
     @Getter
     class ServerSocketWrapper {
@@ -54,12 +58,23 @@ public interface SocketProvider {
         default void initSocket(SocketChannel socketChannel) {
         }
 
-        default byte[] wrap(byte[] arr) {
-            return arr;
+        default byte[] read(SocketChannel socketChannel) {
+            return new byte[0];
         }
 
-        default byte[] unwrap(byte[] arr) {
-            return arr;
+        default void write(SocketChannel socketChannel, byte[] data) {
+        }
+
+        default boolean hasCustomRW(SocketChannel socketChannel) {
+            return false;
+        }
+
+        default void listenSocketClose(SocketChannel socketChannel) {
+
+        }
+
+        default boolean isSecure(SocketChannel socketChannel) {
+            return false;
         }
     }
 }

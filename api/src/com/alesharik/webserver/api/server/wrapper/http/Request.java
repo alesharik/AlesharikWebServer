@@ -229,7 +229,7 @@ public class Request implements Recyclable {
         }
 
         private Builder parse(String firstLine) {
-            String[] startLine = firstLine.split(" ");
+            String[] startLine = firstLine.replaceAll("\u0000", "").split(" ");
             this.method = Method.valueOf(startLine[0]);
             if(startLine[1].contains("://")) {
                 this.rawUri = startLine[1].replaceFirst(".*://.[^/]+", "");

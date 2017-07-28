@@ -141,6 +141,7 @@ public final class HttpServerModuleImpl implements HttpServerModule {
             }
             Element config = getXmlElement("configuration", element, false);
 
+            wrapper.setExecutorPool(executorPool);
             wrapper.parseConfig(config);
 
             wrappers.add(wrapper);

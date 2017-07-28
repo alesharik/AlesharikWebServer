@@ -61,3 +61,6 @@
 /pom.xml
 /api/pom.xml
 /main/pom.xml
+/keycert.cert
+/keystore.keystore
+/store.truststore

@@ -61,7 +61,7 @@ public class Response implements Recyclable {
      */
     protected final BitSet marks = new BitSet(8);
 
-    private Response() {
+    protected Response() {
         buffer = new OutputBuffer();
         writer = new EncodedWriter(buffer, Charsets.UTF8_CHARSET);
         status = HttpStatus.NOT_IMPLEMENTED_501;

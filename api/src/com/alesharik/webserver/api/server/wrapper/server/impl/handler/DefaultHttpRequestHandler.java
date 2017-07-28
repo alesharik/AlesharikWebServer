@@ -91,7 +91,7 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
             try {
                 chain = bundle.getRouter().route(request, bundle.getFilterChains());
             } catch (Exception e) {
-                Response response = new Response();
+                Response response = Response.getResponse();
                 bundle.getErrorHandler().handleException(e, request, response, ErrorHandler.Pool.SELECTOR);
                 sender.send(request, response);
                 return;
@@ -115,7 +115,7 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
             try {
                 response = chain.handleRequest(request, handlers);
             } catch (Exception e) {
-                response = new Response();
+                response = Response.getResponse();
                 errorHandler.handleException(e, request, response, ErrorHandler.Pool.WORKER);
             } finally {
                 sender.send(request, response);

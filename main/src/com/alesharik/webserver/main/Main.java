@@ -110,6 +110,7 @@ public class Main {
                 }
             }
         } catch (ConfigurationParseError e) {
+            e.printStackTrace();
             System.err.println("Configuration error occurs! Stopping...");
             shutdown();
         } catch (Error e) {
