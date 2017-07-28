@@ -337,7 +337,8 @@ final class DispatcherThread extends Thread {
             serverStatistics.addResponseTimeAvg(System.currentTimeMillis() - response.getCreationTime());
 
             Response.delete(response);
-            Request.Builder.delete((Request.Builder) request);
+            if(request instanceof Request.Builder)
+                Request.Builder.delete((Request.Builder) request);
         }
 
         enum State {
