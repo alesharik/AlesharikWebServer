@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Iterator;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -202,5 +203,15 @@ public class ByteOffHeapVectorTest {
     @Test
     public void getElementSizeTest() throws Exception {
         assertEquals(array.getElementSize(), 1L);
+    }
+
+    @Test
+    public void writeTest() throws Exception {
+        byte[] test = new byte[24];
+        new Random(1).nextBytes(test);
+        address = array.write(address, test, 0, 18);
+        for(int i = 5, j = 0; i < 18 + 5; i++, j++) {
+            assertEquals(test[j], array.get(address, i));
+        }
     }
 }

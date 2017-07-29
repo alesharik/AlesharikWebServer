@@ -136,6 +136,21 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
         }
     }
 
+    public long write(long arr, byte[] buf, int off, int length) {
+        if(off < 0 || length < 0)
+            throw new IllegalArgumentException();
+
+        long reqLen = length - off;
+        if(buf.length < reqLen)
+            throw new IllegalArgumentException();
+
+        long len = size(arr);
+        long addr = checkBounds(arr, len + reqLen);
+        unsafe.copyMemory(buf, BYTE_ARRAY_BASE_OFFSET + off, null, addr + META_SIZE + len, reqLen);
+        unsafe.putLong(addr + BASE_FIELD_SIZE, len + reqLen);
+        return addr;
+    }
+
     @Override
     protected long getElementSize() {
         return 1L; //sizeof(byte)
