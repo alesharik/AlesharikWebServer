@@ -76,8 +76,8 @@ dependencies {
     compile group: 'org.openjdk.jcstress', name: 'jcstress-core', version: '0.3'
 
     compile files("${System.properties['java.home']}/../lib/tools.jar")
-//    compile files('one-nio/one-nio.jar')
-    compile group: 'ru.odnoklassniki', name: 'one-nio', version: '1.0'
+    compile files('one-nio/one-nio.jar')
+//    compile group: 'ru.odnoklassniki', name: 'one-nio', version: '1.0'
 }
 
 task checkDirs {
