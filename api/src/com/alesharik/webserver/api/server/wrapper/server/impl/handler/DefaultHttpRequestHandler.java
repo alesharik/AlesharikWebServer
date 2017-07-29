@@ -43,6 +43,7 @@ import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandler;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerBundle;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
+import com.alesharik.webserver.api.server.wrapper.server.BatchingRunnableTask;
 import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
 import com.alesharik.webserver.api.server.wrapper.server.HttpRequestHandler;
 import com.alesharik.webserver.api.server.wrapper.server.Sender;
@@ -67,7 +68,7 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
     }
 
     @AllArgsConstructor
-    private static final class BundleSelectTask implements Runnable {
+    private static final class BundleSelectTask implements BatchingRunnableTask<Object> {
         private final Set<HttpHandlerBundle> bundles;
         private final Request request;
         private final ExecutorPool executorPool;
@@ -99,10 +100,17 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
 
             executorPool.executeWorkerTask(new HandleTask(sender, chain, request, bundle.getErrorHandler(), bundle.getHttpHandlers()));
         }
+
+        private final Object key = new Object();
+
+        @Override
+        public Object getKey() {
+            return key;
+        }
     }
 
     @AllArgsConstructor
-    private static final class HandleTask implements Runnable {
+    private static final class HandleTask implements BatchingRunnableTask<Object> {
         private final Sender sender;
         private final FilterChain chain;
         private final Request request;
@@ -120,6 +128,13 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
             } finally {
                 sender.send(request, response);
             }
+        }
+
+        private final Object key = new Object();
+
+        @Override
+        public Object getKey() {
+            return key;
         }
     }
 }

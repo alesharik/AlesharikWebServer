@@ -230,6 +230,7 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
 
             @Override
             public void initSocket(SocketChannel socketChannel) {
+                SSLEngine engine = null;
                 try {
 
 
@@ -241,7 +242,7 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
 //                        }
 
 
-                    SSLEngine engine = sslContext.createSSLEngine(((InetSocketAddress) socketChannel.getRemoteAddress()).getHostName(), ((InetSocketAddress) socketChannel.getRemoteAddress()).getPort());
+                    engine = sslContext.createSSLEngine(((InetSocketAddress) socketChannel.getRemoteAddress()).getHostName(), ((InetSocketAddress) socketChannel.getRemoteAddress()).getPort());
 //                    engine.set(true);
                     engine.setUseClientMode(false);
                     engine.setWantClientAuth(true);
@@ -250,9 +251,19 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
                     value.doHandshake();
                     if(value.isSecure())
                         engines.put(socketChannel.socket(), value);
-                } catch (IOException e) {
+                } catch (ClosedChannelException e) {
                     try {
-                        System.err.println("SSL connection failed! Remote host " + socketChannel.getRemoteAddress().toString());
+                        socketChannel.close();
+                    } catch (IOException e1) {
+                        //Ok
+                    }
+                } catch (IOException e) {
+                    if(engine == null) {
+                        e.printStackTrace();
+                        return;
+                    }
+                    try {
+                        System.err.println("SSL connection failed! Remote host " + engine.getPeerHost() + ':' + engine.getPeerPort());
                         socketChannel.close();
                     } catch (IOException e1) {
                         e1.printStackTrace();
@@ -274,7 +285,7 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
                     EngineWrapper.Result result;
                     do {
                         result = wrapper.receiveData(byteBuffer);
-                        byteArrayOutputStream.write(result.buffer.array());
+                        byteArrayOutputStream.write(result.buffer.array(), 0, result.buffer.remaining());
                         byteBuffer = result.buffer;
                         byteBuffer.clear();
                     } while(result.result.bytesProduced() == byteBuffer.capacity());
@@ -518,6 +529,7 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
                         tmp.flip();
                         r = wrapAndSend(tmp, true);
                     } while(r.result.getStatus() != SSLEngineResult.Status.CLOSED && r.result.bytesProduced() > 0);
+                    Result.delete(r);
                     engine.closeOutbound();
                     try {
                         engine.closeInbound();

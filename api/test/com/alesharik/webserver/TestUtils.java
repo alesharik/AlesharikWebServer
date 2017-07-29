@@ -23,6 +23,7 @@ import com.alesharik.webserver.api.server.wrapper.http.HttpVersion;
 import com.alesharik.webserver.api.server.wrapper.http.Method;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
+import com.alesharik.webserver.api.server.wrapper.server.BatchingRunnableTask;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Constructor;
@@ -119,7 +120,7 @@ public final class TestUtils {
     /**
      * Simply executes {@link Thread#sleep(long)} in executor
      */
-    public static final class WaitTask implements Runnable {
+    public static final class WaitTask implements BatchingRunnableTask<Object> {
         private final long time;
 
         /**
@@ -136,6 +137,11 @@ public final class TestUtils {
             } catch (InterruptedException e) {
                 //Ok :(
             }
+        }
+
+        @Override
+        public Object getKey() {
+            return new Object();
         }
     }
 }

@@ -19,12 +19,14 @@
 package com.alesharik.webserver.api.server.wrapper.server.impl.executor;
 
 import com.alesharik.webserver.TestUtils;
+import com.alesharik.webserver.api.server.wrapper.server.BatchingCallableTask;
+import com.alesharik.webserver.api.server.wrapper.server.BatchingForkJoinTask;
+import com.alesharik.webserver.api.server.wrapper.server.BatchingRunnableTask;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.PrintStream;
-import java.util.concurrent.ForkJoinTask;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -84,14 +86,37 @@ public class SeparatedExecutorPoolTest {
         executorPool.start();
         assertTrue(executorPool.isRunning());
 
-        Runnable runnable = mock(Runnable.class);
+        BatchingRunnableTask runnable = mock(BatchingRunnableTask.class);
+        when(runnable.getKey()).thenReturn(new Object());
         Object checker = new Object();
 
         executorPool.executeWorkerTask(runnable);
         executorPool.executeSelectorTask(runnable);
 
-        assertEquals(checker, executorPool.submitSelectorTask(ForkJoinTask.adapt(runnable, checker)).get());
-        assertEquals(checker, executorPool.submitWorkerTask(ForkJoinTask.adapt(runnable, checker)).get());
+        assertEquals(checker, executorPool.submitSelectorTask(BatchingForkJoinTask.wrap(new BatchingCallableTask<Object, Object>() {
+            @Override
+            public Object getKey() {
+                return new Object();
+            }
+
+            @Override
+            public Object call() throws Exception {
+                runnable.run();
+                return checker;
+            }
+        })).get());
+        assertEquals(checker, executorPool.submitWorkerTask(BatchingForkJoinTask.wrap(new BatchingCallableTask<Object, Object>() {
+            @Override
+            public Object getKey() {
+                return new Object();
+            }
+
+            @Override
+            public Object call() throws Exception {
+                runnable.run();
+                return checker;
+            }
+        })).get());
 
         Thread.sleep(100);
 
@@ -115,14 +140,37 @@ public class SeparatedExecutorPoolTest {
         executorPool.start();
         assertTrue(executorPool.isRunning());
 
-        Runnable runnable = mock(Runnable.class);
+        BatchingRunnableTask runnable = mock(BatchingRunnableTask.class);
+        when(runnable.getKey()).thenReturn(new Object());
         Object checker = new Object();
 
         executorPool.executeWorkerTask(runnable);
         executorPool.executeSelectorTask(runnable);
 
-        assertEquals(checker, executorPool.submitSelectorTask(ForkJoinTask.adapt(runnable, checker)).get());
-        assertEquals(checker, executorPool.submitWorkerTask(ForkJoinTask.adapt(runnable, checker)).get());
+        assertEquals(checker, executorPool.submitSelectorTask(BatchingForkJoinTask.wrap(new BatchingCallableTask<Object, Object>() {
+            @Override
+            public Object getKey() {
+                return new Object();
+            }
+
+            @Override
+            public Object call() throws Exception {
+                runnable.run();
+                return checker;
+            }
+        })).get());
+        assertEquals(checker, executorPool.submitWorkerTask(BatchingForkJoinTask.wrap(new BatchingCallableTask<Object, Object>() {
+            @Override
+            public Object getKey() {
+                return new Object();
+            }
+
+            @Override
+            public Object call() throws Exception {
+                runnable.run();
+                return checker;
+            }
+        })).get());
 
         Thread.sleep(100);
 

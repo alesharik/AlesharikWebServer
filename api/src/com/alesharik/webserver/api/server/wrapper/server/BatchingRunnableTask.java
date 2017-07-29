@@ -16,24 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.server.wrapper.server.mx;
+package com.alesharik.webserver.api.server.wrapper.server;
 
-public interface ExecutorPoolMXBean {
-    int getSelectorPoolThreadCount();
-
-    int getSelectorPoolAliveThreadCount();
-
-    int getWorkerPoolThreadCount();
-
-    int getWorkerPoolAliveThreadCount();
-
-    long getSelectorPoolTaskCount();
-
-    long getWorkerPoolTaskCount();
-
-    ThreadGroup getThreadGroup();
-
-    boolean batchingSupported();
-
-    long maxBatchQueueSize();
+public interface BatchingRunnableTask<K> extends BatchingTask<K>, Runnable {
 }

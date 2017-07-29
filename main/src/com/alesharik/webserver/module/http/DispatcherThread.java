@@ -18,11 +18,13 @@
 
 package com.alesharik.webserver.module.http;
 
+import com.alesharik.webserver.api.memory.impl.ByteOffHeapVector;
 import com.alesharik.webserver.api.server.wrapper.http.HeaderManager;
 import com.alesharik.webserver.api.server.wrapper.http.HttpVersion;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
 import com.alesharik.webserver.api.server.wrapper.http.header.ObjectHeader;
+import com.alesharik.webserver.api.server.wrapper.server.BatchingRunnableTask;
 import com.alesharik.webserver.api.server.wrapper.server.CloseSocketException;
 import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
 import com.alesharik.webserver.api.server.wrapper.server.HttpRequestHandler;
@@ -30,8 +32,8 @@ import com.alesharik.webserver.api.server.wrapper.server.Sender;
 import com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper;
 import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import sun.misc.Cleaner;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -76,6 +78,7 @@ final class DispatcherThread extends Thread {
         if(!wrapper.isRunning())
             return;
         wrapper.registerSelector(selector);
+        selector.wakeup();
     }
 
     @Override
@@ -111,34 +114,45 @@ final class DispatcherThread extends Thread {
                         Session socket = (Session) key.attachment();
                         if(socket.isClosed())
                             key.cancel();
+                        if(!socket.isReady.get())
+                            continue;
                         processSession(socket);
                     }
                 }
                 keys.clear();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }
+        System.err.println("Dispatcher stop!");
     }
 
     private void processSession(Session socket) {
         if(socket.socket.isClosed())
             return;
 
-        executorPool.executeSelectorTask(() -> {
-            try {
-                socket.read();
-            } catch (IOException e) {
-                e.printStackTrace();
+        executorPool.executeSelectorTask(new BatchingRunnableTask<Socket>() {
+            @Override
+            public Socket getKey() {
+                return socket.socket;
+            }
+
+            @Override
+            public void run() {
+                try {
+                    socket.read();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
 
     private static final class Session implements Sender {
+        private static final ByteOffHeapVector vector = ByteOffHeapVector.instance();
         private static final Charset CHARSET = Charset.forName("ISO-8859-1");
 
         private final Socket socket;
-        private final ByteArrayOutputStream byteBuffer;
         private final AtomicReference<State> state;
         private final ByteBuffer buffer;
         private final HttpRequestHandler requestHandler;
@@ -148,6 +162,7 @@ final class DispatcherThread extends Thread {
         private final AtomicBoolean isReady = new AtomicBoolean(false);
 
         private Request.Builder builder;
+        private volatile long byteBuffer;
 
         public Session(Socket socket, HttpRequestHandler requestHandler, ExecutorPool pool, HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics, SocketProvider.SocketManager socketManager) {
             this.socket = socket;
@@ -155,22 +170,32 @@ final class DispatcherThread extends Thread {
             this.pool = pool;
             this.serverStatistics = serverStatistics;
             this.socketManager = socketManager;
-            this.byteBuffer = new ByteArrayOutputStream();
+            this.byteBuffer = vector.allocate();
+            Cleaner.create(this, () -> vector.free(this.byteBuffer));
+
             this.state = new AtomicReference<>(State.NOTHING);
             this.buffer = ByteBuffer.allocate(2048);
             this.serverStatistics.aliveConnections.incrementAndGet();
             this.serverStatistics.newConnection();
 
-            pool.executeSelectorTask(() -> {
-                try {
-                    socketManager.initSocket(socket.getChannel());
-                    isReady.set(true);
-                } catch (CloseSocketException e) {
+            pool.executeSelectorTask(new BatchingRunnableTask<Socket>() {
+                @Override
+                public Socket getKey() {
+                    return socket;
+                }
+
+                @Override
+                public void run() {
                     try {
-                        socket.close();
-                        socket.getChannel().close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
+                        socketManager.initSocket(socket.getChannel());
+                        isReady.set(true);
+                    } catch (CloseSocketException e) {
+                        try {
+                            socket.close();
+                            socket.getChannel().close();
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
                     }
                 }
             });
@@ -183,7 +208,8 @@ final class DispatcherThread extends Thread {
         public synchronized void read() throws IOException {
             if(!isReady.get() || !socket.getChannel().isConnected())
                 return;
-            if(socket.isClosed() || !socket.getChannel().isOpen()) {
+
+            if(isClosed()) {
                 if(!socket.isClosed())
                     socket.close();
                 if(socket.getChannel().isOpen())
@@ -195,7 +221,7 @@ final class DispatcherThread extends Thread {
 
             if(socketManager.hasCustomRW(socket.getChannel())) {
                 try {
-                    byteBuffer.write(socketManager.read(socket.getChannel()));
+                    byteBuffer = vector.write(byteBuffer, socketManager.read(socket.getChannel()));
                     check();
                 } catch (CloseSocketException | ClosedChannelException e) {
                     socketManager.listenSocketClose(socket.getChannel());
@@ -204,7 +230,7 @@ final class DispatcherThread extends Thread {
             } else {
                 int nRead;
                 while((nRead = socket.getChannel().read(buffer)) == 2048) {
-                    byteBuffer.write(buffer.array());
+                    byteBuffer = vector.write(byteBuffer, buffer.array());
                     buffer.clear();
                 }
                 if(nRead == -1) {
@@ -214,14 +240,17 @@ final class DispatcherThread extends Thread {
                     check();
                     return;
                 }
-                byteBuffer.write(buffer.array(), 0, nRead);
+                byteBuffer = vector.write(byteBuffer, buffer.array(), 0, nRead);
             }
             check();
         }
 
         @SuppressFBWarnings("DM_DEFAULT_ENCODING")//FindBugs error
         private void check() throws IOException {
-            String str = new String(byteBuffer.toByteArray(), CHARSET);
+            if(vector.size(byteBuffer) == 0)
+                return;
+
+            String str = new String(vector.toByteArray(byteBuffer), CHARSET);
             while(str.startsWith("\r\n"))
                 str = str.replaceFirst("\r\n", "");
             if(builder == null || this.state.get() == State.NOTHING) { //Parse first line
@@ -231,8 +260,9 @@ final class DispatcherThread extends Thread {
                 builder = Request.Builder.start(str.substring(0, firstLine));
                 this.state.set(State.HEADERS);
                 str = str.substring(firstLine);
-                this.byteBuffer.reset();
-                this.byteBuffer.write(str.getBytes(CHARSET));
+
+                vector.clear(byteBuffer);
+                this.byteBuffer = vector.fromByteArray(str.getBytes(CHARSET));
 
                 builder.withInfo(((InetSocketAddress) socket.getRemoteSocketAddress()), socket.getLocalAddress(), socketManager.isSecure(socket.getChannel()));
             }
@@ -241,8 +271,8 @@ final class DispatcherThread extends Thread {
                 builder.withHeaders(str.substring(0, headerEnd));
                 str = str.substring(headerEnd);
                 this.state.set(State.ALL);
-                this.byteBuffer.reset();
-                this.byteBuffer.write(str.getBytes(CHARSET));
+                vector.clear(byteBuffer);
+                this.byteBuffer = vector.fromByteArray(str.getBytes(CHARSET));
             }
             if(this.state.get() == State.ALL) { //Parse body
                 if(socket.isClosed()) {
@@ -252,16 +282,16 @@ final class DispatcherThread extends Thread {
                 if(builder.containsHeader("Content-Length")) {//ALL REQUESTS WITH MESSAGE BODY MUST CONTAINS VALID Content-Length HEADER
                     @SuppressWarnings("unchecked")
                     long length = builder.getHeader(HeaderManager.getHeaderByName("Content-Length", ObjectHeader.class), Long.class);
-                    if(byteBuffer.size() >= length) {
-                        long last = byteBuffer.size() - length;
-                        byte[] bytes = byteBuffer.toByteArray();
+                    if(vector.size(byteBuffer) >= length) {
+                        long last = vector.size(byteBuffer) - length;
+                        byte[] bytes = vector.toByteArray(byteBuffer);
                         if(length > Integer.MAX_VALUE)
                             System.err.println("Skipping bytes from " + socket.getRemoteSocketAddress().toString());
                         byte[] bodyBytes = new byte[(int) length];
                         System.arraycopy(bytes, 0, bodyBytes, 0, (int) length);
                         builder.withBody(bodyBytes);
-                        byteBuffer.reset();
-                        byteBuffer.write(bytes, (int) length, (int) last);
+                        vector.clear(byteBuffer);
+                        vector.write(byteBuffer, bytes, (int) length, (int) last);
                         publish();
                     }
                 } else if(str.contains("\r\n\r\n")) {
@@ -271,8 +301,8 @@ final class DispatcherThread extends Thread {
 //                            builder.withBody(str.substring(0, index).getBytes());
                         str = str.substring(index + 4);
                     }
-                    this.byteBuffer.reset();
-                    this.byteBuffer.write(str.getBytes(CHARSET));
+                    vector.clear(byteBuffer);
+                    this.byteBuffer = vector.fromByteArray(str.getBytes(CHARSET));
                     publish();
                 }
             }
@@ -295,50 +325,61 @@ final class DispatcherThread extends Thread {
 
             SocketChannel channel = socket.getChannel();
             byte[] res = response.toByteArray();
-            if(socketManager.hasCustomRW(socket.getChannel())) {
-                try {
-                    socketManager.write(socket.getChannel(), res);
-                } catch (CloseSocketException e) {
-                    try {
-                        socketManager.listenSocketClose(socket.getChannel());
-                        socket.getChannel().close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
+            pool.executeSelectorTask(new BatchingRunnableTask<Socket>() {
+                @Override
+                public Socket getKey() {
+                    return socket;
                 }
-            } else {
-                ByteBuffer byteBuffer = ByteBuffer.wrap(res);
-                int nSend = 0;
-                int count = 0;
-                try {
-                    while((nSend += channel.write(byteBuffer)) < res.length) {
-                        count++;
-                        if(count > 10) {
-                            System.err.println("SocketChannel to " + socket.getRemoteSocketAddress().toString() + " has problems! Try #" + count);
+
+                @Override
+                public void run() {
+                    if(socketManager.hasCustomRW(socket.getChannel())) {
+                        try {
+                            socketManager.write(socket.getChannel(), res);
+                        } catch (CloseSocketException e) {
+                            try {
+                                socketManager.listenSocketClose(socket.getChannel());
+                                socket.getChannel().close();
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                    } else {
+                        ByteBuffer byteBuffer = ByteBuffer.wrap(res);
+                        int nSend = 0;
+                        int count = 0;
+                        try {
+                            while((nSend += channel.write(byteBuffer)) < res.length) {
+                                count++;
+                                if(count > 10) {
+                                    System.err.println("SocketChannel to " + socket.getRemoteSocketAddress().toString() + " has problems! Try #" + count);
+                                }
+                            }
+                            socket.getOutputStream().flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
-                    socket.getOutputStream().flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    if(((request.getHttpVersion() == HttpVersion.HTTP_1_0 || request.getHttpVersion() == HttpVersion.HTTP_0_9) && !request.containsHeader("Connection: keep-alive")) || request.containsHeader("Connection: close")) {
+                        try {
+                            socketManager.listenSocketClose(socket.getChannel());
+                            socket.getChannel().close();
+                            serverStatistics.aliveConnections.decrementAndGet();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    serverStatistics.addResponseTimeAvg(System.currentTimeMillis() - response.getCreationTime());
+
+                    Response.delete(response);
+                    if(request instanceof Request.Builder)
+                        Request.Builder.delete((Request.Builder) request);
                 }
-            }
-            if(((request.getHttpVersion() == HttpVersion.HTTP_1_0 || request.getHttpVersion() == HttpVersion.HTTP_0_9) && !request.containsHeader("Connection: keep-alive")) || request.containsHeader("Connection: close")) {
-                try {
-                    socketManager.listenSocketClose(socket.getChannel());
-                    socket.getChannel().close();
-                    serverStatistics.aliveConnections.decrementAndGet();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            });
+
             if(response.getResponseCode() > 499 && response.getResponseCode() < 600)
                 serverStatistics.newError();
-
-            serverStatistics.addResponseTimeAvg(System.currentTimeMillis() - response.getCreationTime());
-
-            Response.delete(response);
-            if(request instanceof Request.Builder)
-                Request.Builder.delete((Request.Builder) request);
         }
 
         enum State {

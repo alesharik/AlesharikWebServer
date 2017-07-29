@@ -23,7 +23,6 @@ import com.alesharik.webserver.configuration.SubModule;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 
 /**
@@ -37,11 +36,11 @@ import java.util.concurrent.Future;
  */
 @ThreadSafe
 public interface ExecutorPool extends ExecutorPoolMXBean, SubModule {
-    <T> Future<T> submitSelectorTask(@Nonnull ForkJoinTask<T> task);
+    <T, K> Future<T> submitSelectorTask(@Nonnull BatchingForkJoinTask<K, T> task);
 
-    void executeSelectorTask(@Nonnull Runnable task);
+    void executeSelectorTask(@Nonnull BatchingRunnableTask task);
 
-    <T> Future<T> submitWorkerTask(@Nonnull ForkJoinTask<T> task);
+    <T, K> Future<T> submitWorkerTask(@Nonnull BatchingForkJoinTask<K, T> task);
 
-    void executeWorkerTask(@Nonnull Runnable task);
+    void executeWorkerTask(@Nonnull BatchingRunnableTask task);
 }
