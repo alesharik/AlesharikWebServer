@@ -136,6 +136,10 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
         }
     }
 
+    public long write(long arr, byte[] buf) {
+        return write(arr, buf, 0, buf.length);
+    }
+
     public long write(long arr, byte[] buf, int off, int length) {
         if(off < 0 || length < 0)
             throw new IllegalArgumentException();

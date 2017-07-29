@@ -209,8 +209,18 @@ public class ByteOffHeapVectorTest {
     public void writeTest() throws Exception {
         byte[] test = new byte[24];
         new Random(1).nextBytes(test);
-        address = array.write(address, test, 0, 18);
-        for(int i = 5, j = 0; i < 18 + 5; i++, j++) {
+        address = array.write(address, test, 1, 18);
+        for(int i = 5, j = 0; i < 17 + 5; i++, j++) {
+            assertEquals(test[j + 1], array.get(address, i));
+        }
+    }
+
+    @Test
+    public void basicWriteTest() throws Exception {
+        byte[] test = new byte[24];
+        new Random(1).nextBytes(test);
+        address = array.write(address, test);
+        for(int i = 5, j = 0; i < 24 + 5; i++, j++) {
             assertEquals(test[j], array.get(address, i));
         }
     }
