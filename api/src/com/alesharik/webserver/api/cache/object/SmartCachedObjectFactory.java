@@ -21,6 +21,7 @@ package com.alesharik.webserver.api.cache.object;
 import com.alesharik.webserver.api.statistics.FuzzyTimeCountStatistics;
 import com.alesharik.webserver.api.statistics.TimeCountStatistics;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -82,7 +83,9 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
     }
 
     @Override
-    public void putInstance(T i) {
+    public void putInstance(@Nullable T i) {
+        if(i == null)
+            return;
         long lock = stampedLock.readLock();
         try {
             if(cache.size() <= currentLimit.get()) {

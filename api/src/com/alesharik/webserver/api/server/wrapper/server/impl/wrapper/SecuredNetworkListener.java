@@ -233,17 +233,7 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
                 SSLEngine engine = null;
                 try {
 
-
-//                    while(!socketChannel.finishConnect())
-//                        try {
-//                            Thread.sleep(1);
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
-
-
                     engine = sslContext.createSSLEngine(((InetSocketAddress) socketChannel.getRemoteAddress()).getHostName(), ((InetSocketAddress) socketChannel.getRemoteAddress()).getPort());
-//                    engine.set(true);
                     engine.setUseClientMode(false);
                     engine.setWantClientAuth(true);
                     EngineWrapper value = new EngineWrapper(socketChannel, engine);
@@ -289,7 +279,7 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
                         byteBuffer = result.buffer;
                         byteBuffer.clear();
                     } while(result.result.bytesProduced() == byteBuffer.capacity());
-
+                    EngineWrapper.Result.delete(result);
                     return byteArrayOutputStream.toByteArray();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -319,7 +309,7 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
 
                 EngineWrapper engineWrapper = engines.get(socketChannel.socket());
                 try {
-                    engineWrapper.sendData(toSend);
+                    EngineWrapper.Result.delete(engineWrapper.sendData(toSend));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -516,6 +506,8 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
                                 break;
                         }
                         status = result == null ? engine.getHandshakeStatus() : result.result.getHandshakeStatus();
+                        if(result != null)
+                            Result.delete(result);
                     }
                     secure = status != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING;
                 }
