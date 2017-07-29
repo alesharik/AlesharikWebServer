@@ -155,6 +155,10 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
         return addr;
     }
 
+    public void clear(long addr) {
+        unsafe.putLong(addr + BASE_FIELD_SIZE, 0);//Set size
+    }
+
     @Override
     protected long getElementSize() {
         return 1L; //sizeof(byte)

@@ -207,7 +207,7 @@ public abstract class OffHeapVectorBase {
     protected final long checkBounds(long address, long next) {
         long max = getMax(address);
         if(next >= max) {
-            address = resize(address, max + RESIZE_DELTA);
+            address = resize(address, Math.max(max + RESIZE_DELTA, next + RESIZE_DELTA));
         }
         return address;
     }

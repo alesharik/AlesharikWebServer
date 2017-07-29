@@ -224,4 +224,22 @@ public class ByteOffHeapVectorTest {
             assertEquals(test[j], array.get(address, i));
         }
     }
+
+    @Test
+    public void testBigHeap() throws Exception {
+        for(int i = 0; i < 1_048_576; i++) {
+            address = array.add(address, (byte) i);
+        }
+    }
+
+    @Test
+    public void testErrorResizeMoreThanMax() throws Exception {
+        for(int i = 0; i < 1_048_576; i++) {
+            address = array.add(address, (byte) i);
+        }
+        byte[] arr = array.toByteArray(address);
+        address = array.write(address, arr);
+
+        array.clear(address);
+    }
 }
