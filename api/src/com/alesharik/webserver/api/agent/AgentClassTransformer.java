@@ -54,8 +54,8 @@ final class AgentClassTransformer implements ClassFileTransformer {
     @SuppressFBWarnings("DM_EXIT")
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        try {
-            if(className == null || loader == null || className.toLowerCase().contains("nashorn") || className.toLowerCase().startsWith("org/apache/".toLowerCase())) {
+        try {//FIXME!
+            if(className == null || loader == null || className.toLowerCase().contains("bytebuddy") || className.toLowerCase().contains("sun") || className.toLowerCase().contains("javafx") || className.toLowerCase().contains("nashorn") || className.toLowerCase().startsWith("org/apache/".toLowerCase())) {
                 return null;
             }
             byte[] first = classfileBuffer;
@@ -63,7 +63,10 @@ final class AgentClassTransformer implements ClassFileTransformer {
             if(transformers != null) {
                 for(MethodHolder transformer : transformers) {
                     try {
-                        classfileBuffer = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+                        byte[] invoke = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+                        if(invoke == null)
+                            continue;
+                        classfileBuffer = invoke;
                     } catch (Throwable throwable) {
                         throwable.printStackTrace();
                     }
@@ -71,7 +74,10 @@ final class AgentClassTransformer implements ClassFileTransformer {
             }
             for(MethodHolder transformer : allTransformers) {
                 try {
-                    classfileBuffer = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+                    byte[] invoke = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
+                    if(invoke == null)
+                        continue;
+                    classfileBuffer = invoke;
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
                 }
