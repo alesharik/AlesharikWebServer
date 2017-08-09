@@ -353,4 +353,32 @@ public class XmlHelper {
             return Integer.parseInt(nameNode.getTextContent());
         }
     }
+
+    /**
+     * Return module form xml config
+     *
+     * @param nodeName name of holder node
+     * @param config   config node
+     * @param required if true, throw {@link ConfigurationParseError} if node not found
+     * @param <T>      module type
+     * @return null if required == false and value not found, overwise T instance
+     */
+    @SuppressWarnings("unchecked")
+    @Nullable
+    public static <T extends Module> T getModule(String nodeName, Element config, boolean required) {
+        Node nameNode = config.getElementsByTagName(nodeName).item(0);
+        if(nameNode == null) {
+            if(required) {
+                throw new ConfigurationParseError("Node " + nodeName + " not found!");
+            } else {
+                return null;
+            }
+        } else {
+            try {
+                return (T) configuration.getModuleByName(nameNode.getTextContent());
+            } catch (ClassCastException e) {
+                throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
+            }
+        }
+    }
 }
