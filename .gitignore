@@ -64,3 +64,16 @@
 /keycert.cert
 /keystore.keystore
 /store.truststore
+/cert.p12
+/server.crt
+/server.csr
+/server.key
+/server.orig.key
+/trustore.truststore
+/dashboard/yarn.lock
+/dashboard/node_modules
+/dashboard/dist
+/api/deploy
+/api/build
+/serverDashboard/output-audio6.mp4
+/serverDashboard/output-audio6.wav
