@@ -20,6 +20,7 @@ package com.alesharik.webserver.configuration;
 
 import com.alesharik.webserver.api.agent.Agent;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
+import com.alesharik.webserver.logger.Debug;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import org.w3c.dom.Document;
@@ -123,6 +124,10 @@ public class Configurator {
             } catch (IOException e) {
                 throw new ConfigurationParseError(e);
             }
+
+            Node debugNode = logger.getElementsByTagName("debug").item(0);
+            if(debugNode != null && Boolean.parseBoolean(debugNode.getTextContent()))
+                Debug.enable();
         }
         Logger.setupLogger(logFile, listenerThreadQueueCapacity);
         //====================End logger setup====================\\

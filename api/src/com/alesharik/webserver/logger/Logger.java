@@ -113,7 +113,7 @@ public final class Logger {
      * @param depth   caller class stack depth
      */
     @SuppressWarnings("unchecked")
-    private static void logMessageUnsafe(String message, int depth) {
+    static void logMessageUnsafe(String message, int depth) {
         messageQueue.add(new Message("", message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1)));
 
         synchronized (loggerThread.synchronizerLock) {
@@ -130,7 +130,7 @@ public final class Logger {
      * @param depth    caller class stack depth
      */
     @SuppressWarnings("unchecked")
-    private static void logMessageUnsafe(String prefixes, String message, int depth) {
+    static void logMessageUnsafe(String prefixes, String message, int depth) {
         messageQueue.add(new Message(prefixes, message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1)));
 
         synchronized (loggerThread.synchronizerLock) {
@@ -145,7 +145,7 @@ public final class Logger {
      * @param depth     caller class stack depth
      * @throws LoggerNotConfiguredException if logger not already configured
      */
-    private static void logThrowable(Throwable throwable, int depth) {
+    static void logThrowable(Throwable throwable, int depth) {
         checkState();
 
         depth++;
@@ -164,7 +164,7 @@ public final class Logger {
      * @param depth     caller class stack depth
      * @throws LoggerNotConfiguredException if logger not already configured
      */
-    private static void logThrowable(String prefixes, Throwable throwable, int depth) {
+    static void logThrowable(String prefixes, Throwable throwable, int depth) {
         checkState();
 
         depth++;
@@ -183,7 +183,7 @@ public final class Logger {
      * @param textFormatter the text formatter
      * @throws LoggerNotConfiguredException if logger not already configured
      */
-    private static void logThrowable(Throwable throwable, int depth, TextFormatter textFormatter) {
+    static void logThrowable(Throwable throwable, int depth, TextFormatter textFormatter) {
         checkState();
 
         depth++;
@@ -203,7 +203,7 @@ public final class Logger {
      * @param textFormatter the text formatter
      * @throws LoggerNotConfiguredException if logger not already configured
      */
-    private static void logThrowable(Throwable throwable, int depth, TextFormatter textFormatter, String... prefixes) {
+    static void logThrowable(Throwable throwable, int depth, TextFormatter textFormatter, String... prefixes) {
         checkState();
 
         depth++;
