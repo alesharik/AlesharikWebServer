@@ -29,6 +29,7 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.main.console.ConsoleCommand;
 import com.alesharik.webserver.main.console.ConsoleCommandManager;
+import com.alesharik.webserver.main.console.impl.PluginConsoleCommand;
 import com.alesharik.webserver.module.server.ControlServerModule;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -57,6 +58,7 @@ public class Main {
         try {
             configuration = new ConfigurationImpl();
             XmlHelper.setConfiguration(configuration);
+            PluginConsoleCommand.init((ConfigurationImpl) configuration);
 
             configurator = new Configurator(CONFIG, configuration, PluginManagerImpl.class);
             configurator.parse();

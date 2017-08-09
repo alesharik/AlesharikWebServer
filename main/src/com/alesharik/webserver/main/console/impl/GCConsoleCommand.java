@@ -23,7 +23,7 @@ import com.alesharik.webserver.main.console.ConsoleCommand;
 import javax.annotation.Nonnull;
 import java.io.PrintStream;
 
-public class GCConsoleCommand implements ConsoleCommand {
+public final class GCConsoleCommand implements ConsoleCommand {
     @Nonnull
     @Override
     public String getName() {

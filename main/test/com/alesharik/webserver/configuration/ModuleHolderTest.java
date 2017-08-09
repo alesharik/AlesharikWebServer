@@ -31,7 +31,7 @@ public class ModuleHolderTest {
     public void setUp() throws Exception {
         Module module = mock(Module.class);
         when(module.getName()).thenReturn("test");
-        moduleHolder = new ConfigurationImpl.ModuleHolder(module, "test");
+        moduleHolder = new ConfigurationImpl.ModuleHolder(module, "test", config);
     }
 
     @Test

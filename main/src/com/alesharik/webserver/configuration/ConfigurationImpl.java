@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.configuration;
 
+import com.alesharik.webserver.api.misc.Triple;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import lombok.EqualsAndHashCode;
@@ -29,9 +30,11 @@ import org.w3c.dom.NodeList;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.stream.Collectors;
 
 @Prefixes("[Configuration]")
 public final class ConfigurationImpl implements Configuration {
@@ -74,12 +77,12 @@ public final class ConfigurationImpl implements Configuration {
                 if(!isInit || !this.modules.containsKey(type)) {
                     ModuleHolder moduleHolder = new ModuleHolder(module, name);
                     this.modules.put(name, moduleHolder);
-                    moduleHolder.getModule().parse(configNode);
+                    moduleHolder.parse(configNode);
                     Logger.log("Module " + name + " with type " + type + " successfully loaded!");
                 } else {
                     ModuleHolder moduleHolder = this.modules.get(name);
                     moduleHolder.uncheck();
-                    moduleHolder.getModule().reload(configNode);
+                    moduleHolder.reload(configNode);
                     Logger.log("Module " + name + " with type " + type + " successfully reloaded!");
                 }
             }
@@ -156,6 +159,26 @@ public final class ConfigurationImpl implements Configuration {
         });
     }
 
+    public Set<Triple<Module, String, Boolean>> getModules() {
+        return modules.entrySet().stream()
+                .map(moduleHolder -> Triple.immutable(moduleHolder.getValue().module, moduleHolder.getKey(), moduleHolder.getValue().isRunning()))
+                .collect(Collectors.toSet());
+    }
+
+    public synchronized void reloadModule(String name) {
+        ModuleHolder moduleHolder = modules.get(name);
+        try {
+            System.out.println("Reloading module " + name);
+            if(!moduleHolder.isRunning())
+                moduleHolder.start();
+            else
+                moduleHolder.reload();
+            System.out.println("Module " + name + " successfully reloaded");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @ToString
     @EqualsAndHashCode
     static final class ModuleHolder {
@@ -169,6 +192,7 @@ public final class ConfigurationImpl implements Configuration {
         private final Module module;
         @Getter
         private final String name;
+        private volatile Element config;
 
         private volatile int state;
 
@@ -176,6 +200,20 @@ public final class ConfigurationImpl implements Configuration {
             this.module = module;
             this.name = name;
             this.state = 0;
+        }
+
+        public void parse(Element element) {
+            config = element;
+            module.parse(element);
+        }
+
+        public void reload(Element element) {
+            config = element;
+            module.reload(element);
+        }
+
+        public void reload() {
+            module.reload(config);
         }
 
         public void start() {
