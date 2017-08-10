@@ -19,6 +19,7 @@
 package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.api.ServerInfo;
+import com.alesharik.webserver.api.agent.Agent;
 import com.alesharik.webserver.configuration.Configuration;
 import com.alesharik.webserver.configuration.ConfigurationImpl;
 import com.alesharik.webserver.configuration.Configurator;
@@ -52,8 +53,30 @@ public class Main {
     private static Configurator configurator;
     private static Configuration configuration;
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         preMain();
+
+        boolean noConfig = false;
+
+        for(String arg : args) {
+            switch (arg) {
+                case "--no-config":
+                    noConfig = true;
+                    break;
+            }
+        }
+
+        if(noConfig) {
+            Logger.setupLogger(File.createTempFile("AlesharikWebServer", "AWS"), 256);
+            System.err.println("Starting server in no-config mode...");
+            //noinspection StatementWithEmptyBody use spinlock here
+            while(Agent.isScanning()) {
+            }
+            System.err.println("Server running in no-config mode! Press enter to stop");
+            System.in.read();
+            System.err.println("Stopping server...");
+            return;
+        }
 
         try {
             configuration = new ConfigurationImpl();
