@@ -16,24 +16,17 @@
  *
  */
 
-package com.alesharik.database.entity;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.alesharik.database.exception;
 
 /**
- * All annotated {@link Entity} fields will be used for store entity in database. All columns, except primary key, are nullable by default.
- * Column nullability controlled by @{@link javax.annotation.Nonnull}/@{@link javax.annotation.Nullable} annotations.
+ * This exception means what something in database driver went wrong. This exception always has message
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Column {
-    /**
-     * Returns column name
-     *
-     * @return column name. If returning string is empty, field name will be taken as column name
-     */
-    String value() default "";
+public class DatabaseInternalException extends DatabaseException {
+    public DatabaseInternalException(String message) {
+        super(message);
+    }
+
+    public DatabaseInternalException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

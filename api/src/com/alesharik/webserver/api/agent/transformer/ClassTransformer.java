@@ -31,5 +31,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface ClassTransformer {
+public @interface ClassTransformer {//TODO add javassist scan for class annotations!
 }

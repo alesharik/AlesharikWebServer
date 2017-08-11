@@ -24,16 +24,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * All annotated {@link Entity} fields will be used for store entity in database. All columns, except primary key, are nullable by default.
- * Column nullability controlled by @{@link javax.annotation.Nonnull}/@{@link javax.annotation.Nullable} annotations.
+ * Annotated static factory method must have at least have 1 parameter({@link EntityManager} and return entity instance. It will create entity in database. All
+ * method code will be executed before database creation. Method must have only 1 return point and return new entity instance
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Column {
-    /**
-     * Returns column name
-     *
-     * @return column name. If returning string is empty, field name will be taken as column name
-     */
-    String value() default "";
+@Target(ElementType.CONSTRUCTOR)
+public @interface Creator {
 }

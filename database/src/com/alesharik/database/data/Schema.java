@@ -16,24 +16,22 @@
  *
  */
 
-package com.alesharik.database.entity;
+package com.alesharik.database.data;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import javax.annotation.Nullable;
 
-/**
- * All annotated {@link Entity} fields will be used for store entity in database. All columns, except primary key, are nullable by default.
- * Column nullability controlled by @{@link javax.annotation.Nonnull}/@{@link javax.annotation.Nullable} annotations.
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Column {
+public interface Schema {
     /**
-     * Returns column name
-     *
-     * @return column name. If returning string is empty, field name will be taken as column name
+     * Can cache tables
      */
-    String value() default "";
+    @Nullable
+    <T> Table<T> getTable(String name, boolean createIfNotExists, Class<T> entity);
+
+    boolean tableExists(String name);
+
+    String getOwner();
+
+    String getName();
+
+    void update();
 }

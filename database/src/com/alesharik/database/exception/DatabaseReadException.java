@@ -16,24 +16,28 @@
  *
  */
 
-package com.alesharik.database.entity;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.alesharik.database.exception;
 
 /**
- * All annotated {@link Entity} fields will be used for store entity in database. All columns, except primary key, are nullable by default.
- * Column nullability controlled by @{@link javax.annotation.Nonnull}/@{@link javax.annotation.Nullable} annotations.
+ * This exception is superclass for all database read exceptions
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Column {
-    /**
-     * Returns column name
-     *
-     * @return column name. If returning string is empty, field name will be taken as column name
-     */
-    String value() default "";
+public abstract class DatabaseReadException extends DatabaseException {
+    protected DatabaseReadException() {
+    }
+
+    protected DatabaseReadException(String message) {
+        super(message);
+    }
+
+    protected DatabaseReadException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    protected DatabaseReadException(Throwable cause) {
+        super(cause);
+    }
+
+    protected DatabaseReadException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

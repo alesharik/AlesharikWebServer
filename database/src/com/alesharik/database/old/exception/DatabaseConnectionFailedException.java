@@ -16,24 +16,20 @@
  *
  */
 
-package com.alesharik.database.entity;
+package com.alesharik.database.old.exception;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.sql.SQLException;
 
-/**
- * All annotated {@link Entity} fields will be used for store entity in database. All columns, except primary key, are nullable by default.
- * Column nullability controlled by @{@link javax.annotation.Nonnull}/@{@link javax.annotation.Nullable} annotations.
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Column {
-    /**
-     * Returns column name
-     *
-     * @return column name. If returning string is empty, field name will be taken as column name
-     */
-    String value() default "";
+public class DatabaseConnectionFailedException extends RuntimeException {
+    private static final long serialVersionUID = -2830389695393764495L;
+    private final SQLException cause;
+
+    public DatabaseConnectionFailedException(SQLException cause) {
+        this.cause = cause;
+    }
+
+    @Override
+    public synchronized Throwable getCause() {
+        return cause;
+    }
 }

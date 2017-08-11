@@ -16,24 +16,28 @@
  *
  */
 
-package com.alesharik.database.entity;
+package com.alesharik.database.entity.asm;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import lombok.Getter;
 
-/**
- * All annotated {@link Entity} fields will be used for store entity in database. All columns, except primary key, are nullable by default.
- * Column nullability controlled by @{@link javax.annotation.Nonnull}/@{@link javax.annotation.Nullable} annotations.
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Column {
-    /**
-     * Returns column name
-     *
-     * @return column name. If returning string is empty, field name will be taken as column name
-     */
-    String value() default "";
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+@Getter
+final class PreloadEntityDescription {
+    final String className;
+    final List<PreloadEntityColumn> columns;
+    final boolean lazy;
+    final boolean bridge;
+
+    PreloadEntityDescription(String className, boolean lazy, boolean bridge) {
+        this.className = className;
+        this.lazy = lazy;
+        this.bridge = bridge;
+        this.columns = new CopyOnWriteArrayList<>();
+    }
+
+    public EntityDescription build(Class<?> clazz) {
+        return new EntityDescription(clazz, columns, lazy, bridge);
+    }
 }

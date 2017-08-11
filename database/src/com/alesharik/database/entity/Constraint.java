@@ -24,16 +24,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * All annotated {@link Entity} fields will be used for store entity in database. All columns, except primary key, are nullable by default.
- * Column nullability controlled by @{@link javax.annotation.Nonnull}/@{@link javax.annotation.Nullable} annotations.
+ * This annotation represents check constraint
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Column {
+public @interface Constraint {
     /**
-     * Returns column name
-     *
-     * @return column name. If returning string is empty, field name will be taken as column name
+     * Check value (like <code>CHECK (val > 0)</code>
      */
-    String value() default "";
+    String value();
+
+    /**
+     * Optional constraint name
+     *
+     * @return name or empty string
+     */
+    String name() default "";
 }

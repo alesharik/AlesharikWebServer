@@ -18,164 +18,70 @@
 
 package com.alesharik.database;
 
-import com.alesharik.database.exception.DatabaseConnectionFailedException;
-import com.alesharik.database.exception.DatabaseExecutionException;
-import com.alesharik.database.proxy.TransactionProxyFactory;
-import com.alesharik.database.transaction.TransactionManager;
-import com.alesharik.database.transaction.TransactionManagerImpl;
-import com.alesharik.database.transaction.reflect.TransactionCallable;
-import com.alesharik.database.transaction.reflect.TransactionRunnable;
+import com.alesharik.database.data.Schema;
+import com.alesharik.database.driver.DatabaseDriver;
+import lombok.Getter;
 
-import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Savepoint;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * AlesharikWebServer Database API provides simply and fast Database EntityManager and Transaction API. For using real SQL you can get database connection and execute
- * all SQL requests with it
+ * WARNING! Database has many ways to do SQL injection, so DO NOT EXPOSE IT!
  */
 public class Database {
-    protected final String dbUrl;
-    protected final String user;
-    protected final String password;
-    protected final DBDriver dbDriver;
+    @Getter
+    protected final Connection connection;
+    protected final DatabaseDriver databaseDriver;
+    protected final AtomicBoolean transactional;
 
-    protected final boolean transactional;
-
-    protected volatile Connection connection;
-    protected volatile TransactionManagerImpl transactionManager;
-
-    public Database(String db, String user, String pass, DBDriver dbDriver, boolean transactional) {
-        this.dbUrl = db;
-        this.user = user;
-        this.password = pass;
-        this.dbDriver = dbDriver;
-        this.transactional = transactional;
+    protected Database(Connection connection, DatabaseDriver databaseDriver, boolean transactional) {
+        this.connection = connection;
+        this.databaseDriver = databaseDriver;
+        this.transactional = new AtomicBoolean(transactional);
+        this.databaseDriver.init(connection);
     }
 
-    public Database(String db, DBDriver dbDriver, boolean transactional) {
-        this.dbUrl = db;
-        this.dbDriver = dbDriver;
-        this.transactional = transactional;
-        this.user = null;
-        this.password = null;
+    public static Database newDatabase(Connection connection, DatabaseDriver databaseDriver, boolean transactional) {
+        return new Database(connection, databaseDriver, transactional);
     }
 
-    public void connect() {
-        try {
-            if(user == null && password == null)
-                connection = DriverManager.getConnection(dbUrl);
-            else
-                connection = DriverManager.getConnection(dbUrl, user, password);
-            dbDriver.setConnection(connection);
-            dbDriver.init();
-            if(transactional)
-                connection.setAutoCommit(false);
-            transactionManager = new TransactionManagerImpl(connection);
-        } catch (SQLException e) {
-            throw new DatabaseConnectionFailedException(e);
-        }
+    public static Database newDatabase(Connection connection, DatabaseDriver databaseDriver) throws SQLException {
+        return new Database(connection, databaseDriver, !connection.getAutoCommit());
     }
 
-    public void disconnect() {
-        checkDbInit();
-        try {
-            transactionManager.commitAll();
-            connection.close();
-            connection = null;
-            transactionManager = null;
-        } catch (SQLException e) {
-            throw new DatabaseConnectionFailedException(e);
-        }
+    public static Database newDatabase(String url, DatabaseDriver databaseDriver, boolean transactional) throws SQLException {
+        Connection connection = DriverManager.getConnection(url);
+        return new Database(connection, databaseDriver, transactional);
     }
 
-    private void checkDbInit() {
-        if(connection == null)
-            throw new IllegalStateException();
+    public static Database newDatabase(String url, String login, String password, DatabaseDriver databaseDriver, boolean transactional) throws SQLException {
+        Connection connection = DriverManager.getConnection(url, login, password);
+        return new Database(connection, databaseDriver, transactional);
+    }
+
+    public void setTransactional(boolean is) {
+        transactional.set(is);
+    }
+
+    public boolean isTransactional() {
+        return transactional.get();
     }
 
     public Schema[] getSchemas() {
-        try {
-            return dbDriver.getSchemas();
-        } catch (SQLException e) {
-            throw new DatabaseExecutionException(e);
-        }
+        return databaseDriver.getSchemas();
     }
 
     public Schema getSchema(String name, boolean createIfNotExists) {
-        try {
-            return dbDriver.getSchema(name, createIfNotExists);
-        } catch (SQLException e) {
-            throw new DatabaseExecutionException(e);
-        }
+        return databaseDriver.getSchema(name, createIfNotExists);
     }
 
-    public <T> Table<T> getTable(String name, Class<T> entity) {
-        return dbDriver.getTable(name, entity);
+    public String getCurrentUser() {
+        return databaseDriver.getCurrentUser();
     }
 
-    public <T> Table<T> createTable(String name, Class<T> e) {
-        return dbDriver.createTable(name, e);
-    }
-
-    public boolean executeTransaction(TransactionRunnable runnable) {
-        if(!transactional)
-            throw new IllegalStateException("Database is not transactional!");
-        Savepoint savepoint = null;
-        try {
-            savepoint = connection.setSavepoint();
-            runnable.run();
-            connection.commit();
-            return true;
-        } catch (Throwable e) {
-            if(savepoint != null)
-                try {
-                    connection.rollback(savepoint);
-                    connection.releaseSavepoint(savepoint);
-                } catch (SQLException e1) {
-                    throw new DatabaseExecutionException(e1);
-                }
-        }
-        return false;
-    }
-
-    @Nullable
-    public <V> V executeTransaction(TransactionCallable<V> callable) {
-        if(!transactional)
-            throw new IllegalStateException("Database is not transactional!");
-        Savepoint savepoint = null;
-        V result = null;
-        try {
-            savepoint = connection.setSavepoint();
-            result = callable.call();
-            connection.commit();
-        } catch (Throwable e) {
-            if(savepoint != null)
-                try {
-                    connection.rollback(savepoint);
-                    connection.releaseSavepoint(savepoint);
-                } catch (SQLException e1) {
-                    throw new DatabaseExecutionException(e1);
-                }
-        }
-        return result;
-    }
-
-    public TransactionManager getTransactionManager() {
-        if(!transactional)
-            throw new IllegalStateException();
-        return transactionManager;
-    }
-
-    public <T, R extends T> T wrapTransaction(Class<T> iface, R real) {
-        if(!transactional)
-            throw new IllegalStateException();
-        return TransactionProxyFactory.newTransactionProxy(iface, real, transactionManager);
-    }
-
-    public Connection getConnection() {
-        return connection;
-    }
+    public void update() {
+        databaseDriver.update();
+    }//TODO transactions!
 }

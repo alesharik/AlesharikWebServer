@@ -16,24 +16,26 @@
  *
  */
 
-package com.alesharik.database.entity;
+package com.alesharik.database.driver;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.alesharik.database.data.Schema;
+
+import java.sql.Connection;
 
 /**
- * All annotated {@link Entity} fields will be used for store entity in database. All columns, except primary key, are nullable by default.
- * Column nullability controlled by @{@link javax.annotation.Nonnull}/@{@link javax.annotation.Nullable} annotations.
+ * Driver can use caches for schemas
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Column {
+public interface DatabaseDriver {
+    void init(Connection connection);
+
     /**
-     * Returns column name
-     *
-     * @return column name. If returning string is empty, field name will be taken as column name
+     * Work with cache only allowed
      */
-    String value() default "";
+    Schema getSchema(String name, boolean createIfNotExists);
+
+    Schema[] getSchemas();
+
+    void update();
+
+    String getCurrentUser();
 }
