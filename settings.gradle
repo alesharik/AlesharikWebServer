@@ -1,5 +1,6 @@
-include 'api', 'main', 'database'
+include 'api', 'main', 'database', 'internals'
 rootProject.name = 'alesharikwebserver'
 project(':api').name = 'alesharikwebserver-api'
 project(':main').name = 'alesharikwebserver-main'
 project(':database').name = 'alesharikwebserver-database'
+project(':internals').name = 'alesharikwebserver-internals'

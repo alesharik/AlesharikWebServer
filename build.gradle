@@ -159,6 +159,6 @@ task prepareDeploy(dependsOn: [clean, generateStartScript, generateConfig, copyS
     println 'Take server at deploy folder'
 }
 
-task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload', ':alesharikwebserver-main:bintrayUpload', ':alesharikwebserver-database:bintrayUpload']) {}
+task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload', ':alesharikwebserver-main:bintrayUpload', ':alesharikwebserver-database:bintrayUpload', ':alesharikwebserver-internals:bintrayUpload']) {}
 
-task publishArtifacts(dependsOn: [':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-database:publishMavenJavaPublicationToMavenLocal']) {}
+task publishArtifacts(dependsOn: [':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-database:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-internals:publishMavenJavaPublicationToMavenLocal']) {}

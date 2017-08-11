@@ -77,6 +77,8 @@ dependencies {
 
     compile files("${System.properties['java.home']}/../lib/tools.jar")
     compile files('one-nio/one-nio.jar')
+
+    compile project(':alesharikwebserver-internals')
 //    compile group: 'ru.odnoklassniki', name: 'one-nio', version: '1.0'
 }
 

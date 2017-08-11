@@ -1,0 +1,49 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+buildDir = new File('./out/')
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src'
+        }
+    }
+    test {
+        java {
+            srcDirs 'test'
+        }
+    }
+}
+
+dependencies {
+    compile group: 'org.projectlombok', name: 'lombok', version: '1.16.10'
+}
+
+task packageJavadoc(type: Jar, dependsOn: javadoc) {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+task packageSources(type: Jar, dependsOn: classes) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId 'com.alesharik'
+            artifactId 'alesharikwebserver-database'
+            version '0.1'
+
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-internals.jar', classifier: 'src'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-internals-sources.jar', classifier: 'sources', extension: 'zip'
+            artifact source: buildDir.toString() + '/libs/alesharikwebserver-internals-javadoc.jar', classifier: 'javadoc', extension: 'zip'
+
+            from components.java
+        }
+    }
+}
+
+jar.dependsOn packageJavadoc
+jar.dependsOn packageSources
