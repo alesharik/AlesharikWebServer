@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Prefixes("[ReportingModule]")
 public final class ReportingModuleImpl implements ReportingModule {
     private static final int DEFAULT_THREAD_COUNT = 10;
-    private static final long DEFAULT_PERIOD = 1000; //1 sec //TODO fix it
+    private static final long DEFAULT_PERIOD = 1000; //1 sec
     private static final CopyOnWriteArrayList<Reporter> reporters = new CopyOnWriteArrayList<>();
 
     private static final AtomicLong idCounter = new AtomicLong(0);

@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.control;
 
-import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
+import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;

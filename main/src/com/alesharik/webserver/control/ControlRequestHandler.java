@@ -22,7 +22,7 @@ import com.alesharik.webserver.api.GrizzlyUtils;
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.fileManager.FileManager;
-import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
+import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.server.api.RequestHandler;

@@ -18,10 +18,13 @@
 
 package com.alesharik.database.driver.postgres;
 
+import com.alesharik.database.entity.EntityManager;
+import com.alesharik.database.entity.asm.EntityClassTransformer;
 import com.alesharik.database.entity.asm.EntityColumn;
 import com.alesharik.database.entity.asm.EntityDescription;
 import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.webserver.internals.ClassInstantiator;
+import com.alesharik.webserver.internals.FieldAccessor;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.w3c.dom.Node;
@@ -32,6 +35,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.ParameterizedType;
 import java.net.InetAddress;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -40,6 +44,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
+import java.util.Collection;
 import java.util.UUID;
 
 final class PostgresTypeTranslator {
@@ -49,6 +54,8 @@ final class PostgresTypeTranslator {
 
         String s = "";
         Class<?> clazz = column.getField().getType();
+        if(clazz.isAssignableFrom(Collection.class))
+            clazz = ((Class<?>) ((ParameterizedType) column.getField().getGenericType()).getActualTypeArguments()[0]);
         if(clazz == byte[].class || clazz == Byte[].class || clazz == Blob.class)
             s = "bytea";
         else if(clazz == short.class || clazz == Short.class)
@@ -97,6 +104,8 @@ final class PostgresTypeTranslator {
 
     private static Object readObject(ResultSet resultSet, EntityColumn column, String nameOverride) throws SQLException {
         Class<?> type = column.getField().getType();
+        if(type.isAssignableFrom(Collection.class))
+            type = ((Class<?>) ((ParameterizedType) column.getField().getGenericType()).getActualTypeArguments()[0]);
         if(type == short.class || type == Short.class) {
             return resultSet.getShort(nameOverride);
         } else if(type == int.class || type == Integer.class) {
@@ -159,8 +168,16 @@ final class PostgresTypeTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    public static <E> E parseEntity(ResultSet resultSet, EntityDescription description) throws SQLException {
+    public static <E> E parseEntity(ResultSet resultSet, EntityDescription description, EntityManager<E> entityManager) throws SQLException {
         E instance = (E) ClassInstantiator.instantiate(description.getClazz());
+        FieldAccessor.setField(instance, entityManager, EntityClassTransformer.ENTITY_MANAGER_FIELD_NAME);
+        if(description.isLazy() || description.isBridge()) {//Load only primary key
+            for(EntityColumn column : description.getPrimaryKey()) {
+                column.setValue(instance, readObject(resultSet, column));
+            }
+            return instance;
+        }
+
         for(EntityColumn column : description.getColumns()) {
             column.setValue(instance, readObject(resultSet, column));
         }

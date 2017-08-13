@@ -24,7 +24,7 @@ import com.alesharik.webserver.api.server.wrapper.server.HttpServer;
 import com.alesharik.webserver.control.AdminDataStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
-import com.alesharik.webserver.module.server.SecuredStoreModule;
+import com.alesharik.webserver.module.security.SecuredStoreModule;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.experimental.UtilityClass;
 import org.w3c.dom.Element;

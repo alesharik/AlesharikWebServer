@@ -19,6 +19,7 @@
 package com.alesharik.database.driver.postgres;
 
 import com.alesharik.database.data.EntityPreparedStatement;
+import com.alesharik.database.entity.EntityManager;
 import com.alesharik.database.entity.asm.EntityDescription;
 import com.alesharik.database.exception.DatabaseCloseSQLException;
 import com.alesharik.database.exception.DatabaseReadSQLException;
@@ -49,13 +50,15 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-class PostgresEntityPreparedStatement<E> implements EntityPreparedStatement<E> {
+final class PostgresEntityPreparedStatement<E> implements EntityPreparedStatement<E> {
     private final PreparedStatement wrapper;
     private final EntityDescription entityDescription;
+    private final EntityManager<E> entityManager;
 
-    public PostgresEntityPreparedStatement(PreparedStatement wrapper, EntityDescription entityDescription) {
+    public PostgresEntityPreparedStatement(PreparedStatement wrapper, EntityDescription entityDescription, EntityManager<E> entityManager) {
         this.wrapper = wrapper;
         this.entityDescription = entityDescription;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -66,7 +69,7 @@ class PostgresEntityPreparedStatement<E> implements EntityPreparedStatement<E> {
                 List<E> ret = new ArrayList<>();
                 resultSet = executeQuery();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription));
+                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, entityManager));
                 return ret;
             } catch (SQLException e) {
                 throw new DatabaseReadSQLException(e);

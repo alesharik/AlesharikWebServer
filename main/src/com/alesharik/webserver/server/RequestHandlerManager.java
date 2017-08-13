@@ -37,6 +37,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 @ClassPathScanner
 @UtilityClass
+@Deprecated
 public class RequestHandlerManager {
     private static final Set<RequestHandler> handlers = new CopyOnWriteArraySet<>();
 

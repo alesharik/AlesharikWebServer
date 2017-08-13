@@ -100,10 +100,7 @@ final class PostgresTable<E> implements Table<E> {
                     request.append(entityColumn.getColumnName());
                     request.append(' ');
                     if(entityColumn.isArray()) {
-                        String arrayTableName = getArrayTableName(name, schema, entityColumn);
-                        request.append(" uuid REFERENCES ").append(arrayTableName).append("(key) ON DELETE CASCADE ");
-                        ArrayTable arrayTable = ArrayTable.create(connection, arrayTableName, entityColumn, schema.getName() + name);
-                        arrays.put(entityColumn, arrayTable);
+                        request.append(" uuid UNIQUE ");
                     } else { //Normal column
                         request.append(PostgresTypeTranslator.getColumnType(entityColumn));
                         if(entityColumn.isForeign()) {
@@ -147,8 +144,15 @@ final class PostgresTable<E> implements Table<E> {
                 request.append(");");
                 statement = connection.prepareStatement(request.toString());
                 statement.executeUpdate();
-                for(EntityColumn entityColumn : entityDescription.getColumns())
-                    createIndex(connection, entityColumn, name);
+                for(EntityColumn entityColumn : entityDescription.getColumns()) {
+                    if(entityColumn.isArray()) {
+                        String arrayTableName = getArrayTableName(name, schema, entityColumn);
+                        ArrayTable arrayTable = ArrayTable.create(connection, arrayTableName, entityColumn, schema.getName() + '.' + name);
+                        arrays.put(entityColumn, arrayTable);
+                    } else if(entityColumn.isIndexed()) {
+                        createIndex(connection, entityColumn, schema.getName() + '.' + name);
+                    }
+                }
                 return new PostgresTable<>(connection, name, schema, entityDescription, arrays);
             } catch (SQLException e) {
                 throw new DatabaseStoreSQLException(e);
@@ -192,14 +196,14 @@ final class PostgresTable<E> implements Table<E> {
             try {
                 preparedStatement = connection.prepareStatement("SELECT * FROM " + getRealName() + " WHERE " + entityDescription.getWhereString());
                 int i = 1;
-                for(EntityColumn entityColumn : entityDescription.getColumns()) {
+                for(EntityColumn entityColumn : entityDescription.getPrimaryKey()) {
                     PostgresTypeTranslator.setObject(preparedStatement, i, entityColumn.getValue(select));
                     i++;
                 }
                 resultSet = preparedStatement.executeQuery();
                 if(!resultSet.next())
                     return null;
-                return PostgresTypeTranslator.parseEntity(resultSet, entityDescription);
+                return PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this);
             } catch (SQLException e) {
                 e.printStackTrace();
                 return null;
@@ -224,7 +228,7 @@ final class PostgresTable<E> implements Table<E> {
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription));
+                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -246,12 +250,13 @@ final class PostgresTable<E> implements Table<E> {
         ResultSet resultSet = null;
         try {
             try {
-                preparedStatement = connection.prepareStatement("SELECT * FROM " + getRealName() + " LIMIT ?");
-                preparedStatement.setInt(1, limit);
+                preparedStatement = connection.prepareStatement("SELECT * FROM " + getRealName() + (limit > 0 ? " LIMIT ?" : ""));
+                if(limit > 0)
+                    preparedStatement.setInt(1, limit);
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription));
+                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -273,12 +278,13 @@ final class PostgresTable<E> implements Table<E> {
         ResultSet resultSet = null;
         try {
             try {
-                preparedStatement = connection.prepareStatement("SELECT * FROM " + getRealName() + " LIMIT ? ORDER BY " + sortBy + (desc ? " DESC " : " ASC "));
-                preparedStatement.setInt(1, limit);
+                preparedStatement = connection.prepareStatement("SELECT * FROM " + getRealName() + (limit > 0 ? " LIMIT ?" : "") + " ORDER BY " + sortBy + (desc ? " DESC " : " ASC "));
+                if(limit > 0)
+                    preparedStatement.setInt(1, limit);
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription));
+                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -321,14 +327,17 @@ final class PostgresTable<E> implements Table<E> {
     }
 
     @Override
-    public void createEntity(E entity, EntityDescription description) {
+    public E createEntity(E entity, EntityDescription description) {
         PreparedStatement statement = null;
         try {
             try {
                 statement = connection.prepareStatement("INSERT INTO " + getRealName() + "(" + description.getColumnList() + ") VALUES (" + QuestionMarkGenerator.getQuestionMarks(description.getColumns().size()) + ")");
                 int i = 1;
                 for(EntityColumn entityColumn : description.getColumns()) {
-                    PostgresTypeTranslator.setObject(statement, i, entityColumn.getValue(entity));
+                    if(entityColumn.isArray())
+                        PostgresTypeTranslator.setObject(statement, i, UUID.randomUUID());
+                    else
+                        PostgresTypeTranslator.setObject(statement, i, entityColumn.getValue(entity));
                     i++;
                 }
                 statement.executeUpdate();
@@ -341,6 +350,7 @@ final class PostgresTable<E> implements Table<E> {
         } catch (SQLException e) {
             throw new DatabaseCloseSQLException(e);
         }
+        return entity;
     }
 
     @Override
@@ -436,7 +446,7 @@ final class PostgresTable<E> implements Table<E> {
     }
 
     private String getRealName() {
-        return schema.getName() + name;
+        return schema.getName() + '.' + name;
     }
 
     private static final class ArrayTable {
@@ -502,7 +512,7 @@ final class PostgresTable<E> implements Table<E> {
                         valueColumnAdding.append(column.isNullable() ? " NULL " : " NOT NULL ");
                     }
                     statement = connection.prepareStatement("CREATE TABLE " + name + "(" +
-                            "key uuid," +
+                            "key uuid REFERENCES " + parentTable + "(" + column.getColumnName() + ")," +
                             "value " + PostgresTypeTranslator.getColumnType(column) + ' ' + valueColumnAdding + ", " +
                             "PRIMARY KEY (key, value)" +
                             ")");
@@ -675,7 +685,7 @@ final class PostgresTable<E> implements Table<E> {
                     if(!resultSet.next())
                         throw new DatabaseInternalException("Array table not found!");
 
-                    return UUID.fromString(resultSet.getString(0));
+                    return UUID.fromString(resultSet.getString(1));
                 } catch (SQLException e) {
                     throw new DatabaseReadSQLException(e);
                 } finally {
@@ -731,7 +741,7 @@ final class PostgresTable<E> implements Table<E> {
                         if(!resultSet.next())
                             throw new DatabaseInternalException("Array table not found!");
 
-                        return UUID.fromString(resultSet.getString(0));
+                        return UUID.fromString(resultSet.getString(1));
                     } catch (SQLException e) {
                         throw new DatabaseReadSQLException(e);
                     } finally {
@@ -758,7 +768,7 @@ final class PostgresTable<E> implements Table<E> {
                         if(!resultSet.next())
                             throw new DatabaseInternalException("`SELECT count()` request returns nothing");
 
-                        return resultSet.getInt(0);
+                        return resultSet.getInt(1);
                     } catch (SQLException e) {
                         throw new DatabaseReadSQLException(e);
                     } finally {
@@ -785,7 +795,7 @@ final class PostgresTable<E> implements Table<E> {
                         if(!resultSet.next())
                             throw new DatabaseInternalException("`SELECT exists()` request returns nothing");
 
-                        return resultSet.getBoolean(0);
+                        return resultSet.getBoolean(1);
                     } catch (SQLException e) {
                         throw new DatabaseReadSQLException(e);
                     } finally {
@@ -813,7 +823,7 @@ final class PostgresTable<E> implements Table<E> {
                         if(!resultSet.next())
                             throw new DatabaseInternalException("`SELECT exists()` request returns nothing");
 
-                        return resultSet.getBoolean(0);
+                        return resultSet.getBoolean(1);
                     } catch (SQLException e) {
                         throw new DatabaseReadSQLException(e);
                     } finally {

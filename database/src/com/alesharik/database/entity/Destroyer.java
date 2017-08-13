@@ -27,6 +27,6 @@ import java.lang.annotation.Target;
  * Annotated non-static method must return void. Method will delete entity from database
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.CONSTRUCTOR)
+@Target(ElementType.METHOD)
 public @interface Destroyer {
 }

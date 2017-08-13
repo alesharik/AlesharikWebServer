@@ -24,6 +24,8 @@ import com.alesharik.database.exception.DatabaseCloseSQLException;
 import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.database.exception.DatabaseReadSQLException;
 import com.alesharik.database.exception.DatabaseStoreSQLException;
+import com.alesharik.database.transaction.TransactionManager;
+import lombok.Getter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,6 +47,8 @@ public final class PostgresDriver implements DatabaseDriver {
     private final List<Schema> schemas;
     private volatile Connection connection;
     private volatile String currentUser;
+    @Getter
+    private volatile TransactionManager transactionManager;
 
     public PostgresDriver() {
         schemas = new CopyOnWriteArrayList<>();
@@ -55,6 +59,11 @@ public final class PostgresDriver implements DatabaseDriver {
         this.connection = connection;
         updateSchemas();
         updateCurrentUser();
+        try {
+            updateTransactional(connection.getAutoCommit());
+        } catch (SQLException e) {
+            throw new DatabaseInternalException("Get auto commit failed", e);
+        }
     }
 
     @Override
@@ -88,13 +97,19 @@ public final class PostgresDriver implements DatabaseDriver {
         return currentUser;
     }
 
+    @Override
+    public void updateTransactional(boolean is) {
+        if(is)
+            transactionManager = new PostgresTransactionManager(connection);
+        else
+            transactionManager = null;
+    }
+
     private void createSchema(Schema schema) {
         PreparedStatement statement = null;
         try {
             try {
-                statement = connection.prepareStatement("CREATE SCHEMA ? AUTHORIZATION ?");
-                statement.setString(1, schema.getName());
-                statement.setString(2, schema.getOwner());
+                statement = connection.prepareStatement("CREATE SCHEMA " + schema.getName() + " AUTHORIZATION " + schema.getOwner());
                 statement.executeUpdate();
             } catch (SQLException e) {
                 throw new DatabaseStoreSQLException(e);
@@ -116,7 +131,7 @@ public final class PostgresDriver implements DatabaseDriver {
                 resultSet = statement.executeQuery();
                 if(!resultSet.next())
                     throw new DatabaseInternalException("`SELECT current_user` database request return 0 lines");
-                currentUser = resultSet.getString(0);
+                currentUser = resultSet.getString(1);
             } catch (SQLException e) {
                 throw new DatabaseReadSQLException(e);
             } finally {

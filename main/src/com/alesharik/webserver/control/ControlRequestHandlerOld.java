@@ -21,7 +21,7 @@ package com.alesharik.webserver.control;
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.fileManager.FileManager;
-import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
+import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
 import com.alesharik.webserver.server.api.RequestHandler;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.glassfish.grizzly.http.Cookie;

@@ -31,7 +31,7 @@ import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.main.console.ConsoleCommand;
 import com.alesharik.webserver.main.console.ConsoleCommandManager;
 import com.alesharik.webserver.main.console.impl.PluginConsoleCommand;
-import com.alesharik.webserver.module.server.ControlServerModule;
+import com.alesharik.webserver.module.security.ControlServerModule;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -88,7 +88,7 @@ public class Main {
 
             System.out.println("Server successfully loaded!");
 
-            Runtime.getRuntime().addShutdownHook(new Thread(Main::shutdownNow));
+            Runtime.getRuntime().addShutdownHook(new ShutdownThread());
 
             ConsoleOrBufferedReader consoleReader;
 
@@ -242,14 +242,39 @@ public class Main {
         return CONFIG;
     }
 
+    private static void shutdownInternal() {
+        Logger.log("Stopping...");
+        configurator.shutdown();
+        Agent.shutdown();
+        Logger.shutdown();
+    }
+
     public synchronized static void shutdown() {
         Logger.log("Stopping...");
         configurator.shutdown();
+        Agent.shutdown();
+        Logger.shutdown();
         System.exit(0);
     }
 
     public synchronized static void shutdownNow() {
+        Logger.log("Emergency stopping...");
         configurator.shutdownNow();
+        Agent.shutdown();
+        Logger.shutdown();
         System.exit(0);
+    }
+
+    private static final class ShutdownThread extends Thread {
+        public ShutdownThread() {
+            setDaemon(true);
+            setPriority(Thread.MAX_PRIORITY);
+            setName("ShutdownHandler");
+        }
+
+        @Override
+        public void run() {
+            shutdownInternal();
+        }
     }
 }

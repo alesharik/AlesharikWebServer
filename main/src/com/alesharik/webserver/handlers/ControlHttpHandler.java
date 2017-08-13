@@ -23,7 +23,7 @@ import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.control.ControlRequestHandler;
-import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
+import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.NamedLogger;
 import com.alesharik.webserver.logger.storing.WriteOnLogStoringStrategy;
@@ -43,6 +43,7 @@ import java.util.UUID;
 /**
  * This class used for handle http requests in control mode
  */
+@Deprecated
 public final class ControlHttpHandler extends HttpHandler {
     private final ControlRequestHandler requestHandler;
     private final FileManager fileManager;

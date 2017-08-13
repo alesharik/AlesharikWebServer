@@ -46,6 +46,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 
+@Deprecated
 public final class MainServer extends WebServer {
     private final ModularErrorPageGenerator errorPageGenerator;
     private HttpServer httpServer;

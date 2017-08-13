@@ -90,4 +90,8 @@ public final class Agent {
     public static boolean isScanning() {
         return !ClassPathScannerTransformer.isFree();
     }
+
+    public static void shutdown() {
+        ClassPathScannerTransformer.shutdown();
+    }
 }

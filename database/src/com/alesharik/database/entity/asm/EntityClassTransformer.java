@@ -50,6 +50,9 @@ import org.objectweb.asm.tree.ClassNode;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,7 +61,8 @@ import static org.objectweb.asm.Opcodes.*;
 @UtilityClass
 @ClassTransformer
 public class EntityClassTransformer {
-    static final String ENTITY_DESCRIPTION_FIELD_NAME = "_entity_description";
+    public static final String ENTITY_DESCRIPTION_FIELD_NAME = "_entity_description";
+    public static final String ENTITY_MANAGER_FIELD_NAME = "_entity_manager";
 
     private static final String ENTITY_ANNOTATION_DESCRIPTOR = Type.getDescriptor(Entity.class);
     private static final String LAZY_ANNOTATION_DESCRIPTOR = Type.getDescriptor(Lazy.class);
@@ -87,10 +91,14 @@ public class EntityClassTransformer {
                 return null;
 
 
-            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_FRAMES + ClassWriter.COMPUTE_MAXS);
+            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
             ClassVisitorImpl cv = new ClassVisitorImpl(classWriter, name, isLazy, isBridge);
             classNode.accept(cv);
-            return classWriter.toByteArray();
+            byte[] bytes = classWriter.toByteArray();
+            File f = new File("./test.class");
+            f.createNewFile();
+            Files.write(f.toPath(), bytes, StandardOpenOption.TRUNCATE_EXISTING);
+            return bytes;
         } catch (Exception e) {
             if(e.getCause() instanceof ClassNotFoundException) {
                 return null;
@@ -103,7 +111,6 @@ public class EntityClassTransformer {
 
     private static final class ClassVisitorImpl extends ClassVisitor {
         private static final Type BOOLEAN_OBJECT_TYPE = Type.getType(Boolean.class);
-        private static final String ENTITY_MANAGER_FIELD_NAME = "_entity_manager";
         private static final Type ENTITY_MANAGER_TYPE = Type.getType(EntityManager.class);
         private static final Type ENTITY_DESCRIPTION_TYPE = Type.getType(EntityDescription.class);
         private static final Method ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD;
@@ -137,11 +144,11 @@ public class EntityClassTransformer {
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
             if((access & ACC_STATIC) == ACC_STATIC && Type.getMethodDescriptor(Type.getObjectType(entityDescription.className), Type.getType(EntityManager.class)).equals(desc)) //Most likely factory method //TODO allow multiple args
-                return new FactoryMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), name, desc);
+                return new FactoryMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, desc);
             else if((access & ACC_STATIC) == 0) { //Can be getter/setter
                 if(name.startsWith("set")) {//Is setter
                     String n = name.substring("set".length());
-                    String fieldName = Character.toLowerCase(n.charAt(0)) + n.substring(1);
+                    String fieldName = Character.toLowerCase(n.charAt(0)) + (n.length() > 1 ? n.substring(1) : "");
                     return new SetterReplacer(super.visitMethod(access, name, desc, signature, exceptions), fieldName, fields.get(fieldName), entityDescription.className);
                 } else if((entityDescription.lazy || entityDescription.bridge) && isGetMethod(name, Type.getReturnType(desc))) { //Getters will be replaced only if entity is lazy or bridge, overwise all values will be fetched form database
                     String fieldName = extractFieldNameFromGetter(name, Type.getReturnType(desc));
@@ -149,21 +156,24 @@ public class EntityClassTransformer {
                         if(fieldName.isEmpty())
                             return super.visitMethod(access, name, desc, signature, exceptions);
 
-                        return new GetterLazyReplacer(super.visitMethod(access, name, desc, signature, exceptions), name, Type.getReturnType(desc), fieldName);
+                        return new GetterLazyReplacer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, Type.getReturnType(desc), fieldName);
                     } else
-                        return new GetterBridgeReplacer(super.visitMethod(access, name, desc, signature, exceptions), name, Type.getReturnType(desc), fieldName);
+                        return new GetterBridgeReplacer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, Type.getReturnType(desc), fieldName);
                 } else
-                    return new DestroyerMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), name);
+                    return new DestroyerMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className);
             }
             return super.visitMethod(access, name, desc, signature, exceptions);
         }
 
         private String extractFieldNameFromGetter(String name, Type desc) {
+            String s = "";
             if(name.startsWith("get"))
-                return name.substring("get".length());
+                s = name.substring("get".length());
             else if(isBoolean(desc) && name.startsWith("is"))
-                return name.substring("is".length());
-            return "";
+                s = name.substring("is".length());
+            else
+                return "";
+            return Character.toLowerCase(s.charAt(0)) + (s.length() > 1 ? s.substring(1) : "");
         }
 
         private boolean isGetMethod(String name, Type desc) {
@@ -178,7 +188,7 @@ public class EntityClassTransformer {
         public void visitEnd() {
             visitField(ACC_PRIVATE | ACC_TRANSIENT, ENTITY_MANAGER_FIELD_NAME, Type.getDescriptor(EntityManager.class), null, null);//Create entity manager field. It will be set in Creator method
             visitField(ACC_PRIVATE | ACC_STATIC | ACC_VOLATILE, ENTITY_DESCRIPTION_FIELD_NAME, Type.getDescriptor(EntityDescription.class), null, null);
-
+            EntityClassManager.addPreloadEntityDescription(entityDescription.className, entityDescription);
             super.visitEnd();
         }
 
@@ -286,7 +296,7 @@ public class EntityClassTransformer {
             public void visitInsn(int opcode) {
                 if(opcode == ARETURN && ok) {
                     int paramId = -1;
-                    int i = 1;
+                    int i = 0;
                     for(Type arg : args) {
                         if(arg.equals(ENTITY_MANAGER_TYPE)) {
                             paramId = i;
@@ -297,18 +307,17 @@ public class EntityClassTransformer {
                     if(paramId == -1)
                         throw new IllegalArgumentException("WAT!");
 
-                    //Stack: ret var
-                    visitVarInsn(ALOAD, paramId);//Stack: ret var, entity manager
-                    super.visitInsn(SWAP);//Stack: entity manager, ret var
-                    super.visitFieldInsn(GETSTATIC, internalName, ENTITY_DESCRIPTION_FIELD_NAME, ENTITY_DESCRIPTION_TYPE.getDescriptor());//Stack: entity manager, ret var, entity description
-                    super.visitInsn(DUP2);//Stack: entity manager, ret var, entity description, ret var, entity description
-                    visitMethodInsn(INVOKEVIRTUAL, ENTITY_MANAGER_TYPE.getInternalName(), ENTITY_CREATE_METHOD.getName(), ENTITY_CREATE_METHOD.getDescriptor(), true);//Stack: ret var, entity description
-                    super.visitInsn(POP);//Stack: ret var
-                    visitVarInsn(ALOAD, paramId);//Stack: ret var, entity manager
-                    super.visitInsn(DUP2);//Stack: ret var, entity manager, ret var, entity manager
+                    visitVarInsn(ALOAD, paramId);//ret var, Entity manager
+                    visitInsn(SWAP);//Entity manager, ret var
+                    super.visitFieldInsn(GETSTATIC, internalName, ENTITY_DESCRIPTION_FIELD_NAME, ENTITY_DESCRIPTION_TYPE.getDescriptor());//Entity manager, ret var, entity description
 
-                    visitFieldInsn(PUTFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, ENTITY_MANAGER_TYPE.getDescriptor());//Stack: ret var, entity manager
-                    super.visitInsn(POP);//Stack: ret var
+                    visitMethodInsn(INVOKEINTERFACE, ENTITY_MANAGER_TYPE.getInternalName(), ENTITY_CREATE_METHOD.getName(), ENTITY_CREATE_METHOD.getDescriptor(), true);//Stack: ret var
+                    visitInsn(DUP);//Stack: ret var, ret var
+                    visitTypeInsn(CHECKCAST, internalName);
+                    visitVarInsn(ALOAD, paramId);//Stack: ret var, ret var, entity manager
+
+                    visitFieldInsn(PUTFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, ENTITY_MANAGER_TYPE.getDescriptor());//Stack: ret var
+                    visitTypeInsn(CHECKCAST, internalName);
                     super.visitInsn(ARETURN);//Return
                 } else
                     super.visitInsn(opcode);
@@ -347,12 +356,14 @@ public class EntityClassTransformer {
             @Override
             public void visitInsn(int opcode) {
                 if(opcode == RETURN && ok) {
+                    visitVarInsn(ALOAD, 0);
                     visitFieldInsn(GETFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, Type.getDescriptor(EntityManager.class));
                     visitVarInsn(ALOAD, 0);
                     visitFieldInsn(GETSTATIC, internalName, ENTITY_DESCRIPTION_FIELD_NAME, ENTITY_DESCRIPTION_TYPE.getDescriptor());
 
-                    visitMethodInsn(INVOKEVIRTUAL, ENTITY_MANAGER_TYPE.getInternalName(), ENTITY_DELETE_METHOD.getName(), ENTITY_DELETE_METHOD.getDescriptor(), true);
+                    visitMethodInsn(INVOKEINTERFACE, ENTITY_MANAGER_TYPE.getInternalName(), ENTITY_DELETE_METHOD.getName(), ENTITY_DELETE_METHOD.getDescriptor(), true);
 
+                    visitVarInsn(ALOAD, 0);
                     visitInsn(ACONST_NULL);
                     visitFieldInsn(PUTFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, ENTITY_MANAGER_TYPE.getDescriptor());
                 }
@@ -382,30 +393,42 @@ public class EntityClassTransformer {
             @Override
             public void visitCode() {
                 Label next1 = new Label();
+                visitVarInsn(ALOAD, 0);
                 visitFieldInsn(GETFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, Type.getDescriptor(EntityManager.class));
                 visitJumpInsn(IFNONNULL, next1);
                 visitInsn(ACONST_NULL);
                 visitInsn(ARETURN);
 
                 visitLabel(next1);
+
                 Label loadedLabel = new Label();
+                visitVarInsn(ALOAD, 0);
                 visitFieldInsn(GETFIELD, internalName, fieldName, fieldType.getDescriptor());
                 visitJumpInsn(IFNONNULL, loadedLabel);
 
+                visitVarInsn(ALOAD, 0);
+
+                visitVarInsn(ALOAD, 0);
                 visitFieldInsn(GETFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, Type.getDescriptor(EntityManager.class));
                 visitVarInsn(ALOAD, 0);
                 visitLdcInsn(fieldName);
                 visitFieldInsn(GETSTATIC, internalName, ENTITY_DESCRIPTION_FIELD_NAME, ENTITY_DESCRIPTION_TYPE.getDescriptor());
 
-                visitMethodInsn(INVOKEVIRTUAL, ENTITY_MANAGER_TYPE.getInternalName(), ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD.getName(), ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD.getDescriptor(), true);
+                visitMethodInsn(INVOKEINTERFACE, ENTITY_MANAGER_TYPE.getInternalName(), ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD.getName(), ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD.getDescriptor(), true);
                 visitTypeInsn(CHECKCAST, fieldType.getInternalName());
-                visitInsn(DUP);
+                visitInsn(SWAP);
+                visitInsn(DUP2);
+                visitInsn(SWAP);
                 visitFieldInsn(PUTFIELD, internalName, fieldName, fieldType.getDescriptor());
+                visitInsn(POP);
                 visitInsn(ARETURN);
 
                 visitLabel(loadedLabel);
+                visitVarInsn(ALOAD, 0);
                 visitFieldInsn(GETFIELD, internalName, fieldName, fieldType.getDescriptor());
                 visitInsn(ARETURN);
+
+                visitEnd();
             }
         }
 
@@ -424,23 +447,27 @@ public class EntityClassTransformer {
             @Override
             public void visitCode() {
                 Label next1 = new Label();
+                visitVarInsn(ALOAD, 0);
                 visitFieldInsn(GETFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, Type.getDescriptor(EntityManager.class));
                 visitJumpInsn(IFNONNULL, next1);
                 visitInsn(ACONST_NULL);
                 visitInsn(ARETURN);
 
+                visitLabel(next1);
+
+                visitVarInsn(ALOAD, 0);
+
+                visitVarInsn(ALOAD, 0);
                 visitFieldInsn(GETFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, Type.getDescriptor(EntityManager.class));
                 visitVarInsn(ALOAD, 0);
                 visitLdcInsn(fieldName);
                 visitFieldInsn(GETSTATIC, internalName, ENTITY_DESCRIPTION_FIELD_NAME, ENTITY_DESCRIPTION_TYPE.getDescriptor());
 
-                visitMethodInsn(INVOKEVIRTUAL, ENTITY_MANAGER_TYPE.getInternalName(), ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD.getName(), ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD.getDescriptor(), true);
+                visitMethodInsn(INVOKEINTERFACE, ENTITY_MANAGER_TYPE.getInternalName(), ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD.getName(), ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD.getDescriptor(), true);
                 visitTypeInsn(CHECKCAST, fieldType.getInternalName());
-                visitInsn(DUP);
-                visitFieldInsn(PUTFIELD, internalName, fieldName, fieldType.getDescriptor());
                 visitInsn(ARETURN);
 
-                visitLabel(next1);
+                visitEnd();
             }
         }
 
@@ -461,18 +488,20 @@ public class EntityClassTransformer {
             public void visitInsn(int opcode) {
                 if(opcode == RETURN) {
                     Label next1 = new Label();
+                    visitVarInsn(ALOAD, 0);
                     visitFieldInsn(GETFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, Type.getDescriptor(EntityManager.class));
                     visitJumpInsn(IFNONNULL, next1);
-                    visitInsn(RETURN);
+                    super.visitInsn(RETURN);
 
                     visitLabel(next1);
-
+                    visitVarInsn(ALOAD, 0);
                     visitFieldInsn(GETFIELD, internalName, ENTITY_MANAGER_FIELD_NAME, Type.getDescriptor(EntityManager.class));
                     visitVarInsn(ALOAD, 0);//Stack: entity manager, this
                     visitLdcInsn(fieldName);//Stack: entity manager, this, field name
                     visitFieldInsn(GETSTATIC, internalName, ENTITY_DESCRIPTION_FIELD_NAME, Type.getDescriptor(EntityDescription.class));//Stack: entity manager, this, field name, entity description
+                    visitVarInsn(ALOAD, 0);
                     visitFieldInsn(GETFIELD, internalName, fieldName, fieldType.getDescriptor());//Stack: entity manager, this, field name, entity description, field current value
-                    visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(EntityManager.class), "updateEntity", Type.getMethodDescriptor(EntityManager.class.getDeclaredMethod("updateEntity", Object.class, String.class, EntityDescription.class, Object.class)), true);
+                    visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(EntityManager.class), "updateEntity", Type.getMethodDescriptor(EntityManager.class.getDeclaredMethod("updateEntity", Object.class, String.class, EntityDescription.class, Object.class)), true);
                 }
                 super.visitInsn(opcode);
             }

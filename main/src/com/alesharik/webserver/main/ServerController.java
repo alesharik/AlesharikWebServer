@@ -28,7 +28,7 @@ import com.alesharik.webserver.api.server.Server;
 import com.alesharik.webserver.api.sharedStorage.annotations.SharedValueSetter;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
-import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
+import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.main.server.ControlServer;

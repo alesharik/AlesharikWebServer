@@ -85,7 +85,7 @@ final class PostgresSchema implements Schema {
                 resultSet = statement.executeQuery();
                 if(!resultSet.next())
                     throw new DatabaseInternalException("`SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = ? AND table_name = ?)` return 0 rows!");
-                return resultSet.getBoolean(0);
+                return resultSet.getBoolean(1);
             } catch (SQLException e) {
                 throw new DatabaseReadSQLException(e);
             } finally {

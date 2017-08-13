@@ -92,6 +92,13 @@ public final class Logger {
      */
     private static MpscLinkedQueue<Message> messageQueue;
     private static final LoggerThread loggerThread = new LoggerThread();
+    private static volatile boolean shutdown = false;
+
+    public static void shutdown() {
+        shutdown = true;
+        loggerThread.interrupt();
+        listenerThread.interrupt();
+    }
 
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
@@ -501,7 +508,8 @@ public final class Logger {
                                     synchronizerLock.wait();
                             }
                         } catch (InterruptedException e) {
-                            Logger.SYSTEM_ERR.println("Logger thread was received interrupt signal! Stopping logging...");
+                            if(!shutdown)
+                                Logger.SYSTEM_ERR.println("Logger thread was received interrupt signal! Stopping logging...");
                             return;
                         }
                     }
@@ -686,7 +694,8 @@ public final class Logger {
                                 synchronizerLock.wait();
                         }
                     } catch (InterruptedException e) {
-                        Logger.SYSTEM_ERR.println("Logger Listener thread was received interrupt signal! Stopping listening...");
+                        if(!shutdown)
+                            Logger.SYSTEM_ERR.println("Logger Listener thread was received interrupt signal! Stopping listening...");
                     }
                 }
             }

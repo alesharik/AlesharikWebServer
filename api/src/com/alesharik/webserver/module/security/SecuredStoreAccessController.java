@@ -16,13 +16,24 @@
  *
  */
 
-package com.alesharik.webserver.main;
+package com.alesharik.webserver.module.security;
 
-import com.alesharik.webserver.api.ServerInfo;
+import javax.crypto.SecretKey;
 
-final class ServerInfoProvider implements ServerInfo.InfoProvider {
-    @Override
-    public String gerServerSoftwareName() {
-        return "AlesharikWebServer (Linux)";
-    }
+/**
+ * This class provides access control ank key for {@link SecuredStoreModule} key(s)
+ */
+public interface SecuredStoreAccessController {
+    /**
+     * Return true if class can access password(s), overwise false
+     *
+     * @param clazz class, that tries to access
+     * @return can class access password(s)
+     */
+    boolean grantAccess(Class<?> clazz);
+
+    /**
+     * Must be same all load cycles
+     */
+    SecretKey passwordKey();
 }

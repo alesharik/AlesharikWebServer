@@ -16,13 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.main;
-
-import com.alesharik.webserver.api.ServerInfo;
-
-final class ServerInfoProvider implements ServerInfo.InfoProvider {
-    @Override
-    public String gerServerSoftwareName() {
-        return "AlesharikWebServer (Linux)";
-    }
-}
+/**
+ * This package contains {@link com.alesharik.webserver.control.AdminDataStorage} implementation
+ */
+package com.alesharik.webserver.control.data.storage;

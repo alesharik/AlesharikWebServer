@@ -20,6 +20,9 @@ package com.alesharik.database;
 
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.driver.DatabaseDriver;
+import com.alesharik.database.exception.DatabaseCloseSQLException;
+import com.alesharik.database.exception.DatabaseInternalException;
+import com.alesharik.database.transaction.TransactionManager;
 import lombok.Getter;
 
 import java.sql.Connection;
@@ -40,6 +43,7 @@ public class Database {
         this.connection = connection;
         this.databaseDriver = databaseDriver;
         this.transactional = new AtomicBoolean(transactional);
+        setTransactional(transactional);
         this.databaseDriver.init(connection);
     }
 
@@ -63,6 +67,11 @@ public class Database {
 
     public void setTransactional(boolean is) {
         transactional.set(is);
+        try {
+            connection.setAutoCommit(!is);
+        } catch (SQLException e) {
+            throw new DatabaseInternalException("Can't update connection commit option", e);
+        }
     }
 
     public boolean isTransactional() {
@@ -81,7 +90,25 @@ public class Database {
         return databaseDriver.getCurrentUser();
     }
 
+    /**
+     * Close database connection
+     */
+    public void close() {
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new DatabaseCloseSQLException(e);
+        }
+    }
+
     public void update() {
         databaseDriver.update();
-    }//TODO transactions!
+    }
+
+    public TransactionManager getTransactionManager() {
+        if(!isTransactional())
+            throw new IllegalStateException("Database must be transactional!");
+        else
+            return databaseDriver.getTransactionManager();
+    }
 }

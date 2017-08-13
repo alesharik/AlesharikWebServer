@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
  * you do not need use setter method to update it's values in database, like you need to do with basic java arrays. Collection object must be initialized and be empty, because it's contents will not synchronize with database! If it is not, new {@link java.util.ArrayList} instance will be sed instead. Collections are lazy, arrays - not.
  * Collections iterators aren't lazy. Setter for collection will not do anything, because collection execute synchronization in use process. Entity manager will use provided collection as cache. Variable name <code>value</code> strongly not advised!
  * <p>
- * All entity instantiation is created by {@link sun.misc.Unsafe} features
+ * All entity instantiation may be created by {@link sun.misc.Unsafe} features. Primary key always loaded by database, although {@link Lazy} or {@link Bridge} annotations. Arrays/collection can't be primary keys!
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

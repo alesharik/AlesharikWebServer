@@ -27,7 +27,6 @@ import com.alesharik.webserver.api.collections.ConcurrentTripleHashMap;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
-import lombok.SneakyThrows;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -70,12 +69,21 @@ final class ClassPathScannerThread extends Thread {
     }
 
     @Override
-    @SneakyThrows
     public void run() {
-        while(isAlive()) {
+        try {
+            while(isAlive() && !isInterrupted())
+                iteration();
+        } catch (InterruptedException e) {
+            Logger.log("Shutdown thread...");
+        }
+    }
+
+    private void iteration() throws InterruptedException {
+        try {
             ClassLoader classLoader = classLoaderQueue.take();
             taskCount.incrementAndGet();
             ConcurrentTripleHashMap<Class<?>, Type, Method> newListeners = new ConcurrentTripleHashMap<>();
+
             new FastClasspathScanner()
                     .overrideClassLoaders(classLoader)
                     .matchClassesWithAnnotation(ClassPathScanner.class, classWithAnnotation -> matchClassPathScanner(classWithAnnotation, newListeners))
@@ -88,6 +96,8 @@ final class ClassPathScannerThread extends Thread {
             new ClassLoaderScanTask(newListeners, classLoaders, workerPool).run();
             listeners.putAll(newListeners);
             taskCount.decrementAndGet();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
     }
 

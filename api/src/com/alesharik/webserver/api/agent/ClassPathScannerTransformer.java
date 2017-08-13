@@ -43,8 +43,6 @@ final class ClassPathScannerTransformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        if(className.toLowerCase().equals("javafx") || className.toLowerCase().contains("sun"))
-            return null;
         tryScanClassLoader(loader);
         return null;
     }
@@ -68,5 +66,9 @@ final class ClassPathScannerTransformer implements ClassFileTransformer {
 
     public static boolean isFree() {
         return thread.isFree();
+    }
+
+    static void shutdown() {
+        thread.interrupt();
     }
 }

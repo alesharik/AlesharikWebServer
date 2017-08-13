@@ -16,13 +16,16 @@
  *
  */
 
-package com.alesharik.webserver.main;
+package com.alesharik.database.transaction;
 
-import com.alesharik.webserver.api.ServerInfo;
+public interface Transaction {
+    Transaction newTransaction();
 
-final class ServerInfoProvider implements ServerInfo.InfoProvider {
-    @Override
-    public String gerServerSoftwareName() {
-        return "AlesharikWebServer (Linux)";
-    }
+    boolean commit();
+
+    void rollback();
+
+    boolean isCommitted();
+
+    boolean isRolledBack();
 }

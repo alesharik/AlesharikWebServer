@@ -16,13 +16,14 @@
  *
  */
 
-package com.alesharik.webserver.main;
+package com.alesharik.database.transaction;
 
-import com.alesharik.webserver.api.ServerInfo;
+import java.util.concurrent.Callable;
 
-final class ServerInfoProvider implements ServerInfo.InfoProvider {
-    @Override
-    public String gerServerSoftwareName() {
-        return "AlesharikWebServer (Linux)";
-    }
+public interface TransactionManager {
+    void executeTransaction(Runnable runnable);
+
+    <C> C executeTransaction(Callable<C> cCallable);
+
+    Transaction newTransaction();
 }

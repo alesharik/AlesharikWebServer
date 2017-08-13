@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.objectweb.asm.Opcodes.*;
 
-final class SharedStorageClassVisitor extends ClassVisitor {
+final class SharedStorageClassVisitor extends ClassVisitor {//FIXME
     private boolean transform;
     private ConcurrentCompletableFuture<String> storageName;
     private String id = "";

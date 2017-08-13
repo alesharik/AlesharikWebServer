@@ -69,19 +69,19 @@ final class PreloadEntityColumn {
     @ToString
     @Generated
     public static class PreloadEntityColumnBuilder {
-        private String fieldName;
-        private String columnName;
-        private boolean foreign;
-        private String foreignTable;
-        private String foreignColumn;
-        private boolean indexed;
-        private boolean primary;
-        private boolean unique;
-        private boolean nullable;
-        private boolean fin;
-        private String constraint;
-        private String constraintName;
-        private String overrideDomain;
+        private String fieldName = "";
+        private String columnName = "";
+        private boolean foreign = false;
+        private String foreignTable = "";
+        private String foreignColumn = "";
+        private boolean indexed = false;
+        private boolean primary = false;
+        private boolean unique = false;
+        private boolean nullable = true;
+        private boolean fin = false;
+        private String constraint = "";
+        private String constraintName = "";
+        private String overrideDomain = "";
 
         PreloadEntityColumnBuilder() {
         }

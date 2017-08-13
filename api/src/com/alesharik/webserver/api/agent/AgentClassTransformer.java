@@ -54,10 +54,9 @@ final class AgentClassTransformer implements ClassFileTransformer {
     @SuppressFBWarnings("DM_EXIT")
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        try {//FIXME!
-            if(className == null || loader == null || className.toLowerCase().contains("bytebuddy") || className.toLowerCase().contains("sun") || className.toLowerCase().contains("javafx") || className.toLowerCase().contains("nashorn") || className.toLowerCase().startsWith("org/apache/".toLowerCase())) {
-                return null;
-            }
+        try {
+            if(className == null || loader == null) return null;
+
             byte[] first = classfileBuffer;
             CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
             if(transformers != null) {

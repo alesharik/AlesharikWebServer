@@ -27,7 +27,7 @@ import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.Module;
 import com.alesharik.webserver.control.dashboard.websocket.plugins.MenuDashboardWebSocketPlugin;
 import com.alesharik.webserver.logger.Prefixes;
-import com.alesharik.webserver.module.server.ControlServerModule;
+import com.alesharik.webserver.module.security.ControlServerModule;
 import lombok.AllArgsConstructor;
 import org.w3c.dom.Element;
 
@@ -35,6 +35,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 
+/**
+ * Test class. Do not used in production
+ */
+@Deprecated
 public class TestModule implements Module {
     private ControlSocketClientModule clientModule;
 
@@ -52,35 +56,6 @@ public class TestModule implements Module {
 
     @Override
     public void start() {
-//        try {
-//            ControlSocketClientConnection connection = clientModule.newConnection("0.0.0.0", 1400, new ControlSocketClientConnection.Authenticator() {
-//                @Override
-//                public String getPassword() {
-//                    return "admin";
-//                }
-//
-//                @Override
-//                public String getLogin() {
-//                    return "admin";
-//                }
-//            });
-//            connection.addListener(new ControlSocketClientConnection.Listener() {
-//                @Override
-//                public boolean canListen(Class<?> messageClazz) {
-//                    return TestMessage.class.isAssignableFrom(messageClazz);
-//                }
-//
-//                @Override
-//                public void listen(ControlSocketMessage message) {
-//                    System.out.println(((TestMessage) message).test());
-//                }
-//            });
-//            connection.awaitConnection();
-//            connection.sendMessage(new TestMessage("test"));
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
 
     @Override
@@ -107,6 +82,7 @@ public class TestModule implements Module {
 
     @AllArgsConstructor
     private static final class TestMessage implements ControlSocketMessage {
+        private static final long serialVersionUID = -9163081824991322648L;
         private final String test;
 
         public String test() {

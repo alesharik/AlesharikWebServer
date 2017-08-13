@@ -23,8 +23,7 @@ import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.api.server.WebServer;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
-import com.alesharik.webserver.control.dataStorage.AdminDataStorageImpl;
-import com.alesharik.webserver.control.websockets.dashboard.DashboardWebSocketApplication;
+import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
 import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.ControlHttpHandler;
 import com.alesharik.webserver.server.api.RequestHandler;
@@ -41,11 +40,11 @@ import org.glassfish.grizzly.websockets.WebSocketEngine;
 import java.io.File;
 import java.io.IOException;
 
+@Deprecated
 public final class ControlServer extends WebServer {
     private HttpServer httpServer;
     private ControlHttpHandler controlHttpHandler;
     private ModularErrorPageGenerator errorPageGenerator;
-    private DashboardWebSocketApplication dashboardWebSocketApplication;
 
     public ControlServer(String host, int port, FileManager fileManager, AdminDataStorageImpl adminDataStorageImpl, DashboardDataHolder holder, boolean logRequests, File logFile) {
         super(host, port);

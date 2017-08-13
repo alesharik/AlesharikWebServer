@@ -31,8 +31,9 @@ public interface EntityManager<E> {
      *
      * @param e           new entity instance
      * @param description entity description
+     * @return e parameter
      */
-    void createEntity(E e, EntityDescription description);
+    E createEntity(E e, EntityDescription description);
 
     /**
      * Delete entity from database

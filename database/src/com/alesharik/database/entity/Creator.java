@@ -28,6 +28,6 @@ import java.lang.annotation.Target;
  * method code will be executed before database creation. Method must have only 1 return point and return new entity instance
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.CONSTRUCTOR)
+@Target(ElementType.METHOD)
 public @interface Creator {
 }
