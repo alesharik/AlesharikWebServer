@@ -19,8 +19,8 @@
 package com.alesharik.database.entity.asm;
 
 import com.alesharik.database.entity.Entity;
-import jdk.internal.org.objectweb.asm.Type;
 import lombok.experimental.UtilityClass;
+import org.objectweb.asm.Type;
 
 import java.lang.reflect.Field;
 import java.util.Map;

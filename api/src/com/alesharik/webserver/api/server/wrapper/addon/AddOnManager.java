@@ -20,64 +20,44 @@ package com.alesharik.webserver.api.server.wrapper.addon;
 
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
-import com.alesharik.webserver.api.collections.ConcurrentTripleHashMap;
-import com.alesharik.webserver.api.collections.TripleHashMap;
-import com.alesharik.webserver.api.server.wrapper.NetworkListenerConfiguration;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ClassPathScanner
 @UtilityClass
 public class AddOnManager {
-    private static final TripleHashMap<String, Class<?>, UseCondition> addons = new ConcurrentTripleHashMap<>();
+    private static final Map<String, Class<?>> addons = new ConcurrentHashMap<>();
 
     @ListenAnnotation(HttpServerAddOn.class)
     public static void listenAddon(Class<?> clazz) {
-        try {
-            HttpServerAddOn annotation = clazz.getAnnotation(HttpServerAddOn.class);
+        HttpServerAddOn annotation = clazz.getAnnotation(HttpServerAddOn.class);
 
-            UseCondition useCondition = annotation.condition().newInstance();
-
-            addons.put(annotation.value(), clazz, useCondition);
-        } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-
-        }
+        addons.put(annotation.value(), clazz);
     }
 
     /**
      * Return addon for name
      *
      * @param name          addon name
-     * @param configuration configuration for {@link UseCondition} to check
-     * @param cast          class to cast
-     * @param <T>           cast
-     * @return new Addon instance
-     * @throws ConditionException       if condition throw an exception or deny crate new instance
-     * @throws IllegalArgumentException if addon not found
+     * @return new Addon instance or null
      * @throws RuntimeException         wrapper for all reflections exceptions
      * @throws ClassCastException       if addon class cannot be cast to cast class
      */
-    @SuppressWarnings("unchecked")
-    public static <T> T getAddonForName(@Nonnull String name, @Nonnull NetworkListenerConfiguration configuration, @Nonnull Class<?> cast) {
+    @Nullable
+    public static Addon getAddonForName(@Nonnull String name) {
         if(!addons.containsKey(name))
-            throw new IllegalArgumentException("Addon not found!");
-        UseCondition condition = addons.getAddition(name);
-
-        try {
-            if(!condition.allow(configuration))
-                throw new ConditionException(condition);
-        } catch (Exception e) {
-            throw new ConditionException(e, condition);
-        }
+            return null;
 
         try {
             Constructor<?> constructor = getConstructor(name);
             constructor.setAccessible(true);
-            return (T) cast.cast(constructor.newInstance());
+            return (Addon) constructor.newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }

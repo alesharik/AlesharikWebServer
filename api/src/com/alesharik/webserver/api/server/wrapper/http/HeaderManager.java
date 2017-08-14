@@ -150,6 +150,14 @@ import java.util.TreeMap;
  * <td>If-Unmodified-Since: Wed, 21 Oct 2015 07:28:00 GMT</td>
  * </tr>
  * <tr>
+ * <td colspan="5" scope="colgroup"><center>Connection management</center></td>
+ * </tr>
+ * <tr>
+ * <td>Connection</td>
+ * <td>String[]</td>
+ * <td>Connection: Upgrade</td>
+ * </tr>
+ * <tr>
  * <td colspan="5" scope="colgroup"><center>Content negotiation</center></td>
  * </tr>
  * <tr>
@@ -289,6 +297,14 @@ import java.util.TreeMap;
  * <td>Location: /index.html</td>
  * <td>URI must be relative!</td>
  * </tr>
+ * <tr>
+ * <td colspan="5" scope="colgroup"><center>Other</center></td>
+ * </tr>
+ * <tr>
+ * <td>Upgrade</td>
+ * <td>String</td>
+ * <td>Upgrade: websocket</td>
+ * </tr>
  * </tbody>
  * </table>
  * DO not support AWS4-HMAC-SHA256 authorization header<br>
@@ -326,6 +342,7 @@ public class HeaderManager {
         headers.put("If-Unmodified-Since", new ObjectHeader<>("If-Unmodified-Since", new DateFactory()));
 
         //TODO Connection management
+        headers.put("Connection", new ListHeader<>("Connection", new StringFactory()));
 
         //Content negotiation
         headers.put("Accept", new AcceptHeader());
@@ -368,6 +385,9 @@ public class HeaderManager {
         headers.put("Location", new ObjectHeader<>("Location", new UriFactory()));
 
         headers.put("Accept-Ranges", new AcceptRangesHeader());
+
+        //Other
+        headers.put("Upgrade", new StringHeader("Upgrade"));
     }
 
     public static <T extends Header> T getHeaderByName(String name, Class<T> clazz) {
@@ -546,6 +566,23 @@ public class HeaderManager {
         @Override
         public Locale[] newArray(int size) {
             return new Locale[size];
+        }
+    }
+
+    private static final class StringFactory implements ListHeader.Factory<String> {
+        @Override
+        public String newInstance(String value) {
+            return value;
+        }
+
+        @Override
+        public String toString(String s) {
+            return s;
+        }
+
+        @Override
+        public String[] newArray(int size) {
+            return new String[size];
         }
     }
 }

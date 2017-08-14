@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.server.wrapper.server;
 
+import com.alesharik.webserver.api.server.wrapper.addon.Addon;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 
 /**
@@ -26,4 +27,6 @@ import com.alesharik.webserver.api.server.wrapper.http.Request;
  */
 public interface HttpRequestHandler {
     void handleRequest(Request request, ExecutorPool executorPool, Sender sender);
+
+    void handleAddon(Addon addon);
 }

@@ -26,6 +26,8 @@ import com.alesharik.webserver.api.server.wrapper.http.data.Cookie;
 import com.alesharik.webserver.api.server.wrapper.http.data.MimeType;
 import com.alesharik.webserver.api.server.wrapper.http.header.ObjectHeader;
 import com.alesharik.webserver.api.server.wrapper.http.header.SetCookieHeader;
+import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
+import com.alesharik.webserver.api.server.wrapper.server.Sender;
 import lombok.Getter;
 import lombok.Setter;
 import org.glassfish.grizzly.utils.Charsets;
@@ -175,6 +177,17 @@ public class Response implements Recyclable {
 
     public void addCookie(Cookie cookie) {
         cookies.add(cookie);
+    }
+
+
+    public boolean isPartial() {
+        return false;
+    }
+
+    public void startSending(Sender sender, ExecutorPool executorPool) {
+        if(isPartial()) {
+
+        }
     }
 
     @Override

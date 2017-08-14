@@ -26,10 +26,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface HttpServerAddOn {
-    Class<? extends UseCondition> condition() default UseCondition.Always.class;
 
     /**
-     * Addon name
+     * Addon name. Used in Upgrade request
      */
     String value();
 }

@@ -31,4 +31,8 @@ public interface HttpHandlerBundle {
     HttpHandler[] getHttpHandlers();
 
     ErrorHandler getErrorHandler();
+
+    default AddonHandler getAddonHandler() {
+        return AddonHandler.None.INSTANCE;
+    }
 }

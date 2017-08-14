@@ -37,6 +37,7 @@
 package com.alesharik.webserver.api.server.wrapper.server.impl.handler;
 
 import com.alesharik.webserver.api.name.Named;
+import com.alesharik.webserver.api.server.wrapper.addon.Addon;
 import com.alesharik.webserver.api.server.wrapper.bundle.ErrorHandler;
 import com.alesharik.webserver.api.server.wrapper.bundle.FilterChain;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandler;
@@ -65,6 +66,11 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
     @Override
     public void handleRequest(Request request, ExecutorPool executorPool, Sender sender) {
         executorPool.executeSelectorTask(new BundleSelectTask(bundles, request, executorPool, sender));
+    }
+
+    @Override
+    public void handleAddon(Addon addon) {
+
     }
 
     @AllArgsConstructor

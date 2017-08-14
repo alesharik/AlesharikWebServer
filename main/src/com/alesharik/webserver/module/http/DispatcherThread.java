@@ -19,11 +19,16 @@
 package com.alesharik.webserver.module.http;
 
 import com.alesharik.webserver.api.memory.impl.ByteOffHeapVector;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOnManager;
+import com.alesharik.webserver.api.server.wrapper.addon.Addon;
 import com.alesharik.webserver.api.server.wrapper.http.HeaderManager;
+import com.alesharik.webserver.api.server.wrapper.http.HttpStatus;
 import com.alesharik.webserver.api.server.wrapper.http.HttpVersion;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
+import com.alesharik.webserver.api.server.wrapper.http.header.ListHeader;
 import com.alesharik.webserver.api.server.wrapper.http.header.ObjectHeader;
+import com.alesharik.webserver.api.server.wrapper.http.header.StringHeader;
 import com.alesharik.webserver.api.server.wrapper.server.BatchingRunnableTask;
 import com.alesharik.webserver.api.server.wrapper.server.CloseSocketException;
 import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
@@ -148,7 +153,7 @@ final class DispatcherThread extends Thread {
         });
     }
 
-    private static final class Session implements Sender {
+    private static final class Session implements Sender, Addon.ByteSender {
         private static final ByteOffHeapVector vector = ByteOffHeapVector.instance();
         private static final Charset CHARSET = Charset.forName("ISO-8859-1");
 
@@ -160,6 +165,7 @@ final class DispatcherThread extends Thread {
         private final HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics;
         private final SocketProvider.SocketManager socketManager;
         private final AtomicBoolean isReady = new AtomicBoolean(false);
+        private volatile Addon addon = null;
 
         private Request.Builder builder;
         private volatile long byteBuffer;
@@ -250,6 +256,12 @@ final class DispatcherThread extends Thread {
             if(vector.size(byteBuffer) == 0)
                 return;
 
+            if(addon != null) {
+                addon.handleBytes(vector, byteBuffer);
+                addon.setSender(this);
+                return;
+            }
+
             String str = new String(vector.toByteArray(byteBuffer), CHARSET);
             while(str.startsWith("\r\n"))
                 str = str.replaceFirst("\r\n", "");
@@ -308,8 +320,38 @@ final class DispatcherThread extends Thread {
             }
         }
 
+        private static final ListHeader<String> connectionHeader = HeaderManager.getHeaderByName("Connection", ListHeader.class);
+        private static final StringHeader upgradeHeader = HeaderManager.getHeaderByName("Upgrade", StringHeader.class);
+
         private void publish() {
             serverStatistics.newRequest();
+            if(builder.containsHeader("Connection")) {
+                String[] connection = builder.getHeader(connectionHeader, String[].class);
+                boolean upgrade = false;
+                for(String s : connection) {
+                    if(s.equals("Upgrade"))
+                        upgrade = true;
+                }
+                if(upgrade && builder.containsHeader("Upgrade")) {
+                    String upg = builder.getHeader(upgradeHeader, String.class);
+                    Addon addon = AddOnManager.getAddonForName(upg);
+                    if(addon != null) {
+                        this.addon = addon;
+                        send(null, addon.respond(builder));
+                        requestHandler.handleAddon(addon);
+                        builder = null;
+                        this.state.set(State.NOTHING);
+                        return;
+                    } else {
+                        Response response = Response.getResponse();
+                        response.respond(HttpStatus.BAD_REQUEST_400);
+                        send(null, response);
+                        builder = null;
+                        this.state.set(State.NOTHING);
+                        return;
+                    }
+                }
+            }
             requestHandler.handleRequest(builder, pool, this);
             builder = null;
             this.state.set(State.NOTHING);
@@ -380,6 +422,57 @@ final class DispatcherThread extends Thread {
 
             if(response.getResponseCode() > 499 && response.getResponseCode() < 600)
                 serverStatistics.newError();
+        }
+
+        @Override
+        public void send(ByteBuffer byteBuffer) {
+            SocketChannel channel = socket.getChannel();
+            pool.executeSelectorTask(new BatchingRunnableTask<Socket>() {
+                @Override
+                public Socket getKey() {
+                    return socket;
+                }
+
+                @Override
+                public void run() {
+                    if(socketManager.hasCustomRW(socket.getChannel())) {
+                        try {
+                            socketManager.write(socket.getChannel(), byteBuffer.array());
+                        } catch (CloseSocketException e) {
+                            try {
+                                socketManager.listenSocketClose(socket.getChannel());
+                                socket.getChannel().close();
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                    } else {
+                        int nSend = 0;
+                        int count = 0;
+                        try {
+                            while((nSend += channel.write(byteBuffer)) < byteBuffer.limit()) {
+                                count++;
+                                if(count > 10) {
+                                    System.err.println("SocketChannel to " + socket.getRemoteSocketAddress().toString() + " has problems! Try #" + count);
+                                }
+                            }
+                            socket.getOutputStream().flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void close() {
+            socketManager.listenSocketClose(socket.getChannel());
+            try {
+                socket.getChannel().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         enum State {
