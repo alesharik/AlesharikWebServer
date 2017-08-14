@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.name;
 
+import com.alesharik.webserver.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,6 +55,11 @@ public class NamedManagerTest {
 
         assertEquals(Test1.class, NamedManager.getClassForNameAndType("Test", Error.class));
         assertNull(NamedManager.getClassForNameAndType("Test", Exception.class));
+    }
+
+    @Test
+    public void testUtilityClass() throws Exception {
+        TestUtils.assertUtilityClass(NamedManager.class);
     }
 
     @Named("Test")

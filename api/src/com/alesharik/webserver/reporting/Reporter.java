@@ -40,7 +40,7 @@ public abstract class Reporter implements Tickable {
      * @param file       the file to report
      * @param tickPeriod report period in milliseconds
      */
-    public abstract void setup(@Nonnull File file, long tickPeriod, @Nullable Element config);
+    public abstract void setup(@Nullable File file, long tickPeriod, @Nullable Element config);
 
     /**
      * Reload config

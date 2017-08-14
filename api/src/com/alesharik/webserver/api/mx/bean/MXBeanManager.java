@@ -37,26 +37,24 @@ public class MXBeanManager {
             Object hotspotInternal = Class.forName("sun.management.HotspotInternal").newInstance();
             ManagementFactory.getPlatformMBeanServer().registerMBean(hotspotInternal, null);
         } catch (InstanceAlreadyExistsException e) {
-            System.err.println("Instance of sun.management.HotspotInternal class already exists!");
+            //Ok, no problem
         } catch (Exception e) {
             throw new Error(e);
         }
-
     }
 
     public static void registerMXBean(Object object, String name) {
         registerMXBean(object, null, name);
     }
 
-    public static <T> void registerMXBean(T object, Class<T> mxBeanInterface, String name) {
+    public static <T, R extends T> void registerMXBean(R object, Class<T> mxBeanInterface, String name) {
         try {
             StandardMBean mb = new StandardMBean(object, mxBeanInterface, true);
             MBeanServer beanServer = ManagementFactory.getPlatformMBeanServer();
 
             ObjectName objectName = new ObjectName(name);
-            if(beanServer.isRegistered(objectName)) {
+            if(beanServer.isRegistered(objectName))
                 beanServer.unregisterMBean(objectName);
-            }
 
             beanServer.registerMBean(mb, objectName);
         } catch (InstanceAlreadyExistsException | InstanceNotFoundException | MBeanRegistrationException
@@ -70,9 +68,8 @@ public class MXBeanManager {
             MBeanServer beanServer = ManagementFactory.getPlatformMBeanServer();
 
             ObjectName objectName = new ObjectName(name);
-            if(beanServer.isRegistered(objectName)) {
+            if(beanServer.isRegistered(objectName))
                 beanServer.unregisterMBean(objectName);
-            }
 
         } catch (InstanceNotFoundException | MBeanRegistrationException | MalformedObjectNameException e) {
             e.printStackTrace();
