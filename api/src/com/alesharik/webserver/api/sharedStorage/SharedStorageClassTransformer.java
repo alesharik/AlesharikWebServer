@@ -22,9 +22,9 @@ import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
 import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
 import com.alesharik.webserver.api.sharedStorage.annotations.UseSharedStorage;
-import jdk.internal.org.objectweb.asm.Type;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 

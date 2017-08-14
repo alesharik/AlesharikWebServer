@@ -18,10 +18,8 @@
 
 package com.alesharik.webserver.api.server.wrapper;
 
-import com.alesharik.webserver.api.server.wrapper.addon.AddOnManager;
 import com.alesharik.webserver.api.server.wrapper.addon.ConditionException;
 import lombok.experimental.UtilityClass;
-import org.glassfish.grizzly.http.server.AddOn;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
@@ -42,8 +40,6 @@ public final class GrizzlyConverter {
         if(configuration.getAddonNames().size() > 0) {
             for(String s : configuration.getAddonNames()) {
                 try {
-                    AddOn addOn = AddOnManager.getAddonForName(s, configuration, AddOn.class);
-                    networkListener.registerAddOn(addOn);
                 } catch (ClassCastException e) {
                     System.err.println("Http server module " + s + " can't be casted to grizzly AddOn");
                 } catch (ConditionException e) {
