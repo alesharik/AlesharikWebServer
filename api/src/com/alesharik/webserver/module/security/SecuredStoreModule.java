@@ -56,4 +56,10 @@ public interface SecuredStoreModule extends Module {
      * @throws IllegalAccessException if access controller doesn't grant access to caller class
      */
     void writeString(@Nonnull String name, @Nonnull String password) throws IllegalAccessException, InvalidKeySpecException, InvalidKeyException, IOException, BadPaddingException, IllegalBlockSizeException;
+
+    @Nonnull
+    @Override
+    default String getName() {
+        return "server-password-store";
+    }
 }

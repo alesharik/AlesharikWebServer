@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.main;
 
+import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.control.ControlSocketClientModule;
 import com.alesharik.webserver.api.control.messaging.ControlSocketMessage;
 import com.alesharik.webserver.api.control.messaging.ControlSocketMessageHandler;
@@ -28,12 +29,21 @@ import com.alesharik.webserver.configuration.Module;
 import com.alesharik.webserver.control.dashboard.websocket.plugins.MenuDashboardWebSocketPlugin;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.module.security.ControlServerModule;
+import com.alesharik.webserver.module.security.SecuredStoreAccessController;
+import com.alesharik.webserver.module.security.SecuredStoreModule;
+import com.alesharik.webserver.module.security.SecuredStoreModuleImpl;
 import lombok.AllArgsConstructor;
 import org.w3c.dom.Element;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.spec.InvalidKeySpecException;
 
 /**
  * Test class. Do not used in production
@@ -65,7 +75,28 @@ public class TestModule implements Module {
 
     @Override
     public void shutdownNow() {
+        SecuredStoreModule securedStoreModule = new SecuredStoreModuleImpl();
+        try {
+            securedStoreModule.storeString(new SecuredStoreAccessController() {//Bind access controller to password name
+                @Override
+                public boolean grantAccess(Class<?> clazz) {
+                    return true;//Return true classes, that allowed to access password, overwise false
+                }
 
+                @Override
+                public SecretKey passwordKey() {
+                    try {
+                        return StringCipher.generateKey("somePrivateKey");//Return secret key for password encryption
+                    } catch (InvalidKeySpecException | InvalidKeyException | UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }, "testPassName");
+            securedStoreModule.writeString("testPassName", "secretPass");//Write password "secretPass" into testPassName
+            securedStoreModule.readString("testPassName");//Read testPassName password. Return "secretPass"
+        } catch (IllegalAccessException | IOException | IllegalBlockSizeException | InvalidKeyException | InvalidKeySpecException | BadPaddingException e) {
+            e.printStackTrace();
+        }
     }
 
     @Nonnull

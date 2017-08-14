@@ -204,12 +204,6 @@ public class SecuredStoreModuleImpl implements SecuredStoreModule {
     public void shutdownNow() {
     }
 
-    @Nonnull
-    @Override
-    public String getName() {
-        return "server-password-store";
-    }
-
     @Nullable
     @Override
     public Layer getMainLayer() {
