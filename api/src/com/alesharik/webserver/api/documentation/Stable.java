@@ -16,19 +16,20 @@
  *
  */
 
-package com.alesharik.webserver.server;
+package com.alesharik.webserver.api.documentation;
 
-@Deprecated
-public interface HttpServerModuleMXBean {
-    long requestCount();
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    int getCoreThreadCount();
-
-    int getMaxThreadCount();
-
-    int getWorkerQueueLimit();
-
-    int getWorkerQueueSize();
-
-    int getSelectorThreadCount();
+/**
+ * This annotation means that annotated class/annotation/package has stable API. This means that
+ * API can be changed ONLY in major releases
+ */
+@Documented
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.PACKAGE})
+@Retention(RetentionPolicy.SOURCE)
+public @interface Stable {
 }

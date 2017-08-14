@@ -23,4 +23,7 @@
  * @see com.alesharik.webserver.reporting.ReportingModule
  * @see com.alesharik.webserver.reporting.ReportingModuleMXBean
  */
+@Stable
 package com.alesharik.webserver.reporting;
+
+import com.alesharik.webserver.api.documentation.Stable;

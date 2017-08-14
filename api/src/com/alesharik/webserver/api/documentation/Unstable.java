@@ -16,10 +16,19 @@
  *
  */
 
-package com.alesharik.webserver.server;
+package com.alesharik.webserver.api.documentation;
 
-import com.alesharik.webserver.configuration.Module;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Deprecated
-public interface HttpServerModule extends Module, HttpServerModuleMXBean {
+/**
+ * This annotation means that annotated class/annotation/package API is still under develop and can be changed
+ */
+@Documented
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.PACKAGE})
+@Retention(RetentionPolicy.SOURCE)
+public @interface Unstable {
 }

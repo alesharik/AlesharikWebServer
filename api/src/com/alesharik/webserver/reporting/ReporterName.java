@@ -18,32 +18,21 @@
 
 package com.alesharik.webserver.reporting;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
- * This is MX bean for {@link ReportingModule}
+ * This annotation set {@link Reporter} name
  */
-public interface ReportingModuleMXBean {
+@Documented
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ReporterName {
     /**
-     * Return all existing reporter
+     * Return reporter unique name
      */
-    int getReporterCount();
-
-    /**
-     * Return active reporter count
-     */
-    int getActiveReporterCount();
-
-    /**
-     * TickingPool thread count
-     */
-    int getThreadCount();
-
-    /**
-     * {@link ThreadGroup} of current {@link ReportingModule}
-     */
-    ThreadGroup getThreadGroup();
-
-    /**
-     * Execute all reporter's <code>tick()</code> method in caller thread
-     */
-    void reportAll();
+    String value();
 }

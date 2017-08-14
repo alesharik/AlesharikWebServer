@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.reporter;
+package com.alesharik.webserver.reporting;
 
 import com.alesharik.webserver.api.ThreadFactories;
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
@@ -24,24 +24,21 @@ import com.alesharik.webserver.api.agent.classPath.ListenClass;
 import com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool;
 import com.alesharik.webserver.api.ticking.TickingPool;
 import com.alesharik.webserver.configuration.Layer;
+import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
-import com.alesharik.webserver.reporting.Reporter;
-import com.alesharik.webserver.reporting.ReportingModule;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Objects;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @ClassPathScanner
@@ -49,34 +46,38 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class ReportingModuleImpl implements ReportingModule {
     private static final int DEFAULT_THREAD_COUNT = 10;
     private static final long DEFAULT_PERIOD = 1000; //1 sec
-    private static final CopyOnWriteArrayList<Reporter> reporters = new CopyOnWriteArrayList<>();
+    static final Map<String, Constructor<?>> reporters = new ConcurrentHashMap<>();
 
     private static final AtomicLong idCounter = new AtomicLong(0);
 
     private final ConcurrentHashMap<Reporter, Long> activeReporters = new ConcurrentHashMap<>();
+    private final Map<Reporter, Long> programReporters = new ConcurrentHashMap<>();
     private final ThreadGroup threadGroup = new ThreadGroup("ReportingModule-" + idCounter.getAndIncrement());
 
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
-    private TickingPool tickingPool;
 
-    private AtomicInteger threadCount = new AtomicInteger(DEFAULT_THREAD_COUNT);
+    private volatile int threadCount = DEFAULT_THREAD_COUNT;
+    private volatile TickingPool tickingPool;
 
     @Override
-    public void parse(@Nonnull Element configNode) {
+    public void parse(@Nullable Element configNode) {
+        if(configNode == null)
+            throw new ConfigurationParseError("Reporting module must have configuration");
+
         activeReporters.clear();
 
-        parseThreadCount(configNode);
+        threadCount = parseThreadCount(configNode);
 
         Element reportersElement = (Element) configNode.getElementsByTagName("reporters").item(0);
         if(reportersElement != null) {
             NodeList reporters = reportersElement.getElementsByTagName("reporter");
             if(reporters.getLength() == 0) {
-                Logger.log("Configuration don't have any reporters. Reporters won't do anything...");
+                System.err.println("Configuration don't have any reporters. Reporter module won't do anything...");
             } else {
                 setupReporters(reporters);
             }
         } else {
-            Logger.log("Configuration don't have reporters parameter. Reporters won't do anything...");
+            System.err.println("Configuration don't have reporters parameter. Reporter module won't do anything...");
         }
     }
 
@@ -85,7 +86,7 @@ public final class ReportingModuleImpl implements ReportingModule {
             Element reporter = (Element) reporters.item(i);
             Element nameElement = (Element) reporter.getElementsByTagName("name").item(0);
             if(nameElement == null) {
-                Logger.log("Reporter with index " + i + " don't have a name. Skipping...");
+                Logger.log("Reporter with index " + i + " doesn't have a name. Skipping...");
                 continue;
             }
             String name = nameElement.getTextContent();
@@ -99,13 +100,13 @@ public final class ReportingModuleImpl implements ReportingModule {
         }
     }
 
-    private void parseThreadCount(Element configNode) {
+    private int parseThreadCount(Element configNode) {
         Element threadCount = (Element) configNode.getElementsByTagName("threadCount").item(0);
         if(threadCount != null) {
-            this.threadCount.set(Integer.parseInt(threadCount.getTextContent()));
+            return Integer.parseInt(threadCount.getTextContent());
         } else {
             Logger.log("Configuration don't have threadCount parameter! Use default(" + DEFAULT_THREAD_COUNT + ")...");
-            this.threadCount.set(DEFAULT_THREAD_COUNT);
+            return DEFAULT_THREAD_COUNT;
         }
     }
 
@@ -113,21 +114,24 @@ public final class ReportingModuleImpl implements ReportingModule {
         Element fileElement = (Element) reporter.getElementsByTagName("file").item(0);
         File file;
         if(fileElement == null) {
-            Logger.log("Reporter " + name + " doesn't have a file! It will receive null as file.");
+            System.out.println("Reporter " + name + " doesn't have a file! It will receive null as file");
             file = null;
         } else {
             file = new File(fileElement.getTextContent());
             if(file.isDirectory()) {
-                Logger.log("Reporter " + name + " file " + file.toString() + " is a directory. Reporter will receive null as file.");
+                System.out.println("Reporter " + name + " file " + file.toString() + " is a directory. Reporter will receive null as file");
                 file = null;
             } else if(!file.exists()) {
-                Logger.log("Creating file " + file.toString());
+                System.out.println("Creating file " + file.toString());
                 try {
                     if(!file.createNewFile()) {
-                        Logger.log("Can't create file " + file.toString());
+                        System.err.println("Can't create file " + file.toString() + ". Skipping reporter " + name);
+                        return;
                     }
                 } catch (IOException e) {
-                    Logger.log(e);
+                    e.printStackTrace();
+                    System.err.println("Can't create file " + file.toString() + ". Skipping reporter " + name);
+                    return;
                 }
             }
         }
@@ -137,15 +141,11 @@ public final class ReportingModuleImpl implements ReportingModule {
         if(periodElement != null) {
             period = Long.parseLong(periodElement.getTextContent());
         } else {
-            Logger.log("Reporter " + name + " doesn't have a period parameter! It will receive default value(" + DEFAULT_PERIOD + ") as period.");
+            System.out.println("Reporter " + name + " doesn't have a period parameter! It will receive default value(" + DEFAULT_PERIOD + ") as period");
             period = DEFAULT_PERIOD;
         }
 
         Element config = (Element) reporter.getElementsByTagName("configuration").item(0);
-        if(config == null) {
-            Logger.log("Reporter " + name + " doesn't have a configuration!");
-        }
-
         rep.setup(file, period, config);
 
         activeReporters.put(rep, period);
@@ -154,8 +154,9 @@ public final class ReportingModuleImpl implements ReportingModule {
     @Override
     public void start() {
         if(!isRunning.get()) {
-            tickingPool = new ExecutorPoolBasedTickingPool(threadCount.get(), ThreadFactories.newThreadFactory(threadGroup));
+            tickingPool = new ExecutorPoolBasedTickingPool(threadCount, ThreadFactories.newThreadFactory(threadGroup));
             activeReporters.forEach(tickingPool::startTicking);
+            programReporters.forEach(tickingPool::startTicking);
             isRunning.set(true);
         }
     }
@@ -163,37 +164,26 @@ public final class ReportingModuleImpl implements ReportingModule {
     @Override
     public void shutdown() {
         if(isRunning.get()) {
+            activeReporters.forEach((reporter, aLong) -> reporter.shutdown());
+            programReporters.forEach((reporter, aLong) -> reporter.shutdown());
             tickingPool.shutdown();
+            isRunning.set(false);
         }
     }
 
     @Override
     public void shutdownNow() {
         if(isRunning.get()) {
+            activeReporters.forEach((reporter, aLong) -> reporter.shutdownNow());
+            programReporters.forEach((reporter, aLong) -> reporter.shutdownNow());
             tickingPool.shutdownNow();
+            isRunning.set(false);
         }
-    }
-
-    @Override
-    public String getName() {
-        return "reporting";
     }
 
     @Override
     public Layer getMainLayer() {
         return null;
-    }
-
-    @Override
-    public void registerNewReporter(Reporter reporter) {
-        Objects.requireNonNull(reporter);
-        reporters.add(reporter);
-    }
-
-    @Override
-    public void unregisterReporter(Reporter reporter) {
-        Objects.requireNonNull(reporter);
-        reporters.remove(reporter);
     }
 
     @Override
@@ -208,7 +198,7 @@ public final class ReportingModuleImpl implements ReportingModule {
 
     @Override
     public int getThreadCount() {
-        return threadCount.get();
+        return threadCount;
     }
 
     @Override
@@ -222,19 +212,30 @@ public final class ReportingModuleImpl implements ReportingModule {
             try {
                 reporter.tick();
             } catch (Exception e) {
-                Logger.log(e);
+                e.printStackTrace();
+            }
+        });
+        programReporters.forEach((reporter, l) -> {
+            try {
+                reporter.tick();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
 
     @Override
-    public void reload(@Nonnull Element configNode) {
-        int threadCount = Integer.parseInt(configNode.getElementsByTagName("threadCount").item(0).getTextContent());
+    public void reload(@Nullable Element configNode) {
+        if(configNode == null)
+            throw new ConfigurationParseError("Reporting module must have configuration");
 
-        if(threadCount != this.threadCount.get()) {
-            Logger.log("Reloading ticking pool...");
-            shutdown();
-            this.threadCount.set(threadCount);
+        int threadCount = parseThreadCount(configNode);
+
+        if(threadCount != this.threadCount) {
+            System.out.println("Reloading ticking pool...");
+            if(isRunning.get())
+                this.tickingPool.shutdown();
+            this.threadCount = threadCount;
             this.tickingPool = new ExecutorPoolBasedTickingPool(threadCount, ThreadFactories.newThreadFactory(threadGroup));
         }
 
@@ -245,6 +246,10 @@ public final class ReportingModuleImpl implements ReportingModule {
         for(int i = 0; i < reporters.getLength(); i++) {
             Element reporter = (Element) reporters.item(i);
             Element nameElement = (Element) reporter.getElementsByTagName("name").item(0);
+            if(nameElement == null) {
+                System.err.println("Reporter doesn't have name! Skipping...");
+                continue;
+            }
             String name = nameElement.getTextContent();
 
             Reporter rep = getReporter(name);
@@ -262,7 +267,7 @@ public final class ReportingModuleImpl implements ReportingModule {
                     }
                 }
             } else {
-                Logger.log("Reporter " + name + " not found! Skipping...");
+                System.err.println("Reporter " + name + " not found! Skipping...");
             }
         }
 
@@ -274,23 +279,53 @@ public final class ReportingModuleImpl implements ReportingModule {
         });
     }
 
-    private Reporter getReporter(String name) {
-        for(Reporter reporter : reporters) {
-            if(name.equals(reporter.getName())) {
-                return reporter;
-            }
+    @Nullable
+    static Reporter getReporter(String name) {
+        Constructor<?> constructor = reporters.get(name);
+        if(constructor == null)
+            return null;
+        try {
+            return (Reporter) constructor.newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     @ListenClass(Reporter.class)
     public static void listenReporter(Class<?> reporterClazz) {
         try {
-            Constructor<?> constructor = reporterClazz.getConstructor();
+            ReporterName name = reporterClazz.getAnnotation(ReporterName.class);
+            if(name == null) {
+                System.err.println("Class " + reporterClazz.getCanonicalName() + " doesn't have ReporterName annotation and will be ignored!");
+                return;
+            }
+            Constructor<?> constructor = reporterClazz.getDeclaredConstructor();
             constructor.setAccessible(true);
-            reporters.add((Reporter) constructor.newInstance());
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
-            e.printStackTrace();
+            reporters.put(name.value(), constructor);
+        } catch (NoSuchMethodException e) {
+            System.err.println("Class " + reporterClazz.getCanonicalName() + " doesn't have empty constructor and will be ignored!");
+        }
+    }
+
+    @Override
+    public void enableReporter(Reporter reporter) {
+        enableReporter(reporter, DEFAULT_PERIOD);
+    }
+
+    @Override
+    public void enableReporter(Reporter reporter, long time) {
+        programReporters.put(reporter, time);
+        if(isRunning.get())
+            tickingPool.startTicking(reporter, time);
+    }
+
+    @Override
+    public void disableReporter(Reporter reporter) {
+        programReporters.remove(reporter);
+        if(isRunning.get()) {
+            reporter.shutdown();
+            tickingPool.stopTicking(reporter);
         }
     }
 }

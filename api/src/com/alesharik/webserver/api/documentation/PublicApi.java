@@ -16,34 +16,19 @@
  *
  */
 
-package com.alesharik.webserver.reporting;
+package com.alesharik.webserver.api.documentation;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * This is MX bean for {@link ReportingModule}
+ * Annotated class/annotation/package/method/constructor is for public use. Be free to use it
  */
-public interface ReportingModuleMXBean {
-    /**
-     * Return all existing reporter
-     */
-    int getReporterCount();
-
-    /**
-     * Return active reporter count
-     */
-    int getActiveReporterCount();
-
-    /**
-     * TickingPool thread count
-     */
-    int getThreadCount();
-
-    /**
-     * {@link ThreadGroup} of current {@link ReportingModule}
-     */
-    ThreadGroup getThreadGroup();
-
-    /**
-     * Execute all reporter's <code>tick()</code> method in caller thread
-     */
-    void reportAll();
+@Documented
+@Target({ElementType.PACKAGE, ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Retention(RetentionPolicy.SOURCE)
+public @interface PublicApi {
 }

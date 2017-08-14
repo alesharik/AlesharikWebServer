@@ -16,12 +16,11 @@
  *
  */
 
-package com.alesharik.webserver.reporter;
+package com.alesharik.webserver.reporting;
 
 import com.alesharik.webserver.api.ComputerData;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
-import com.alesharik.webserver.reporting.Reporter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -30,6 +29,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import lombok.EqualsAndHashCode;
 import org.glassfish.grizzly.utils.Charsets;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -57,6 +57,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+@ReporterName("cpu")
+@EqualsAndHashCode
 @Prefixes({"[Reporter]", "[CpuReporter]"})
 public final class CpuReporter extends Reporter {
     private static final Gson GSON = new GsonBuilder()

@@ -22,11 +22,12 @@ import com.alesharik.webserver.api.ticking.Tickable;
 import org.w3c.dom.Element;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 
 /**
  * Reporter write report data to file
- * @implNote your class must have empty constructor and it will be called at loading
+ * @implNote your class must have empty constructor and it will be called for instance creation
  */
 public abstract class Reporter implements Tickable {
 
@@ -39,14 +40,14 @@ public abstract class Reporter implements Tickable {
      * @param file       the file to report
      * @param tickPeriod report period in milliseconds
      */
-    public abstract void setup(@Nonnull File file, long tickPeriod, Element config);
+    public abstract void setup(@Nonnull File file, long tickPeriod, @Nullable Element config);
 
     /**
      * Reload config
      *
      * @param config the config element
      */
-    public abstract void reload(Element config);
+    public abstract void reload(@Nullable Element config);
 
     @Override
     public void tick() throws Exception {
@@ -73,7 +74,8 @@ public abstract class Reporter implements Tickable {
     public abstract void shutdownNow();
 
     /**
-     * Get reporter name
+     * Get reporter unique name
      */
+    @Nonnull
     public abstract String getName();
 }

@@ -19,50 +19,40 @@
 package com.alesharik.webserver.reporting;
 
 import com.alesharik.webserver.configuration.Module;
-import org.w3c.dom.Element;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 
+/**
+ * Reporting module manages all {@link Reporter}s
+ */
 @ThreadSafe
 public interface ReportingModule extends Module, ReportingModuleMXBean {
-    @Override
-    void parse(Element configNode);
-
-    @Override
-    void start();
-
-    @Override
-    void shutdown();
-
-    @Override
-    void shutdownNow();
-
-    @Override
-    String getName();
+    /**
+     * Add reporter to active reporters
+     *
+     * @param reporter already initiated reporter
+     */
+    void enableReporter(Reporter reporter);
 
     /**
-     * Register new reporter.
+     * Add reporter to active reporters
+     *
+     * @param reporter already initiated reporter
+     * @param time     tick time in milliseconds
      */
-    void registerNewReporter(@Nonnull Reporter reporter);
+    void enableReporter(Reporter reporter, long time);
 
-    void unregisterReporter(@Nonnull Reporter reporter);
+    /**
+     * Remove reporter from active reporters
+     *
+     * @param reporter already initiated reporter
+     */
+    void disableReporter(Reporter reporter);
 
+    @Nonnull
     @Override
-    int getReporterCount();
-
-    @Override
-    int getThreadCount();
-
-    @Override
-    ThreadGroup getThreadGroup();
-
-    @Override
-    void reportAll();
-
-    @Override
-    void reload(Element configNode);
-
-    @Override
-    int getActiveReporterCount();
+    default String getName() {
+        return "reporting-module";
+    }
 }

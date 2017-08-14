@@ -16,15 +16,19 @@
  *
  */
 
-package com.alesharik.webserver.server.api;
+package com.alesharik.webserver.api.documentation;
 
-import com.alesharik.webserver.configuration.Module;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Deprecated
-public abstract class HttpHandler extends org.glassfish.grizzly.http.server.HttpHandler implements Module {
-    public HttpHandler() {
-
-    }
-
-    public abstract String getHandlerName();
+/**
+ * Annotated class/annotation/package/method/constructor is private api! Try to do not use it!
+ */
+@Documented
+@Target({ElementType.PACKAGE, ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Retention(RetentionPolicy.SOURCE)
+public @interface PrivateApi {
 }
