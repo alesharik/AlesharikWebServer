@@ -32,6 +32,10 @@ public interface HttpHandlerBundle {
 
     ErrorHandler getErrorHandler();
 
+    default HttpHandlerResponseDecorator getReponseDecorator() {
+        return HttpHandlerResponseDecorator.Ignore.INSTANCE;
+    }
+
     default AddonHandler getAddonHandler() {
         return AddonHandler.None.INSTANCE;
     }

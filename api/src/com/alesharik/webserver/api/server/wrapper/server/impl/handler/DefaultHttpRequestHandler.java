@@ -42,6 +42,7 @@ import com.alesharik.webserver.api.server.wrapper.bundle.ErrorHandler;
 import com.alesharik.webserver.api.server.wrapper.bundle.FilterChain;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandler;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerBundle;
+import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerResponseDecorator;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
 import com.alesharik.webserver.api.server.wrapper.server.BatchingRunnableTask;
@@ -104,7 +105,7 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
                 return;
             }
 
-            executorPool.executeWorkerTask(new HandleTask(sender, chain, request, bundle.getErrorHandler(), bundle.getHttpHandlers()));
+            executorPool.executeWorkerTask(new HandleTask(sender, chain, request, bundle.getErrorHandler(), bundle.getHttpHandlers(), bundle.getReponseDecorator()));
         }
 
         private final Object key = new Object();
@@ -122,12 +123,13 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
         private final Request request;
         private final ErrorHandler errorHandler;
         private final HttpHandler[] handlers;
+        private final HttpHandlerResponseDecorator responseDecorator;
 
         @Override
         public void run() {
             Response response = null;
             try {
-                response = chain.handleRequest(request, handlers);
+                response = chain.handleRequest(request, handlers, responseDecorator);
             } catch (Exception e) {
                 response = Response.getResponse();
                 errorHandler.handleException(e, request, response, ErrorHandler.Pool.WORKER);

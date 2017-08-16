@@ -21,12 +21,28 @@ package com.alesharik.webserver.api.server.wrapper.bundle;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
 
-import javax.annotation.Nonnull;
-
 /**
- * This class contains filter chain and router
+ * Provides ability to decorate request before sending
  */
-public interface FilterChain extends Filter {
-    @Nonnull
-    Response handleRequest(Request request, HttpHandler[] httpHandlers, HttpHandlerResponseDecorator decorator);
+public interface HttpHandlerResponseDecorator {
+    /**
+     * Executes after {@link HttpHandler} handles request
+     *
+     * @param request  the request
+     * @param response response to decorate
+     * @param noAnswer true if no {@link HttpHandler} accept this {@link Request}, overwise false
+     */
+    void decorate(Request request, Response response, boolean noAnswer);
+
+    final class Ignore implements HttpHandlerResponseDecorator {
+        public static final Ignore INSTANCE = new Ignore();
+
+        private Ignore() {
+        }
+
+        @Override
+        public void decorate(Request request, Response response, boolean noAnswer) {
+
+        }
+    }
 }

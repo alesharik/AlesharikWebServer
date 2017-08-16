@@ -215,7 +215,7 @@ public class HeaderBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @Group("acceptRangesHeaderTest")
     @GroupThreads(2)
-    public AcceptRangesHeader.Range acceptRangesParseTest() {
+    public AcceptRangesHeader.RangeType acceptRangesParseTest() {
         return acceptRangesHeader.getValue(toParseAcceptRanges);
     }
 
@@ -224,7 +224,7 @@ public class HeaderBenchmark {
     @Group("acceptRangesHeaderTest")
     @GroupThreads(2)
     public String acceptRangesBuildTest() {
-        return acceptRangesHeader.build(AcceptRangesHeader.Range.BYTES);
+        return acceptRangesHeader.build(AcceptRangesHeader.RangeType.BYTES);
     }
 
     @Benchmark

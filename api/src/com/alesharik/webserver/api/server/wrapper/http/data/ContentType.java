@@ -34,6 +34,10 @@ public class ContentType {
         this.charset = charset;
     }
 
+    public ContentType(MimeType type) {
+        this.type = type;
+    }
+
     public ContentType(MimeType type, String boundary) {
         if(!type.toMimeType().equals("multipart/form-data"))
             throw new IllegalArgumentException();
@@ -46,13 +50,15 @@ public class ContentType {
     }
 
     public String toHeaderString() {
-        return hasBoundary() ? type.toMimeType() + "; boundary=" + boundary : type.toMimeType() + "; charset=" + charset.toString();
+        return hasBoundary() ? type.toMimeType() + "; boundary=" + boundary : type.toMimeType() + (charset == null ? null : "; charset=" + charset.toString());
     }
 
     public static ContentType parse(String s) {
         String[] parts = Utils.divideStringUnsafe(s, s.indexOf(';'), 2);
         MimeType type = MimeType.parseType(parts[0]);
-        if(type.toMimeType().equals("multipart/form-data"))
+        if(parts.length == 1)
+            return new ContentType(type);
+        else if(type.toMimeType().equals("multipart/form-data"))
             return new ContentType(type, parts[1].substring("boundary=".length()));
         else
             return new ContentType(type, parts[1].substring("charset=".length()));

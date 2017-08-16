@@ -33,14 +33,14 @@ public class AcceptRangesHeaderTest {
 
     @Test
     public void getValueTest() throws Exception {
-        assertEquals(AcceptRangesHeader.Range.BYTES, header.getValue("Accept-Ranges: bytes"));
-        assertEquals(AcceptRangesHeader.Range.NONE, header.getValue("Accept-Ranges: none"));
-        assertEquals(AcceptRangesHeader.Range.NONE, header.getValue("Accept-Ranges: wat"));
+        assertEquals(AcceptRangesHeader.RangeType.BYTES, header.getValue("Accept-Ranges: bytes"));
+        assertEquals(AcceptRangesHeader.RangeType.NONE, header.getValue("Accept-Ranges: none"));
+        assertEquals(AcceptRangesHeader.RangeType.NONE, header.getValue("Accept-Ranges: wat"));
     }
 
     @Test
     public void buildTest() throws Exception {
-        assertEquals("Accept-Ranges: bytes", header.build(AcceptRangesHeader.Range.BYTES));
-        assertEquals("Accept-Ranges: none", header.build(AcceptRangesHeader.Range.NONE));
+        assertEquals("Accept-Ranges: bytes", header.build(AcceptRangesHeader.RangeType.BYTES));
+        assertEquals("Accept-Ranges: none", header.build(AcceptRangesHeader.RangeType.NONE));
     }
 }

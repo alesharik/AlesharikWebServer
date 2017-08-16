@@ -16,17 +16,22 @@
  *
  */
 
-package com.alesharik.webserver.api.server.wrapper.bundle;
+package com.alesharik.webserver.api.server.wrapper.bundle.impl.file;
 
 import com.alesharik.webserver.api.server.wrapper.http.Request;
-import com.alesharik.webserver.api.server.wrapper.http.Response;
+import com.alesharik.webserver.api.server.wrapper.http.data.MimeType;
 
-import javax.annotation.Nonnull;
+public interface FileContentProvider {
+    boolean hasFile(Request request);
 
-/**
- * This class contains filter chain and router
- */
-public interface FilterChain extends Filter {
-    @Nonnull
-    Response handleRequest(Request request, HttpHandler[] httpHandlers, HttpHandlerResponseDecorator decorator);
+    String getName(Request request);
+
+    long getLength(Request request);
+
+    /**
+     * @return byte[] with 0 length then can't provide this range, overwise data
+     */
+    byte[] getRangedData(long start, long size);
+
+    MimeType getMimeType(Request request);
 }

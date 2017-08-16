@@ -45,7 +45,7 @@ public class Request implements Recyclable {
     /**
      * This is cache for headers
      */
-    protected final Map<Header, Object> headerMap;
+    protected final Map<Header, List<Object>> headerMap;
     protected Cookie[] cookies;
     @Getter
     protected Method method;
@@ -157,19 +157,49 @@ public class Request implements Recyclable {
     @Nullable
     public <T> T getHeader(Header<T> header, Class<T> cast) {
         if(headerMap.containsKey(header))
-            return cast.cast(headerMap.get(header));
+            return cast.cast(headerMap.get(header).get(0));
         else {
             if(!containsHeader(header.name))
                 return null;
             for(String s : headers) {
+                List<T> ret = new ArrayList<>();
                 if(s.startsWith(header.name)) {
                     T t = header.getValue(s);
-                    headerMap.put(header, t);
-                    return t;
+                    ret.add(t);
+                }
+                if(!ret.isEmpty()) {
+                    headerMap.put(header, Collections.unmodifiableList(ret));
+                    return ret.get(0);
                 }
             }
         }
         return null;
+    }
+
+    @Nonnull
+    public <T> List<T> getHeaders(Header<T> header, Class<T> cast) {
+        if(headerMap.containsKey(header)) {
+            List<T> ret = new ArrayList<>();
+            for(Object o : headerMap.get(header)) {
+                ret.add(cast.cast(o));
+            }
+            return ret;
+        } else {
+            if(!containsHeader(header.name))
+                return Collections.emptyList();
+            for(String s : headers) {
+                List<T> ret = new ArrayList<>();
+                if(s.startsWith(header.name)) {
+                    T t = header.getValue(s);
+                    ret.add(t);
+                }
+                if(!ret.isEmpty()) {
+                    headerMap.put(header, Collections.unmodifiableList(ret));
+                    return ret;
+                }
+            }
+        }
+        return Collections.emptyList();
     }
 
     @Nonnull

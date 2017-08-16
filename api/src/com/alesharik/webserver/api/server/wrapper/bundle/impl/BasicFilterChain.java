@@ -21,6 +21,7 @@ package com.alesharik.webserver.api.server.wrapper.bundle.impl;
 import com.alesharik.webserver.api.server.wrapper.bundle.Filter;
 import com.alesharik.webserver.api.server.wrapper.bundle.FilterChain;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandler;
+import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerResponseDecorator;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
 
@@ -47,7 +48,7 @@ public class BasicFilterChain implements FilterChain {
 
     @Nonnull
     @Override
-    public Response handleRequest(Request request, HttpHandler[] httpHandlers) {
+    public Response handleRequest(Request request, HttpHandler[] httpHandlers, HttpHandlerResponseDecorator decorator) {
         Response response = Response.getResponse();
         for(Filter filter : filters) {
             if(!filter.accept(request, response))
@@ -56,9 +57,11 @@ public class BasicFilterChain implements FilterChain {
         for(HttpHandler httpHandler : httpHandlers) {
             if(httpHandler.getFilter().accept(request, response)) {
                 httpHandler.handle(request, response);
+                decorator.decorate(request, response, false);
                 return response;
             }
         }
+        decorator.decorate(request, response, true);
         return response;
     }
 }

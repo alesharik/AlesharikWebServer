@@ -19,10 +19,12 @@
 package com.alesharik.webserver.api.server.wrapper.http;
 
 import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.api.server.wrapper.http.data.ContentRange;
 import com.alesharik.webserver.api.server.wrapper.http.data.ContentType;
 import com.alesharik.webserver.api.server.wrapper.http.data.ETag;
 import com.alesharik.webserver.api.server.wrapper.http.data.Encoding;
 import com.alesharik.webserver.api.server.wrapper.http.data.Host;
+import com.alesharik.webserver.api.server.wrapper.http.data.Range;
 import com.alesharik.webserver.api.server.wrapper.http.data.ReferrerPolicy;
 import com.alesharik.webserver.api.server.wrapper.http.data.TkType;
 import com.alesharik.webserver.api.server.wrapper.http.data.UserAgent;
@@ -298,6 +300,24 @@ import java.util.TreeMap;
  * <td>URI must be relative!</td>
  * </tr>
  * <tr>
+ * <td colspan="5" scope="colgroup"><center>Range</center></td>
+ * </tr>
+ * <tr>
+ * <td>Accept-Ranges</td>
+ * <td>{@link com.alesharik.webserver.api.server.wrapper.http.header.AcceptRangesHeader.RangeType}</td>
+ * <td>Accept-Ranges: bytes</td>
+ * </tr>
+ * <tr>
+ * <td>Content-Range</td>
+ * <td>{@link ContentRange}</td>
+ * <td>Content-Range: bytes 1-2/3</td>
+ * </tr>
+ * <tr>
+ * <td>Range</td>
+ * <td>{@link Range}[]</td>
+ * <td>Range: bytes=200-1000, 2000-6576, 19000-</td>
+ * </tr>
+ * <tr>
  * <td colspan="5" scope="colgroup"><center>Other</center></td>
  * </tr>
  * <tr>
@@ -385,6 +405,8 @@ public class HeaderManager {
         headers.put("Location", new ObjectHeader<>("Location", new UriFactory()));
 
         headers.put("Accept-Ranges", new AcceptRangesHeader());
+        headers.put("Content-Range", new ObjectHeader<>("Content-Range", new ContentRangeFactory()));
+        headers.put("Range", new ObjectHeader<>("Range", new RangeFactory()));
 
         //Other
         headers.put("Upgrade", new StringHeader("Upgrade"));
@@ -583,6 +605,49 @@ public class HeaderManager {
         @Override
         public String[] newArray(int size) {
             return new String[size];
+        }
+    }
+
+    private static final class ContentRangeFactory implements ObjectHeader.Factory<ContentRange> {
+
+        @Override
+        public ContentRange newInstance(String s) {
+            return ContentRange.fromHeaderString(s);
+        }
+
+        @Override
+        public String toString(ContentRange range) {
+            return range.toHeaderString();
+        }
+    }
+
+    private static final class RangeFactory implements ObjectHeader.Factory<Range[]> {
+
+        @Override
+        public Range[] newInstance(String s) {
+            String[] parts = s.split("=", 2);
+            AcceptRangesHeader.RangeType rangeType = AcceptRangesHeader.RangeType.parseRange(parts[0]);
+            String[] parts1 = parts[1].split(", ");
+            Range[] ret = new Range[parts1.length];
+            for(int i = 0; i < parts1.length; i++) {
+                ret[i] = Range.parse(rangeType, parts1[i]);
+            }
+            return ret;
+        }
+
+        @Override
+        public String toString(Range[] ranges) {
+            StringBuilder stringBuilder = new StringBuilder(ranges[0].getRangeType().toString());
+            stringBuilder.append('=');
+            boolean notFirst = false;
+            for(Range range : ranges) {
+                if(notFirst)
+                    stringBuilder.append(", ");
+                else
+                    notFirst = true;
+                stringBuilder.append(range.toHeaderString());
+            }
+            return stringBuilder.toString();
         }
     }
 }

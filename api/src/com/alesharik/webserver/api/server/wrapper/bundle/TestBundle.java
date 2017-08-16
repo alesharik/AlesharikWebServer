@@ -43,7 +43,7 @@ public class TestBundle implements HttpHandlerBundle {
                 new FilterChain() {
                     @Nonnull
                     @Override
-                    public Response handleRequest(Request request, HttpHandler[] httpHandlers) {
+                    public Response handleRequest(Request request, HttpHandler[] httpHandlers, HttpHandlerResponseDecorator decorator) {
                         Response response = Response.getResponse();
                         httpHandlers[0].handle(request, response);
                         return response;

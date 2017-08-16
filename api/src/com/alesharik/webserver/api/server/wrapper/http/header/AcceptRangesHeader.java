@@ -24,7 +24,7 @@ import lombok.ToString;
 
 import java.util.regex.Pattern;
 
-public final class AcceptRangesHeader extends Header<AcceptRangesHeader.Range> {
+public final class AcceptRangesHeader extends Header<AcceptRangesHeader.RangeType> {
     private final Pattern pattern;
 
     public AcceptRangesHeader() {
@@ -33,34 +33,34 @@ public final class AcceptRangesHeader extends Header<AcceptRangesHeader.Range> {
     }
 
     /**
-     * Default value is {@link Range#NONE}
+     * Default value is {@link RangeType#NONE}
      *
      * @param str header line
      */
     @Override
-    public Range getValue(String str) {
+    public RangeType getValue(String str) {
         String body = pattern.matcher(str).replaceFirst("");
-        return Range.parseRange(body);
+        return RangeType.parseRange(body);
     }
 
     @Override
-    public String build(Range value) {
+    public String build(RangeType value) {
         return "Accept-Ranges: " + value.getName();
     }
 
     @ToString
-    public enum Range {
+    public enum RangeType {
         BYTES("bytes"),
         NONE("none");
 
         @Getter
         private final String name;
 
-        Range(String name) {
+        RangeType(String name) {
             this.name = name;
         }
 
-        public static Range parseRange(String str) {
+        public static RangeType parseRange(String str) {
             if(str.equals("bytes"))
                 return BYTES;
             return NONE;

@@ -22,13 +22,16 @@ import com.alesharik.webserver.api.internal.ShutdownState;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This thread refills all {@link CachedObjectFactory} with dead instances
  */
-class CachedObjectFactoryReFillerThread extends Thread {
+class CachedObjectFactoryReFillerThread extends Thread {//TODO move to java.lang.ref.Cleaner in Java 9
     private static final ReferenceQueue<Object> queue = new ReferenceQueue<>();
+    private static final List<Ref> refs = new CopyOnWriteArrayList<>();
     static final AtomicReference<CachedObjectFactoryReFillerThread> thread = new AtomicReference<>();
 
     static {
@@ -48,10 +51,11 @@ class CachedObjectFactoryReFillerThread extends Thread {
         try {
             while(isAlive()) {
                 Ref ref = (Ref) queue.remove();
+                refs.remove(ref);
                 try {
                     Recyclable obj = (Recyclable) ref.get();
                     if(obj == null)
-                        return;
+                        continue;
 
                     ref.factory.putInstance(obj);
                 } catch (Exception e) {
@@ -74,6 +78,7 @@ class CachedObjectFactoryReFillerThread extends Thread {
         public Ref(T referent, CachedObjectFactory factory) {
             super(referent, CachedObjectFactoryReFillerThread.queue);
             this.factory = factory;
+            refs.add(this);
         }
     }
 }
