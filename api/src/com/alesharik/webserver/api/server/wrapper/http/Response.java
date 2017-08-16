@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.server.wrapper.http;
 
+import com.alesharik.webserver.api.ServerInfo;
 import com.alesharik.webserver.api.cache.object.CachedObjectFactory;
 import com.alesharik.webserver.api.cache.object.Recyclable;
 import com.alesharik.webserver.api.cache.object.SmartCachedObjectFactory;
@@ -26,8 +27,7 @@ import com.alesharik.webserver.api.server.wrapper.http.data.Cookie;
 import com.alesharik.webserver.api.server.wrapper.http.data.MimeType;
 import com.alesharik.webserver.api.server.wrapper.http.header.ObjectHeader;
 import com.alesharik.webserver.api.server.wrapper.http.header.SetCookieHeader;
-import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
-import com.alesharik.webserver.api.server.wrapper.server.Sender;
+import com.alesharik.webserver.api.server.wrapper.http.header.StringHeader;
 import lombok.Getter;
 import lombok.Setter;
 import org.glassfish.grizzly.utils.Charsets;
@@ -43,6 +43,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 @SuppressWarnings("unchecked")
 public class Response implements Recyclable {
+    private static final StringHeader serverHeader = HeaderManager.getHeaderByName("Server", StringHeader.class);
+    private static final String defaultServerHeader = serverHeader.build(ServerInfo.getServerSoftwareName());
+
     private static final CachedObjectFactory<Response> factory = new SmartCachedObjectFactory<>(Response::new);
 
     public static final Charset CHARSET = Charset.forName("ISO-8859-1");
@@ -67,6 +70,7 @@ public class Response implements Recyclable {
         buffer = new OutputBuffer();
         writer = new EncodedWriter(buffer, Charsets.UTF8_CHARSET);
         status = HttpStatus.NOT_IMPLEMENTED_501;
+        headers.add(defaultServerHeader);
     }
 
     public static Response getResponse() {
@@ -177,17 +181,6 @@ public class Response implements Recyclable {
 
     public void addCookie(Cookie cookie) {
         cookies.add(cookie);
-    }
-
-
-    public boolean isPartial() {
-        return false;
-    }
-
-    public void startSending(Sender sender, ExecutorPool executorPool) {
-        if(isPartial()) {
-
-        }
     }
 
     @Override
