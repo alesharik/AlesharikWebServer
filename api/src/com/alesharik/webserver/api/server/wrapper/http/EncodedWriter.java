@@ -20,7 +20,6 @@ package com.alesharik.webserver.api.server.wrapper.http;
 
 import lombok.AccessLevel;
 import lombok.Setter;
-import org.glassfish.grizzly.utils.Charsets;
 
 import java.nio.charset.Charset;
 
@@ -35,6 +34,6 @@ public class EncodedWriter {
     }
 
     public void write(String s) {
-        buffer.write(s.getBytes(Charsets.UTF8_CHARSET));
+        buffer.write(s.getBytes(charset));
     }
 }
