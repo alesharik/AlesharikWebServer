@@ -39,7 +39,6 @@ public class CachedObjectFactoryReFillerThreadTest {
         Thread.sleep(100);
 
         assertTrue(CachedObjectFactoryReFillerThread.thread.get().isAlive());
-
         verify(mock).println("CachedObjectFactory-ReFiller was stopped!");
         verify(mock).println("Restarting CachedObjectFactory-ReFiller...");
     }

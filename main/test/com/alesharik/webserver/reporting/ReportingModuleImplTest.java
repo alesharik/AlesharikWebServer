@@ -122,6 +122,8 @@ public class ReportingModuleImplTest {
         String f = new String(Files.readAllBytes(temp.toPath()), Charsets.UTF8_CHARSET);
         assertTrue(Boolean.parseBoolean(f));
         temp.deleteOnExit();
+        temp = File.createTempFile("AlesharikWebServer", "testFileForReportingModuleImplTest");
+        temp.deleteOnExit();
 
         reportingModule.start();
 
@@ -142,7 +144,6 @@ public class ReportingModuleImplTest {
         Document document1 = documentBuilder1.parse(new ByteArrayInputStream(config1.getBytes(Charsets.UTF8_CHARSET)));
         reportingModule.reload(document1.getDocumentElement());
         reportingModule.reportAll();
-
 
         String f1 = new String(Files.readAllBytes(temp.toPath()), Charsets.UTF8_CHARSET);
         assertFalse(Boolean.parseBoolean(f1));
