@@ -34,6 +34,8 @@ public final class ServerInfo {
     }
 
     public static String getServerSoftwareName() {
+        if(provider == null)
+            return "AlesharikWebServer: ServerInfo class not initialized! Please, report this information to server admin or server api realisation creator!";
         return provider.gerServerSoftwareName();
     }
 
