@@ -60,7 +60,7 @@ public final class PostgresDriver implements DatabaseDriver {
         updateSchemas();
         updateCurrentUser();
         try {
-            updateTransactional(connection.getAutoCommit());
+            updateTransactional(!connection.getAutoCommit());
         } catch (SQLException e) {
             throw new DatabaseInternalException("Get auto commit failed", e);
         }
