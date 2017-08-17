@@ -64,7 +64,7 @@ public class RangeFileHttpProvider implements FilteredHttpHandler {
             ContentType contentType = new ContentType(provider.getMimeType(request));
             if(ranges.length == 1) {
                 Range range = ranges[0];
-                byte[] data = provider.getRangedData(range.getStart(), range.getEnd());
+                byte[] data = provider.getRangedData(request, range.getStart(), range.getEnd());
                 if(data.length == 0) {
                     response.respond(HttpStatus.REQUEST_RANGE_NOT_SATISFIABLE_416);
                     return;
@@ -82,7 +82,7 @@ public class RangeFileHttpProvider implements FilteredHttpHandler {
                 response.respond(HttpStatus.PARTIAL_CONTENT_206);
                 Map<String, byte[]> resp = new HashMap<>();
                 for(Range range : ranges) {
-                    byte[] data = provider.getRangedData(range.getStart(), range.getEnd());
+                    byte[] data = provider.getRangedData(request, range.getStart(), range.getEnd());
                     if(data.length == 0) {
                         response.respond(HttpStatus.REQUEST_RANGE_NOT_SATISFIABLE_416);
                         return;

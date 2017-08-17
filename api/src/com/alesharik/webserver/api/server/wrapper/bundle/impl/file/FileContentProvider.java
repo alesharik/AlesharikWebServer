@@ -31,7 +31,7 @@ public interface FileContentProvider {
     /**
      * @return byte[] with 0 length then can't provide this range, overwise data
      */
-    byte[] getRangedData(long start, long size);
+    byte[] getRangedData(Request request, long start, long size);
 
     MimeType getMimeType(Request request);
 }

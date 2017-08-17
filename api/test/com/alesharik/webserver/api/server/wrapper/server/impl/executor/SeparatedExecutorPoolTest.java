@@ -69,8 +69,6 @@ public class SeparatedExecutorPoolTest {
             executorPool.executeWorkerTask(new TestUtils.WaitTask(10 * 1000));
         }
 
-        Thread.sleep(10);
-
         assertTrue(executorPool.getSelectorPoolTaskCount() > 0);
         assertTrue(executorPool.getWorkerPoolTaskCount() > 0);
 

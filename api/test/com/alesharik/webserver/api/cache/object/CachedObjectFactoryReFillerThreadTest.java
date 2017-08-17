@@ -24,7 +24,6 @@ import java.io.PrintStream;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class CachedObjectFactoryReFillerThreadTest {
     @Test
@@ -39,7 +38,5 @@ public class CachedObjectFactoryReFillerThreadTest {
         Thread.sleep(100);
 
         assertTrue(CachedObjectFactoryReFillerThread.thread.get().isAlive());
-        verify(mock).println("CachedObjectFactory-ReFiller was stopped!");
-        verify(mock).println("Restarting CachedObjectFactory-ReFiller...");
     }
 }
