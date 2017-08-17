@@ -175,7 +175,7 @@ final class PostgresTable<E> implements Table<E> {
         PreparedStatement statement = null;
         try {
             try {
-                statement = connection.prepareStatement("CREATE UNIQUE INDEX " + column.getColumnName() + "_idx ON " + tableName + '(' + column.getColumnName() + ')');
+                statement = connection.prepareStatement("CREATE INDEX " + column.getColumnName() + "_idx ON " + tableName + '(' + column.getColumnName() + ')');
                 statement.executeUpdate();
             } catch (SQLException e) {
                 throw new DatabaseReadSQLException(e);
