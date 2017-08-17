@@ -50,9 +50,6 @@ import org.objectweb.asm.tree.ClassNode;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,11 +91,7 @@ public class EntityClassTransformer {
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
             ClassVisitorImpl cv = new ClassVisitorImpl(classWriter, name, isLazy, isBridge);
             classNode.accept(cv);
-            byte[] bytes = classWriter.toByteArray();
-            File f = new File("./test.class");
-            f.createNewFile();
-            Files.write(f.toPath(), bytes, StandardOpenOption.TRUNCATE_EXISTING);
-            return bytes;
+            return classWriter.toByteArray();
         } catch (Exception e) {
             if(e.getCause() instanceof ClassNotFoundException) {
                 return null;
