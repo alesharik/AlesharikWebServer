@@ -149,9 +149,13 @@ public class EntityClassTransformer {
                 if(name.startsWith("set")) {//Is setter
                     String n = name.substring("set".length());
                     String fieldName = Character.toLowerCase(n.charAt(0)) + (n.length() > 1 ? n.substring(1) : "");
+                    if(!fields.containsKey(fieldName))
+                        return super.visitMethod(access, name, desc, signature, exceptions);
                     return new SetterReplacer(super.visitMethod(access, name, desc, signature, exceptions), fieldName, fields.get(fieldName), entityDescription.className);
                 } else if((entityDescription.lazy || entityDescription.bridge) && isGetMethod(name, Type.getReturnType(desc))) { //Getters will be replaced only if entity is lazy or bridge, overwise all values will be fetched form database
                     String fieldName = extractFieldNameFromGetter(name, Type.getReturnType(desc));
+                    if(!fields.containsKey(fieldName))
+                        return super.visitMethod(access, name, desc, signature, exceptions);
                     if(entityDescription.lazy) {
                         if(fieldName.isEmpty())
                             return super.visitMethod(access, name, desc, signature, exceptions);
