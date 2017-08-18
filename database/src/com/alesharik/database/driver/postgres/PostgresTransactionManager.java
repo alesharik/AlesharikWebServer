@@ -73,6 +73,6 @@ final class PostgresTransactionManager implements TransactionManager {
 
     @Override
     public Transaction newTransaction() {
-        return null;
+        return new PostgresTransaction(connection);
     }
 }

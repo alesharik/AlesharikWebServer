@@ -35,12 +35,7 @@ final class PostgresTransaction implements Transaction {
     private final BitSet state = new BitSet(3);
 
     public PostgresTransaction(Connection connection) {
-        this.connection = connection;
-        try {
-            this.savepoint = connection.setSavepoint();
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("Can't create savepoint", e);
-        }
+        this(connection, false);
     }
 
     private PostgresTransaction(Connection connection, boolean children) {
