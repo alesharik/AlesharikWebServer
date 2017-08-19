@@ -62,7 +62,9 @@ public class RangeFileHttpProvider implements FilteredHttpHandler {
         } else if(request.getMethod() == Method.GET) {
             Range[] ranges = request.getHeader(rangeHeader, Range[].class);
             ContentType contentType = new ContentType(provider.getMimeType(request));
-            if(ranges.length == 1) {
+            if(ranges == null) {
+                response.respond(HttpStatus.REQUEST_RANGE_NOT_SATISFIABLE_416);
+            } else if(ranges.length == 1) {
                 Range range = ranges[0];
                 byte[] data = provider.getRangedData(request, range.getStart(), range.getEnd());
                 if(data.length == 0) {
