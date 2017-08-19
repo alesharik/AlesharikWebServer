@@ -474,21 +474,11 @@ final class PostgresTable<E> implements Table<E> {
             try {
                 try {
                     StringBuilder valueColumnAdding = new StringBuilder();
-                    boolean hasFirst = false;
                     if(column.isUnique()) {
-                        if(hasFirst)
-                            valueColumnAdding.append(", ");
-                        else
-                            hasFirst = true;
 
-                        valueColumnAdding.append(" UNIQUE");
+                        valueColumnAdding.append(" UNIQUE ");
                     }
                     if(column.isForeign()) {
-                        if(hasFirst)
-                            valueColumnAdding.append(", ");
-                        else
-                            hasFirst = true;
-
                         valueColumnAdding.append(" REFERENCES ");
                         valueColumnAdding.append(column.getForeignTable());
                         if(!column.getForeignColumn().isEmpty()) {
@@ -507,8 +497,6 @@ final class PostgresTable<E> implements Table<E> {
                         valueColumnAdding.append(" )");
                     }
                     {
-                        if(hasFirst)
-                            valueColumnAdding.append(", ");
                         valueColumnAdding.append(column.isNullable() ? " NULL " : " NOT NULL ");
                     }
                     statement = connection.prepareStatement("CREATE TABLE " + name + "(" +
