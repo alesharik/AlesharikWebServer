@@ -23,6 +23,8 @@ import com.alesharik.webserver.configuration.SubModule;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.Future;
 
 /**
@@ -36,9 +38,12 @@ import java.util.concurrent.Future;
  */
 @ThreadSafe
 public interface ExecutorPool extends ExecutorPoolMXBean, SubModule {
-    <T, K> Future<T> submitSelectorTask(@Nonnull BatchingForkJoinTask<K, T> task);
+    void setSelectorContexts(SelectorContext.Factory factory);//TODO add thread group
 
-    void executeSelectorTask(@Nonnull BatchingRunnableTask task);
+    /**
+     * Add socket to one of selector contexts
+     */
+    void selectSocket(SelectableChannel socket, SocketChannel socketChannel, SocketProvider.SocketManager socketManager);
 
     <T, K> Future<T> submitWorkerTask(@Nonnull BatchingForkJoinTask<K, T> task);
 

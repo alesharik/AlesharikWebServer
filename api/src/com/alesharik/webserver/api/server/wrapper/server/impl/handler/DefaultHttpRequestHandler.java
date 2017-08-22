@@ -49,6 +49,7 @@ import com.alesharik.webserver.api.server.wrapper.server.BatchingRunnableTask;
 import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
 import com.alesharik.webserver.api.server.wrapper.server.HttpRequestHandler;
 import com.alesharik.webserver.api.server.wrapper.server.Sender;
+import com.alesharik.webserver.logger.Debug;
 import lombok.AllArgsConstructor;
 
 import java.util.Set;
@@ -66,7 +67,7 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
 
     @Override
     public void handleRequest(Request request, ExecutorPool executorPool, Sender sender) {
-        executorPool.executeSelectorTask(new BundleSelectTask(bundles, request, executorPool, sender));
+        executorPool.executeWorkerTask(new BundleSelectTask(bundles, request, executorPool, sender));
     }
 
     @Override
@@ -90,8 +91,9 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
                     break;
                 }
             }
+            Debug.log("Request from " + request.getRemote().toString());
             if(bundle == null) {
-                System.err.println("Bundle not found for " + request);
+                System.err.println("Bundle not found for " + request.getContextPath());
                 return;
             }
             FilterChain chain;
@@ -134,6 +136,7 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
                 response = Response.getResponse();
                 errorHandler.handleException(e, request, response, ErrorHandler.Pool.WORKER);
             } finally {
+                Debug.log("Response sent to " + request.getRemote().toString());
                 sender.send(request, response);
             }
         }

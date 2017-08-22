@@ -23,15 +23,22 @@ import com.alesharik.webserver.api.name.Named;
 import com.alesharik.webserver.api.server.wrapper.server.BatchingForkJoinTask;
 import com.alesharik.webserver.api.server.wrapper.server.BatchingRunnableTask;
 import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
+import com.alesharik.webserver.api.server.wrapper.server.SelectorContext;
+import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
 import org.jctools.queues.MpscGrowableArrayQueue;
 
 import javax.annotation.Nonnull;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SocketChannel;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.StampedLock;
 
 /**
  * This class uses separated {@link ForkJoinPool} for provide {@link ExecutorPool} functionality
@@ -46,7 +53,7 @@ public class SeparatedExecutorPool implements ExecutorPool {
     protected final Map<Object, BatchingTask> selectorBatches = new ConcurrentHashMap<>();
     protected final Map<Object, BatchingTask> workerBatches = new ConcurrentHashMap<>();
 
-    protected volatile ForkJoinPool selectorPool;
+    protected volatile List<SelectorWorkerThread> selectorPool;
     protected volatile ForkJoinPool workerPool;
 
     public SeparatedExecutorPool(int selector, int worker, ThreadGroup threadGroup) {
@@ -63,7 +70,7 @@ public class SeparatedExecutorPool implements ExecutorPool {
 
     @Override
     public int getSelectorPoolAliveThreadCount() {
-        return selectorPool == null ? 0 : selectorPool.getActiveThreadCount();
+        return selectorPool == null ? 0 : selectorPool.size();
     }
 
     @Override
@@ -78,7 +85,7 @@ public class SeparatedExecutorPool implements ExecutorPool {
 
     @Override
     public long getSelectorPoolTaskCount() {
-        return selectorPool == null ? 0 : selectorPool.getQueuedSubmissionCount();
+        return 0;
     }
 
     @Override
@@ -110,7 +117,7 @@ public class SeparatedExecutorPool implements ExecutorPool {
     @Override
     public void start() {
         System.out.println("Starting separated FJP based executor pool (selector: " + selectorParallelism + " threads, worker: " + workerParallelism + " threads)");
-        this.selectorPool = new ForkJoinPool(selectorParallelism, threadFactory, null, false);
+        this.selectorPool = new CopyOnWriteArrayList<>();
         this.workerPool = new ForkJoinPool(workerParallelism, threadFactory, null, false);
         System.out.println("Separated executor pool in " + group.getName() + " thread group successfully started");
     }
@@ -118,59 +125,67 @@ public class SeparatedExecutorPool implements ExecutorPool {
     @Override
     public void shutdownNow() {
         System.out.println("Emergency shutdown pool in " + group.getName() + " thread group");
-        selectorPool.shutdownNow();
+        selectorPool.forEach(SelectorWorkerThread::shutdown);
         workerPool.shutdownNow();
     }
 
     @Override
     public void shutdown() {
         System.out.println("Shutdown pool in " + group.getName() + " thread group");
-        selectorPool.shutdown();
+        selectorPool.forEach(SelectorWorkerThread::shutdown);
         workerPool.shutdown();
         System.out.println("Shutdown successful of pool in " + group.getName() + " thread group");
     }
 
     @Override
     public boolean isRunning() {
-        return workerPool != null && !workerPool.isShutdown() && selectorPool != null && !selectorPool.isShutdown();
+        return workerPool != null && !workerPool.isShutdown() && selectorPool != null;
     }
 
     @Override
-    public <T, K> Future<T> submitSelectorTask(@Nonnull BatchingForkJoinTask<K, T> task) {
-        if(!selectorBatches.getOrDefault(task.getKey(), new BatchingTask(selectorBatches, task.getKey(), selectorPool)).add(task)) {
-            BatchingTask task1 = new BatchingTask(selectorBatches, task.getKey(), selectorPool);
-            task1.add(task);
-            selectorBatches.put(task.getKey(), task1);
+    public void setSelectorContexts(SelectorContext.Factory factory) {
+        selectorPool.forEach(SelectorWorkerThread::shutdown);
+        selectorPool.clear();
+        for(int i = 0; i < selectorParallelism; i++) {
+            SelectorWorkerThread workerThread = new SelectorWorkerThread(factory.newInstance(), group);
+            workerThread.start();
+            selectorPool.add(workerThread);
         }
-        return task;
     }
 
     @Override
-    public void executeSelectorTask(@Nonnull BatchingRunnableTask task) {
-        if(!selectorBatches.getOrDefault(task.getKey(), new BatchingTask(selectorBatches, task.getKey(), selectorPool)).add(task)) {
-            BatchingTask task1 = new BatchingTask(selectorBatches, task.getKey(), selectorPool);
-            task1.add(task);
-            selectorBatches.put(task.getKey(), task1);
+    public void selectSocket(SelectableChannel socket, SocketChannel socketChannel, SocketProvider.SocketManager socketManager) {
+        SelectorWorkerThread lower = selectorPool.get(0);
+        for(SelectorWorkerThread workerThread : selectorPool) {
+            if(workerThread.getSocketCount() < lower.getSocketCount())
+                lower = workerThread;
         }
+        lower.registerSocket(socket, socketChannel, socketManager);
     }
 
     @Override
     public <T, K> Future<T> submitWorkerTask(@Nonnull BatchingForkJoinTask<K, T> task) {
-        if(!workerBatches.getOrDefault(task.getKey(), new BatchingTask(workerBatches, task.getKey(), workerPool)).add(task)) {
-            BatchingTask task1 = new BatchingTask(workerBatches, task.getKey(), workerPool);
-            task1.add(task);
-            workerBatches.put(task.getKey(), task1);
+        Object key = task.getKey();
+        if(workerBatches.containsKey(key)) {
+            if(workerBatches.getOrDefault(key, new BatchingTask(workerBatches, key, workerPool).runTask()).add(task))
+                return task;
         }
+        BatchingTask task1 = new BatchingTask(workerBatches, key, workerPool);
+        task1.add(task);
+        task1.runTask();
         return task;
     }
 
     @Override
     public void executeWorkerTask(@Nonnull BatchingRunnableTask task) {
-        if(!workerBatches.getOrDefault(task.getKey(), new BatchingTask(workerBatches, task.getKey(), workerPool)).add(task)) {
-            BatchingTask task1 = new BatchingTask(workerBatches, task.getKey(), workerPool);
-            task1.add(task);
-            workerBatches.put(task.getKey(), task1);
+        Object key = task.getKey();
+        if(workerBatches.containsKey(key)) {
+            if(workerBatches.getOrDefault(key, new BatchingTask(workerBatches, key, workerPool).runTask()).add(task))
+                return;
         }
+        BatchingTask task1 = new BatchingTask(workerBatches, key, workerPool);
+        task1.add(task);
+        task1.runTask();
     }
 
     protected static final class BatchingTask extends ForkJoinTask<Void> {
@@ -184,14 +199,23 @@ public class SeparatedExecutorPool implements ExecutorPool {
 
         private final Map<Object, BatchingTask> removeMap;
         private final Object object;
+        private final StampedLock stampedLock;
+        private final ForkJoinPool pool;
 
         public BatchingTask(Map<Object, BatchingTask> removeMap, Object object, ForkJoinPool pool) {
             this.removeMap = removeMap;
             this.object = object;
-            tasks = new MpscGrowableArrayQueue<>(8, MAX_COUNT);
-            runnables = new MpscGrowableArrayQueue<>(8, MAX_COUNT);
-            state = new AtomicReference<>(State.NOT_COMPLETED);
+            this.pool = pool;
+            this.tasks = new MpscGrowableArrayQueue<>(8, MAX_COUNT);
+            this.runnables = new MpscGrowableArrayQueue<>(8, MAX_COUNT);
+            this.state = new AtomicReference<>(State.NOT_COMPLETED);
+            this.stampedLock = new StampedLock();
+        }
+
+        public BatchingTask runTask() {
             pool.execute(this);
+            removeMap.put(object, this);
+            return this;
         }
 
         @Override
@@ -205,48 +229,73 @@ public class SeparatedExecutorPool implements ExecutorPool {
         }
 
         public boolean add(ForkJoinTask task) {
-            return state.updateAndGet(state1 -> {
-                if(tasks.size() == MAX_COUNT)
-                    return State.TASKS_COMPLETED;
-                if(state1 == State.NOT_COMPLETED)
+            long stamp = stampedLock.readLock();//Use read lock because queue is concurrent, but method need to interrupt run method and allow concurrent queue adding
+            try {
+                if(state.updateAndGet(state1 -> tasks.size() >= MAX_COUNT ? State.TASKS_COMPLETED : state1) == State.NOT_COMPLETED) {
                     tasks.add(task);
-                return state1;
-            }) == State.NOT_COMPLETED;
+                    return true;
+                } else
+                    return false;
+            } finally {
+                stampedLock.unlock(stamp);
+            }
         }
 
         public boolean add(Runnable runnable) {
-            return state.updateAndGet(state1 -> {
-                if(runnables.size() == MAX_COUNT)
-                    return State.ALL_COMPLETED;
-                if(state1 != State.ALL_COMPLETED)
+            long stamp = stampedLock.readLock();//Use read lock because queue is concurrent, but method need to interrupt run method and allow concurrent queue adding
+            try {
+                if(state.updateAndGet(state1 -> runnables.size() >= MAX_COUNT ? State.ALL_COMPLETED : state1) != State.ALL_COMPLETED) {
                     runnables.add(runnable);
-                return state1;
-            }) != State.ALL_COMPLETED;
+                    return true;
+                } else
+                    return false;
+            } finally {
+                stampedLock.unlock(stamp);
+            }
         }
 
         @Override
         protected boolean exec() {
             try {
-                while(!tasks.isEmpty())
+                while(tasks.isEmpty() && runnables.isEmpty())
+                    Thread.sleep(1);
+                while(!tasks.isEmpty()) {
+                    long writeLock = stampedLock.writeLock();
                     try {
                         tasks.poll().invoke();
                     } catch (Exception e) {
                         e.printStackTrace();
+                    } finally {
+                        stampedLock.unlockWrite(writeLock);
                     }
+                }
 
-                if(state.updateAndGet(state1 -> tasks.isEmpty() ? State.TASKS_COMPLETED : State.NOT_COMPLETED) == State.NOT_COMPLETED)
-                    exec();
+                long lock = stampedLock.writeLock();
+                try {
+                    if(state.updateAndGet(state1 -> tasks.isEmpty() ? State.TASKS_COMPLETED : State.NOT_COMPLETED) == State.NOT_COMPLETED)
+                        exec();
+                } finally {
+                    stampedLock.unlockWrite(lock);
+                }
 
-                while(!runnables.isEmpty())
+                while(!runnables.isEmpty()) {
+                    long writeLock = stampedLock.writeLock();//TODO use better way to do so(unlock write only if someone tries to add task)
                     try {
                         runnables.poll().run();
                     } catch (Exception e) {
                         e.printStackTrace();
+                    } finally {
+                        stampedLock.unlockWrite(writeLock);
                     }
+                }
 
-                if(state.updateAndGet(state1 -> runnables.isEmpty() ? State.ALL_COMPLETED : State.TASKS_COMPLETED) == State.TASKS_COMPLETED)
-                    exec();
-
+                lock = stampedLock.writeLock();
+                try {
+                    if(state.updateAndGet(state1 -> runnables.isEmpty() ? State.ALL_COMPLETED : State.TASKS_COMPLETED) == State.TASKS_COMPLETED)
+                        exec();
+                } finally {
+                    stampedLock.unlockWrite(lock);
+                }
                 removeMap.remove(object);
                 return true;
             } catch (Exception e) {
@@ -259,6 +308,44 @@ public class SeparatedExecutorPool implements ExecutorPool {
             NOT_COMPLETED,
             TASKS_COMPLETED,
             ALL_COMPLETED
+        }
+    }
+
+    private static final class SelectorWorkerThread extends Thread {
+        private final SelectorContext context;
+        private volatile boolean isRunning;
+
+        public SelectorWorkerThread(SelectorContext context, ThreadGroup threadGroup) {
+            super(threadGroup, "SelectorThread");
+            this.context = context;
+        }
+
+        @Override
+        public synchronized void start() {
+            isRunning = true;
+            super.start();
+        }
+
+        @Override
+        public void run() {
+            while(isRunning) {
+                context.iteration();
+            }
+        }
+
+        public long getSocketCount() {
+            return context.getSocketCount();
+        }
+
+        public void registerSocket(SelectableChannel channel, SocketChannel socketChannel, SocketProvider.SocketManager socketManager) {
+            context.registerSocket(channel, socketChannel, socketManager);
+        }
+
+        public void shutdown() {
+            if(!isRunning)
+                return;
+            isRunning = false;
+            context.wakeup();
         }
     }
 }

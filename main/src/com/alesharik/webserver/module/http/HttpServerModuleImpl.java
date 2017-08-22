@@ -41,7 +41,6 @@ import org.w3c.dom.Element;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -72,7 +71,8 @@ public final class HttpServerModuleImpl implements HttpServerModule {
     @Getter
     private volatile Layer mainLayer;
 
-    private volatile DispatcherThread thread;
+    private volatile AcceptorThread acceptorThread;
+    private volatile SelectorContextImpl.Factory factory;
 
     public HttpServerModuleImpl() {
         wrappers = new CopyOnWriteArraySet<>();
@@ -195,11 +195,8 @@ public final class HttpServerModuleImpl implements HttpServerModule {
         this.handler = httpRequestHandler;
 
         this.mainLayer = new MainLayerImpl(wrappers, pool);
-        try {
-            this.thread = new DispatcherThread(threadGroup, httpRequestHandler, executorPool, httpServerStatistics);
-        } catch (IOException e) {
-            throw new ConfigurationParseError(e);
-        }
+        this.acceptorThread = new AcceptorThread(threadGroup, executorPool);
+        this.factory = () -> new SelectorContextImpl(httpServerStatistics, httpRequestHandler, executorPool);
     }
 
     @Override
@@ -213,22 +210,23 @@ public final class HttpServerModuleImpl implements HttpServerModule {
     public void start() {
         mainLayer.start();
         for(ServerSocketWrapper wrapper : this.wrappers) {
-            this.thread.handle(wrapper);
+            this.acceptorThread.handle(wrapper);
         }
-        thread.start();
+        acceptorThread.start();
+        pool.setSelectorContexts(factory);
     }
 
     @Override
     public void shutdown() {
         mainLayer.shutdown();
-        thread.shutdown();
+        acceptorThread.shutdown();
         httpServerStatistics.responseTime.reset();
     }
 
     @Override
     public void shutdownNow() {
         mainLayer.shutdownNow();
-        thread.shutdown();
+        acceptorThread.shutdown();
         httpServerStatistics.responseTime.reset();
     }
 
