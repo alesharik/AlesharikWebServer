@@ -19,6 +19,7 @@
 package com.alesharik.webserver.api.qt;
 
 import com.alesharik.webserver.api.ByteOrderUtils;
+import com.alesharik.webserver.api.cache.object.Recyclable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -41,7 +42,7 @@ import java.nio.charset.Charset;
  * Use OffHeap for work
  */
 @NotThreadSafe
-public class QDataStream implements DataInput, DataOutput, AutoCloseable {
+public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recyclable {
     private static final int DEFAULT_SIZE = 16;
     private static final Unsafe U = JavaInternals.getUnsafe();
 
@@ -403,6 +404,27 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
     private void allocate(long count) {
         address = U.reallocateMemory(address, count);
         size = count;
+    }
+
+    /**
+     * Add space to stream
+     */
+    public void alloc(long count) {
+        address = U.reallocateMemory(address, count);
+        size += count;
+    }
+
+    /**
+     * Deletes all content, reset cursors and set size to default capacity
+     */
+    @Override
+    public void recycle() {
+        order = ByteOrder.nativeOrder();
+        size = DEFAULT_SIZE;
+        U.freeMemory(address);
+        address = U.allocateMemory(size);
+        readCursor = 0;
+        writeCursor = 0;
     }
 
     public enum FormatStrategy implements QDataStreamStrategy {
