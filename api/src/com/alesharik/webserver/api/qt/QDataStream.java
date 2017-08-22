@@ -94,21 +94,6 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
         return size - writeCursor;
     }
 
-    @Override
-    public void write(int b) {
-        writeByte(b);
-    }
-
-    @Override
-    public void write(byte[] b) {
-        write(b, 0, b.length);
-    }
-
-    @Override
-    public void write(byte[] b, int off, int len) {
-        U.copyMemory(b, JavaInternals.byteArrayOffset + off, null, allocFor(len), len);
-    }
-
     /**
      * qint8
      */
@@ -132,7 +117,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
     /**
      * quint8
      */
-    public void writeUnsignedByte(int b) {
+    public void writeUnsignedByte(short b) {
         U.putByte(allocFor(1), (byte) (b & 0xFF));
     }
 
@@ -174,13 +159,13 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
     /**
      * quint16
      */
-    public void writeUnsignedShort(short s) {
+    public void writeUnsignedShort(int s) {
         U.putShort(allocFor(2), ByteOrderUtils.format((short) (s & 0xffff), order));
     }
 
     @Override
     public int readUnsignedShort() throws IOException {
-        return ByteOrderUtils.format((short) (U.getShort(read(2)) & 0xffff), order);
+        return ByteOrderUtils.format((U.getShort(read(2)) & 0xffff), order);
     }
 
     @Override
@@ -213,12 +198,12 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
     /**
      * quint32
      */
-    public void writeUnsignedInt(int v) {
-        U.putInt(allocFor(4), ByteOrderUtils.format((int) (v & 0xffffffffL), order));
+    public void writeUnsignedInt(long v) {
+        U.putInt(allocFor(4), (int) ByteOrderUtils.format((v), order));
     }
 
-    public int readUnsignedInt() {
-        return ByteOrderUtils.format((int) (U.getInt(read(4)) & 0xffffffffL), order);
+    public long readUnsignedInt() {
+        return ByteOrderUtils.format((U.getInt(read(4)) & 0x00000000FFFFFFFFL), order);
     }
 
     /**
@@ -254,6 +239,31 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
     @Override
     public void writeDouble(double v) {
         U.putDouble(allocFor(8), ByteOrderUtils.format(v, order));
+    }
+
+    @Override
+    public float readFloat() {
+        return ByteOrderUtils.format(U.getFloat(read(4)), order);
+    }
+
+    @Override
+    public double readDouble() {
+        return ByteOrderUtils.format(U.getDouble(read(8)), order);
+    }
+
+    @Override
+    public void write(int b) {
+        writeByte(b);
+    }
+
+    @Override
+    public void write(byte[] b) {
+        write(b, 0, b.length);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) {
+        U.copyMemory(b, JavaInternals.byteArrayOffset + off, null, allocFor(len), len);
     }
 
     @Override
@@ -317,17 +327,6 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
         long delta = Math.min((size - readCursor), n);
         readCursor += delta;
         return (int) delta;
-    }
-
-
-    @Override
-    public float readFloat() {
-        return ByteOrderUtils.format(U.getFloat(read(4)), order);
-    }
-
-    @Override
-    public double readDouble() {
-        return ByteOrderUtils.format(U.getDouble(read(8)), order);
     }
 
     /**
@@ -410,11 +409,11 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable {
         QT_4_4 {
             @Override
             public String readString(Unsafe unsafe, QDataStream dataStream) {
-                int size = dataStream.readUnsignedInt();
+                long size = dataStream.readUnsignedInt();
                 if(size == 0xFFFFFFFF)
                     return "";
 
-                byte[] data = new byte[size];
+                byte[] data = new byte[(int) size];
                 for(int i = 0; i < size; i++) {
                     data[i] = dataStream.readByte();
                 }
