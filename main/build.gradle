@@ -3,6 +3,22 @@ apply plugin: 'idea'
 
 buildDir = new File('./out/')
 
+//====================Deploy====================\\
+
+task buildDeploy {}
+
+//====================Cleaning====================\\
+
+clean.doFirst {
+    delete 'build'
+    delete 'out'
+    delete 'deploy'
+    delete buildDir.toString()
+    delete projectDir.toString() + "/reporting/"
+}
+
+//====================Config====================\\
+
 sourceSets {
     main {
         java {
@@ -25,6 +41,8 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.7.21'
 }
 
+//====================Build====================\\
+
 task checkDirs {
     if(!buildDir.exists())
         buildDir.mkdirs()
@@ -33,6 +51,10 @@ task checkDirs {
 build.dependsOn checkDirs
 build.dependsOn jar
 build.dependsOn check
+
+buildDeploy.dependsOn checkDirs
+buildDeploy.dependsOn jar
+buildDeploy.dependsOn check
 
 task codeCoverageReport(dependsOn: test, type: JacocoReport) {
     executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
@@ -57,22 +79,22 @@ jar {
     }
 }
 
-clean.doFirst {
-    delete buildDir.toString()
-    delete projectDir.toString() + "/reporting/"
-}
-
-
 javadoc.destinationDir = new File(buildDir.toString() + '/javadoc/')
-
 
 task packageJavadoc(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
     classifier = 'javadoc'
+    group = 'build'
 }
 task packageSources(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
     classifier = 'sources'
+    group = 'build'
+}
+
+artifacts {
+    archives packageJavadoc
+    archives packageSources
 }
 
 publishing {
@@ -80,28 +102,11 @@ publishing {
         mavenJava(MavenPublication) {
             groupId 'com.alesharik'
             artifactId 'alesharikwebserver-main'
-            version '0.1'
-
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-main.jar', classifier: 'src'
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-main-sources.jar', classifier: 'sources', extension: 'zip'
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-main-javadoc.jar', classifier: 'javadoc', extension: 'zip'
+            version this.version
 
             from components.java
         }
     }
 }
 
-//install {
-//    repositories.mavenInstaller {
-//        name 'AlesharikWebServer-main'
-//
-//        groupId 'com.alesharik'
-//        artifactId 'alesharikwebserver-main'
-//        version '0.1'
-//    }
-//}
-
-jar.dependsOn packageJavadoc
-jar.dependsOn packageSources
-jar.dependsOn packageSources
 jar.dependsOn test

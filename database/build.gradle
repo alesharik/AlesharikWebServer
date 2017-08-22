@@ -28,10 +28,17 @@ dependencies {
 task packageJavadoc(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
     classifier = 'javadoc'
+    group = 'build'
 }
 task packageSources(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
     classifier = 'sources'
+    group = 'build'
+}
+
+artifacts {
+    archives packageJavadoc
+    archives packageSources
 }
 
 publishing {
@@ -39,16 +46,16 @@ publishing {
         mavenJava(MavenPublication) {
             groupId 'com.alesharik'
             artifactId 'alesharikwebserver-database'
-            version '0.1'
-
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-database.jar', classifier: 'src'
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-database-sources.jar', classifier: 'sources', extension: 'zip'
-            artifact source: buildDir.toString() + '/libs/alesharikwebserver-database-javadoc.jar', classifier: 'javadoc', extension: 'zip'
+            version this.version
 
             from components.java
         }
     }
 }
 
-jar.dependsOn packageJavadoc
-jar.dependsOn packageSources
+//====================Cleaning====================\\
+
+clean.doFirst {
+    delete 'build'
+    delete 'out'
+}

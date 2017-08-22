@@ -1,6 +1,3 @@
-//apply plugin: 'java'
-//apply plugin: 'idea'//TODO move error page generators to api
-
 buildscript {
     repositories {
         jcenter()
@@ -12,6 +9,7 @@ buildscript {
     dependencies {
         classpath 'com.github.erizo.gradle:jcstress-gradle-plugin:0.8.0'
         classpath "gradle.plugin.me.champeau.gradle:jmh-gradle-plugin:0.3.0"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
     }
 }
 
@@ -20,17 +18,54 @@ plugins {
     id 'java'
     id 'idea'
     id 'maven-publish'
+    id "cz.malohlava" version "1.0.2"
 }
+
+//====================Groups====================\\
+allprojects {
+    ext.DEPLOY_GROUP = 'deploy'
+    ext.NATIVE_GROUP = "native"
+
+    version = "0.1"
+}
+
+//====================Some vars====================\\
 
 def deployDir = new File("./deploy/")
 def userProp = project.hasProperty('user') ? project.property('user') : System.getenv('user')
 def keyProp = project.hasProperty('key') ? project.property('key') : System.getenv('key')
+
+//====================Cleaning====================\\
+
+clean.doFirst {
+    delete 'out'
+}
+
+task cleanDeployFolder(type: Delete) {
+    delete 'deploy'
+}
+
+clean.dependsOn cleanDeployFolder
+clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean"
+
+//====================Config====================\\
 
 repositories {
     mavenCentral()
     mavenLocal()
 }
 
+visteg {
+    enabled        = true
+    colouredNodes  = true
+    colouredEdges  = true
+    destination    = 'out/reports/visteg.dot'
+    exporter       = 'dot'
+    colorscheme    = 'spectral11'
+    nodeShape      = 'box'
+    startNodeShape = 'hexagon'
+    endNodeShape   = 'doubleoctagon'
+}
 
 subprojects {
     buildscript {
@@ -50,6 +85,8 @@ subprojects {
     apply plugin: 'jacoco'
     apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.bintray'
+    apply plugin: "cz.malohlava"
+    apply plugin: 'maven'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -71,7 +108,6 @@ subprojects {
         options.addStringOption('Xdoclint:none', '-quiet')
     }
 
-
     bintray {
         user = userProp
         key = keyProp
@@ -83,31 +119,60 @@ subprojects {
             name = 'alesharikwebserver'
             licenses = ['GPL-3.0']
             vcsUrl = 'https://github.com/alesharik/AlesharikWebServer'
+            version {
+                name = this.version
+                desc = 'AlesharikWebServer Snapshot release'
+                released  = new Date()
+                vcsTag = this.version
+            }
         }
     }
 }
 
-clean.doFirst {
-    deployDir.deleteDir()
+//====================Publishing====================\\
+
+task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload', ':alesharikwebserver-main:bintrayUpload', ':alesharikwebserver-database:bintrayUpload', ':alesharikwebserver-internals:bintrayUpload']) {
+    description = "Publish artifacts to bintray"
+    group = 'distribution'
 }
 
+task publishArtifacts(dependsOn: [':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-database:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-internals:publishMavenJavaPublicationToMavenLocal']) {
+    description = "Publish artifacts to maven local"
+    group = 'distribution'
+}
+
+//====================Preparing server to deploy====================\\
+
 task checkDeployDir {
+    group = DEPLOY_GROUP
+    description = "Create deploy dir if not exitst"
+
     if(!deployDir.exists())
         deployDir.mkdirs()
 }
 
-task copyArtifacts(dependsOn: [checkDeployDir, ':alesharikwebserver-api:build', 'alesharikwebserver-main:build'], type: Copy) {
+task copyArtifacts(dependsOn: [checkDeployDir, ':alesharikwebserver-api:buildDeploy', 'alesharikwebserver-main:buildDeploy'], type: Copy) {
+    group = DEPLOY_GROUP
+    description = "Copy builded jars"
+
     from('./api/out/libs/') {
-        exclude 'alesharikwebserver-api.jar'
+        include 'alesharikwebserver-api-all.jar'
     }
-    from './main/out/libs/'
+    from ('./main/out/libs/') {
+        include 'alesharikwebserver-main.jar'
+    }
+
     rename('alesharikwebserver-api-all.jar', 'agent.jar')
     rename('alesharikwebserver-main.jar', 'main.jar')
     into deployDir.toString()
 }
 
-task generateConfig(dependsOn: copyArtifacts) {
-    def config = new File(deployDir.toString() + "/configuration.xml")
+task generateConfig(dependsOn: checkDeployDir) {
+    group = DEPLOY_GROUP
+    description = "Generates configuration"
+
+    def config = deployDir.toPath().resolve("configuration.xml").toAbsolutePath().toFile()
+    config.createNewFile()
     config.text = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
             "<configuration>\n" +
             "    <api>\n" +
@@ -117,6 +182,7 @@ task generateConfig(dependsOn: copyArtifacts) {
             "        <logger>\n" +
             "            <listenerQueueCapacity>128</listenerQueueCapacity>\n" +
             "            <logFile>./logs/log-{\$time}.log</logFile>\n" +
+            "            <debug>false</debug>\n" +
             "        </logger>\n" +
             "        <pluginManager>\n" +
             "            <folder>./plugins/</folder>\n" +
@@ -134,8 +200,13 @@ task generateConfig(dependsOn: copyArtifacts) {
             "</configuration>"
 }
 
-task generateStartScript(dependsOn: copyArtifacts) {
-    def startScript = new File(deployDir.toString() + "/start.sh")
+//noinspection GroovyAssignabilityCheck
+task generateRootStartScript(dependsOn: checkDeployDir) {
+    group = DEPLOY_GROUP
+    description = "generates rootStart.sg script"
+
+    def startScript = deployDir.toPath().resolve("rootStart.sh").toAbsolutePath().toFile()
+    startScript.createNewFile()
     startScript.text = "#!/usr/bin/env bash\n" +
             "if type -p java; then\n" +
             "    echo found java executable in PATH\n" +
@@ -150,15 +221,45 @@ task generateStartScript(dependsOn: copyArtifacts) {
             "sudo -s \${_java} -javaagent:agent.jar -jar main.jar"
 }
 
+task generateStartScript(dependsOn: checkDeployDir) {
+    group = DEPLOY_GROUP
+    description = "generates start.sg script"
+
+    def startScript = deployDir.toPath().resolve("start.sh").toAbsolutePath().toFile()
+    startScript.createNewFile()
+    startScript.text = "#!/usr/bin/env bash\n" +
+            "if type -p java; then\n" +
+            "    echo found java executable in PATH\n" +
+            "    _java=java\n" +
+            "elif [[ -n \"\$JAVA_HOME\" ]] && [[ -x \"\$JAVA_HOME/bin/java\" ]];  then\n" +
+            "    echo found java executable in JAVA_HOME\n" +
+            "    _java=\"\$JAVA_HOME/bin/java\"\n" +
+            "else\n" +
+            "    echo \"no java found!\"\n" +
+            "    exit 1\n" +
+            "fi\n" +
+            "\${_java} -javaagent:agent.jar -jar main.jar"
+}
+
 task copyServerDashboard(dependsOn: checkDeployDir, type: Copy) {
+    group = DEPLOY_GROUP
+
     from(rootProject.projectDir.toString() + "/serverDashboard/")
     into(deployDir.toString() + "/serverDashboard/")
 }
 
-task prepareDeploy(dependsOn: [clean, generateStartScript, generateConfig, copyServerDashboard]) {
-    println 'Take server at deploy folder'
+task generateFiles(dependsOn: [generateConfig, generateStartScript, generateRootStartScript, copyServerDashboard]) {
+    group = DEPLOY_GROUP
 }
 
-task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload', ':alesharikwebserver-main:bintrayUpload', ':alesharikwebserver-database:bintrayUpload', ':alesharikwebserver-internals:bintrayUpload']) {}
+task prepareDeploy(dependsOn: [cleanDeployFolder, generateFiles, copyArtifacts]) {
+    group = DEPLOY_GROUP
+    description = "Build server and configure it"
 
-task publishArtifacts(dependsOn: [':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-database:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-internals:publishMavenJavaPublicationToMavenLocal']) {}
+    doLast {
+        println 'Take server at ./deploy folder'
+    }
+}
+
+//TODO move error page generators to api
+//TODO add object storage for request

@@ -1,0 +1,23 @@
+apply plugin: 'jcstress'
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src'
+        }
+    }
+}
+
+dependencies {
+    compile project(':alesharikwebserver-internals')
+    compile project(':alesharikwebserver-api')
+    compile project(':alesharikwebserver-main')
+    compile project(':alesharikwebserver-database')
+}
+
+//====================JCStress====================\\
+
+jcstress {
+    jvmArgs = '-server -XX:+UnlockDiagnosticVMOptions'
+    iterations = 10
+}
