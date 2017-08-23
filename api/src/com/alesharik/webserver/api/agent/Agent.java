@@ -49,6 +49,10 @@ public final class Agent {
         inst.addTransformer(new AgentClassTransformer(), true);
     }
 
+    public static void agentmain(@Nullable String agentArgs, @Nonnull Instrumentation instrumentation) {
+        premain(agentArgs, instrumentation);
+    }
+
     /**
      * @see Instrumentation#retransformClasses(Class[])
      */
@@ -93,5 +97,11 @@ public final class Agent {
 
     public static void shutdown() {
         ClassPathScannerTransformer.shutdown();
+    }
+
+    public static void checkInstall() {
+        if(instrumentation == null) {
+            AgentInstaller.install();
+        }
     }
 }

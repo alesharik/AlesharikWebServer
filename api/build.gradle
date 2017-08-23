@@ -200,7 +200,9 @@ jar {
     manifest {
         attributes(
                 'Premain-Class': 'com.alesharik.webserver.api.agent.Agent',
-                'Can-Retransform-Classes': 'true'
+                'Agent-Class': 'com.alesharik.webserver.api.agent.Agent',
+                'Can-Retransform-Classes': 'true',
+                'Can-Redefine-Classes': 'true'
         )
     }
     from {
