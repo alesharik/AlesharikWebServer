@@ -24,6 +24,8 @@ import one.nio.util.JavaInternals;
 import sun.misc.Cleaner;
 import sun.misc.VM;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -33,20 +35,23 @@ import java.lang.reflect.Method;
 @UtilityClass
 public class MemoryReserveUtils {
     private static final Class<?> bitsClazz;
-    private static final Method reserveMemoryMethod;
-    private static final Method unreserveMemoryMethod;
+    private static final MethodHandle reserveMemoryMethod;
+    private static final MethodHandle unreserveMemoryMethod;
 
     static {
         try {
             bitsClazz = Class.forName("java.nio.Bits");
-            reserveMemoryMethod = bitsClazz.getDeclaredMethod("reserveMemory", long.class, int.class);
-            unreserveMemoryMethod = bitsClazz.getDeclaredMethod("unreserveMemory", long.class, int.class);
+            Method reserveMemory = bitsClazz.getDeclaredMethod("reserveMemory", long.class, int.class);
+            Method unreserveMemory = bitsClazz.getDeclaredMethod("unreserveMemory", long.class, int.class);
 
-            reserveMemoryMethod.setAccessible(true);
-            unreserveMemoryMethod.setAccessible(true);
+            reserveMemory.setAccessible(true);
+            unreserveMemory.setAccessible(true);
+
+            reserveMemoryMethod = MethodHandles.lookup().unreflect(reserveMemory);
+            unreserveMemoryMethod = MethodHandles.lookup().unreflect(unreserveMemory);
         } catch (ClassNotFoundException e) {
             throw new Error("java.nio.Bits class not found!");
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new Error(e);
         }
     }
@@ -106,7 +111,7 @@ public class MemoryReserveUtils {
         boolean pa = VM.isDirectMemoryPageAligned();
         int ps = JavaInternals.unsafe.pageSize();
         long s = Math.max(1L, (long) size + (pa ? ps : 0));
-        reserveMemoryMethod.invoke(null, s, size);
+        reserveMemoryMethod.invokeExact(s, size);
     }
 
     /**
@@ -120,6 +125,6 @@ public class MemoryReserveUtils {
         boolean pa = VM.isDirectMemoryPageAligned();
         int ps = JavaInternals.unsafe.pageSize();
         long s = Math.max(1L, (long) size + (pa ? ps : 0));
-        unreserveMemoryMethod.invoke(null, s, size);
+        unreserveMemoryMethod.invokeExact(s, size);
     }
 }
