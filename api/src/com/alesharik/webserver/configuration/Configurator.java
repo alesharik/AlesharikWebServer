@@ -26,6 +26,7 @@ import com.alesharik.webserver.logger.Prefixes;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.annotation.Nonnull;
@@ -185,6 +186,20 @@ public class Configurator {
             }
         }
         //====================End plugin manager setup====================\\
+
+        //====================Hooks====================\\
+
+        Element hooksNode = (Element) node.getElementsByTagName("hooks").item(0);
+        if(hooksNode != null) {
+            System.out.println("Loading user-defined hooks");
+            NodeList hooks = hooksNode.getElementsByTagName("hook");
+            for(int i = 0; i < hooks.getLength(); i++) {
+                configuration.parseHook((Element) hooks.item(i));
+            }
+            System.out.println("User-defined hooks successfully loaded");
+        }
+
+        //====================End hooks====================\\
 
         System.out.println("API successfully configured!");
         isApiSetup.set(true);

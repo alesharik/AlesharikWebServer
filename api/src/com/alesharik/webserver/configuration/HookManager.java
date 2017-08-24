@@ -18,37 +18,14 @@
 
 package com.alesharik.webserver.configuration;
 
-import org.w3c.dom.Element;
+import com.alesharik.webserver.hook.Hook;
+import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.util.List;
 
 /**
- * Module loaded by {@link Configurator} if user uses it.
- * Module must have no-args constructor!
+ * Hook manager manages all custom hooks for module
  */
-public interface Module {
-    void parse(@Nullable Element configNode);
-
-    void reload(@Nullable Element configNode);
-
-    void start();
-
-    void shutdown();
-
-    void shutdownNow();
-
-    @Nonnull
-    String getName();
-
-    /**
-     * Return module main layer. If layer is <code>null</code>, module don't have layers
-     */
-    @Nullable
-    Layer getMainLayer();
-
-    @Nullable
-    default HookManager getHookManager() {
-        return null;
-    }
+public interface HookManager {
+    void loadHooks(List<Pair<String, Hook>> hooks);
 }

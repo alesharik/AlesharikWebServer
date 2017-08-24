@@ -16,39 +16,20 @@
  *
  */
 
-package com.alesharik.webserver.configuration;
+package com.alesharik.webserver.hook;
 
 import org.w3c.dom.Element;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
- * Module loaded by {@link Configurator} if user uses it.
- * Module must have no-args constructor!
+ * Hook factories create user-defined hooks from configuration.
+ * Hook factories are singletons. If hook has no no-args constructor, it will be created via Unsafe
  */
-public interface Module {
-    void parse(@Nullable Element configNode);
-
-    void reload(@Nullable Element configNode);
-
-    void start();
-
-    void shutdown();
-
-    void shutdownNow();
+public interface HookFactory {
+    @Nonnull
+    Hook create(@Nonnull Element config, String name);
 
     @Nonnull
     String getName();
-
-    /**
-     * Return module main layer. If layer is <code>null</code>, module don't have layers
-     */
-    @Nullable
-    Layer getMainLayer();
-
-    @Nullable
-    default HookManager getHookManager() {
-        return null;
-    }
 }

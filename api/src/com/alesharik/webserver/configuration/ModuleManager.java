@@ -23,6 +23,10 @@ import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -57,11 +61,19 @@ public final class ModuleManager {
             if(Modifier.isAbstract(moduleClazz.getModifiers())) {
                 return;
             }
+            if(moduleClazz.isAnnotationPresent(Ignored.class))
+                return;
             Constructor<?> constructor = moduleClazz.getConstructor();
             Module instance = (Module) constructor.newInstance();
             modules.put(instance.getName(), instance);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Target(ElementType.TYPE)
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface Ignored {
+
     }
 }

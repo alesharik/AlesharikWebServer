@@ -22,6 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.Element;
 
+import java.util.ArrayList;
+
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -32,7 +34,7 @@ public class ModuleHolderTest {
     public void setUp() throws Exception {
         Module module = mock(Module.class);
         when(module.getName()).thenReturn("test");
-        moduleHolder = new ConfigurationImpl.ModuleHolder(module, "test");
+        moduleHolder = new ConfigurationImpl.ModuleHolder(module, "test", new ArrayList<>());
     }
 
     @Test

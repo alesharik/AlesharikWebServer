@@ -16,39 +16,27 @@
  *
  */
 
-package com.alesharik.webserver.configuration;
-
-import org.w3c.dom.Element;
+package com.alesharik.webserver.hook;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * Module loaded by {@link Configurator} if user uses it.
- * Module must have no-args constructor!
+ * Hooks allows to listen events form server and it's plugins. Hooks config fetched form main configuration.
+ * All hooks have name and group. In configuration they defined as <code>group.name</code>.
+ * All hooks are singletons. If hook has no no-args constructor, it will be created via Unsafe.
+ * System hook reloading not supported!
  */
-public interface Module {
-    void parse(@Nullable Element configNode);
-
-    void reload(@Nullable Element configNode);
-
-    void start();
-
-    void shutdown();
-
-    void shutdownNow();
-
+public interface Hook extends Listener {
+    /**
+     * Returns hook name
+     */
     @Nonnull
     String getName();
 
     /**
-     * Return module main layer. If layer is <code>null</code>, module don't have layers
+     * Returns hook group. Group can be nullable only for user-defined hooks!
      */
     @Nullable
-    Layer getMainLayer();
-
-    @Nullable
-    default HookManager getHookManager() {
-        return null;
-    }
+    String getGroup();
 }

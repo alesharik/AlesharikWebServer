@@ -19,16 +19,24 @@
 package com.alesharik.webserver.configuration;
 
 import com.alesharik.webserver.api.misc.Triple;
+import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
+import com.alesharik.webserver.hook.Hook;
+import com.alesharik.webserver.hook.HookManager;
+import com.alesharik.webserver.hook.UserHookManager;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.apache.commons.lang3.tuple.Pair;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,6 +70,7 @@ public final class ConfigurationImpl implements Configuration {
             Node typeNode = element.getElementsByTagName("type").item(0);
             Node nameNode = element.getElementsByTagName("name").item(0);
             Element configNode = (Element) element.getElementsByTagName("configuration").item(0);
+            Element hooksNode = (Element) element.getElementsByTagName("hooks").item(0);
             if(typeNode != null && nameNode != null) {
                 type = typeNode.getTextContent();
                 name = nameNode.getTextContent();
@@ -69,13 +78,47 @@ public final class ConfigurationImpl implements Configuration {
                 Logger.log("Node №" + i + " has invalid configuration! Skipping...");
                 continue;
             }
+            List<Pair<ModuleHolder.Action, Hook>> systemHooks = new ArrayList<>();
+            List<Pair<String, Hook>> userHooks = new ArrayList<>();//FIXME
+            if(hooksNode != null) {
+                NodeList childNodes = hooksNode.getChildNodes();
+                for(int j = 0; j < childNodes.getLength(); j++) {
+                    if(childNodes.item(j).getNodeType() != Node.ELEMENT_NODE)
+                        continue;
+                    Element node = (Element) childNodes.item(j);
+                    if(node.getTagName().equals("start")) {
+                        Hook hook = HookManager.getHookForName(node.getTextContent());
+                        if(hook == null)
+                            throw new ConfigurationParseError("Hook " + node.getTextContent() + " not found!");
+                        systemHooks.add(Pair.of(ModuleHolder.Action.START, hook));
+                    } else if(node.getTagName().equals("reload")) {
+                        Hook hook = HookManager.getHookForName(node.getTextContent());
+                        if(hook == null)
+                            throw new ConfigurationParseError("Hook " + node.getTextContent() + " not found!");
+                        systemHooks.add(Pair.of(ModuleHolder.Action.RELOAD, hook));
+                    } else if(node.getTagName().equals("shutdown")) {
+                        Hook hook = HookManager.getHookForName(node.getTextContent());
+                        if(hook == null)
+                            throw new ConfigurationParseError("Hook " + node.getTextContent() + " not found!");
+                        systemHooks.add(Pair.of(ModuleHolder.Action.SHUTDOWN, hook));
+                    } else {
+                        Hook hook = HookManager.getHookForName(node.getTextContent());
+                        if(hook == null)
+                            throw new ConfigurationParseError("Hook " + node.getTextContent() + " not found!");
+                        userHooks.add(Pair.of(node.getTagName(), hook));
+                    }
+                }
+            }
 
             Module module = ModuleManager.getModuleByName(type);
             if(module == null) {
                 Logger.log("Module with type " + type + " not found! Skipping...");
             } else {
+                if(module.getHookManager() != null)
+                    module.getHookManager().loadHooks(userHooks);
+
                 if(!isInit || !this.modules.containsKey(type)) {
-                    ModuleHolder moduleHolder = new ModuleHolder(module, name);
+                    ModuleHolder moduleHolder = new ModuleHolder(module, name, systemHooks);
                     this.modules.put(name, moduleHolder);
                     moduleHolder.parse(configNode);
                     Logger.log("Module " + name + " with type " + type + " successfully loaded!");
@@ -105,22 +148,35 @@ public final class ConfigurationImpl implements Configuration {
             Logger.log("Init node not found! Server won't start any plugin!");
             return;
         }
-        NodeList startModuleNodes = initNode.getElementsByTagName("startModule");
-        for(int i = 0; i < startModuleNodes.getLength(); i++) {
-            String name = startModuleNodes.item(i).getTextContent();
-            if(!modules.containsKey(name)) {
-                Logger.log("Server doesn't have " + name + " module! Skipping...");
+        NodeList initChildNodes = initNode.getChildNodes();
+        for(int i = 0; i < initChildNodes.getLength(); i++) {
+            if(initChildNodes.item(i).getNodeType() != Node.ELEMENT_NODE)
                 continue;
-            }
-            ModuleHolder moduleHolder = modules.get(name);
-            if(moduleHolder.isRunning()) {
-                moduleHolder.mainUncheck();
-            } else {
-                moduleHolder.start();
-                moduleHolder.mainUncheck();
-                Logger.log("Module " + moduleHolder.getName() + " with type " + moduleHolder.getType() + " successfully started!");
+            Element item = (Element) initChildNodes.item(i);
+            if(item.getTagName().equals("start-module")) {
+                String name = item.getTextContent();
+                if(!modules.containsKey(name)) {
+                    Logger.log("Server doesn't have " + name + " module! Skipping...");
+                    continue;
+                }
+                ModuleHolder moduleHolder = modules.get(name);
+                if(moduleHolder.isRunning()) {
+                    moduleHolder.mainUncheck();
+                } else {
+                    moduleHolder.start();
+                    moduleHolder.mainUncheck();
+                    Logger.log("Module " + moduleHolder.getName() + " with type " + moduleHolder.getType() + " successfully started!");
+                }
+            } else if(item.getTagName().equals("hook")) {
+                String hookName = item.getTextContent();
+                Hook hook = HookManager.getHookForName(hookName);
+                if(hook == null)
+                    throw new ConfigurationParseError("Hook " + hookName + " not found!");
+                else
+                    hook.listen(null, new Object[0]);
             }
         }
+
 
         modules.entrySet().stream()
                 .filter(stringModuleHolderEntry -> stringModuleHolderEntry.getValue().isRunning())
@@ -132,9 +188,14 @@ public final class ConfigurationImpl implements Configuration {
     }
 
     @Override
+    public void parseHook(Element hook) {
+        UserHookManager.parseHook(hook);
+    }
+
+    @Override
     public Module getModuleByName(String name) {
         System.out.println("Trying to load " + name);
-        return modules.get(name).getModule();
+        return modules.get(name);
     }
 
     @Override
@@ -179,9 +240,10 @@ public final class ConfigurationImpl implements Configuration {
         }
     }
 
+    @ModuleManager.Ignored
     @ToString
     @EqualsAndHashCode
-    static final class ModuleHolder {
+    static final class ModuleHolder implements Module {
         private static final AtomicIntegerFieldUpdater<ModuleHolder> stateUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleHolder.class, "state");
 
         private static final int CHECKED = 1;
@@ -192,24 +254,30 @@ public final class ConfigurationImpl implements Configuration {
         private final Module module;
         @Getter
         private final String name;
+        private final List<Pair<Action, Hook>> systemHooks;
         private volatile Element config;
 
         private volatile int state;
 
-        public ModuleHolder(@Nonnull Module module, @Nonnull String name) {
+        public ModuleHolder(@Nonnull Module module, @Nonnull String name, List<Pair<Action, Hook>> systemHooks) {
             this.module = module;
             this.name = name;
+            this.systemHooks = systemHooks;
             this.state = 0;
         }
 
         public void parse(Element element) {
             config = element;
             module.parse(element);
+
+            fireEvent(Action.RELOAD);
         }
 
         public void reload(Element element) {
             config = element;
             module.reload(element);
+
+            fireEvent(Action.RELOAD);
         }
 
         public void reload() {
@@ -221,6 +289,8 @@ public final class ConfigurationImpl implements Configuration {
             if((value = stateUpdater.get(this) & STARTED) != STARTED) {
                 module.start();
                 stateUpdater.set(this, value | STARTED);
+
+                fireEvent(Action.START);
             }
         }
 
@@ -229,6 +299,8 @@ public final class ConfigurationImpl implements Configuration {
             if((value = stateUpdater.get(this) & STARTED) == STARTED) {
                 module.shutdown();
                 stateUpdater.set(this, value & ~STARTED);
+
+                fireEvent(Action.SHUTDOWN);
             }
         }
 
@@ -238,6 +310,12 @@ public final class ConfigurationImpl implements Configuration {
                 module.shutdownNow();
                 stateUpdater.set(this, value & ~STARTED);
             }
+        }
+
+        @Nullable
+        @Override
+        public Layer getMainLayer() {
+            return module.getMainLayer();
         }
 
         public boolean isRunning() {
@@ -282,6 +360,19 @@ public final class ConfigurationImpl implements Configuration {
 
         public boolean mainIsChecked() {
             return (stateUpdater.get(this) & MAIN_CHECKED) == MAIN_CHECKED;
+        }
+
+        private void fireEvent(Action action) {
+            for(Pair<Action, Hook> hookActionEntry : systemHooks) {
+                if(hookActionEntry.getKey() == action)
+                    hookActionEntry.getValue().listen(module, new Object[0]);
+            }
+        }
+
+        private enum Action {
+            START,
+            SHUTDOWN,
+            RELOAD
         }
     }
 }

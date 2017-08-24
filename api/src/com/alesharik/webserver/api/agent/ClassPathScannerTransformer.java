@@ -58,7 +58,11 @@ final class ClassPathScannerTransformer implements ClassFileTransformer {
         if(classLoader.getClass().getCanonicalName().equals("sun.reflect.DelegatingClassLoader")) {
             return;
         }
-        if(!classLoaders.contains(classLoader)) {
+        if(classLoader.getClass().isAnnotationPresent(Rescanable.class)) {
+            thread.addClassLoader(classLoader);
+            if(!classLoaders.contains(classLoader))
+                classLoaders.add(classLoader);
+        } else if(!classLoaders.contains(classLoader)) {
             classLoaders.add(classLoader);
             thread.addClassLoader(classLoader);
         }

@@ -16,39 +16,20 @@
  *
  */
 
-package com.alesharik.webserver.configuration;
-
-import org.w3c.dom.Element;
+package com.alesharik.webserver.hook;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * Module loaded by {@link Configurator} if user uses it.
- * Module must have no-args constructor!
+ * Listeners listen events from server and it's modules
  */
-public interface Module {
-    void parse(@Nullable Element configNode);
-
-    void reload(@Nullable Element configNode);
-
-    void start();
-
-    void shutdown();
-
-    void shutdownNow();
-
-    @Nonnull
-    String getName();
-
+public interface Listener {
     /**
-     * Return module main layer. If layer is <code>null</code>, module don't have layers
+     * Executes then someone fire event
+     *
+     * @param sender module, who send event or null if it is server
+     * @param args   optional arguments
      */
-    @Nullable
-    Layer getMainLayer();
-
-    @Nullable
-    default HookManager getHookManager() {
-        return null;
-    }
+    void listen(@Nullable Object sender, @Nonnull Object[] args);
 }

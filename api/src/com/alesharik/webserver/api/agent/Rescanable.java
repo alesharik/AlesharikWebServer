@@ -16,39 +16,17 @@
  *
  */
 
-package com.alesharik.webserver.configuration;
+package com.alesharik.webserver.api.agent;
 
-import org.w3c.dom.Element;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Module loaded by {@link Configurator} if user uses it.
- * Module must have no-args constructor!
+ * This annotation means, what {@link ClassLoader} can be rescanned
  */
-public interface Module {
-    void parse(@Nullable Element configNode);
-
-    void reload(@Nullable Element configNode);
-
-    void start();
-
-    void shutdown();
-
-    void shutdownNow();
-
-    @Nonnull
-    String getName();
-
-    /**
-     * Return module main layer. If layer is <code>null</code>, module don't have layers
-     */
-    @Nullable
-    Layer getMainLayer();
-
-    @Nullable
-    default HookManager getHookManager() {
-        return null;
-    }
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Rescanable {
 }

@@ -30,6 +30,8 @@ public interface Configuration {
 
     void parseMain(Element main);
 
+    void parseHook(Element hook);
+
     Module getModuleByName(String name);
 
     /**
