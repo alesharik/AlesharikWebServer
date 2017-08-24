@@ -21,11 +21,30 @@ package com.alesharik.webserver.configuration;
 import com.alesharik.webserver.hook.Hook;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
  * Hook manager manages all custom hooks for module
  */
 public interface HookManager {
-    void loadHooks(List<Pair<String, Hook>> hooks);
+    /**
+     * Load hooks from configuration. All last-loaded hooks must be removed
+     *
+     * @param hooks configured hook pairs
+     */
+    void loadHooks(@Nonnull List<Pair<String, Hook>> hooks);
+
+    /**
+     * Return human-readable event names
+     */
+    @Nonnull
+    String[] getEventNames();
+
+    /**
+     * Return hook count for event
+     *
+     * @param eventName event name, retrieved from {@link #getEventNames()}
+     */
+    int getHooks(String eventName);
 }

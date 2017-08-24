@@ -192,6 +192,7 @@ public class Configurator {
         Element hooksNode = (Element) node.getElementsByTagName("hooks").item(0);
         if(hooksNode != null) {
             System.out.println("Loading user-defined hooks");
+            configuration.clearHooks();
             NodeList hooks = hooksNode.getElementsByTagName("hook");
             for(int i = 0; i < hooks.getLength(); i++) {
                 configuration.parseHook((Element) hooks.item(i));

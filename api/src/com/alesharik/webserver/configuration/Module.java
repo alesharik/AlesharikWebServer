@@ -47,6 +47,9 @@ public interface Module {
     @Nullable
     Layer getMainLayer();
 
+    /**
+     * Return module {@link HookManager} or null, if module has no custom events
+     */
     @Nullable
     default HookManager getHookManager() {
         return null;

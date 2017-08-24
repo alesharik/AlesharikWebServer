@@ -22,9 +22,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * Hooks allows to listen events form server and it's plugins. Hooks config fetched form main configuration.
+ * Hooks allows to listen events form server and it's modules.
+ *
  * All hooks have name and group. In configuration they defined as <code>group.name</code>.
- * All hooks are singletons. If hook has no no-args constructor, it will be created via Unsafe.
+ *
+ * All hooks are singletons.
+ * If hook has no no-args constructor, it will be created via Unsafe.
  * System hook reloading not supported!
  */
 public interface Hook extends Listener {

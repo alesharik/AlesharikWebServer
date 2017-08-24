@@ -193,6 +193,11 @@ public final class ConfigurationImpl implements Configuration {
     }
 
     @Override
+    public void clearHooks() {
+        UserHookManager.cleanHooks();
+    }
+
+    @Override
     public Module getModuleByName(String name) {
         System.out.println("Trying to load " + name);
         return modules.get(name);

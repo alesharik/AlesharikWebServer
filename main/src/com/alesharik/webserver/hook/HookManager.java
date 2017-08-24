@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @UtilityClass
-public final class HookManager {//TODO mxbean, custom jar loading
+public final class HookManager {//TODO mxbean, custom jar loading, tests(!)
     private static final Map<String, Hook> hooks = new ConcurrentHashMap<>();
     private static final Map<String, Hook> userDefinedHooks = new ConcurrentHashMap<>();
     private static final HookClassLoader hookClassLoader = new HookClassLoader(HookManager.class.getClassLoader());

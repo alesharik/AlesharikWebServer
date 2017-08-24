@@ -24,12 +24,24 @@ import javax.annotation.Nonnull;
 
 /**
  * Hook factories create user-defined hooks from configuration.
- * Hook factories are singletons. If hook has no no-args constructor, it will be created via Unsafe
+ * Hook factories are singletons.
+ * If factory has no no-args constructor, it will be created via Unsafe
  */
 public interface HookFactory {
+    /**
+     * Create hook from configuration
+     *
+     * @param config hook configuration
+     * @param name   hook name(defined by user)
+     * @return hook with no group
+     * @throws com.alesharik.webserver.exceptions.error.ConfigurationParseError if config error happens
+     */
     @Nonnull
-    Hook create(@Nonnull Element config, String name);
+    Hook create(@Nonnull Element config, @Nonnull String name);
 
+    /**
+     * Return hook factory unique name
+     */
     @Nonnull
     String getName();
 }

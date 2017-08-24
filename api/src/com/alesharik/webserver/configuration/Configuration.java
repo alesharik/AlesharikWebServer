@@ -32,6 +32,11 @@ public interface Configuration {
 
     void parseHook(Element hook);
 
+    /**
+     * Clear all user-defined hooks
+     */
+    void clearHooks();
+
     Module getModuleByName(String name);
 
     /**
