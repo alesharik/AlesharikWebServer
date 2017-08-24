@@ -28,8 +28,8 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.Set;
@@ -47,6 +47,7 @@ import java.util.stream.Stream;
 @Prefixes({"[Agent]", "[ClassPathScannerThread]"})
 final class ClassPathScannerThread extends Thread {
     private static final AtomicInteger taskCount = new AtomicInteger(0);
+    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     /**
      * FJP parallelism
      */
@@ -56,7 +57,7 @@ final class ClassPathScannerThread extends Thread {
     private final LinkedBlockingQueue<ClassLoader> classLoaderQueue;
     private final CopyOnWriteArraySet<ClassLoader> classLoaders;
 
-    private final ConcurrentTripleHashMap<Class<?>, Type, Method> listeners;
+    private final ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners;
 
     public ClassPathScannerThread() {
         setName("ClassPath scanner thread");
@@ -82,7 +83,7 @@ final class ClassPathScannerThread extends Thread {
         try {
             ClassLoader classLoader = classLoaderQueue.take();
             taskCount.incrementAndGet();
-            ConcurrentTripleHashMap<Class<?>, Type, Method> newListeners = new ConcurrentTripleHashMap<>();
+            ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners = new ConcurrentTripleHashMap<>();
 
             new FastClasspathScanner()
                     .overrideClassLoaders(classLoader)
@@ -105,8 +106,7 @@ final class ClassPathScannerThread extends Thread {
         classLoaderQueue.add(classLoader);
     }
 
-    private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, Method> newListeners) {
-
+    private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners) {
         Stream.of(clazz.getDeclaredMethods())
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
                 .filter(method -> method.isAnnotationPresent(ListenAnnotation.class) || method.isAnnotationPresent(ListenClass.class) || method.isAnnotationPresent(ListenInterface.class))
@@ -114,13 +114,28 @@ final class ClassPathScannerThread extends Thread {
                 .forEach(method -> {
                     if(method.isAnnotationPresent(ListenAnnotation.class)) {
                         ListenAnnotation annotation = method.getAnnotation(ListenAnnotation.class);
-                        newListeners.put(annotation.value(), Type.ANNOTATION, method);
+                        try {
+                            method.setAccessible(true);
+                            newListeners.put(annotation.value(), Type.ANNOTATION, LOOKUP.unreflect(method));
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        }
                     } else if(method.isAnnotationPresent(ListenClass.class)) {
                         ListenClass annotation = method.getAnnotation(ListenClass.class);
-                        newListeners.put(annotation.value(), Type.CLASS, method);
+                        try {
+                            method.setAccessible(true);
+                            newListeners.put(annotation.value(), Type.CLASS, LOOKUP.unreflect(method));
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        }
                     } else if(method.isAnnotationPresent(ListenInterface.class)) {
                         ListenInterface annotation = method.getAnnotation(ListenInterface.class);
-                        newListeners.put(annotation.value(), Type.INTERFACE, method);
+                        try {
+                            method.setAccessible(true);
+                            newListeners.put(annotation.value(), Type.INTERFACE, LOOKUP.unreflect(method));
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
     }
@@ -141,11 +156,11 @@ final class ClassPathScannerThread extends Thread {
     }
 
     private static final class ClassLoaderScanTask implements Runnable {
-        private final ConcurrentTripleHashMap<Class<?>, Type, Method> listeners;
+        private final ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners;
         private final Set<ClassLoader> classLoaders;
         private final ForkJoinPool forkJoinPool;
 
-        public ClassLoaderScanTask(ConcurrentTripleHashMap<Class<?>, Type, Method> listeners, Set<ClassLoader> classLoaders, ForkJoinPool forkJoinPool) {
+        public ClassLoaderScanTask(ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners, Set<ClassLoader> classLoaders, ForkJoinPool forkJoinPool) {
             this.listeners = listeners;
             this.classLoaders = classLoaders;
             this.forkJoinPool = forkJoinPool;
@@ -160,8 +175,8 @@ final class ClassPathScannerThread extends Thread {
                     case ANNOTATION:
                         scanner.matchClassesWithAnnotation(aClass, classWithAnnotation -> {
                             try {
-                                method.invoke(null, classWithAnnotation);
-                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                method.invokeExact(classWithAnnotation);
+                            } catch (Throwable e) {
                                 Logger.log(e);
                             }
                         });
@@ -169,8 +184,8 @@ final class ClassPathScannerThread extends Thread {
                     case CLASS:
                         scanner.matchSubclassesOf(aClass, subclass -> {
                             try {
-                                method.invoke(null, subclass);
-                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                method.invokeExact(subclass);
+                            } catch (Throwable e) {
                                 Logger.log(e);
                             }
                         });
@@ -178,11 +193,8 @@ final class ClassPathScannerThread extends Thread {
                     case INTERFACE:
                         scanner.matchClassesImplementing(aClass, implementingClass -> {
                             try {
-                                method.invoke(null, implementingClass);
-                            } catch (IllegalAccessException | InvocationTargetException e) {
-                                if(e instanceof InvocationTargetException) {
-                                    Logger.log(e.getCause());
-                                }
+                                method.invokeExact(implementingClass);
+                            } catch (Throwable e) {
                                 Logger.log(e);
                             }
                         });

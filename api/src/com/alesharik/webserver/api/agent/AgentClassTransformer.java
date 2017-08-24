@@ -26,8 +26,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
@@ -109,15 +109,15 @@ final class AgentClassTransformer implements ClassFileTransformer {
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
                 .forEach(method -> {
                     try {
-                        MethodHandle methodHandle = METHOD_HANDLES_LOOKUP.unreflect(method);
+                        method.setAccessible(true);
                         Param.Type[] parse = Param.Type.parse(method);
 
                         if(method.isAnnotationPresent(Transform.class)) {
                             String value = method.getAnnotation(Transform.class).value();
                             transformers.computeIfAbsent(value, k -> new CopyOnWriteArrayList<>());
-                            transformers.get(value).add(new MethodHolder(methodHandle, parse));
+                            transformers.get(value).add(new MethodHolder(method, parse));
                         } else {
-                            allTransformers.add(new MethodHolder(methodHandle, parse));
+                            allTransformers.add(new MethodHolder(method, parse));
                         }
                     } catch (Throwable e) {
                         e.printStackTrace();
@@ -126,10 +126,10 @@ final class AgentClassTransformer implements ClassFileTransformer {
     }
 
     private static final class MethodHolder {
-        private final MethodHandle methodHandle;
+        private final Method methodHandle;
         private final Param.Type[] args;
 
-        public MethodHolder(MethodHandle methodHandle, Param.Type[] args) {
+        public MethodHolder(Method methodHandle, Param.Type[] args) {
             this.methodHandle = methodHandle;
             this.args = args;
         }
@@ -158,7 +158,7 @@ final class AgentClassTransformer implements ClassFileTransformer {
                         invokeArgs.add(null);
                 }
             }
-            return (byte[]) methodHandle.invokeWithArguments(invokeArgs);
+            return (byte[]) methodHandle.invoke(null, invokeArgs.toArray());
         }
     }
 }
