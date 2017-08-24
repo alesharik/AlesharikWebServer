@@ -51,8 +51,6 @@ public class JavaCompareBenchmark {
 
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
-//    @Group("reflect_VS_methodHandle")
-//    @GroupThreads(6)
     public String reflectionMethodCall() {
         try {
             return (String) testMethod.invoke(null, o);
@@ -64,8 +62,6 @@ public class JavaCompareBenchmark {
 
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
-//    @Group("reflect_VS_methodHandle")
-//    @GroupThreads(6)
     public String methodHandleArgumentsCall() {
         try {
             return (String) testMethodHandle.invokeWithArguments(o);
@@ -77,8 +73,6 @@ public class JavaCompareBenchmark {
 
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
-//    @Group("reflect_VS_methodHandle")
-//    @GroupThreads(6)
     public String methodHandleExactCall() {
         try {
             return (String) testMethodHandle.invokeExact(o);
