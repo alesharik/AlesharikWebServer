@@ -35,7 +35,7 @@ public class AddOnManager {
     private static final Map<String, Class<?>> addons = new ConcurrentHashMap<>();
 
     @ListenAnnotation(HttpServerAddOn.class)
-    public static void listenAddon(Class<?> clazz) {
+    static void listenAddon(Class<?> clazz) {
         HttpServerAddOn annotation = clazz.getAnnotation(HttpServerAddOn.class);
 
         addons.put(annotation.value(), clazz);

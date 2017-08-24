@@ -40,7 +40,7 @@ public class HttpBundleManager {
     static final Map<String, Class<?>> bundles = new ConcurrentHashMap<>();
 
     @ListenInterface(HttpHandlerBundle.class)
-    public static void listenBundle(Class<?> bundle) {
+    static void listenBundle(Class<?> bundle) {
         if(!bundle.isAnnotationPresent(HttpBundle.class)) {
             System.err.println("Http bundle " + bundle.getCanonicalName() + " must have HttpBundle annotation!");
             return;

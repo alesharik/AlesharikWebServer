@@ -42,7 +42,7 @@ public class WebSocketApplicationManager {
     private static final Set<WebSocketApplication> applications = new CopyOnWriteArraySet<>();
 
     @ListenAnnotation(WSApplication.class)
-    public static void listenWebsocketApplication(Class<?> clazz) {
+    static void listenWebsocketApplication(Class<?> clazz) {
         if(WebSocketApplication.class.isAssignableFrom(clazz)) {
             try {
                 WSApplication application = clazz.getAnnotation(WSApplication.class);

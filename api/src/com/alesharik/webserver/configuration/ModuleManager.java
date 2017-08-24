@@ -56,7 +56,7 @@ public final class ModuleManager {
     }
 
     @ListenInterface(Module.class)
-    public static void listenModule(Class<?> moduleClazz) {
+    static void listenModule(Class<?> moduleClazz) {
         try {
             if(Modifier.isAbstract(moduleClazz.getModifiers())) {
                 return;

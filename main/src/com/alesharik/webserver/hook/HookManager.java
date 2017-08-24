@@ -20,6 +20,7 @@ package com.alesharik.webserver.hook;
 
 import com.alesharik.webserver.api.agent.Agent;
 import com.alesharik.webserver.api.agent.Rescanable;
+import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.internals.ClassInstantiator;
 import lombok.experimental.UtilityClass;
@@ -34,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * This class manages hooks
  */
+@ClassPathScanner
 @UtilityClass
 public final class HookManager {//TODO mxbean, custom jar loading
     static final Map<String, Hook> hooks = new ConcurrentHashMap<>();
@@ -41,7 +43,7 @@ public final class HookManager {//TODO mxbean, custom jar loading
     private static final HookClassLoader hookClassLoader = new HookClassLoader(HookManager.class.getClassLoader());
 
     @ListenInterface(Hook.class)
-    public static void listen(Class<?> clazz) {
+    static void listen(Class<?> clazz) {
         Hook instance = (Hook) ClassInstantiator.instantiate(clazz);
         if(instance.getGroup() == null) {
             System.err.println("Hook " + instance.getName() + " has no group! Ignoring...");

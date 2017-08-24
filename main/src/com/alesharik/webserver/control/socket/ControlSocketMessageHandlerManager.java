@@ -38,7 +38,7 @@ public class ControlSocketMessageHandlerManager {
     private static final ConcurrentHashMap<Class<?>, ControlSocketMessageHandler> handlers = new ConcurrentHashMap<>();
 
     @ListenInterface(ControlSocketMessageHandler.class)
-    public static void listenMessageHandler(Class<?> clazz) {
+    static void listenMessageHandler(Class<?> clazz) {
         if(!clazz.isAnnotationPresent(WireControlSocketMessage.class)) {
             System.err.println("Class " + clazz + " doesn't have WireControlSocketMessage annotation! Skipping...");
             return;

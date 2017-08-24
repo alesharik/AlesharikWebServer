@@ -58,7 +58,7 @@ public final class DashboardWebSocketPluginManager {
     }
 
     @ListenClass(DashboardWebSocketPlugin.class)
-    public static void listenPlugin(Class<?> clazz) {
+    static void listenPlugin(Class<?> clazz) {
         try {
             Constructor<?> constructor = clazz.getConstructor(WebSocketSender.class);
             constructor.setAccessible(true);

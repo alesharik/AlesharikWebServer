@@ -40,7 +40,7 @@ public class NamedManager {
     static final ConcurrentHashMap<Class<?>, String> entries = new ConcurrentHashMap<>();
 
     @ListenAnnotation(Named.class)
-    public static void listenNamedClass(Class<?> clazz) {
+    static void listenNamedClass(Class<?> clazz) {
         entries.put(clazz, clazz.getAnnotation(Named.class).value());
     }
 

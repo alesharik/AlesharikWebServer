@@ -55,7 +55,7 @@ public class UserHookManager {
     static final Map<String, HookFactory> hookFactories = new ConcurrentHashMap<>();
 
     @ListenInterface(HookFactory.class)
-    public static void listen(Class<?> clazz) {
+    static void listen(Class<?> clazz) {
         HookFactory instance = (HookFactory) ClassInstantiator.instantiate(clazz);
         if(hookFactories.containsKey(instance.getName()))//Map overwrite protection
             return;

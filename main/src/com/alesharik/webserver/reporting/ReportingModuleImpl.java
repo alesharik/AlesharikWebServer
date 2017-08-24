@@ -293,7 +293,7 @@ public final class ReportingModuleImpl implements ReportingModule {
     }
 
     @ListenClass(Reporter.class)
-    public static void listenReporter(Class<?> reporterClazz) {
+    static void listenReporter(Class<?> reporterClazz) {
         try {
             ReporterName name = reporterClazz.getAnnotation(ReporterName.class);
             if(name == null) {

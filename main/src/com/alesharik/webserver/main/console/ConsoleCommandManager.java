@@ -39,7 +39,7 @@ public final class ConsoleCommandManager {
     private static final Map<String, ConsoleCommand> commands = new ConcurrentHashMap<>();
 
     @ListenInterface(ConsoleCommand.class)
-    public static void listenCommand(Class<?> clazz) {
+    static void listenCommand(Class<?> clazz) {
         try {
             Constructor<?> constructor = clazz.getDeclaredConstructor();
             constructor.setAccessible(true);
