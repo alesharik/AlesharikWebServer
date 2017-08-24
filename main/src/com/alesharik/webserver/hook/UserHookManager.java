@@ -26,6 +26,7 @@ import com.alesharik.webserver.internals.ClassInstantiator;
 import lombok.experimental.UtilityClass;
 import org.w3c.dom.Element;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -51,19 +52,29 @@ import java.util.concurrent.ConcurrentHashMap;
 @UtilityClass
 @ClassPathScanner
 public class UserHookManager {
-    private static final Map<String, HookFactory> hookFactories = new ConcurrentHashMap<>();
+    static final Map<String, HookFactory> hookFactories = new ConcurrentHashMap<>();
 
     @ListenInterface(HookFactory.class)
     public static void listen(Class<?> clazz) {
         HookFactory instance = (HookFactory) ClassInstantiator.instantiate(clazz);
+        if(hookFactories.containsKey(instance.getName()))//Map overwrite protection
+            return;
         hookFactories.put(instance.getName(), instance);
     }
 
+    /**
+     * Delete all user-defined hooks
+     */
     public static void cleanHooks() {
         HookManager.cleanUserDefinedHooks();
     }
 
-    public static void parseHook(Element hookElement) {
+    /**
+     * Load user-defined hook from configuration
+     *
+     * @param hookElement hook element(name, factory, config and etc)
+     */
+    public static void parseHook(@Nonnull Element hookElement) {
         String name = XmlHelper.getString("name", hookElement, true);
         String factory = XmlHelper.getString("factory", hookElement, true);
         if(!hookFactories.containsKey(factory))

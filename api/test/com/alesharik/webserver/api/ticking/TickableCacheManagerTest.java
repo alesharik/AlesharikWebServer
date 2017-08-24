@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.api.ticking;
 
-import com.alesharik.webserver.TestUtils;
+import com.alesharik.webserver.api.TestUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Ignore;
 import org.junit.Test;

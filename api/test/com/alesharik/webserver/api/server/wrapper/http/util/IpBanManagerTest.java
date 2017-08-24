@@ -28,7 +28,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
-import static com.alesharik.webserver.TestUtils.*;
+import static com.alesharik.webserver.api.TestUtils.*;
 import static org.junit.Assert.*;
 
 public class IpBanManagerTest {

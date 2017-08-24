@@ -18,8 +18,10 @@
 
 package com.alesharik.webserver.api.server.wrapper.http;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+@EqualsAndHashCode
 @Getter
 public class HttpStatus {
     private final int code;

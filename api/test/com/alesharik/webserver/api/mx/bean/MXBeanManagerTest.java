@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.api.mx.bean;
 
-import com.alesharik.webserver.TestUtils;
+import com.alesharik.webserver.api.TestUtils;
 import org.junit.Test;
 
 import javax.management.ObjectName;

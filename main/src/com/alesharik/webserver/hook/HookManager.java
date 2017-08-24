@@ -25,15 +25,19 @@ import com.alesharik.webserver.internals.ClassInstantiator;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * This class manages hooks
+ */
 @UtilityClass
-public final class HookManager {//TODO mxbean, custom jar loading, tests(!)
-    private static final Map<String, Hook> hooks = new ConcurrentHashMap<>();
-    private static final Map<String, Hook> userDefinedHooks = new ConcurrentHashMap<>();
+public final class HookManager {//TODO mxbean, custom jar loading
+    static final Map<String, Hook> hooks = new ConcurrentHashMap<>();
+    static final Map<String, Hook> userDefinedHooks = new ConcurrentHashMap<>();
     private static final HookClassLoader hookClassLoader = new HookClassLoader(HookManager.class.getClassLoader());
 
     @ListenInterface(Hook.class)
@@ -43,15 +47,25 @@ public final class HookManager {//TODO mxbean, custom jar loading, tests(!)
             System.err.println("Hook " + instance.getName() + " has no group! Ignoring...");
             return;
         }
+        if(hooks.containsKey(instance.getGroup() + '.' + instance.getName()))//Map overwrite protection
+            return;
 
         hooks.put(instance.getGroup() + "." + instance.getName(), instance);
     }
 
-    public static void addHookJar(URL jarUrl) {
+    /**
+     * Add new jar file to hooks classloader and scans it
+     *
+     * @param jarUrl existing jar file
+     */
+    public static void addHookJar(@Nonnull URL jarUrl) {
         hookClassLoader.addURL(jarUrl);
         Agent.tryScanClassLoader(hookClassLoader);
     }
 
+    /**
+     * Return classloader for hook jars and other hooks-related stuff
+     */
     public static ClassLoader getClassLoader() {
         return hookClassLoader;
     }
@@ -64,7 +78,13 @@ public final class HookManager {//TODO mxbean, custom jar loading, tests(!)
         userDefinedHooks.clear();
     }
 
-    @Nonnull
+    /**
+     * Return hook for it's name
+     *
+     * @param hook hook full name(<code>group.name</code> or <code>name</code>)
+     * @return hook instance if exists, overwise null
+     */
+    @Nullable
     public static Hook getHookForName(String hook) {
         if(hooks.containsKey(hook))
             return hooks.get(hook);

@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.TestUtils;
 import com.alesharik.webserver.exceptions.MIMETypeAlreadyExistsException;
 import org.junit.Test;
 

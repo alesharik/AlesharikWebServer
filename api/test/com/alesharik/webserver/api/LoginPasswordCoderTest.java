@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.TestUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
