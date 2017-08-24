@@ -22,6 +22,7 @@ import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpBundle;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerBundle;
+import com.alesharik.webserver.logger.Prefixes;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
@@ -34,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @ClassPathScanner
 @UtilityClass
+@Prefixes({"[HTTP]", "[HttpBundleManager]"})
 public class HttpBundleManager {
     static final Map<String, Class<?>> bundles = new ConcurrentHashMap<>();
 
@@ -44,10 +46,9 @@ public class HttpBundleManager {
             return;
         }
         HttpBundle annotation = bundle.getAnnotation(HttpBundle.class);
-        if(bundles.containsKey(annotation.value())) {
-            System.err.println("HttpBundle " + annotation.value() + " already exists!");
+        if(bundles.containsKey(annotation.value())) //Overwrite protection
             return;
-        }
+
         bundles.put(annotation.value(), bundle);
     }
 

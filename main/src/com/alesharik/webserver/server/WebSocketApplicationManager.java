@@ -45,21 +45,26 @@ public class WebSocketApplicationManager {
     public static void listenWebsocketApplication(Class<?> clazz) {
         if(WebSocketApplication.class.isAssignableFrom(clazz)) {
             try {
-                Constructor<?> constructor = clazz.getDeclaredConstructor();
-                constructor.setAccessible(true);
-                WebSocketApplication app = (WebSocketApplication) constructor.newInstance();
-                applications.add(app);
-
                 WSApplication application = clazz.getAnnotation(WSApplication.class);
                 Class<?> checker = application.checker();
                 if(!WSChecker.class.isAssignableFrom(checker)) {
                     checker = WSChecker.class;
                     System.out.println("Checker of class " + clazz.toString() + " must extend WSChecker");
                 }
+
                 WSChecker wsChecker = (WSChecker) checker.newInstance();
-                if(wsChecker.enabled()) {
-//                    WebSocketEngine.getEngine().register(application.contextPath(), application.value(), app); //TODO rewrite
+                if(!wsChecker.enabled()) {
+                    return;
                 }
+
+                Constructor<?> constructor = clazz.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                WebSocketApplication app = (WebSocketApplication) constructor.newInstance();
+                if(applications.contains(app))//Overwrite protection
+                    return;
+                applications.add(app);
+
+                //TODO rewrite
             } catch (NoSuchMethodException e) {
                 System.err.println("Class " + clazz.getCanonicalName() + " doesn't have empty constructor!");
             } catch (SecurityException | InstantiationException | IllegalAccessException | InvocationTargetException e) {

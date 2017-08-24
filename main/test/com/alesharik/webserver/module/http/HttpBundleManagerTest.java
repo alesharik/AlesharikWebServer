@@ -51,11 +51,14 @@ public class HttpBundleManagerTest {
 
     @Test
     public void testAddDuplicate() throws Exception {
+        HttpBundleManager.bundles.clear();
+
         PrintStream serrMock = mock(PrintStream.class);
         System.setErr(serrMock);
         HttpBundleManager.listenBundle(Test2.class);
         HttpBundleManager.listenBundle(Test2.class);
-        verify(serrMock).println("HttpBundle test already exists!");
+
+        assertEquals(1, HttpBundleManager.bundles.size());
     }
 
     @Test
