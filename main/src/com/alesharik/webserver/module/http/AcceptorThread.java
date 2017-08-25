@@ -33,9 +33,10 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Acceptor thread only accept new connections
+ * Acceptor thread accepts new connections and publish them into {@link ExecutorPool},
+ * You is free to use this class in your projects, but it isn't designed as public and it's API can be changed
  */
-final class AcceptorThread extends Thread implements SubModule {
+public final class AcceptorThread extends Thread implements SubModule {
     private final ExecutorPool executorPool;
     private final Selector selector;
     private volatile boolean isRunning;
@@ -57,6 +58,11 @@ final class AcceptorThread extends Thread implements SubModule {
         }
     }
 
+    /**
+     * Register server socket to internal selector
+     *
+     * @param wrapper server socket wrapper
+     */
     public void handle(ServerSocketWrapper wrapper) {
         if(!wrapper.isRunning())
             return;
