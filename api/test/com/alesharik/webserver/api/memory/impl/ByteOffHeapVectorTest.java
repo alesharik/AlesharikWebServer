@@ -252,10 +252,25 @@ public class ByteOffHeapVectorTest {
         byte[] cut = array.cut(address, 50);
         assertEquals(50, cut.length);
         for(int i = 0; i < 50; i++) {
-            assertEquals(cut[i], (byte) i);
+            assertEquals((byte) i, cut[i]);
         }
         assertEquals(50, array.size(address));
         array.cut(address, 10);
         assertEquals(40, array.size(address));
+    }
+
+    @Test
+    public void testCutAll() throws Exception {
+        array.clear(address);
+        for(int i = 0; i < 100; i++) {
+            address = array.add(address, (byte) i);
+        }
+        byte[] data = array.cut(address, 100);
+        assertEquals(100, data.length);
+        assertEquals(0, array.size(address));
+
+        for(int i = 0; i < 100; i++) {
+            assertEquals((byte) i, data[i]);
+        }
     }
 }
