@@ -51,6 +51,17 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
         return arr;
     }
 
+    public byte[] cut(long address, int size) {
+        long s = size(address);
+        if(s < size)
+            throw new IllegalArgumentException();
+        byte[] arr = new byte[size];
+        unsafe.copyMemory(null, address + META_SIZE, arr, BYTE_ARRAY_BASE_OFFSET, size);
+        unsafe.putLong(address + BASE_FIELD_SIZE, s - size);
+        unsafe.copyMemory(null, address + META_SIZE + size, null, address + META_SIZE, size);
+        return arr;
+    }
+
     /**
      * Return element with given index
      *
