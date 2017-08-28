@@ -31,7 +31,6 @@ import sun.misc.Unsafe;
 import javax.annotation.Nonnull;
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -42,7 +41,7 @@ import java.nio.charset.Charset;
  * Use OffHeap for work
  */
 @NotThreadSafe
-public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recyclable {
+public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recyclable {//TODO normal memory reserve?
     private static final int DEFAULT_SIZE = 16;
     private static final Unsafe U = JavaInternals.getUnsafe();
 
@@ -153,7 +152,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
     }
 
     @Override
-    public short readShort() throws IOException {
+    public short readShort() {
         return ByteOrderUtils.format(U.getShort(read(2)), order);
     }
 
@@ -165,12 +164,12 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
     }
 
     @Override
-    public int readUnsignedShort() throws IOException {
+    public int readUnsignedShort() {
         return ByteOrderUtils.format((U.getShort(read(2)) & 0xffff), order);
     }
 
     @Override
-    public void writeChar(int v) throws IOException {
+    public void writeChar(int v) {
         U.putChar(allocFor(2), ByteOrderUtils.format((char) v, order));
     }
 
@@ -179,7 +178,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
     }
 
     @Override
-    public char readChar() throws IOException {
+    public char readChar() {
         return U.getChar(read(2));
     }
 
@@ -301,7 +300,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
     }
 
     @Override
-    public void readFully(byte[] b) throws IOException {
+    public void readFully(byte[] b) {
         readFully(b, 0, b.length);
     }
 
