@@ -53,9 +53,38 @@ public class SmartCachedObjectFactoryTest {
 
     @Test
     public void testMxBeanOptions() throws Exception {
-        assertEquals(0, factory.getMinCachedObjectCount());
+        assertEquals(32, factory.getMinCachedObjectCount());
     }
 
+    @Test
+    public void testBasicConcurrency() throws Exception {
+        Thread a = new Thread(() -> {
+            for(int i = 0; i < 100; i++) {
+                TestClass instance = factory.getInstance();
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                factory.putInstance(instance);
+            }
+        });
+        Thread b = new Thread(() -> {
+            for(int i = 0; i < 100; i++) {
+                TestClass instance = factory.getInstance();
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                factory.putInstance(instance);
+            }
+        });
+        a.start();
+        b.start();
+        a.join();
+        b.join();
+    }
 
     private static final class TestClass implements Recyclable {
 
