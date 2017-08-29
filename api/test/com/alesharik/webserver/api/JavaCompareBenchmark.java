@@ -81,4 +81,10 @@ public class JavaCompareBenchmark {
             return "";
         }
     }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    public Object newObjectCost() {
+        return new Object();
+    }
 }
