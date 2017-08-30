@@ -24,16 +24,21 @@ import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.State;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @BenchmarkTest("java")
 @Measurement(timeUnit = TimeUnit.NANOSECONDS)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
+@State(Scope.Benchmark)
 public class JavaCompareBenchmark {
     private static final Method testMethod;
     private static final MethodHandle testMethodHandle;
@@ -86,5 +91,14 @@ public class JavaCompareBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     public Object newObjectCost() {
         return new Object();
+    }
+
+    private final List<Object> testList = new ArrayList<>();
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    public Object addRemoveCost() {
+        testList.add(new Object());
+        return testList.remove(0);
     }
 }

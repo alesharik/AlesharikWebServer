@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @param <T>
  */
 public final class SmartCachedObjectFactory<T extends Recyclable> implements CachedObjectFactory<T> {
-    private static final int MAX_CREATE_COUNT = 100;
+    private static final int MAX_COUNT = 100;
 
     private final ObjectFactory<T> factory;
     private final List<T> cache;
@@ -191,7 +191,7 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
                 long maxCreated = 0;
                 long minDiff = Integer.MAX_VALUE;
                 for(int i = 0; i < 5; i++) {
-                    maxCreated = Math.max(MAX_CREATE_COUNT, data[i][3]);
+                    maxCreated = Math.max(MAX_COUNT, data[i][3]);
                     long diff = (data[i][0] - data[i][1]) / 2;
                     if(diff > 1)
                         minDiff = Math.min(minDiff, diff);
@@ -204,10 +204,11 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
                         cache.add(factory.newInstance());
                     }
                 } else if(minDiff != Integer.MAX_VALUE) {
-                    for(int i = 0; i < minDiff; i++) {
+                    long min = Math.min(MAX_COUNT, minDiff);
+                    for(int i = 0; i < min; i++) {//When load suddenly drop, pool tires to optimise itself, but it can be long process
                         cache.remove(0);
                     }
-                    maxObjectCount.addAndGet((int) (-1 * minDiff));
+                    maxObjectCount.addAndGet((int) (-1 * min));
                 }
             } finally {
                 lock.set(false);
