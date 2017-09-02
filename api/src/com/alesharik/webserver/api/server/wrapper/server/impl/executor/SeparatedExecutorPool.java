@@ -329,7 +329,14 @@ public class SeparatedExecutorPool implements ExecutorPool {
         @Override
         public void run() {
             while(isRunning) {
-                context.iteration();
+                try {
+                    context.iteration();
+                } catch (RuntimeException e) {
+                    if(e.getCause().getClass().isAssignableFrom(InterruptedException.class))
+                        interrupt();
+                    else
+                        e.printStackTrace();
+                }
             }
         }
 
