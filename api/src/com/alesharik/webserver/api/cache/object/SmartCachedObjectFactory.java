@@ -191,7 +191,7 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
                 long maxCreated = 0;
                 long minDiff = Integer.MAX_VALUE;
                 for(int i = 0; i < 5; i++) {
-                    maxCreated = Math.max(MAX_COUNT, data[i][3]);
+                    maxCreated = Math.min(MAX_COUNT, data[i][3]);
                     long diff = (data[i][0] - data[i][1]) / 2;
                     if(diff > 1)
                         minDiff = Math.min(minDiff, diff);

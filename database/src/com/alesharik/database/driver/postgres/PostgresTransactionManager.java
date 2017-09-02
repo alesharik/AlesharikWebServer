@@ -39,8 +39,8 @@ final class PostgresTransactionManager implements TransactionManager {
         try {
             savepoint = connection.setSavepoint();
             runnable.run();
-            connection.commit();
             connection.releaseSavepoint(savepoint);
+            connection.commit();
         } catch (Exception e) {
             if(savepoint != null)
                 try {
@@ -58,8 +58,8 @@ final class PostgresTransactionManager implements TransactionManager {
         try {
             savepoint = connection.setSavepoint();
             ret = cCallable.call();
-            connection.commit();
             connection.releaseSavepoint(savepoint);
+            connection.commit();
         } catch (Exception e) {
             if(savepoint != null)
                 try {

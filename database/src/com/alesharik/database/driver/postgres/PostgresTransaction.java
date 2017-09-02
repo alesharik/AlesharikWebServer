@@ -58,15 +58,19 @@ final class PostgresTransaction implements Transaction {
     @Override
     public boolean commit() {
         for(PostgresTransaction child : children) {
-            if(child.isRolledBack())
+            if(child.isRolledBack()) {
+                rollback();
                 return false;
-            else if(child.isCommitted())
+            } else if(child.isCommitted())
                 continue;
-            if(!child.commit())
+            if(!child.commit()) {
+                rollback();
                 return false;
+            }
         }
         if(!state.get(0)) {
             try {
+                connection.releaseSavepoint(savepoint);
                 connection.commit();
             } catch (SQLException e) {
                 throw new DatabaseInternalException("Can't commit", e);
