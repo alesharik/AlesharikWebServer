@@ -58,7 +58,7 @@ public final class ByteOffHeapVector extends OffHeapVectorBase {
         byte[] arr = new byte[size];
         unsafe.copyMemory(null, address + META_SIZE, arr, BYTE_ARRAY_BASE_OFFSET, size);
         unsafe.putLong(address + BASE_FIELD_SIZE, s - size);
-        unsafe.copyMemory(null, address + META_SIZE + size, null, address + META_SIZE, size);
+        unsafe.copyMemory(null, address + META_SIZE + size, null, address + META_SIZE, s - size);
         return arr;
     }
 

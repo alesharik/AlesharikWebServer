@@ -25,9 +25,11 @@ import sun.misc.Unsafe;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
+ * <pre>
  * ┌────────────┬─────────────┬───────────┬──────┐
  * │ BASE(long) │ COUNT(long) │ MAX(long) │ DATA │
  * └────────────┴─────────────┴───────────┴──────┘
+ * </pre>
  * This is base of OffHeapVector. It contains basic methods array methods for size, maximum size, etc
  *
  * @implNote you need to write your own <code>set()</code>, <code>get()</code>, etc methods

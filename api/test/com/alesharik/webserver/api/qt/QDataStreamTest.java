@@ -20,7 +20,6 @@ package com.alesharik.webserver.api.qt;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -31,7 +30,6 @@ import java.util.Random;
 
 import static org.junit.Assert.*;
 
-@Ignore
 @RunWith(Theories.class)
 public class QDataStreamTest {
     @DataPoints
@@ -209,6 +207,17 @@ public class QDataStreamTest {
         String test = "aasdsdfsasadfasfgdfkjsldjlfdlksdlkfl;sdkjglfsdklkgdfljgk;dakughdfkslasfl;sd;kgjsfmg";
         stream.writeUTF(test);
         assertEquals(test, stream.readUTF());
+    }
+
+    @Theory
+    public void testReadALotOfUTF(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
+        String test = "aasdsdfsasadfasfgdfkjsldjlfdlksdlkfl;sdkjglfsdklkgdfljgk;dakughdfkslasfl;sd;kgjsfmg";
+        String text1 = "sdfdsfadfsdsfdfs";
+        stream.writeUTF(test);
+        stream.writeUTF(text1);
+        assertEquals(test, stream.readUTF());
+        assertEquals(text1, stream.readUTF());
     }
 
     @Theory

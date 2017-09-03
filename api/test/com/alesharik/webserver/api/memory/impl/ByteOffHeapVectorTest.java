@@ -249,14 +249,17 @@ public class ByteOffHeapVectorTest {
         for(int i = 0; i < 100; i++) {
             address = array.add(address, (byte) i);
         }
-        byte[] cut = array.cut(address, 50);
-        assertEquals(50, cut.length);
-        for(int i = 0; i < 50; i++) {
+        byte[] cut = array.cut(address, 25);
+        assertEquals(25, cut.length);
+        for(int i = 0; i < 25; i++) {
             assertEquals((byte) i, cut[i]);
         }
-        assertEquals(50, array.size(address));
+        assertEquals(75, array.size(address));
         array.cut(address, 10);
-        assertEquals(40, array.size(address));
+        assertEquals(65, array.size(address));
+        for(int i = 35; i < 65; i++) {
+            assertEquals(((byte) i), array.get(address, i - 35));
+        }
     }
 
     @Test
