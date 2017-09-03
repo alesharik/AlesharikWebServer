@@ -349,4 +349,8 @@ public final class Utils {
         System.arraycopy(arr, offset, copy, 0, size);
         return copy;
     }
+
+    public static native int cast(long l);
+
+    public static native short cast(int i);
 }

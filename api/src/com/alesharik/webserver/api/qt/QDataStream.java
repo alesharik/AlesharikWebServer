@@ -19,6 +19,7 @@
 package com.alesharik.webserver.api.qt;
 
 import com.alesharik.webserver.api.ByteOrderUtils;
+import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.cache.object.Recyclable;
 import lombok.Getter;
 import lombok.Setter;
@@ -160,12 +161,12 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
      * quint16
      */
     public void writeUnsignedShort(int s) {
-        U.putShort(allocFor(2), ByteOrderUtils.format((short) (s & 0xffff), order));
+        U.putShort(allocFor(2), ByteOrderUtils.format(Utils.cast(s & 0xffff), order));
     }
 
     @Override
     public int readUnsignedShort() {
-        return ByteOrderUtils.format((U.getShort(read(2)) & 0xffff), order);
+        return ByteOrderUtils.format((U.getShort(read(2))), order) & 0xffff;
     }
 
     @Override
@@ -179,7 +180,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
 
     @Override
     public char readChar() {
-        return U.getChar(read(2));
+        return ByteOrderUtils.format(U.getChar(read(2)), order);
     }
 
     /**
@@ -199,11 +200,11 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
      * quint32
      */
     public void writeUnsignedInt(long v) {
-        U.putInt(allocFor(4), (int) ByteOrderUtils.format((v), order));
+        U.putInt(allocFor(4), ByteOrderUtils.format(Utils.cast(v), order));
     }
 
     public long readUnsignedInt() {
-        return ByteOrderUtils.format((U.getInt(read(4)) & 0x00000000FFFFFFFFL), order);
+        return ByteOrderUtils.format((U.getInt(read(4))), order) & 0xffffffffL;
     }
 
     /**
@@ -238,7 +239,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
 
     @Override
     public void writeDouble(double v) {
-        U.putDouble(allocFor(8), ByteOrderUtils.format(v, order));
+        U.putDouble(allocFor(8), v);
     }
 
     @Override
@@ -248,7 +249,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
 
     @Override
     public double readDouble() {
-        return ByteOrderUtils.format(U.getDouble(read(8)), order);
+        return U.getDouble(read(8));
     }
 
     @Override

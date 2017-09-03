@@ -125,6 +125,22 @@ task generateJavaHeaders(dependsOn: compileJava, type: Exec) {
     errorOutput = System.out
 }
 
+task addJavaCritical(dependsOn: generateJavaHeaders) {
+    group = NATIVE_GROUP
+    doFirst {
+        System.err.println("Asd")
+        new File(sourceSets.main.output.classesDir.toString() + '/' + nativesSrc).listFiles().each {
+//            System.err.println("test")
+//            System.err.println(it)
+//            if (it.name == "com_alesharik_webserver_api_Utils.h") {
+//                it.text = it.text
+//                        .replaceAll("Java_com_alesharik_webserver_api_Utils_cast__J", "JavaCritical_com_alesharik_webserver_api_Utils_cast__J")
+//                        .replaceAll("Java_com_alesharik_webserver_api_Utils_cast__I", "JavaCritical_com_alesharik_webserver_api_Utils_cast__I")
+//            }
+        }
+    }
+}
+
 task copyNativeDir(dependsOn: compileJava, type: Copy) {
     group = NATIVE_GROUP
 
@@ -132,7 +148,7 @@ task copyNativeDir(dependsOn: compileJava, type: Copy) {
     into sourceSets.main.output.classesDir.toString() + '/' + nativesSrc
 }
 
-task executeCmake(dependsOn: [copyNativeDir, generateJavaHeaders], type: Exec) {
+task executeCmake(dependsOn: [copyNativeDir, addJavaCritical], type: Exec) {
     group = NATIVE_GROUP
 
     workingDir sourceSets.main.output.classesDir.toString() + '/' + nativesSrc
@@ -192,6 +208,11 @@ shadowJar {
     baseName = project.name + '-all'
     classifier = null
     version = null
+
+    from (nativeLibsDir) {
+        include '**/*.so'
+        include '**/*.dll'
+    }
 }
 
 jar {
@@ -249,6 +270,7 @@ task packageSources(type: Jar, dependsOn: classes) {
 
 build {}
 
+shadowJar.dependsOn copyNatives
 jar.dependsOn copyNatives
 jar.dependsOn test
 

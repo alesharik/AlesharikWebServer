@@ -20,13 +20,23 @@ package com.alesharik.webserver.api.qt;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.Ignore;
+import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
+import java.nio.ByteOrder;
 import java.util.Random;
 
 import static org.junit.Assert.*;
 
+@Ignore
+@RunWith(Theories.class)
 public class QDataStreamTest {
+    @DataPoints
+    public static ByteOrder theories[] = new ByteOrder[]{ByteOrder.LITTLE_ENDIAN, ByteOrder.BIG_ENDIAN};
+
     private QDataStream stream;
 
     @Before
@@ -39,30 +49,34 @@ public class QDataStreamTest {
         stream.close();
     }
 
-    @Test
-    public void testByte() throws Exception {
+    @Theory
+    public void testByte(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeByte(123);
         stream.writeByte(0x1);
         assertEquals(123, stream.readByte());
         assertEquals(0x1, stream.readByte());
     }
 
-    @Test
-    public void testUnsignedByte() throws Exception {
+    @Theory
+    public void testUnsignedByte(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeUnsignedByte((short) (Byte.MAX_VALUE + 1));
         assertEquals((short) Byte.MAX_VALUE + 1, stream.readUnsignedByte());
     }
 
-    @Test
-    public void testBoolean() throws Exception {
+    @Theory
+    public void testBoolean(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeBoolean(true);
         stream.writeBoolean(false);
         assertTrue(stream.readBoolean());
         assertFalse(stream.readBoolean());
     }
 
-    @Test
-    public void testShort() throws Exception {
+    @Theory
+    public void testShort(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         short s = 200;
         stream.writeShort(s);
         stream.writeShort(Short.MAX_VALUE);
@@ -70,58 +84,67 @@ public class QDataStreamTest {
         assertEquals(Short.MAX_VALUE, stream.readShort());
     }
 
-    @Test
-    public void testUnsignedShort() throws Exception {
+    @Theory
+    public void testUnsignedShort(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeUnsignedShort(Short.MAX_VALUE + 1);
         assertEquals(Short.MAX_VALUE + 1, stream.readUnsignedShort());
     }
 
-    @Test
-    public void testChar() throws Exception {
+    @Theory
+    public void testChar(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeChar(123);
         stream.writeChar('c');
         assertEquals(123, stream.readChar());
         assertEquals('c', stream.readChar());
     }
 
-    @Test
-    public void testInt() throws Exception {
+    @Theory
+    public void testInt(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeInt(123456);
         assertEquals(123456, stream.readInt());
     }
 
-    @Test
-    public void testUnsignedInt() throws Exception {
+    @Theory
+    public void testUnsignedInt(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeUnsignedInt(Integer.MAX_VALUE + 1L);
         assertEquals(Integer.MAX_VALUE + 1L, stream.readUnsignedInt());
     }
 
-    @Test
-    public void testLong() throws Exception {
+    @Theory
+    public void testLong(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeLong(1234567890123412412L);
         assertEquals(1234567890123412412L, stream.readLong());
     }
 
-    @Test
-    public void testUnsignedLong() throws Exception {
+    @Theory
+    public void testUnsignedLong(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeLong(Long.MAX_VALUE);
         assertEquals(Long.MAX_VALUE, stream.readLong());
     }
 
-    @Test
-    public void testFloat() throws Exception {
+    @Theory
+    public void testFloat(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeFloat(1.0F);
         assertEquals(1.0F, stream.readFloat(), 0.000001);
     }
 
-    @Test
-    public void testDouble() throws Exception {
+    @Theory
+    public void testDouble(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         stream.writeDouble(Double.MAX_VALUE);
         assertEquals(Double.MAX_VALUE, stream.readDouble(), 0.000000000000000000000000000000000000000000000000001);
     }
 
-    @Test
-    public void writeBytesTest() throws Exception {
+    @Theory
+    public void writeBytesTest(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         byte[] data = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
         byte[] data2 = new byte[]{30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42};
         byte[] data3 = new byte[]{99, 100, 101};
@@ -157,8 +180,9 @@ public class QDataStreamTest {
         }
     }
 
-    @Test
-    public void testWriteBytes() throws Exception {
+    @Theory
+    public void testWriteBytes(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         String test = "asdfqwer";
         stream.writeBytes(test);
         for(char c : test.toCharArray()) {
@@ -166,8 +190,9 @@ public class QDataStreamTest {
         }
     }
 
-    @Test
-    public void testWriteChars() throws Exception {
+    @Theory
+    public void testWriteChars(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         String test = "qwertyuiop";
         int length = test.getBytes("UTF-16LE").length;
         stream.writeChars(test);
@@ -178,15 +203,17 @@ public class QDataStreamTest {
         assertEquals(test, ret);
     }
 
-    @Test
-    public void testReadUTF() throws Exception {
+    @Theory
+    public void testReadUTF(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         String test = "aasdsdfsasadfasfgdfkjsldjlfdlksdlkfl;sdkjglfsdklkgdfljgk;dakughdfkslasfl;sd;kgjsfmg";
         stream.writeUTF(test);
         assertEquals(test, stream.readUTF());
     }
 
-    @Test
-    public void testSkip() throws Exception {
+    @Theory
+    public void testSkip(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         byte[] data = new byte[]{1, 2, 3};
         stream.write(data);
         stream.skip(1);
@@ -194,8 +221,9 @@ public class QDataStreamTest {
         assertEquals(data[2], stream.readByte());
     }
 
-    @Test
-    public void testBigArray() throws Exception {
+    @Theory
+    public void testBigArray(ByteOrder byteOrder) throws Exception {
+        stream.setOrder(byteOrder);
         byte[] arr = new byte[4096 * 4096];
         new Random().nextBytes(arr);
         stream.write(arr);

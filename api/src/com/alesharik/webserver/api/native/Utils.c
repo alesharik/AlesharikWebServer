@@ -375,3 +375,40 @@ JNIEXPORT jobjectArray JNICALL Java_com_alesharik_webserver_api_Utils_getPartiti
     (*env)->ThrowNew(env, IOException, "Can't open directory /sys/block");
     return NULL;
 }
+
+
+/*
+ * Class:     com_alesharik_webserver_api_Utils
+ * Method:    cast
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL JavaCritical_com_alesharik_webserver_api_Utils_cast__J (jlong l) {
+    return (jint) l;
+}
+
+/*
+ * Class:     com_alesharik_webserver_api_Utils
+ * Method:    cast
+ * Signature: (I)S
+ */
+JNIEXPORT jshort JNICALL JavaCritical_com_alesharik_webserver_api_Utils_cast__I (jint i) {
+    return (jshort) i;
+}
+
+/*
+ * Class:     com_alesharik_webserver_api_Utils
+ * Method:    cast
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL Java_com_alesharik_webserver_api_Utils_cast__J (JNIEnv* env, jclass c, jlong l) {
+    return (jint) l;
+}
+
+/*
+ * Class:     com_alesharik_webserver_api_Utils
+ * Method:    cast
+ * Signature: (I)S
+ */
+JNIEXPORT jshort JNICALL Java_com_alesharik_webserver_api_Utils_cast__I (JNIEnv* env, jclass c, jint i) {
+    return (jshort) i;
+}
