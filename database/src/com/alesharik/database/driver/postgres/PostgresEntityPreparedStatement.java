@@ -66,6 +66,8 @@ final class PostgresEntityPreparedStatement<E> implements EntityPreparedStatemen
         ResultSet resultSet = null;
         try {
             try {
+                wrapper.closeOnCompletion();
+
                 List<E> ret = new ArrayList<>();
                 resultSet = executeQuery();
                 while(resultSet.next())

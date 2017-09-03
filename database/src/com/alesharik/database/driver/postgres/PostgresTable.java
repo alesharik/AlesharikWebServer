@@ -302,7 +302,11 @@ final class PostgresTable<E> implements Table<E> {
 
     @Override
     public EntityPreparedStatement<E> prepareStatement(String statement) {
-        return null;
+        try {
+            return new PostgresEntityPreparedStatement<>(connection.prepareStatement(statement), entityDescription, this);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
