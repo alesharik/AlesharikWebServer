@@ -50,6 +50,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -136,9 +137,9 @@ public class EntityClassTransformer {
 
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-            if((access & ACC_STATIC) == ACC_STATIC && Type.getMethodDescriptor(Type.getObjectType(entityDescription.className), Type.getType(EntityManager.class)).equals(desc)) //Most likely factory method //TODO allow multiple args
+            if(Modifier.isStatic(access) && contains(Type.getArgumentTypes(desc), Type.getType(EntityManager.class)) && Type.getReturnType(desc).equals(Type.getType(entityDescription.className))) //Most likely factory method
                 return new FactoryMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, desc);
-            else if((access & ACC_STATIC) == 0) { //Can be getter/setter
+            else if(!Modifier.isStatic(access)) { //Can be getter/setter
                 if(name.startsWith("set")) {//Is setter
                     String n = name.substring("set".length());
                     String fieldName = Character.toLowerCase(n.charAt(0)) + (n.length() > 1 ? n.substring(1) : "");
@@ -160,6 +161,14 @@ public class EntityClassTransformer {
                     return new DestroyerMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className);
             }
             return super.visitMethod(access, name, desc, signature, exceptions);
+        }
+
+        private static boolean contains(Type[] types, Type type) {
+            for(Type type1 : types) {
+                if(type1.equals(type))
+                    return true;
+            }
+            return false;
         }
 
         private String extractFieldNameFromGetter(String name, Type desc) {
