@@ -34,6 +34,7 @@ import com.alesharik.database.entity.Unique;
 import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
 import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
+import com.alesharik.webserver.logger.Debug;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.objectweb.asm.AnnotationVisitor;
@@ -88,7 +89,7 @@ public class EntityClassTransformer {
             if(!has)
                 return null;
 
-
+            Debug.log("Instrumenting class " + name);
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
             ClassVisitorImpl cv = new ClassVisitorImpl(classWriter, name, isLazy, isBridge);
             classNode.accept(cv);
@@ -137,7 +138,7 @@ public class EntityClassTransformer {
 
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-            if(Modifier.isStatic(access) && contains(Type.getArgumentTypes(desc), Type.getType(EntityManager.class)) && Type.getReturnType(desc).equals(Type.getType(entityDescription.className))) //Most likely factory method
+            if(Modifier.isStatic(access) && contains(Type.getArgumentTypes(desc), Type.getType(EntityManager.class)) && Type.getReturnType(desc).equals(Type.getObjectType(entityDescription.className))) //Most likely factory method
                 return new FactoryMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, desc);
             else if(!Modifier.isStatic(access)) { //Can be getter/setter
                 if(name.startsWith("set")) {//Is setter

@@ -90,7 +90,10 @@ final class PostgresTypeTranslator {
     }
 
     public static void setObject(PreparedStatement preparedStatement, int index, Object o) throws SQLException {
-        preparedStatement.setObject(index, o);
+        if(o.getClass().isAssignableFrom(JsonObject.class))
+            preparedStatement.setObject(index, o.toString());
+        else
+            preparedStatement.setObject(index, o);
     }
 
     private static final JsonParser JSON_PARSER = new JsonParser();
