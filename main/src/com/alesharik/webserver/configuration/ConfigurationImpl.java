@@ -200,7 +200,7 @@ public final class ConfigurationImpl implements Configuration {
     @Override
     public Module getModuleByName(String name) {
         System.out.println("Trying to load " + name);
-        return modules.get(name);
+        return modules.get(name).getModule();
     }
 
     @Override

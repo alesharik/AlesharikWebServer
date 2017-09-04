@@ -19,7 +19,6 @@
 package com.alesharik.webserver.api.qt;
 
 import com.alesharik.webserver.api.ByteOrderUtils;
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.cache.object.Recyclable;
 import lombok.Getter;
 import lombok.Setter;
@@ -161,7 +160,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
      * quint16
      */
     public void writeUnsignedShort(int s) {
-        U.putShort(allocFor(2), ByteOrderUtils.format(Utils.cast(s & 0xffff), order));
+        U.putShort(allocFor(2), ByteOrderUtils.format((short) (s & 0xffff), order));
     }
 
     @Override
@@ -200,7 +199,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
      * quint32
      */
     public void writeUnsignedInt(long v) {
-        U.putInt(allocFor(4), ByteOrderUtils.format(Utils.cast(v), order));
+        U.putInt(allocFor(4), ByteOrderUtils.format((int) v, order));
     }
 
     public long readUnsignedInt() {

@@ -381,4 +381,8 @@ public class XmlHelper {
             }
         }
     }
+
+    public static <T extends Module> T getModuleByName(String name, Class<T> cast) {
+        return cast.cast(configuration.getModuleByName(name));
+    }
 }
