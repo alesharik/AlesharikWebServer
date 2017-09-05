@@ -27,6 +27,7 @@ import com.alesharik.webserver.internals.ClassInstantiator;
 import com.alesharik.webserver.internals.FieldAccessor;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.postgresql.util.PGobject;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -44,7 +45,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 final class PostgresTypeTranslator {
@@ -90,9 +93,12 @@ final class PostgresTypeTranslator {
     }
 
     public static void setObject(PreparedStatement preparedStatement, int index, Object o) throws SQLException {
-        if(o != null && o.getClass().isAssignableFrom(JsonObject.class))
-            preparedStatement.setObject(index, o.toString());
-        else
+        if(o != null && o.getClass().isAssignableFrom(JsonObject.class)) {
+            PGobject x = new PGobject();
+            x.setType("json");
+            x.setValue(o.toString());
+            preparedStatement.setObject(index, x);
+        } else
             preparedStatement.setObject(index, o);
     }
 
@@ -171,18 +177,26 @@ final class PostgresTypeTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    public static <E> E parseEntity(ResultSet resultSet, EntityDescription description, EntityManager<E> entityManager) throws SQLException {
+    public static <E> E parseEntity(ResultSet resultSet, EntityDescription description, EntityManager<E> entityManager, Map<EntityColumn, PostgresTable.ArrayTable> arrays) throws SQLException {
         E instance = (E) ClassInstantiator.instantiate(description.getClazz());
         FieldAccessor.setField(instance, entityManager, EntityClassTransformer.ENTITY_MANAGER_FIELD_NAME);
         if(description.isLazy() || description.isBridge()) {//Load only primary key
             for(EntityColumn column : description.getPrimaryKey()) {
-                column.setValue(instance, readObject(resultSet, column));
+                if(column.isArray())
+                    column.setValue(instance, (description.isBridge())
+                            ? new PostgresTable.ArrayTable.BridgeCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description)
+                            : new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description));
+                else
+                    column.setValue(instance, readObject(resultSet, column));
             }
             return instance;
         }
 
         for(EntityColumn column : description.getColumns()) {
-            column.setValue(instance, readObject(resultSet, column));
+            if(column.isArray())
+                column.setValue(instance, new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description));
+            else
+                column.setValue(instance, readObject(resultSet, column));
         }
         return instance;
     }

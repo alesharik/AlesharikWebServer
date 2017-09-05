@@ -203,7 +203,7 @@ final class PostgresTable<E> implements Table<E> {
                 resultSet = preparedStatement.executeQuery();
                 if(!resultSet.next())
                     return null;
-                return PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this);
+                return PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this, arrays);
             } catch (SQLException e) {
                 e.printStackTrace();
                 return null;
@@ -228,7 +228,7 @@ final class PostgresTable<E> implements Table<E> {
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this));
+                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this, arrays));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -256,7 +256,7 @@ final class PostgresTable<E> implements Table<E> {
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this));
+                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this, arrays));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -284,7 +284,7 @@ final class PostgresTable<E> implements Table<E> {
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this));
+                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this, arrays));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -303,7 +303,7 @@ final class PostgresTable<E> implements Table<E> {
     @Override
     public EntityPreparedStatement<E> prepareStatement(String statement) {
         try {
-            return new PostgresEntityPreparedStatement<>(connection.prepareStatement(statement), entityDescription, this);
+            return new PostgresEntityPreparedStatement<>(connection.prepareStatement(statement), entityDescription, this, arrays);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -453,7 +453,7 @@ final class PostgresTable<E> implements Table<E> {
         return schema.getName() + '.' + name;
     }
 
-    private static final class ArrayTable {
+    static final class ArrayTable {
         private final Connection connection;
         private final String name;
         private final String parentTable;
@@ -697,7 +697,7 @@ final class PostgresTable<E> implements Table<E> {
             NOT_DEFINED
         }
 
-        private static class BridgeCollectionWrapper<E> implements Collection<E> {
+        static class BridgeCollectionWrapper<E> implements Collection<E> {
             protected final Collection<E> wrap;
             protected final ArrayTable table;
             protected final Object entity;
@@ -1050,7 +1050,7 @@ final class PostgresTable<E> implements Table<E> {
             }
         }
 
-        private static final class LazyCollectionWrapper<E> extends BridgeCollectionWrapper<E> {
+        static final class LazyCollectionWrapper<E> extends BridgeCollectionWrapper<E> {
             private final AtomicInteger countCache = new AtomicInteger(-1);
             private final AtomicBoolean syncCaches = new AtomicBoolean(false);
 

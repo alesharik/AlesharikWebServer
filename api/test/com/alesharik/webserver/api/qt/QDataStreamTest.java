@@ -241,4 +241,15 @@ public class QDataStreamTest {
             assertEquals(b, stream.readByte());
         }
     }
+
+    @Theory
+    public void test102UInt(ByteOrder order) {
+        stream.setOrder(order);
+        stream.writeUnsignedInt(102);
+        String s = "{\"id\":\"d871dbd1-ebf2-422b-be4b-1f4cf4d1d8c5\",\"name\":\"test\",\"login\":\"test\",\"connected\":true,\"ip\":\"127.0.0.1\",\"controlPort\":4000,\"data\":{}}";
+        stream.writeUTF(s);
+
+        assertEquals(102, stream.readUnsignedInt());
+        assertEquals(s, stream.readUTF());
+    }
 }

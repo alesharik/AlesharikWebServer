@@ -430,7 +430,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
         QT_4_4 {
             @Override
             public String readString(Unsafe unsafe, QDataStream dataStream) {
-                long size = dataStream.readUnsignedInt();
+                long size = dataStream.readInt();
                 if(size == 0xFFFFFFFF)
                     return "";
 
@@ -444,7 +444,7 @@ public class QDataStream implements DataInput, DataOutput, AutoCloseable, Recycl
             @SneakyThrows
             @Override
             public void writeString(Unsafe unsafe, String s, QDataStream dataStream) {
-                dataStream.writeUnsignedInt(s.length() == 0 ? 0xFFFFFFFF : s.length());
+                dataStream.writeInt(s.length() == 0 ? 0xFFFFFFFF : s.length());
                 dataStream.write(s.getBytes("UTF-8"));
             }
 

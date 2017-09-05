@@ -20,6 +20,7 @@ package com.alesharik.database.driver.postgres;
 
 import com.alesharik.database.data.EntityPreparedStatement;
 import com.alesharik.database.entity.EntityManager;
+import com.alesharik.database.entity.asm.EntityColumn;
 import com.alesharik.database.entity.asm.EntityDescription;
 import com.alesharik.database.exception.DatabaseCloseSQLException;
 import com.alesharik.database.exception.DatabaseReadSQLException;
@@ -49,16 +50,19 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 
 final class PostgresEntityPreparedStatement<E> implements EntityPreparedStatement<E> {
     private final PreparedStatement wrapper;
     private final EntityDescription entityDescription;
     private final EntityManager<E> entityManager;
+    private final Map<EntityColumn, PostgresTable.ArrayTable> arrayTableMap;
 
-    public PostgresEntityPreparedStatement(PreparedStatement wrapper, EntityDescription entityDescription, EntityManager<E> entityManager) {
+    public PostgresEntityPreparedStatement(PreparedStatement wrapper, EntityDescription entityDescription, EntityManager<E> entityManager, Map<EntityColumn, PostgresTable.ArrayTable> arrayTableMap) {
         this.wrapper = wrapper;
         this.entityDescription = entityDescription;
         this.entityManager = entityManager;
+        this.arrayTableMap = arrayTableMap;
     }
 
     @Override
@@ -71,7 +75,7 @@ final class PostgresEntityPreparedStatement<E> implements EntityPreparedStatemen
                 List<E> ret = new ArrayList<>();
                 resultSet = executeQuery();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, entityManager));
+                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, entityManager, arrayTableMap));
                 return ret;
             } catch (SQLException e) {
                 throw new DatabaseReadSQLException(e);
