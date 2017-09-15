@@ -25,6 +25,7 @@ import com.alesharik.webserver.configuration.SubModule;
 import sun.misc.Cleaner;
 
 import java.io.IOException;
+import java.net.StandardSocketOptions;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -90,7 +91,7 @@ public final class AcceptorThread extends Thread implements SubModule {
                     if(next.isAcceptable()) {
                         SocketProvider.ServerSocketWrapper attachment = (SocketProvider.ServerSocketWrapper) next.attachment();
                         SocketChannel socket = attachment.getServerSocket().accept();
-
+                        socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
                         if(socket == null)
                             continue;
                         if(!socket.finishConnect())

@@ -753,7 +753,7 @@ final class PostgresTable<E> implements Table<E> {
                 ResultSet resultSet = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("SELECT count() FROM " + table.name + " WHERE key = ?");
+                        statement = connection.prepareStatement("SELECT count(*) FROM " + table.name + " WHERE key = ?");
                         statement.setObject(1, id);
                         resultSet = statement.executeQuery();
 
@@ -1092,7 +1092,7 @@ final class PostgresTable<E> implements Table<E> {
             @Override
             public Iterator<E> iterator() {
                 loadCache();
-                return wrap.iterator();
+                return wrap.iterator();//FIXME iterator not working with bd, only with wrapper
             }
 
             @Override

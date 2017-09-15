@@ -1,6 +1,5 @@
 apply plugin: 'java'
 apply plugin: 'idea'
-
 buildDir = new File('./out/')
 
 //====================Deploy====================\\
