@@ -201,7 +201,7 @@ public class ReportingModuleImplTest {
         reportingModule.shutdownNow();
 
         verify(reporter, atLeast(1)).tick();
-        verify(reporter, atLeast(2)).tick();
+        verify(reporter1, atLeast(2)).tick();
     }
 
     @Test
