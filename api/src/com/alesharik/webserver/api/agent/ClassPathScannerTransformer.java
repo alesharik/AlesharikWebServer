@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.alesharik.webserver.api.agent.ClassLoaderHelper.*;
+
 /**
  * This class hold {@link ClassPathScannerThread} and send new class loaders to it.
  * This class also hold all ClassLoaders.
@@ -55,10 +57,10 @@ final class ClassPathScannerTransformer implements ClassFileTransformer {
     }
 
     public static void tryScanClassLoader(ClassLoader classLoader) {
-        if(classLoader.getClass().getCanonicalName().equals("sun.reflect.DelegatingClassLoader")) {
+        if(classLoader.getClass().getCanonicalName().equals("sun.reflect.DelegatingClassLoader") || isIgnored(classLoader) || isClosed(classLoader)) {
             return;
         }
-        if(classLoader.getClass().isAnnotationPresent(Rescanable.class)) {
+        if(isRescanable(classLoader)) {
             thread.addClassLoader(classLoader);
             if(!classLoaders.contains(classLoader))
                 classLoaders.add(classLoader);

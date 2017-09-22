@@ -18,17 +18,11 @@
 
 package com.alesharik.webserver.api.agent;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.io.Closeable;
 
-/**
- * This annotation means, what {@link ClassLoader} can be rescanned
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface Rescanable {
+public interface CloseableClassLoader extends Closeable {
+    @Override
+    void close();
+
+    boolean isClosed();
 }

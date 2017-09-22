@@ -26,7 +26,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
@@ -43,7 +42,6 @@ import java.util.stream.Stream;
  */
 @Prefixes({"[Agent]", "[AgentClassTransformer]"})
 final class AgentClassTransformer implements ClassFileTransformer {
-    private static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = MethodHandles.lookup();
     /**
      * ClassName: Transformers
      */

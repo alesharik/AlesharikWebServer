@@ -88,7 +88,11 @@ final class ClassPathScannerThread extends Thread {
             new FastClasspathScanner()
                     .overrideClassLoaders(classLoader)
                     .matchClassesWithAnnotation(ClassPathScanner.class, classWithAnnotation -> matchClassPathScanner(classWithAnnotation, newListeners))
-                    .matchClassesWithAnnotation(ClassTransformer.class, AgentClassTransformer::addTransformer)
+                    .matchClassesWithAnnotation(ClassTransformer.class, transformer -> {
+                        if(transformer.isAnnotationPresent(Ignored.class))
+                            return;
+                        AgentClassTransformer.addTransformer(transformer);
+                    })
                     .scanAsync(workerPool, PARALLELISM)
                     .get();
 
@@ -107,6 +111,9 @@ final class ClassPathScannerThread extends Thread {
     }
 
     private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners) {
+        if(clazz.isAnnotationPresent(Ignored.class))
+            return;
+
         Stream.of(clazz.getDeclaredMethods())
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
                 .filter(method -> method.isAnnotationPresent(ListenAnnotation.class) || method.isAnnotationPresent(ListenClass.class) || method.isAnnotationPresent(ListenInterface.class))
@@ -174,6 +181,8 @@ final class ClassPathScannerThread extends Thread {
                 switch (type) {
                     case ANNOTATION:
                         scanner.matchClassesWithAnnotation(aClass, classWithAnnotation -> {
+                            if(classWithAnnotation.isAnnotationPresent(Ignored.class))
+                                return;
                             try {
                                 method.invokeExact(classWithAnnotation);
                             } catch (Throwable e) {
@@ -183,6 +192,8 @@ final class ClassPathScannerThread extends Thread {
                         break;
                     case CLASS:
                         scanner.matchSubclassesOf(aClass, subclass -> {
+                            if(subclass.isAnnotationPresent(Ignored.class))
+                                return;
                             try {
                                 method.invokeExact(subclass);
                             } catch (Throwable e) {
@@ -192,6 +203,8 @@ final class ClassPathScannerThread extends Thread {
                         break;
                     case INTERFACE:
                         scanner.matchClassesImplementing(aClass, implementingClass -> {
+                            if(implementingClass.isAnnotationPresent(Ignored.class))
+                                return;
                             try {
                                 method.invokeExact(implementingClass);
                             } catch (Throwable e) {

@@ -18,17 +18,15 @@
 
 package com.alesharik.webserver.api.agent;
 
-import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation means, what {@link ClassLoader} can be rescanned
+ * Ignored classloader can't be checked by classpath scanner
  */
-@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface Rescanable {
+@Target(ElementType.TYPE)
+public @interface IgnoreClassLoader {
 }
