@@ -19,16 +19,21 @@
 package com.alesharik.webserver.daemon;
 
 /**
- * This MXBean provides information about connected daemon
+ * Manages daemon lifecycle
  */
-public interface DaemonManagementBean {
+public interface DaemonLifecycleManager {
     /**
-     * Return <code>true</code> if daemon's thread is alive, overwise <code>false</code>
+     * Start daemon thread
      */
-    boolean isAlive();
+    void start();
 
     /**
-     * Return daemon thread
+     * Shutdown daemon thread
      */
-    Thread getThread();
+    void shutdown();
+
+    /**
+     * Return true if daemon's thread is alive, overwise false
+     */
+    boolean isRunning();
 }

@@ -18,12 +18,17 @@
 
 package com.alesharik.webserver.daemon.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Injects {@link com.alesharik.webserver.logger.NamedLogger} for daemon in annotated field
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+@Documented
 public @interface Logger {
 }

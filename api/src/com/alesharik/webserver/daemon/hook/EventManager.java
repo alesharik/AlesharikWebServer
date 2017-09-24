@@ -18,6 +18,19 @@
 
 package com.alesharik.webserver.daemon.hook;
 
+import javax.annotation.Nonnull;
+
+/**
+ * Event manager fire events
+ *
+ * @see com.alesharik.webserver.daemon.annotation.Daemon
+ */
 public interface EventManager {
-    void fireEvent(String name, Object... args);
+    /**
+     * Fire event. Do nothing if event not exists
+     *
+     * @param name event name
+     * @param args event arguments
+     */
+    void fireEvent(@Nonnull String name, Object... args);
 }

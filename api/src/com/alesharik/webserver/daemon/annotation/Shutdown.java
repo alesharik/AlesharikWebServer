@@ -18,15 +18,17 @@
 
 package com.alesharik.webserver.daemon.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This method called in caller thread, not daemon thread. This method MUST interrupt {@link Run} method! Shutdown method can't throw any exceptions
+ * This method called in caller thread, not daemon thread. This method MUST interrupt {@link Run} method! It can't throw any exceptions
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Documented
 public @interface Shutdown {
 }

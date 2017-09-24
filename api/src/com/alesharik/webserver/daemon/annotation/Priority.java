@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.daemon.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,6 +29,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@Documented
 public @interface Priority {
     /**
      * Return daemon thread priority. Must be between {@link Thread#MIN_PRIORITY} and {@link Thread#MAX_PRIORITY}

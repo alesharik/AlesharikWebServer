@@ -21,9 +21,13 @@ package com.alesharik.webserver.daemon.impl;
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
 import com.alesharik.webserver.daemon.Daemon;
+import com.alesharik.webserver.daemon.DaemonApiWrapper;
+import com.alesharik.webserver.daemon.DaemonLifecycleManager;
+import com.alesharik.webserver.daemon.HookProvider;
 import lombok.experimental.UtilityClass;
 import org.w3c.dom.Element;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,18 +61,18 @@ public class DaemonManager {
                 .collect(Collectors.toList());
     }
 
-    public static void loadDaemon(String name, Element config, boolean restart) {
-        if(!daemonClasses.containsKey(name))
+    public static DaemonLifecycleManager loadDaemon(@Nonnull String name, @Nonnull Element config, @Nonnull String type, boolean restart, HookProvider provider) {
+        if(!daemonClasses.containsKey(type))
             throw new IllegalArgumentException("Daemon not found");
 
         DaemonClassLoader daemonClassLoader = new DaemonClassLoader(parent);
-        Daemon daemon = DaemonReflectionFactory.createDaemon(daemonClasses.get(name), daemonClassLoader);
+        Daemon daemon = DaemonReflectionFactory.createDaemon(daemonClasses.get(type), daemonClassLoader, name, provider);
         daemonClassLoader.setDaemon(daemon);
 
         DaemonThread daemonThread = new DaemonThread(THREAD_GROUP, daemon);
         daemonThread.setAutoRestart(restart);
-        daemonThread.start(config);
         daemons.put(name, daemonThread);
+        return new DaemonLifecycleManagerImpl(daemonThread, config);
     }
 
     public static void reloadDaemon(String name, Element config) {
@@ -83,11 +87,42 @@ public class DaemonManager {
         }
     }
 
+    public static DaemonApiWrapper getApi(String name) {
+        if(!daemons.containsKey(name))
+            throw new IllegalArgumentException("Daemon not found!");
+        return ((DaemonClassLoader) daemons.get(name).getContextClassLoader()).getApi();
+    }
+
     @ListenAnnotation(com.alesharik.webserver.daemon.annotation.Daemon.class)
     private static void listen(Class<?> clazz) {
         com.alesharik.webserver.daemon.annotation.Daemon daemon = clazz.getAnnotation(com.alesharik.webserver.daemon.annotation.Daemon.class);
         if(daemonClasses.containsKey(daemon.value()))
             return;
         daemonClasses.put(daemon.value(), clazz);
+    }
+
+    private static final class DaemonLifecycleManagerImpl implements DaemonLifecycleManager {
+        private final DaemonThread daemonThread;
+        private final Element config;
+
+        public DaemonLifecycleManagerImpl(DaemonThread daemonThread, Element config) {
+            this.daemonThread = daemonThread;
+            this.config = config;
+        }
+
+        @Override
+        public void start() {
+            daemonThread.start(config);
+        }
+
+        @Override
+        public void shutdown() {
+            daemonThread.shutdown();
+        }
+
+        @Override
+        public boolean isRunning() {
+            return daemonThread.isAlive();
+        }
     }
 }

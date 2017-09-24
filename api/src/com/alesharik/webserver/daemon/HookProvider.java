@@ -18,17 +18,13 @@
 
 package com.alesharik.webserver.daemon;
 
-/**
- * This MXBean provides information about connected daemon
- */
-public interface DaemonManagementBean {
-    /**
-     * Return <code>true</code> if daemon's thread is alive, overwise <code>false</code>
-     */
-    boolean isAlive();
+import com.alesharik.webserver.hook.Hook;
 
-    /**
-     * Return daemon thread
-     */
-    Thread getThread();
+import java.util.function.BiConsumer;
+
+/**
+ * Provides hooks from xml configuration
+ */
+public interface HookProvider {
+    void provide(BiConsumer<String, Hook> consumer);
 }

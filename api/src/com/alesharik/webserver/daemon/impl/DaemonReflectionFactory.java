@@ -23,6 +23,7 @@ import com.alesharik.webserver.api.reflection.ReflectUtils;
 import com.alesharik.webserver.daemon.Daemon;
 import com.alesharik.webserver.daemon.DaemonApi;
 import com.alesharik.webserver.daemon.DaemonManagementBean;
+import com.alesharik.webserver.daemon.HookProvider;
 import com.alesharik.webserver.daemon.annotation.Api;
 import com.alesharik.webserver.daemon.annotation.EventManager;
 import com.alesharik.webserver.daemon.annotation.HookManager;
@@ -64,7 +65,7 @@ class DaemonReflectionFactory {
     private static final int DEFAULT_PRIORITY = Thread.NORM_PRIORITY - 2;
     private static final Map<String, ObjectReflectionWrapper> wrappers = new ConcurrentHashMap<>();
 
-    static Daemon<?> createDaemon(Class<?> clazz, ClassLoader classLoader) {
+    static Daemon<?> createDaemon(Class<?> clazz, ClassLoader classLoader, String name, HookProvider provider) {
         if(clazz.isPrimitive() || clazz.isArray())
             throw new IllegalArgumentException("Class must be reference type!");
 
@@ -81,7 +82,7 @@ class DaemonReflectionFactory {
             NamedLogger logger = Logger.createNewNamedLogger("Daemon][" + daemonAnnotation.value(), null);
             logger.setStoringStrategyFactory(DisabledStoringStrategy::new);
 
-            return new DaemonImpl(instance, daemonAnnotation.value(), reflect, logger, priority);
+            return new DaemonImpl(instance, daemonAnnotation.value(), name, reflect, logger, priority, provider);
         } catch (ClassNotFoundException e) {
             throw new Error(e);
         } catch (IllegalAccessException e) {
@@ -422,6 +423,7 @@ class DaemonReflectionFactory {
 
     static final class DaemonImpl implements Daemon<DaemonApi> {
         private final Object instance;
+        private final String type;
         private final String name;
         private final ObjectReflectionWrapper reflect;
         private final NamedLogger logger;
@@ -433,8 +435,9 @@ class DaemonReflectionFactory {
         private volatile DaemonManagementBean managementBean;
         private volatile DaemonHookManager hookManager;
 
-        public DaemonImpl(Object instance, String name, ObjectReflectionWrapper reflect, NamedLogger logger, int priority) {
+        public DaemonImpl(Object instance, String type, String name, ObjectReflectionWrapper reflect, NamedLogger logger, int priority, HookProvider provider) {
             this.instance = instance;
+            this.type = type;
             this.name = name;
             this.reflect = reflect;
             this.logger = logger;
@@ -450,6 +453,12 @@ class DaemonReflectionFactory {
                 reflect.setupClass(instance, eventManager, logger);
                 this.hookManager = hookManager;
             }
+            provider.provide(hookManager::registerHook);
+        }
+
+        @Override
+        public String getType() {
+            return type;
         }
 
         @Override
@@ -567,6 +576,30 @@ class DaemonReflectionFactory {
                 }
             }
 
+            void fireStartHook() {
+                if(hooks.containsKey("start"))
+                    for(Hook hook : hooks.get("start")) {
+                        try {
+                            hook.listen(sender, new Object[0]);
+                        } catch (Exception e) {
+                            System.err.println("Exception in hook " + hook.getName() + ", group " + hook.getGroup());
+                            e.printStackTrace();
+                        }
+                    }
+            }
+
+            void fireShutdownHook() {
+                if(hooks.containsKey("shutdown"))
+                    for(Hook hook : hooks.get("shutdown")) {
+                        try {
+                            hook.listen(sender, new Object[0]);
+                        } catch (Exception e) {
+                            System.err.println("Exception in hook " + hook.getName() + ", group " + hook.getGroup());
+                            e.printStackTrace();
+                        }
+                    }
+            }
+
             @Override
             public void registerHook(String event, Hook hook) {
                 put(event, hook);
@@ -595,6 +628,7 @@ class DaemonReflectionFactory {
                     try {
                         hook.listen(sender, args);
                     } catch (Exception e) {
+                        System.err.println("Exception in hook " + hook.getName() + ", group " + hook.getGroup());
                         e.printStackTrace();
                     }
                 }

@@ -66,7 +66,7 @@ final class DaemonThread extends Thread {
 
         if(!startDaemon() && autoRestart)
             do {
-                System.err.println("Restarting daemon in initialization stage " + getDaemon().getName());
+                System.err.println("Restarting daemon in initialization stage " + getDaemon().getType());
             } while(!startDaemon());
 
         boolean result;
@@ -182,7 +182,7 @@ final class DaemonThread extends Thread {
                 System.err.println("Uncaught exception in daemon thread " + t.getName());
                 e.printStackTrace();
             } else {
-                daemon.getNamedLogger().log('[' + daemon.getName() + ']', e);
+                daemon.getNamedLogger().log('[' + daemon.getType() + ']', e);
             }
         }
     }

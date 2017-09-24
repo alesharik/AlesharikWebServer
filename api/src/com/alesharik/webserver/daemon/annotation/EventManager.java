@@ -18,12 +18,17 @@
 
 package com.alesharik.webserver.daemon.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation for {@link com.alesharik.webserver.daemon.hook.EventManager} field. Before {@link Setup} stage event manager will be injected
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+@Documented
 public @interface EventManager {
 }

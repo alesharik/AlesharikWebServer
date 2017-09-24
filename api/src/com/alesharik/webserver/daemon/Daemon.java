@@ -22,26 +22,75 @@ import com.alesharik.webserver.daemon.hook.DaemonHookManager;
 import com.alesharik.webserver.logger.NamedLogger;
 import org.w3c.dom.Element;
 
+import javax.annotation.Nonnull;
+
+/**
+ * This is internal class. It describes daemon
+ *
+ * @param <A> daemon api type
+ */
 public interface Daemon<A extends DaemonApi> {
+    /**
+     * Return daemon type
+     */
+    String getType();
+
+    /**
+     * Return daemon name
+     */
     String getName();
 
-    void parseConfig(Element c);
+    /**
+     * Parse daemon configuration
+     *
+     * @param c configuration
+     */
+    void parseConfig(@Nonnull Element c);
 
+    /**
+     * Setup daemon
+     */
     void setup();
 
+    /**
+     * Run daemon
+     */
     void run();
 
-    void reload(Element element);
+    /**
+     * Reload daemon configuration
+     *
+     * @param element configuration
+     */
+    void reload(@Nonnull Element element);
 
+    /**
+     * Shutdown daemon
+     */
     void shutdown();
 
+    /**
+     * Return daemon api
+     */
     A getApi();
 
+    /**
+     * Return daemon hook manager
+     */
     DaemonHookManager getHookManager();
 
+    /**
+     * Return Daemon management bean
+     */
     DaemonManagementBean getManagementBean();
 
+    /**
+     * Return daemon logger
+     */
     NamedLogger getNamedLogger();
 
+    /**
+     * Return daemon's thread priority
+     */
     int getPriority();
 }

@@ -18,12 +18,17 @@
 
 package com.alesharik.webserver.daemon.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotate reload method. It must have 1 parameter - {@link org.w3c.dom.Element}, new config
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@Documented
 public @interface Reload {
 }

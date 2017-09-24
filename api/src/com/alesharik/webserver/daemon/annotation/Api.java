@@ -23,6 +23,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * {@link com.alesharik.webserver.daemon.DaemonApi} represents daemon api, through which another parts can interact with daemon/
+ * Annotation can be placed on field with realisation, getter method or realisation inner class. Inner class can have constructor with 1 parameter -
+ * your daemon class, and it will receive your class instance
+ */
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Api {

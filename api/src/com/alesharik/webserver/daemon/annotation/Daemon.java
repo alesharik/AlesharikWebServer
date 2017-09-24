@@ -18,13 +18,34 @@
 
 package com.alesharik.webserver.daemon.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * AlesharikWebServer daemons are threads, which run concurrently with server. Daemons are basically improved Daemon Threads,
+ * which can be configured from xml configuration, support hooks, and can be monitored. Daemon can set it's priority by @{@link Priority} annotation.
+ * Daemons support inheritance.
+ * Lifecycle:<br>
+ * <ol>
+ * <li>{@link Parse} - parse config in main thread</li>
+ * <li>{@link Setup} - setup daemon in daemon thread</li>
+ * <li>{@link Run} - main daemon code, executed in daemon thread</li>
+ * <li>{@link Reload} - executes iin daemon thread when daemon must be reloaded. Default realisation is: {@link Shutdown} -> {@link Parse} -> {@link Setup} -> {@link Run}</li>
+ * <li>{@link Shutdown} - shutdown daemon. Executes in caller thread</li>
+ * </ol>
+ *
+ * @see Api
+ * @see ManagementBean
+ * @see HookManager
+ * @see EventManager
+ * @see Logger
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@Documented
 public @interface Daemon {
     String value();
 }

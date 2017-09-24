@@ -23,13 +23,37 @@ import com.alesharik.webserver.hook.Hook;
 import javax.annotation.Nonnull;
 import java.util.List;
 
+/**
+ * This contains all hook logic. It MUST handle start and shutdown hooks!
+ */
 public interface DaemonHookManager {
-    void registerHook(String event, Hook hook);
+    /**
+     * Register new hook
+     *
+     * @param event hook event name
+     * @param hook  the hook
+     */
+    void registerHook(@Nonnull String event, @Nonnull Hook hook);
 
+    /**
+     * Return available method, not affect hook parsing process
+     */
+    @Nonnull
     String[] getEvents();
 
-    int getHookCount(String event);
+    /**
+     * Return hook count for event
+     *
+     * @param event event name
+     * @return positive/zero integer
+     */
+    int getHookCount(@Nonnull String event);
 
+    /**
+     * Return all hooks for event
+     * @param event event name
+     * @return unmodifiable collection
+     */
     @Nonnull
-    List<Hook> getHooks(String event);
+    List<Hook> getHooks(@Nonnull String event);
 }

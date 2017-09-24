@@ -18,15 +18,19 @@
 
 package com.alesharik.webserver.daemon.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * MUST BE ALWAYS ACCESSIBLE!
+ * {@link com.alesharik.webserver.daemon.hook.DaemonHookManager} used for handling hooks. This class must be accessible at any time.
+ * Annotation can be placed on field with realisation, getter method or realisation inner class. Inner class can have constructor with 1 parameter -
+ * your daemon class, and it will receive your class instance
  */
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+@Documented
 public @interface HookManager {
 }

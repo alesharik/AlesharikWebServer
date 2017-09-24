@@ -55,6 +55,10 @@ final class DaemonClassLoader extends ClassLoader implements CloseableClassLoade
         this.daemonApiWrapper.daemonApi = daemon.getApi();
     }
 
+    DaemonApiWrapper getApi() {
+        return daemonApiWrapper;
+    }
+
     public static DaemonClassLoader getClassLoader(Daemon daemon) {
         ClassLoader cl = daemon.getClass().getClassLoader();
         if(!(cl instanceof DaemonClassLoader))

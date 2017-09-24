@@ -20,13 +20,27 @@ package com.alesharik.webserver.daemon;
 
 import javax.annotation.Nullable;
 
+/**
+ * Wrapper wraps daemon api for keeping api consistency
+ */
 public abstract class DaemonApiWrapper {
+    /**
+     * Return {@link DaemonApi} or <code>null</code> if it is'n found
+     */
     @Nullable
     public abstract DaemonApi get();
 
+    /**
+     * Return {@link T} or <code>null</code> if it is'n found
+     *
+     * @param cast api cast
+     */
     public <T> T get(Class<T> cast) {
         return cast.cast(get());
     }
 
+    /**
+     * Return <code>true</code> if API instance available, overwise false
+     */
     public abstract boolean available();
 }

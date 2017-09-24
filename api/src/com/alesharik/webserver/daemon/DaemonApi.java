@@ -18,5 +18,10 @@
 
 package com.alesharik.webserver.daemon;
 
+/**
+ * Daemon API used for interaction with daemon. It is preferable to use {@link DaemonApiWrapper} instead of instance
+ *
+ * @see com.alesharik.webserver.daemon.annotation.Daemon
+ */
 public interface DaemonApi {
 }
