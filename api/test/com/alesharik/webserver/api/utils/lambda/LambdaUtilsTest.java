@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.lambda;
+package com.alesharik.webserver.api.utils.lambda;
 
 import com.alesharik.webserver.api.TestUtils;
 import com.alesharik.webserver.api.Utils;
@@ -32,8 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static com.alesharik.webserver.api.lambda.LambdaUtils.*;
-import static com.alesharik.webserver.api.lambda.LambdaUtils.when;
+import static com.alesharik.webserver.api.utils.lambda.LambdaUtils.*;
+import static com.alesharik.webserver.api.utils.lambda.LambdaUtils.when;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.*;

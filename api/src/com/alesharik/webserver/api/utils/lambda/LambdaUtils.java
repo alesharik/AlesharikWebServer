@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.lambda;
+package com.alesharik.webserver.api.utils.lambda;
 
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
