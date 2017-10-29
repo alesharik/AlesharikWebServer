@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.api.cache.object;
 
-import com.alesharik.webserver.api.internal.ShutdownState;
+import com.alesharik.webserver.internals.ShutdownState;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;

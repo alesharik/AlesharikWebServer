@@ -18,10 +18,19 @@
 
 package com.alesharik.webserver.internals;
 
-public final class UnsafeAccessError extends InternalHackingError {
-    private static final long serialVersionUID = 1569770664010226997L;
+import javax.annotation.Nonnull;
 
-    public UnsafeAccessError(Exception e) {
-        super("Can't access to sun.misc.Unsafe", e);
+/**
+ * This error means that server part can't get access to JVM internals
+ */
+public class InternalHackingError extends Error {
+    private static final long serialVersionUID = -8027538638308520332L;
+
+    public InternalHackingError(@Nonnull String message) {
+        super(message);
+    }
+
+    public InternalHackingError(@Nonnull String message, @Nonnull Throwable cause) {
+        super(message, cause);
     }
 }

@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api;
+package com.alesharik.webserver.internals;
 
 import org.junit.Test;
 import sun.misc.Cleaner;

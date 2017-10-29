@@ -51,4 +51,6 @@ abstract class UnsafeAccess {
      * Create object without calling constructor
      */
     public abstract Object newInstance(Class<?> clazz);
+
+    public abstract int pageSize();
 }

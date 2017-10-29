@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.api.memory;
 
-import com.alesharik.webserver.api.MemoryReserveUtils;
+import com.alesharik.webserver.internals.MemoryReserveUtils;
 import one.nio.util.JavaInternals;
 import sun.misc.Unsafe;
 

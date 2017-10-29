@@ -16,9 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.internal;
-
-import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
+package com.alesharik.webserver.internals;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -26,9 +24,18 @@ import java.lang.reflect.Field;
 /**
  * This class wrap {@link Shutdown} class
  */
-public enum ShutdownState {//TODO move to internals
+public enum ShutdownState {
+    /**
+     * VM is running normally
+     */
     RUNNING,
+    /**
+     * VM is handling Shutdown hooks
+     */
     HOOKS,
+    /**
+     * VM is handling finalizers
+     */
     FINALIZERS;
 
     private static final Field stateField;
@@ -39,18 +46,27 @@ public enum ShutdownState {//TODO move to internals
             stateField = clazz.getDeclaredField("state");
             stateField.setAccessible(true);
         } catch (ClassNotFoundException | NoSuchFieldException e) {
-            throw new UnexpectedBehaviorError(e);
+            throw new InternalHackingError("Can't get access to Shutdown.state field!", e);
         }
     }
 
+    /**
+     * Return true if VM is running, overwise false
+     */
     public boolean isRunning() {
         return this == RUNNING;
     }
 
+    /**
+     * Return true if VM is in shutdown sequence, overwise false
+     */
     public boolean isStopping() {
         return this != RUNNING;
     }
 
+    /**
+     * Return current VM state
+     */
     @Nonnull
     public static ShutdownState getCurrentState() {
         int state = getFieldValue();
@@ -68,7 +84,7 @@ public enum ShutdownState {//TODO move to internals
         try {
             return stateField.getInt(null);
         } catch (IllegalAccessException e) {
-            throw new UnexpectedBehaviorError(e);
+            throw new InternalHackingError("Access to Shutdown.state denied!", e);
         }
     }
 }

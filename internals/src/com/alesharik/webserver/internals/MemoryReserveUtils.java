@@ -16,12 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.api;
+package com.alesharik.webserver.internals;
 
-import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
-import one.nio.util.JavaInternals;
 import sun.misc.Cleaner;
 import sun.misc.VM;
 
@@ -33,7 +31,7 @@ import java.lang.reflect.Method;
 /**
  * This is a wrapper for {@link java.nio.Bits#reserveMemory(long, int)} and {@link java.nio.Bits#unreserveMemory(long, int)}
  */
-@UtilityClass//TODO move to internals
+@UtilityClass
 public class MemoryReserveUtils {
     private static final Class<?> bitsClazz;
     private static final MethodHandle reserveMemoryMethod;
@@ -51,9 +49,9 @@ public class MemoryReserveUtils {
             reserveMemoryMethod = MethodHandles.lookup().unreflect(reserveMemory);
             unreserveMemoryMethod = MethodHandles.lookup().unreflect(unreserveMemory);
         } catch (ClassNotFoundException e) {
-            throw new UnexpectedBehaviorError("java.nio.Bits class not found!", e);
+            throw new InternalHackingError("java.nio.Bits class not found!", e);
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new UnexpectedBehaviorError(e);
+            throw new InternalHackingError("Illegal access to java.nio.Bits", e);
         }
     }
 
@@ -110,7 +108,7 @@ public class MemoryReserveUtils {
     @SneakyThrows
     private static void reserveMemory1(int size) throws InvocationTargetException {
         boolean pa = VM.isDirectMemoryPageAligned();
-        int ps = JavaInternals.unsafe.pageSize();
+        int ps = UnsafeAccess.INSTANCE.pageSize();
         long s = Math.max(1L, (long) size + (pa ? ps : 0));
         reserveMemoryMethod.invokeExact(s, size);
     }
@@ -124,7 +122,7 @@ public class MemoryReserveUtils {
     @SneakyThrows
     private static void unreserveMemory(int size) throws InvocationTargetException {
         boolean pa = VM.isDirectMemoryPageAligned();
-        int ps = JavaInternals.unsafe.pageSize();
+        int ps = UnsafeAccess.INSTANCE.pageSize();
         long s = Math.max(1L, (long) size + (pa ? ps : 0));
         unreserveMemoryMethod.invokeExact(s, size);
     }

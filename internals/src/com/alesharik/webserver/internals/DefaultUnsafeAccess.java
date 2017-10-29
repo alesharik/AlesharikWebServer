@@ -46,4 +46,9 @@ final class DefaultUnsafeAccess extends UnsafeAccess {
             throw new ClassInstantiationException(e);
         }
     }
+
+    @Override
+    public int pageSize() {
+        return U.pageSize();
+    }
 }

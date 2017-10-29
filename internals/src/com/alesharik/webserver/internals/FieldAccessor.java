@@ -72,7 +72,7 @@ public class FieldAccessor {
         }
     }
 
-    private static final class ErrorImpl extends Error {
+    private static final class ErrorImpl extends InternalHackingError {
         private static final long serialVersionUID = 5344919956196469895L;
 
         public ErrorImpl(Exception e) {
