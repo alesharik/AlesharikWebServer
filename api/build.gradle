@@ -299,3 +299,5 @@ test {
         exceptionFormat "short"
     }
 }
+
+test.testLogging.showStandardStreams = true
