@@ -56,7 +56,7 @@ public class PingPongManagerTest {
 
     @Test
     public void testPingExpired() throws Exception {
-        pingPong.setTimeout(1, TimeUnit.MILLISECONDS);
+        pingPong.setTimeout(5, TimeUnit.MILLISECONDS);
 
         Consumer consumer = mock(Consumer.class);
         //noinspection unchecked
@@ -82,7 +82,7 @@ public class PingPongManagerTest {
 
     @Test
     public void testGlobalPingExpired() throws Exception {
-        PingPongManager.GLOBAL.setTimeout(1, TimeUnit.MILLISECONDS);
+        PingPongManager.GLOBAL.setTimeout(5, TimeUnit.MILLISECONDS);
 
         Consumer consumer = mock(Consumer.class);
         //noinspection unchecked
@@ -94,7 +94,7 @@ public class PingPongManagerTest {
         assertFalse(((PingPongManager.PingPongImpl) PingPongManager.GLOBAL).pings.isEmpty());
         assertEquals(ping, ((PingPongManager.PingPongImpl) PingPongManager.GLOBAL).pings.get(0).longValue());
 
-        Thread.sleep(5);
+        Thread.sleep(10);
 
         //noinspection unchecked
         verify(consumer, times(1)).accept(ping);
@@ -130,7 +130,7 @@ public class PingPongManagerTest {
         RuntimeException exception = mock(RuntimeException.class);
         doThrow(exception).when(pingable).ping(anyLong());
 
-        PingPongManager.schedulePingable(pingable, 1, TimeUnit.MILLISECONDS);
+        PingPongManager.schedulePingable(pingable, 5, TimeUnit.MILLISECONDS);
         Thread.sleep(10);
 
         verify(pingable, only()).ping(anyLong());
