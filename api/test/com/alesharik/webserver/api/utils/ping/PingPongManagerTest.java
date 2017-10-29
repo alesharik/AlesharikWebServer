@@ -106,7 +106,7 @@ public class PingPongManagerTest {
     public void testPingable() throws Exception {
         Pingable pingable = mock(Pingable.class);
         PingableScheduler scheduler = PingPongManager.schedulePingable(pingable, 1, TimeUnit.MILLISECONDS);
-        Thread.sleep(2);
+        Thread.sleep(5);
         scheduler.stop();
 
         verify(pingable, new VerificationMode() {

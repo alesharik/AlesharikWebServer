@@ -292,3 +292,10 @@ publishing {
         }
     }
 }
+
+test {
+    testLogging {
+        events "failed"
+        exceptionFormat "short"
+    }
+}
