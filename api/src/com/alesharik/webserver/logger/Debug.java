@@ -45,33 +45,33 @@ public class Debug {
 
     public static void log(String message) {
         if(isEnabled())
-            Logger.logMessageUnsafe(DEBUG_PREFIX, TEXT_FORMATTER.format(message), 2);
+            Logger.logMessageUnsafeDebug(DEBUG_PREFIX, TEXT_FORMATTER.format(message), 2);
     }
 
     public static void log(String prefix, String message) {
         if(isEnabled())
-            Logger.logMessageUnsafe(DEBUG_PREFIX + TEXT_FORMATTER.format(prefix), TEXT_FORMATTER.format(message), 2);
+            Logger.logMessageUnsafeDebug(DEBUG_PREFIX + TEXT_FORMATTER.format(prefix), TEXT_FORMATTER.format(message), 2);
     }
 
     public static void log(String message, String... prefixes) {
         if(isEnabled()) {
             String join = String.join("", prefixes);
-            Logger.logMessageUnsafe(DEBUG_PREFIX + (join.isEmpty() ? "" : TEXT_FORMATTER.format(join)), TEXT_FORMATTER.format(message), 2);
+            Logger.logMessageUnsafeDebug(DEBUG_PREFIX + (join.isEmpty() ? "" : TEXT_FORMATTER.format(join)), TEXT_FORMATTER.format(message), 2);
         }
     }
 
     public static void log(Throwable message) {
         if(isEnabled())
-            Logger.logThrowable(message, 2, TEXT_FORMATTER, DEBUG_PREFIX);
+            Logger.logThrowableDebug(message, 2, TEXT_FORMATTER, DEBUG_PREFIX);
     }
 
     public static void log(Throwable message, String prefix) {
         if(isEnabled())
-            Logger.logThrowable(message, 2, TEXT_FORMATTER, DEBUG_PREFIX + prefix);
+            Logger.logThrowableDebug(message, 2, TEXT_FORMATTER, DEBUG_PREFIX + prefix);
     }
 
     public static void log(Throwable message, String... prefixes) {
         if(isEnabled())
-            Logger.logThrowable(message, 2, TEXT_FORMATTER, DEBUG_PREFIX + String.join("", prefixes));
+            Logger.logThrowableDebug(message, 2, TEXT_FORMATTER, DEBUG_PREFIX + String.join("", prefixes));
     }
 }

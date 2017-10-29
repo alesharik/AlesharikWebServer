@@ -23,6 +23,9 @@ import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.api.reflection.ParentPackageIterator;
 import com.alesharik.webserver.api.statistics.FuzzyTimeCountStatistics;
 import com.alesharik.webserver.api.statistics.TimeCountStatistics;
+import com.alesharik.webserver.logger.level.LoggingLevel;
+import com.alesharik.webserver.logger.level.LoggingLevelManager;
+import com.alesharik.webserver.logger.level.LoggingLevelManagerMXBean;
 import com.alesharik.webserver.logger.logger.FileLoggerHandler;
 import com.alesharik.webserver.logger.logger.LoggerFormatter;
 import com.alesharik.webserver.logger.logger.PrintStreamErrorManager;
@@ -32,6 +35,7 @@ import com.alesharik.webserver.logger.mx.LoggerMXBean;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import org.jctools.queues.MpscLinkedQueue;
 import org.jctools.queues.MpscLinkedQueue7;
@@ -48,9 +52,13 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -94,6 +102,8 @@ public final class Logger {
     private static final LoggerThread loggerThread = new LoggerThread();
     private static volatile boolean shutdown = false;
 
+    private static final LoggingLevelManager loggingLevelManager = new LoggingLevelManagerImpl();
+
     public static void shutdown() {
         shutdown = true;
         loggerThread.interrupt();
@@ -120,8 +130,8 @@ public final class Logger {
      * @param depth   caller class stack depth
      */
     @SuppressWarnings("unchecked")
-    static void logMessageUnsafe(String message, int depth) {
-        messageQueue.add(new Message("", message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1)));
+    static void logMessageUnsafe(String message, int depth, boolean isSout) {
+        messageQueue.add(new Message("", message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1), isSout));
 
         synchronized (loggerThread.synchronizerLock) {
             loggerThread.synchronizerLock.notifyAll();
@@ -137,13 +147,47 @@ public final class Logger {
      * @param depth    caller class stack depth
      */
     @SuppressWarnings("unchecked")
-    static void logMessageUnsafe(String prefixes, String message, int depth) {
-        messageQueue.add(new Message(prefixes, message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1)));
+    static void logMessageUnsafe(String prefixes, String message, int depth, boolean isSout) {
+        messageQueue.add(new Message(prefixes, message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1), isSout));
 
         synchronized (loggerThread.synchronizerLock) {
             loggerThread.synchronizerLock.notifyAll();
         }
     }
+
+    /**
+     * Add message to messageQueue. Do not throw {@link LoggerNotConfiguredException} and do not execute {@link #checkState()} method.
+     * You need to execute it before call this method!
+     *
+     * @param message the message
+     * @param depth   caller class stack depth
+     */
+    @SuppressWarnings("unchecked")
+    static void logMessageUnsafeDebug(String message, int depth) {
+        messageQueue.add(new Message("", message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1), false, true));
+
+        synchronized (loggerThread.synchronizerLock) {
+            loggerThread.synchronizerLock.notifyAll();
+        }
+    }
+
+    /**
+     * Add message to messageQueue. Do not throw {@link LoggerNotConfiguredException} and do not execute {@link #checkState()} method.
+     * You need to execute it before call this method!
+     *
+     * @param prefixes user-defined message prefixes
+     * @param message  the message
+     * @param depth    caller class stack depth
+     */
+    @SuppressWarnings("unchecked")
+    static void logMessageUnsafeDebug(String prefixes, String message, int depth) {
+        messageQueue.add(new Message(prefixes, message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1), false, true));
+
+        synchronized (loggerThread.synchronizerLock) {
+            loggerThread.synchronizerLock.notifyAll();
+        }
+    }
+
 
     /**
      * Add throwable to messageQueue
@@ -163,6 +207,10 @@ public final class Logger {
         }
     }
 
+    private static void logMessageUnsafe(String s, int depth) {
+        logMessageUnsafe(s, depth, false);
+    }
+
     /**
      * Add throwable to messageQueue
      *
@@ -180,6 +228,10 @@ public final class Logger {
         for(StackTraceElement stackTraceElement : throwable.getStackTrace()) {
             logMessageUnsafe(prefixes, stackTraceElement.toString(), depth);
         }
+    }
+
+    private static void logMessageUnsafe(String prefixes, String s, int depth) {
+        logMessageUnsafe(prefixes, s, depth, false);
     }
 
     /**
@@ -223,6 +275,28 @@ public final class Logger {
         }
     }
 
+    /**
+     * Add throwable to messageQueue
+     *
+     * @param prefixes      user-defined message prefixes
+     * @param throwable     the throwable
+     * @param depth         caller class stack depth
+     * @param textFormatter the text formatter
+     * @throws LoggerNotConfiguredException if logger not already configured
+     */
+    static void logThrowableDebug(Throwable throwable, int depth, TextFormatter textFormatter, String... prefixes) {
+        checkState();
+
+        depth++;
+        String prefs = String.join("", prefixes);
+        if(!prefs.isEmpty())
+            prefs = textFormatter.format(prefs);
+        logMessageUnsafeDebug(prefs, textFormatter.format(throwable.toString()), depth);
+        for(StackTraceElement stackTraceElement : throwable.getStackTrace()) {
+            logMessageUnsafeDebug(prefs, textFormatter.format(stackTraceElement.toString()), depth);
+        }
+    }
+
     public static void log(String message) {
         checkState();
 
@@ -243,8 +317,8 @@ public final class Logger {
         logMessageUnsafe(textFormatter.format(message), 5);
     }
 
-    private static void logFromStream(String message) {
-        logMessageUnsafe(message, 5);
+    private static void logFromStream(String message, boolean isSout) {
+        logMessageUnsafe(message, 5, isSout);
     }
 
     public static void log(@Nonnull Throwable throwable, @Nonnull TextFormatter textFormatter) {
@@ -339,6 +413,7 @@ public final class Logger {
 
                 log("Default print streams replaced");
                 MXBeanManager.registerMXBean(bean, LoggerMXBean.class, "com.alesharik.webserver.logger:type=Logger");
+                MXBeanManager.registerMXBean(loggingLevelManager, LoggingLevelManagerMXBean.class, "com.alesharik.webserver.logger:type=LoggingLevelManager");
                 log("Logger successfully started");
             } catch (SecurityException | UnsupportedEncodingException e) {
                 e.printStackTrace(SYSTEM_ERR);
@@ -518,6 +593,8 @@ public final class Logger {
                     if(message == null) continue;
 
                     Class<?> clazz = message.getCaller();
+                    com.alesharik.webserver.logger.level.Level level = (message.isSout || message.isDebug) ? clazz.getAnnotation(com.alesharik.webserver.logger.level.Level.class) : null;
+
                     String prefix = cache.get(clazz);
                     if(prefix == null) {
                         prefix = generatePrefixes(clazz);
@@ -526,11 +603,16 @@ public final class Logger {
                     String prefixes = prefix + message.getPrefixes() + message.getClassPrefix();
                     String msg = prefixes + ": " + message.getMessage();
 
-                    LogRecord record = new LogRecord(Level.INFO, msg);
-                    record.setMillis(System.currentTimeMillis());
-                    record.setLoggerName("Logger");
-                    loggerHandlers.forEach(handler -> handler.publish(record));
-
+                    if(level != null && (message.isDebug || level.replaceSout())) {
+                        LoggingLevel loggingLevel = loggingLevelManager.getLoggingLevel(level.value());
+                        if(loggingLevel != null)
+                            loggingLevel.log(msg);
+                    } else {
+                        LogRecord record = new LogRecord(Level.INFO, msg);
+                        record.setMillis(System.currentTimeMillis());
+                        record.setLoggerName("Logger");
+                        loggerHandlers.forEach(handler -> handler.publish(record));
+                    }
                     Logger.listenerThread.sendMessage(message);
 
                     statistics.measure(1);
@@ -582,6 +664,9 @@ public final class Logger {
 
         @Nullable
         public String get(Class<?> clazz) {
+            if(clazz.isAssignableFrom(LoggingLevelImpl.class))
+                return "";
+
             String prefix = prefixes.get(clazz);
             if(prefix != null)
                 prefixes.setTime(clazz, CONTAINS_TIME);
@@ -602,6 +687,17 @@ public final class Logger {
         private final String message;
         private final Class<?> caller;
         private final String locationPrefix;
+        private final boolean isSout;
+        private final boolean isDebug;
+
+        public Message(String prefixes, String message, Class<?> caller, String locationPrefix, boolean isSout) {
+            this.prefixes = prefixes;
+            this.message = message;
+            this.caller = caller;
+            this.locationPrefix = locationPrefix;
+            this.isSout = isSout;
+            this.isDebug = false;
+        }
 
         /**
          * Return class prefix and debug prefix if needed
@@ -624,7 +720,7 @@ public final class Logger {
         private final LogRecord logRecord;
 
         public MessageWithLogRecord(String prefixes, String message, Class<?> caller, String locationPrefix, LogRecord record) {
-            super(prefixes, message, caller, locationPrefix);
+            super(prefixes, message, caller, locationPrefix, false);
             this.logRecord = record;
         }
 
@@ -791,7 +887,7 @@ public final class Logger {
 
         @Override
         public void flush() {
-            Logger.logFromStream(lineBuffer.get());
+            Logger.logFromStream(lineBuffer.get(), true);
             lineBuffer.set("");
         }
 
@@ -1244,6 +1340,100 @@ public final class Logger {
         @Override
         public long getMessagesParsedPerSecond() {
             return Logger.loggerThread.getMessagePerSecond();
+        }
+    }
+
+    private static final class LoggingLevelManagerImpl implements LoggingLevelManager {
+        private final Map<String, LoggingLevel> loggingLevels = new ConcurrentHashMap<>();
+
+        @Override
+        public LoggingLevel getLoggingLevel(String name) {
+            return loggingLevels.get(name);
+        }
+
+        @Override
+        public LoggingLevel createLoggingLevel(String name) {
+            if(loggingLevels.containsKey(name))
+                return loggingLevels.get(name);
+            LoggingLevel loggingLevel = new LoggingLevelImpl(name);
+            loggingLevels.put(name, loggingLevel);
+            return loggingLevel;
+        }
+
+        @Override
+        public int getLoggingLevelCount() {
+            return loggingLevels.size();
+        }
+
+        @Override
+        public List<String> getLoggingLevels() {
+            return new ArrayList<>(loggingLevels.keySet());
+        }
+    }
+
+    private static final class LoggingLevelImpl implements LoggingLevel {
+        private final String prefix;
+        @Getter
+        private final String name;
+
+        private volatile boolean enabled = true;
+        @Setter
+        @Getter
+        private volatile NamedLogger logger = null;
+        @Setter
+        @Getter
+        private volatile TextFormatter formatter = null;
+
+        public LoggingLevelImpl(String name) {
+            this.prefix = '[' + name + ']';
+            this.name = name;
+        }
+
+        @Override
+        public void enable() {
+            enabled = true;
+        }
+
+        @Override
+        public void disable() {
+            enabled = false;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        @Override
+        public void log(String s) {
+            if(enabled) {
+                TextFormatter textFormatter = this.formatter;
+                if(textFormatter != null)
+                    s = textFormatter.format(s);
+
+                NamedLogger namedLogger = this.logger;
+                if(namedLogger != null)
+                    namedLogger.log(prefix, s);
+                else
+                    Logger.log(prefix, s);
+            }
+        }
+
+        @Override
+        public void log(Exception e) {
+            if(enabled) {
+                TextFormatter textFormatter = this.formatter;
+
+                NamedLogger namedLogger = this.logger;
+                if(namedLogger != null)
+                    namedLogger.log(prefix, e);
+                else {
+                    if(textFormatter == null)
+                        Logger.log(prefix, e);
+                    else
+                        Logger.log(prefix, e, textFormatter);
+                }
+            }
         }
     }
 }
