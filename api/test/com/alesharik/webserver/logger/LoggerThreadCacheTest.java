@@ -37,7 +37,7 @@ public class LoggerThreadCacheTest {
     @Test
     public void cacheClearTest() throws Exception {
         cache.add(String.class, "test");
-        Thread.sleep(Logger.LoggerThreadCache.CONTAINS_TIME + Logger.LoggerThreadCache.UPDATE_DELAY);
+        Thread.sleep(Logger.LoggerThreadCache.CONTAINS_TIME + Logger.LoggerThreadCache.UPDATE_DELAY + 10);
         assertNull(cache.get(String.class));
     }
 
