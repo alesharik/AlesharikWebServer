@@ -53,8 +53,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.alesharik.webserver.api.agent.ASMUtils.*;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PROTECTED;
-import static jdk.internal.org.objectweb.asm.Opcodes.ASM5;
+import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
+import static org.objectweb.asm.Opcodes.ASM5;
 
 //TODO logging
 //TODO constructor handling
