@@ -102,6 +102,7 @@ public final class Logger {
     private static final LoggerThread loggerThread = new LoggerThread();
     private static volatile boolean shutdown = false;
 
+    @Getter
     private static final LoggingLevelManager loggingLevelManager = new LoggingLevelManagerImpl();
 
     public static void shutdown() {

@@ -27,6 +27,8 @@ import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
 import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
 import com.alesharik.webserver.api.documentation.PrivateApi;
+import com.alesharik.webserver.logger.Logger;
+import com.alesharik.webserver.logger.level.Level;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -56,11 +58,11 @@ import static com.alesharik.webserver.api.agent.ASMUtils.*;
 import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
 import static org.objectweb.asm.Opcodes.ASM5;
 
-//TODO logging
 //TODO constructor handling
 @PrivateApi
 @UtilityClass
 @ClassTransformer
+@Level("Hacker")
 class HackerClassTransformer {
     private static final boolean ENABLED;
 
@@ -73,6 +75,8 @@ class HackerClassTransformer {
         ENABLED = Agent.isClassRetransformationSupported();
         if(!ENABLED)
             System.out.println("Class retransformation not supported! Hackers will not work!");
+
+        Logger.getLoggingLevelManager().createLoggingLevel("Hacker");
     }
 
     @TransformAll
@@ -83,12 +87,14 @@ class HackerClassTransformer {
         boolean changed = false;
         if(extendsClasses.contains(name)) {
             changed = true;
+            System.out.println("Preparing class " + name + " for inheritance...");
             data = ensureCanExtends(data, classNode);
         }
 
         if(!hasAnnotation(classNode, HACKER_ANNOTATION_TYPE))
             return changed ? data : null;
 
+        System.out.println("Found hacker " + name);
         Pair<String, Object>[] extend = getAnnotationParams(classNode, EXTENDS_ANNOTATION_TYPE);
         String extendName = "";
         if(extend != null) {
