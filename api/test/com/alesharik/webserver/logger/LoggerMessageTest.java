@@ -27,31 +27,31 @@ public class LoggerMessageTest {
 
     @Test
     public void getClassPrefixWithoutAnnotation() throws Exception {
-        Logger.Message message = new Logger.Message("", "", Test1.class, debugPrefix);
+        Logger.Message message = new Logger.Message("", "", Test1.class, debugPrefix, false);
         assertEquals(debugPrefix, message.getClassPrefix());
     }
 
     @Test
     public void getClassPrefixWithValue() throws Exception {
-        Logger.Message message = new Logger.Message("", "", Test2.class, debugPrefix);
+        Logger.Message message = new Logger.Message("", "", Test2.class, debugPrefix, false);
         assertEquals("[Test]", message.getClassPrefix());
     }
 
     @Test
     public void getClassPrefixWithValueArray() throws Exception {
-        Logger.Message message = new Logger.Message("", "", Test3.class, debugPrefix);
+        Logger.Message message = new Logger.Message("", "", Test3.class, debugPrefix, false);
         assertEquals("[Asd][Sdf]", message.getClassPrefix());
     }
 
     @Test
     public void getClassPrefixWithDebugModeAndValue() throws Exception {
-        Logger.Message message = new Logger.Message("", "", Test4.class, debugPrefix);
+        Logger.Message message = new Logger.Message("", "", Test4.class, debugPrefix, false);
         assertEquals("[QWERTY]" + debugPrefix, message.getClassPrefix());
     }
 
     @Test
     public void getClassPrefixWithDebugModeAndValueArray() throws Exception {
-        Logger.Message message = new Logger.Message("", "", Test5.class, debugPrefix);
+        Logger.Message message = new Logger.Message("", "", Test5.class, debugPrefix, false);
         assertEquals("[zxc][cvb]" + debugPrefix, message.getClassPrefix());
     }
 
