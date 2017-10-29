@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver.api.utils.classloader;
 
+import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
+
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -54,7 +56,7 @@ public class InstantiableClassLoader extends ClassLoader {
                 } catch (NoSuchMethodException e1) {
                     return null;
                 } catch (IllegalAccessException e1) {
-                    throw new Error("WTF!", e1);
+                    throw new UnexpectedBehaviorError("IllegalAccessException after setAccessible? Java 9 is not supported yet", e1);
                 } catch (InvocationTargetException e1) {
                     throw new RuntimeException(e.getCause());
                 }

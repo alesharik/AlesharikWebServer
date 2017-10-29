@@ -44,6 +44,9 @@ public class NetworkListener implements com.alesharik.webserver.api.server.wrapp
 
     @Override
     public void registerSelector(Selector selector) {
+        if(serverSocket == null)
+            return;
+
         try {
             serverSocket.register(selector, SelectionKey.OP_ACCEPT, new SocketProvider.ServerSocketWrapper(serverSocket, SocketManager.DEFAULT));
         } catch (ClosedChannelException e) {
@@ -62,7 +65,7 @@ public class NetworkListener implements com.alesharik.webserver.api.server.wrapp
         try {
             serverSocket = config.newSocket();
         } catch (IOException e) {
-            throw new Error(e);
+            e.printStackTrace();
         }
     }
 
@@ -109,10 +112,6 @@ public class NetworkListener implements com.alesharik.webserver.api.server.wrapp
         private int receiveBufferSize;
         private boolean reuseAddress = false;
         private int soTimeout;
-
-        ServerSocketConfig() {
-
-        }
 
         public void parse(Element element) {
             range = PortRange.getPortsFromXML(element);

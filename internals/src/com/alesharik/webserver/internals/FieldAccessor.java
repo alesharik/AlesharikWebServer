@@ -33,7 +33,7 @@ public class FieldAccessor {
             MODIFIERS_FIELD = Field.class.getDeclaredField("modifiers");
             MODIFIERS_FIELD.setAccessible(true);
         } catch (NoSuchFieldException e) {
-            throw new Error(e);
+            throw new ErrorImpl(e);
         }
     }
 
@@ -69,6 +69,14 @@ public class FieldAccessor {
             } catch (NoSuchFieldException e1) {
                 throw new IllegalStateException(e1);
             }
+        }
+    }
+
+    private static final class ErrorImpl extends Error {
+        private static final long serialVersionUID = 5344919956196469895L;
+
+        public ErrorImpl(Exception e) {
+            super("Can't get access to Field.modifiers field! Something is wring in java", e);
         }
     }
 }

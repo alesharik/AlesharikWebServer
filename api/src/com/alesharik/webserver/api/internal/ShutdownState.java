@@ -18,13 +18,15 @@
 
 package com.alesharik.webserver.api.internal;
 
+import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
+
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 
 /**
  * This class wrap {@link Shutdown} class
  */
-public enum ShutdownState {
+public enum ShutdownState {//TODO move to internals
     RUNNING,
     HOOKS,
     FINALIZERS;
@@ -37,7 +39,7 @@ public enum ShutdownState {
             stateField = clazz.getDeclaredField("state");
             stateField.setAccessible(true);
         } catch (ClassNotFoundException | NoSuchFieldException e) {
-            throw new Error(e);
+            throw new UnexpectedBehaviorError(e);
         }
     }
 
@@ -66,7 +68,7 @@ public enum ShutdownState {
         try {
             return stateField.getInt(null);
         } catch (IllegalAccessException e) {
-            throw new Error(e);
+            throw new UnexpectedBehaviorError(e);
         }
     }
 }

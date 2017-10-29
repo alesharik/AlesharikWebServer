@@ -16,34 +16,24 @@
  *
  */
 
-package com.alesharik.webserver.internals;
+package com.alesharik.webserver.exceptions.error;
 
-import sun.misc.Unsafe;
+/**
+ * This error indicates problem in JVM/Java/Libraries and it's unexpected behavior, missing classes or anything, that server ot it's component
+ * require to start
+ */
+public class UnexpectedBehaviorError extends Error {
+    private static final long serialVersionUID = 2517314639265950737L;
 
-import java.lang.reflect.Field;
-
-final class DefaultUnsafeAccess extends UnsafeAccess {
-    private static final Unsafe U;
-
-    static {
-        try {
-            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-            theUnsafe.setAccessible(true);
-            U = (Unsafe) theUnsafe.get(null);
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new UnsafeAccessError(e);
-        }
+    public UnexpectedBehaviorError(String message) {
+        super(message);
     }
 
-    public DefaultUnsafeAccess() {
+    public UnexpectedBehaviorError(Throwable cause) {
+        super(cause);
     }
 
-    @Override
-    public Object newInstance(Class<?> clazz) {
-        try {
-            return U.allocateInstance(clazz);
-        } catch (InstantiationException e) {
-            throw new ClassInstantiationException(e);
-        }
+    public UnexpectedBehaviorError(String message, Throwable cause) {
+        super(message, cause);
     }
 }

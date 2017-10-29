@@ -34,6 +34,7 @@ import com.alesharik.database.entity.Unique;
 import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
 import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
+import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.logger.Debug;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
@@ -115,7 +116,7 @@ public class EntityClassTransformer {
                 java.lang.reflect.Method method = EntityManager.class.getDeclaredMethod("getEntityField", Object.class, String.class, EntityDescription.class);
                 ENTITY_MANAGER_GET_ENTITY_FIELD_METHOD = Method.getMethod(method);
             } catch (NoSuchMethodException e) {
-                throw new Error(e);
+                throw new UnexpectedBehaviorError("EntityManager.getEntityField method not found! Please, report this to developer!", e);
             }
         }
 
@@ -285,7 +286,7 @@ public class EntityClassTransformer {
                 try {
                     ENTITY_CREATE_METHOD = Method.getMethod(EntityManager.class.getDeclaredMethod("createEntity", Object.class, EntityDescription.class));
                 } catch (NoSuchMethodException e) {
-                    throw new Error(e);
+                    throw new UnexpectedBehaviorError("EntityManager.createEntity method not found! Please, report this to developer!", e);
                 }
             }
 
@@ -348,7 +349,7 @@ public class EntityClassTransformer {
                     java.lang.reflect.Method method = EntityManager.class.getDeclaredMethod("deleteEntity", Object.class, EntityDescription.class);
                     ENTITY_DELETE_METHOD = Method.getMethod(method);
                 } catch (NoSuchMethodException e) {
-                    throw new Error(e);
+                    throw new UnexpectedBehaviorError("EntityManager.deleteEntity method not found! Please, report this to developer!", e);
                 }
             }
 

@@ -18,32 +18,10 @@
 
 package com.alesharik.webserver.internals;
 
-import sun.misc.Unsafe;
+public final class UnsafeAccessError extends Error {
+    private static final long serialVersionUID = 1569770664010226997L;
 
-import java.lang.reflect.Field;
-
-final class DefaultUnsafeAccess extends UnsafeAccess {
-    private static final Unsafe U;
-
-    static {
-        try {
-            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-            theUnsafe.setAccessible(true);
-            U = (Unsafe) theUnsafe.get(null);
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new UnsafeAccessError(e);
-        }
-    }
-
-    public DefaultUnsafeAccess() {
-    }
-
-    @Override
-    public Object newInstance(Class<?> clazz) {
-        try {
-            return U.allocateInstance(clazz);
-        } catch (InstantiationException e) {
-            throw new ClassInstantiationException(e);
-        }
+    public UnsafeAccessError(Exception e) {
+        super("Can't access to sun.misc.Unsafe", e);
     }
 }

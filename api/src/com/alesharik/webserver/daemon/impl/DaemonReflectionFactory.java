@@ -35,6 +35,7 @@ import com.alesharik.webserver.daemon.annotation.Run;
 import com.alesharik.webserver.daemon.annotation.Setup;
 import com.alesharik.webserver.daemon.annotation.Shutdown;
 import com.alesharik.webserver.daemon.hook.DaemonHookManager;
+import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.hook.Hook;
 import com.alesharik.webserver.internals.ClassInstantiator;
 import com.alesharik.webserver.logger.Logger;
@@ -84,7 +85,7 @@ class DaemonReflectionFactory {
 
             return new DaemonImpl(instance, daemonAnnotation.value(), name, reflect, logger, priority, provider);
         } catch (ClassNotFoundException e) {
-            throw new Error(e);
+            throw new UnexpectedBehaviorError(e);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }

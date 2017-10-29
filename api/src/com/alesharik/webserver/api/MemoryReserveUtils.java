@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api;
 
+import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import one.nio.util.JavaInternals;
@@ -32,7 +33,7 @@ import java.lang.reflect.Method;
 /**
  * This is a wrapper for {@link java.nio.Bits#reserveMemory(long, int)} and {@link java.nio.Bits#unreserveMemory(long, int)}
  */
-@UtilityClass
+@UtilityClass//TODO move to internals
 public class MemoryReserveUtils {
     private static final Class<?> bitsClazz;
     private static final MethodHandle reserveMemoryMethod;
@@ -50,9 +51,9 @@ public class MemoryReserveUtils {
             reserveMemoryMethod = MethodHandles.lookup().unreflect(reserveMemory);
             unreserveMemoryMethod = MethodHandles.lookup().unreflect(unreserveMemory);
         } catch (ClassNotFoundException e) {
-            throw new Error("java.nio.Bits class not found!");
+            throw new UnexpectedBehaviorError("java.nio.Bits class not found!", e);
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new Error(e);
+            throw new UnexpectedBehaviorError(e);
         }
     }
 

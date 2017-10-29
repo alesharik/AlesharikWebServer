@@ -25,6 +25,7 @@ import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.database.exception.DatabaseReadSQLException;
 import com.alesharik.database.exception.DatabaseStoreSQLException;
 import com.alesharik.database.transaction.TransactionManager;
+import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
 import lombok.Getter;
 
 import java.sql.Connection;
@@ -40,7 +41,7 @@ public final class PostgresDriver implements DatabaseDriver {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            throw new Error(e);
+            throw new UnexpectedBehaviorError("Postgres JDBC Driver not found! Please, check server installation!", e);
         }
     }
 

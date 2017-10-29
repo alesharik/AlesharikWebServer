@@ -26,6 +26,7 @@ import com.alesharik.webserver.configuration.Configurator;
 import com.alesharik.webserver.configuration.PluginManagerImpl;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
+import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.main.console.ConsoleCommand;
@@ -138,6 +139,11 @@ public class Main {
             e.printStackTrace();
             System.err.println("Configuration error occurs! Stopping...");
             shutdown();
+        } catch (UnexpectedBehaviorError e) {
+            e.printStackTrace();
+            System.err.println("Unexpected behavior error occurs! Now server is in undefined state. Please check your java installation!");
+            System.err.println("Stopping...");
+            shutdownNow();
         } catch (Error e) {
             e.printStackTrace();
             System.err.println("Critical error detected! Stopping...");

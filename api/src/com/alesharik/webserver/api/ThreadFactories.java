@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api;
 
+import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.UtilityClass;
@@ -81,7 +82,7 @@ public final class ThreadFactories {
                 constructor = ForkJoinWorkerThread.class.getDeclaredConstructor(ForkJoinPool.class, ThreadGroup.class, AccessControlContext.class);
                 constructor.setAccessible(true);
             } catch (NoSuchMethodException e) {
-                throw new Error(e);
+                throw new UnexpectedBehaviorError("ForkJoinWorkerThread doesn't have protected constructor(ForkJoinPool, ThreadGroup, AccessControlContext). Check your java version!", e);
             }
         }
 

@@ -29,7 +29,7 @@ abstract class UnsafeAccess {
             try {
                 INSTANCE = (UnsafeAccess) Class.forName("com.alesharik.webserver.internals.DefaultUnsafeAccess").newInstance();
             } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-                throw new Error(e);
+                throw new UnsafeAccessError(e);
             }
         else
             INSTANCE = null;//FIXME
