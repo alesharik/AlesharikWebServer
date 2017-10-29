@@ -23,6 +23,8 @@ import com.alesharik.webserver.api.agent.transformer.Transform;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
 import com.alesharik.webserver.logger.Prefixes;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -48,52 +50,6 @@ final class AgentClassTransformer implements ClassFileTransformer {
     private static final Set<Class<?>> transformerClasses = new CopyOnWriteArraySet<>();
     private static final ConcurrentHashMap<String, CopyOnWriteArrayList<MethodHolder>> transformers = new ConcurrentHashMap<>();
     private static final CopyOnWriteArrayList<MethodHolder> allTransformers = new CopyOnWriteArrayList<>();
-
-    @SuppressFBWarnings("DM_EXIT")
-    @Override
-    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        try {
-            if(className == null || loader == null) return null;
-
-            byte[] first = classfileBuffer;
-            CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
-            if(transformers != null) {
-                for(MethodHolder transformer : transformers) {
-                    try {
-                        byte[] invoke = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
-                        if(invoke == null)
-                            continue;
-                        classfileBuffer = invoke;
-                    } catch (Throwable throwable) {
-                        throwable.printStackTrace();
-                    }
-                }
-            }
-            for(MethodHolder transformer : allTransformers) {
-                try {
-                    byte[] invoke = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
-                    if(invoke == null)
-                        continue;
-                    classfileBuffer = invoke;
-                } catch (Throwable throwable) {
-                    throwable.printStackTrace();
-                }
-            }
-            return Arrays.equals(first, classfileBuffer) ? null : classfileBuffer;
-        } catch (Error e) {
-            System.err.println("Error in transforming class " + className + ", classloader = " + loader);
-            e.printStackTrace();
-
-            System.err.println("Error detected! Stopping application...");
-            System.exit(1);
-            return null;
-        } catch (Throwable e) {
-            System.err.println("Error in transforming class " + className + ", classloader = " + loader);
-            e.printStackTrace();
-            return null;
-        }
-    }
-
 
     static void addTransformer(Class<?> transformer) {
         if(transformerClasses.contains(transformer)) {
@@ -123,6 +79,56 @@ final class AgentClassTransformer implements ClassFileTransformer {
                 });
     }
 
+    @SuppressFBWarnings("DM_EXIT")
+    @Override
+    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        try {
+            if(className == null || loader == null) return null;
+
+            ClassNode classNode = new ClassNode();
+            ClassReader classReader = new ClassReader(classfileBuffer);
+            classReader.accept(classNode, 0);
+
+            byte[] first = classfileBuffer;
+            CopyOnWriteArrayList<MethodHolder> transformers = AgentClassTransformer.transformers.get(className);
+            if(transformers != null) {
+                for(MethodHolder transformer : transformers) {
+                    try {
+                        byte[] invoke = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer, classNode);
+                        if(invoke == null)
+                            continue;
+                        classfileBuffer = invoke;
+                    } catch (Throwable throwable) {
+                        throwable.printStackTrace();
+                    }
+                }
+            }
+
+            for(MethodHolder transformer : allTransformers) {
+                try {
+                    byte[] invoke = transformer.invoke(loader, className, classBeingRedefined, protectionDomain, classfileBuffer, classNode);
+                    if(invoke == null)
+                        continue;
+                    classfileBuffer = invoke;
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+            return Arrays.equals(first, classfileBuffer) ? null : classfileBuffer;
+        } catch (Error e) {
+            System.err.println("Error in transforming class " + className + ", classloader = " + loader);
+            e.printStackTrace();
+
+            System.err.println("Error detected! Stopping application...");
+            System.exit(1);
+            return null;
+        } catch (Throwable e) {
+            System.err.println("Error in transforming class " + className + ", classloader = " + loader);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private static final class MethodHolder {
         private final Method methodHandle;
         private final Param.Type[] args;
@@ -132,7 +138,7 @@ final class AgentClassTransformer implements ClassFileTransformer {
             this.args = args;
         }
 
-        public byte[] invoke(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws Throwable {
+        public byte[] invoke(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer, ClassNode classNode) throws Throwable {
             ArrayList<Object> invokeArgs = new ArrayList<>(args.length);
             for(Param.Type type : args) {
                 switch (type) {
@@ -150,6 +156,9 @@ final class AgentClassTransformer implements ClassFileTransformer {
                         break;
                     case CLASS_NAME:
                         invokeArgs.add(className);
+                        break;
+                    case CLASS_NODE:
+                        invokeArgs.add(classNode);
                         break;
                     case NULL:
                     default:

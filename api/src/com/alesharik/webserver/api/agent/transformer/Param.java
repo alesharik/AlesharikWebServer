@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver.api.agent.transformer;
 
+import org.objectweb.asm.tree.ClassNode;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -61,6 +63,10 @@ public @interface Param {
          */
         CLASSFILE_BUFFER,
         /**
+         * {@link org.objectweb.asm.tree.ClassNode} of current class
+         */
+        CLASS_NODE,
+        /**
          * Return null
          */
         NULL;
@@ -76,39 +82,40 @@ public @interface Param {
                 if(ann != null) {
                     switch (ann.value()) {
                         case CLASS_BEING_REDEFINED:
-                            if(args[i].isAssignableFrom(Class.class)) {
+                            if(Class.class.isAssignableFrom(args[i]))
                                 ret[i] = CLASS_BEING_REDEFINED;
-                            } else {
+                            else
                                 ret[i] = NULL;
-                            }
                             break;
                         case CLASS_LOADER:
-                            if(args[i].isAssignableFrom(ClassLoader.class)) {
+                            if(ClassLoader.class.isAssignableFrom(args[i]))
                                 ret[i] = CLASS_LOADER;
-                            } else {
+                            else
                                 ret[i] = NULL;
-                            }
                             break;
                         case CLASS_NAME:
-                            if(args[i].isAssignableFrom(String.class)) {
+                            if(String.class.isAssignableFrom(args[i]))
                                 ret[i] = CLASS_NAME;
-                            } else {
+                            else
                                 ret[i] = NULL;
-                            }
                             break;
                         case CLASSFILE_BUFFER:
-                            if(args[i].isAssignableFrom(Byte[].class) || args[i].isAssignableFrom(byte[].class)) {
+                            if(Byte[].class.isAssignableFrom(args[i]) || byte[].class.isAssignableFrom(args[i]))
                                 ret[i] = CLASSFILE_BUFFER;
-                            } else {
+                            else
                                 ret[i] = NULL;
-                            }
                             break;
                         case PROTECTION_DOMAIN:
-                            if(args[i].isAssignableFrom(ProtectionDomain.class)) {
+                            if(ProtectionDomain.class.isAssignableFrom(args[i]))
                                 ret[i] = PROTECTION_DOMAIN;
-                            } else {
+                            else
                                 ret[i] = NULL;
-                            }
+                            break;
+                        case CLASS_NODE:
+                            if(ClassNode.class.isAssignableFrom(args[i]))
+                                ret[i] = CLASS_NODE;
+                            else
+                                ret[i] = NULL;
                             break;
                         case NULL:
                         default:

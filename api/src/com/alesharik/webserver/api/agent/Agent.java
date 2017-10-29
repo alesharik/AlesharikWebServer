@@ -47,6 +47,8 @@ public final class Agent {
 
         inst.addTransformer(new ClassPathScannerTransformer(), false);
         inst.addTransformer(new AgentClassTransformer(), true);
+
+        System.out.println("Agent successfully installed! Class redefinition supported: " + inst.isRedefineClassesSupported() + ", class retransformation supported: " + inst.isRetransformClassesSupported());
     }
 
     public static void agentmain(@Nullable String agentArgs, @Nonnull Instrumentation instrumentation) {
@@ -97,6 +99,14 @@ public final class Agent {
 
     public static void shutdown() {
         ClassPathScannerTransformer.shutdown();
+    }
+
+    public static boolean isClassRedefinitionSupported() {
+        return instrumentation.isRedefineClassesSupported();
+    }
+
+    public static boolean isClassRetransformationSupported() {
+        return instrumentation.isRetransformClassesSupported();
     }
 
     public static void checkInstall() {
