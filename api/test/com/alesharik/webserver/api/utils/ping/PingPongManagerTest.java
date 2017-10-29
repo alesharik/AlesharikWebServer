@@ -22,10 +22,6 @@ import com.alesharik.webserver.api.TestUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.internal.exceptions.Reporter;
-import org.mockito.internal.reporting.Discrepancy;
-import org.mockito.internal.verification.api.VerificationData;
-import org.mockito.verification.VerificationMode;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -109,20 +105,7 @@ public class PingPongManagerTest {
         Thread.sleep(100);
         scheduler.stop();
 
-        verify(pingable, new VerificationMode() {
-            @Override
-            public void verify(VerificationData data) {
-                if(data.getAllInvocations().size() > 4)
-                    throw Reporter.tooManyActualInvocations(4, data.getAllInvocations().size(), data.getTarget(), data.getTarget().getLocation());
-                else if(data.getAllInvocations().size() < 1)
-                    throw Reporter.tooLittleActualInvocations(new Discrepancy(1, data.getAllInvocations().size()), data.getTarget(), data.getTarget().getLocation());
-            }
-
-            @Override
-            public VerificationMode description(String description) {
-                return this;
-            }
-        }).ping(anyLong());
+        verify(pingable, atLeastOnce()).ping(anyLong());
     }
 
     @Test
