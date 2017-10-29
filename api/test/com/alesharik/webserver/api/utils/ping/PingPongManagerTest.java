@@ -107,13 +107,12 @@ public class PingPongManagerTest {
         PingableScheduler scheduler = PingPongManager.schedulePingable(pingable, 1, TimeUnit.MILLISECONDS);
         Thread.sleep(2);
         scheduler.stop();
-        Thread.sleep(5);
 
         verify(pingable, new VerificationMode() {
             @Override
             public void verify(VerificationData data) {
-                if(data.getAllInvocations().size() > 3)
-                    throw Reporter.tooManyActualInvocations(3, data.getAllInvocations().size(), data.getTarget(), data.getTarget().getLocation());
+                if(data.getAllInvocations().size() > 4)
+                    throw Reporter.tooManyActualInvocations(4, data.getAllInvocations().size(), data.getTarget(), data.getTarget().getLocation());
                 else if(data.getAllInvocations().size() < 1)
                     throw Reporter.tooLittleActualInvocations(new Discrepancy(1, data.getAllInvocations().size()), data.getTarget(), data.getTarget().getLocation());
             }
