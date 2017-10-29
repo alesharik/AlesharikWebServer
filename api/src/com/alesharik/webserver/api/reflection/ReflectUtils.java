@@ -20,6 +20,7 @@ package com.alesharik.webserver.api.reflection;
 
 import lombok.experimental.UtilityClass;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -27,70 +28,130 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * This class contains some useful methods for reflection
+ */
 @UtilityClass
 public class ReflectUtils {
-    public static List<Method> getAllDeclaredMethods(Class<?> clazz) {
+    /**
+     * Return all declared methods endpoint(method without overriding) form class and it's superclasses and interfaces
+     *
+     * @param clazz class
+     * @return methods in {@link ArrayList}
+     */
+    @Nonnull
+    public static List<Method> getAllDeclaredMethods(@Nonnull Class<?> clazz) {
         List<Method> methods = new ArrayList<>();
-        addClass(clazz, methods, null);
+        addClassMethods(clazz, methods);
         return methods;
     }
 
+    /**
+     * Return all fields form class, all it's superclasses
+     * @param clazz class
+     * @return fields in {@link ArrayList}
+     */
     public static List<Field> getAllDeclaredFields(Class<?> clazz) {
         List<Field> fields = new ArrayList<>();
-        addClass(clazz, fields, null);
+        addClassFields(clazz, fields);
         return fields;
     }
 
+    /**
+     * Return all subclasses form class, all it's superclasses
+     * @param clazz class
+     * @return subclasses in {@link ArrayList} at 1 inner level
+     */
     public static List<Class<?>> getAllInnerClasses(Class<?> clazz) {
         List<Class<?>> classes = new ArrayList<>();
-        addClass(clazz, classes, null);
+        addClassSubclasses(clazz, classes);
         return classes;
     }
 
-    private static void addClass(Class<?> clazz, List<Method> methods, Method nil) {
+    private static void addClassMethods(Class<?> clazz, List<Method> methods) {
         for(Method method : clazz.getDeclaredMethods()) {
             if(Modifier.isAbstract(method.getModifiers()))
                 continue;
+            boolean ok = true;//Method override existing
+            for(Method method1 : methods) {
+                if(method1.getName().equals(method.getName()) && Arrays.equals(method1.getParameterTypes(), method.getParameterTypes())) {
+                    ok = false;
+                    break;
+                }
+            }
+            if(!ok)
+                continue;
+
             method.setAccessible(true);
             methods.add(method);
         }
         for(Class<?> aClass : clazz.getInterfaces()) {
-            addInterface(aClass, methods);
+            addInterfaceMethods(aClass, methods);
         }
         Class<?> superclass = clazz.getSuperclass();
         if(superclass != null) {
-            addClass(superclass, methods, null);
+            addClassMethods(superclass, methods);
         }
     }
 
-    private static void addInterface(Class<?> i, List<Method> methods) {
+    private static void addInterfaceMethods(Class<?> i, List<Method> methods) {
         for(Method method : i.getDeclaredMethods()) {
             if(!method.isDefault())
                 continue;
+
+            boolean ok = true;//Method override existing
+            for(Method method1 : methods) {
+                if(method1.getName().equals(method.getName()) && Arrays.equals(method1.getParameterTypes(), method.getParameterTypes())) {
+                    ok = false;
+                    break;
+                }
+            }
+            if(!ok)
+                continue;
+
             method.setAccessible(true);
             methods.add(method);
         }
         for(Class<?> aClass : i.getInterfaces()) {
-            addInterface(aClass, methods);
+            addInterfaceMethods(aClass, methods);
         }
     }
 
-    private static void addClass(Class<?> clazz, List<Field> fields, Field nil) {
+    private static void addClassFields(Class<?> clazz, List<Field> fields) {
         for(Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
             fields.add(field);
         }
+        for(Class<?> aClass : clazz.getInterfaces()) {
+            addInterfaceFields(aClass, fields);
+        }
         Class<?> superclass = clazz.getSuperclass();
         if(superclass != null) {
-            addClass(superclass, fields, null);
+            addClassFields(superclass, fields);
         }
     }
 
-    private static void addClass(Class<?> clazz, List<Class<?>> classes, Class<?> nil) {
-        classes.addAll(Arrays.asList(clazz.getDeclaredClasses()));
+    private static void addInterfaceFields(Class<?> clazz, List<Field> fields) {
+        for(Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+            fields.add(field);
+        }
+        for(Class<?> aClass : clazz.getInterfaces()) {
+            addClassFields(aClass, fields);
+        }
+    }
+
+    private static void addClassSubclasses(Class<?> clazz, List<Class<?>> classes) {
+        for(Class<?> aClass : clazz.getDeclaredClasses()) {
+            if(!classes.contains(aClass))
+                classes.add(aClass);
+        }
+        for(Class<?> aClass : clazz.getInterfaces()) {
+            addClassSubclasses(aClass, classes);
+        }
         Class<?> superclass = clazz.getSuperclass();
         if(superclass != null) {
-            addClass(superclass, classes, null);
+            addClassSubclasses(superclass, classes);
         }
     }
 }
