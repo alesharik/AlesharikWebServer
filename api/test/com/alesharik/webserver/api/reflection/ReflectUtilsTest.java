@@ -36,6 +36,7 @@ public class ReflectUtilsTest {
         assertTrue(methods.contains(Test5.class.getDeclaredMethod("b")));
         assertTrue(methods.contains(Test4.class.getDeclaredMethod("c")));
         assertTrue(methods.contains(Test5.class.getDeclaredMethod("asd")));
+        System.out.println(methods.size() + "m");
         assertEquals(16, methods.size());
     }
 
@@ -47,6 +48,7 @@ public class ReflectUtilsTest {
         assertTrue(fields.contains(Test4.class.getDeclaredField("a1")));
         assertTrue(fields.contains(Test5.class.getDeclaredField("a1")));
         assertTrue(fields.contains(Test5.class.getDeclaredField("b1")));
+        System.out.println(fields.size() + "f");
         assertEquals(5, fields.size());
     }
 
