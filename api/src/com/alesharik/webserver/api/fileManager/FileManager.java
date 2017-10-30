@@ -19,6 +19,7 @@
 package com.alesharik.webserver.api.fileManager;
 
 import com.alesharik.webserver.api.CompressionUtils;
+import com.alesharik.webserver.api.file.FileManagerResourcePlugin;
 import com.alesharik.webserver.exceptions.FileFoundException;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
@@ -51,6 +52,7 @@ import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 @Prefixes("[FileManager]")
+@Deprecated
 //TODO fix NO_HOLD mode
 public final class FileManager {
     /**
