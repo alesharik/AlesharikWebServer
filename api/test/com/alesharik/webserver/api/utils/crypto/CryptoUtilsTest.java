@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.utils.crypto;
 
+import com.alesharik.webserver.api.TestUtils;
 import org.junit.Test;
 
 import java.security.SecureRandom;
@@ -78,5 +79,10 @@ public class CryptoUtilsTest {
                     fail("Duplicated salts detected!");
             }
         }
+    }
+
+    @Test
+    public void testUtils() throws Exception {
+        TestUtils.assertUtilityClass(CryptoUtils.class);
     }
 }

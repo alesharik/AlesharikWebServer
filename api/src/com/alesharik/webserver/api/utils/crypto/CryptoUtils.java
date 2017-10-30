@@ -22,9 +22,14 @@ import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 import java.security.SecureRandom;
 import java.util.Random;
 
+/**
+ * This class contains some utilities for cryptography
+ */
+@ThreadSafe
 @UtilityClass
 public class CryptoUtils {
     private static final ThreadLocal<SecureRandom> SECURE_RANDOM = ThreadLocal.withInitial(CryptoUtils::newStrongSecureRandom);
