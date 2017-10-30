@@ -18,8 +18,8 @@
 
 package com.alesharik.webserver.module.security;
 
-import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.api.utils.crypto.StringCipher;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.logger.Logger;

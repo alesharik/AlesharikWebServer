@@ -18,12 +18,12 @@
 
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.control.ControlSocketClientModule;
 import com.alesharik.webserver.api.control.messaging.ControlSocketMessage;
 import com.alesharik.webserver.api.control.messaging.ControlSocketMessageHandler;
 import com.alesharik.webserver.api.control.messaging.ControlSocketServerConnection;
 import com.alesharik.webserver.api.control.messaging.WireControlSocketMessage;
+import com.alesharik.webserver.api.utils.crypto.StringCipher;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.Module;
 import com.alesharik.webserver.control.dashboard.websocket.plugins.MenuDashboardWebSocketPlugin;

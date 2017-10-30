@@ -36,7 +36,7 @@
 
 package com.alesharik.webserver.control.data.storage;
 
-import com.alesharik.webserver.api.StringCipher;
+import com.alesharik.webserver.api.utils.crypto.StringCipher;
 import com.alesharik.webserver.logger.Logger;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 

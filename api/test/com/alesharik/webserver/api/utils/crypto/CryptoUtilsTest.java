@@ -81,6 +81,24 @@ public class CryptoUtilsTest {
         }
     }
 
+
+    @Test
+    public void testGenerateBytes() throws Exception {
+        byte[][] bytes = new byte[100][100];
+        for(int i = 0; i < 100; i++) {
+            byte[] byteArr = CryptoUtils.generateRandomBytes(100);
+            bytes[i] = byteArr;
+        }
+        for(int i = 0; i < bytes.length; i++) {
+            for(int j = 0; j < bytes.length; j++) {
+                if(i == j)
+                    continue;
+                if(Arrays.equals(bytes[i], bytes[j]))
+                    fail("Duplicated byte arrays detected!");
+            }
+        }
+    }
+
     @Test
     public void testUtils() throws Exception {
         TestUtils.assertUtilityClass(CryptoUtils.class);

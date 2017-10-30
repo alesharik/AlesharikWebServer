@@ -24,6 +24,7 @@ import com.alesharik.webserver.logger.level.Level;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -43,6 +44,7 @@ import java.security.spec.KeySpec;
 @Level("Crypto")
 @Prefixes("[DESede]")
 @UtilityClass
+@ThreadSafe
 public class DESedeCipher {
     private static volatile boolean ENABLED;
     private static final SecretKeyFactory SECRET_KEY_FACTORY;

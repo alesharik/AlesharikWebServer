@@ -37,8 +37,8 @@
 package com.alesharik.webserver.control.data.storage;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
-import com.alesharik.webserver.api.StringCipher;
 import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.api.utils.crypto.StringCipher;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.control.AdminDataStorage;

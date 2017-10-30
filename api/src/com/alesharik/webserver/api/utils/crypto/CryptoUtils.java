@@ -63,7 +63,7 @@ public class CryptoUtils {
     /**
      * Creates new {@link SecureRandom} with random-generated seed
      *
-     * @return
+     * @return new secure random
      */
     @Nonnull
     public static SecureRandom newStrongSecureRandom() {
@@ -73,5 +73,18 @@ public class CryptoUtils {
         secureRandom.setSeed(random.nextLong());
 
         return secureRandom;
+    }
+
+    /**
+     * Generate random byte array
+     *
+     * @param size array size
+     * @return byte array of specified size
+     */
+    @Nonnull
+    public static byte[] generateRandomBytes(int size) {
+        byte[] arr = new byte[size];
+        SECURE_RANDOM.get().nextBytes(arr);
+        return arr;
     }
 }

@@ -24,6 +24,7 @@ import com.alesharik.webserver.logger.level.Level;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -42,9 +43,13 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 
+/**
+ * This class contains AES utils
+ */
 @Level("Crypto")
 @Prefixes("[AES]")
 @UtilityClass
+@ThreadSafe
 public class AESCipher {
     private static volatile boolean ENABLED;
     private static final SecretKeyFactory SECRET_KEY_FACTORY;
@@ -110,7 +115,7 @@ public class AESCipher {
      * @throws RuntimeException if key is invalid
      */
     @Nonnull
-    public static SecretKey getSecretKey(String password, byte[] salt, int iterations, int keyLength) {
+    public static SecretKey getSecretKey(@Nonnull String password, @Nonnull byte[] salt, int iterations, int keyLength) {
         if(!ENABLED)
             throw new IllegalArgumentException("AES encryption is not supported!");
 
@@ -132,7 +137,7 @@ public class AESCipher {
      * @return new secret key
      */
     @Nonnull
-    public static SecretKey generateNewSecretKey(byte[] salt, int iterations, int keyLength) {
+    public static SecretKey generateNewSecretKey(@Nonnull byte[] salt, int iterations, int keyLength) {
         return getSecretKey(CryptoUtils.generateRandomString(keyLength), salt, iterations, keyLength);
     }
 
