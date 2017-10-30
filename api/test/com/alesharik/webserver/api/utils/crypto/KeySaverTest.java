@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api.utils.crypto;
 
-import com.alesharik.webserver.api.Utils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +34,7 @@ public class KeySaverTest {
     @Before
     public void setUp() throws Exception {
         file = File.createTempFile("asdsasadsasad", "asdasdasdsassa");
-        secretKey = StringCipher.generateKey(Utils.getRandomString(24));
+        secretKey = DESedeCipher.generateNewSecretKey();
     }
 
     @Test
