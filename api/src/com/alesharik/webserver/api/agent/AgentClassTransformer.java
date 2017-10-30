@@ -28,6 +28,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
@@ -110,6 +111,13 @@ final class AgentClassTransformer implements ClassFileTransformer {
                     if(invoke == null)
                         continue;
                     classfileBuffer = invoke;
+                } catch (InvocationTargetException e) {
+                    if(e.getCause() instanceof NoClassDefFoundError)
+                        System.err.println("Transformer " + transformer.methodHandle.getDeclaringClass().getCanonicalName() + " not found!");
+                    else {
+                        System.err.println("Exception in transformer " + transformer.methodHandle.getDeclaringClass().getCanonicalName() + '!');
+                        e.getCause().printStackTrace();
+                    }
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
                 }

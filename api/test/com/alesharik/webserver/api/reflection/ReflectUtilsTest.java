@@ -19,47 +19,70 @@
 package com.alesharik.webserver.api.reflection;
 
 import com.alesharik.webserver.api.TestUtils;
+import com.alesharik.webserver.logger.Logger;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ReflectUtilsTest {
+    @Before
+    public void setUp() throws Exception {
+        Logger.disable();
+    }
+
     @Test
     public void getMethods() throws Exception {
         List<Method> methods = ReflectUtils.getAllDeclaredMethods(Test5.class);
-        assertTrue(methods.contains(C.class.getDeclaredMethod("a")));
-        assertTrue(methods.contains(Test5.class.getDeclaredMethod("b")));
-        assertTrue(methods.contains(Test4.class.getDeclaredMethod("c")));
-        assertTrue(methods.contains(Test5.class.getDeclaredMethod("asd")));
-        System.out.println(methods.size() + "m");
-        assertEquals(16, methods.size());
+        assertContainsObjectSet(methods, new Method[]{
+                C.class.getDeclaredMethod("a"),
+                Test5.class.getDeclaredMethod("b"),
+                Test4.class.getDeclaredMethod("c"),
+                Test5.class.getDeclaredMethod("asd")
+        });
     }
 
     @Test
     public void getFields() throws Exception {
         List<Field> fields = ReflectUtils.getAllDeclaredFields(Test5.class);
-        assertTrue(fields.contains(C.class.getDeclaredField("TEST")));
-        assertTrue(fields.contains(Test3.class.getDeclaredField("a1")));
-        assertTrue(fields.contains(Test4.class.getDeclaredField("a1")));
-        assertTrue(fields.contains(Test5.class.getDeclaredField("a1")));
-        assertTrue(fields.contains(Test5.class.getDeclaredField("b1")));
-        System.out.println(fields.size() + "f");
-        assertEquals(5, fields.size());
+        assertContainsObjectSet(fields, new Field[]{
+                C.class.getDeclaredField("TEST"),
+                Test3.class.getDeclaredField("a1"),
+                Test4.class.getDeclaredField("a1"),
+                Test5.class.getDeclaredField("a1"),
+                Test5.class.getDeclaredField("b1")
+        });
     }
 
     @Test
     public void getInnerClasses() throws Exception {
         List<Class<?>> classes = ReflectUtils.getAllInnerClasses(Test5.class);
-        assertTrue(classes.contains(C.I1.class));
-        assertTrue(classes.contains(Test5.T2.class));
-        assertTrue(classes.contains(Test4.T3.class));
-        assertTrue(classes.contains(Test3.T3.class));
-        assertEquals(4, classes.size());
+        assertContainsObjectSet(classes, new Class[]{
+                C.I1.class,
+                Test5.T2.class,
+                Test4.T3.class,
+                Test3.T3.class
+        });
+    }
+
+    private <T> void assertContainsObjectSet(List<T> a, T[] b) {
+        List<T> contains = new ArrayList<>();
+        for(T t : a) {
+            if(contains.contains(t))
+                throw new AssertionError("Object contains more than 1 times!");
+            for(T t1 : b) {
+                if(t.equals(t1)) {
+                    contains.add(t);
+                    break;
+                }
+            }
+        }
+        assertEquals(contains.size(), b.length);
     }
 
     @Test

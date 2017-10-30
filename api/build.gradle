@@ -238,7 +238,7 @@ jar {
 }
 
 test {
-    jvmArgs '-javaagent:' + buildDir.toString() + '/libs/alesharikwebserver-api-all.jar'
+//    jvmArgs '-javaagent:' + buildDir.toString() + '/libs/alesharikwebserver-api-all.jar'
 }
 
 task codeCoverageReport(dependsOn: test, type: JacocoReport) {

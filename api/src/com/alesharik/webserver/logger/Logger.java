@@ -468,7 +468,11 @@ public final class Logger {
     public static void disable() {
         loggerHandlers.forEach(Handler::close);
         loggerHandlers.clear();
-        listenerThread.disable();
+        if(listenerThread != null)
+            listenerThread.disable();
+
+        System.setOut(SYSTEM_OUT);
+        System.setErr(SYSTEM_ERR);
     }
 
     /**
@@ -754,7 +758,7 @@ public final class Logger {
 
         public void disable() {
             enabled.set(false);
-            MXBeanManager.unregisterMXBean("LoggerListener");
+            MXBeanManager.unregisterMXBean("com.alesharik.webserver.logger:type=LoggerListener");
         }
 
         public void addListener(LoggerListener loggerListener) {

@@ -27,6 +27,7 @@ import com.alesharik.webserver.api.collections.ConcurrentTripleHashMap;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
+import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -85,7 +86,7 @@ final class ClassPathScannerThread extends Thread {
             taskCount.incrementAndGet();
             ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners = new ConcurrentTripleHashMap<>();
 
-            new FastClasspathScanner()
+            ScanResult result = new FastClasspathScanner()
                     .overrideClassLoaders(classLoader)
                     .matchClassesWithAnnotation(ClassPathScanner.class, classWithAnnotation -> matchClassPathScanner(classWithAnnotation, newListeners))
                     .matchClassesWithAnnotation(ClassTransformer.class, transformer -> {
@@ -93,8 +94,15 @@ final class ClassPathScannerThread extends Thread {
                             return;
                         AgentClassTransformer.addTransformer(transformer);
                     })
+                    .verbose(false)
                     .scanAsync(workerPool, PARALLELISM)
                     .get();
+
+            if(result.getMatchProcessorExceptions().size() > 0) {
+                System.err.println("Exceptions detected while processing classloader!");
+                for(Throwable throwable : result.getMatchProcessorExceptions())
+                    throwable.printStackTrace();
+            }
 
             new ClassLoaderScanTask(listeners, Collections.singleton(classLoader), workerPool).run();
             classLoaders.add(classLoader);
