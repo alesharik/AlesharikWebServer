@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.utils.crypto;
 
+import com.alesharik.webserver.api.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,5 +53,10 @@ public class KeySaverTest {
     @Test(expected = FileNotFoundException.class)
     public void saveKeyToNotExistingFile() throws Exception {
         KeySaver.saveKeyToFile(secretKey, new File("asd"));
+    }
+
+    @Test
+    public void testUtility() throws Exception {
+        TestUtils.assertUtilityClass(KeySaver.class);
     }
 }

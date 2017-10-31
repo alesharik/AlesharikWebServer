@@ -35,6 +35,9 @@ public class DESedeCipherTest {
 
     @Test
     public void testCycle() throws Exception {
+        if(!isEnabled())
+            return;
+
         SecretKey secretKey = generateNewSecretKey();
         String test = "This is a test DESede string";
 

@@ -97,6 +97,7 @@ public final class StringCipher {
      * @return encrypted base64 string without \r\n
      */
     @Nonnull
+    @Deprecated
     public static String encrypt(@Nonnull String data, @Nullable String key, @Nullable SecretKey... keys) throws InvalidKeyException, UnsupportedEncodingException, BadPaddingException, IllegalBlockSizeException, InvalidKeySpecException {
         SecretKey secretKey = getSecretKey(key, keys);
         cipher.get().init(Cipher.ENCRYPT_MODE, secretKey);
@@ -114,6 +115,7 @@ public final class StringCipher {
      * @return decrypted normal string
      */
     @Nonnull
+    @Deprecated
     public static String decrypt(@Nonnull String base64, @Nullable String key, @Nullable SecretKey... keys) throws InvalidKeySpecException, InvalidKeyException, UnsupportedEncodingException, BadPaddingException, IllegalBlockSizeException {
         SecretKey secretKey = getSecretKey(key, keys);
         cipher.get().init(Cipher.DECRYPT_MODE, secretKey);
@@ -121,6 +123,7 @@ public final class StringCipher {
     }
 
     @Nonnull
+    @Deprecated
     private static SecretKey getSecretKey(@Nullable String key, @Nullable SecretKey[] keys) throws InvalidKeySpecException, InvalidKeyException, UnsupportedEncodingException {
         SecretKey secretKey;
         if(keys.length <= 0) {
@@ -141,6 +144,7 @@ public final class StringCipher {
      * @throws IllegalArgumentException if key length not 24
      */
     @Nonnull
+    @Deprecated
     public static SecretKey generateKey(@Nonnull String key) throws InvalidKeySpecException, InvalidKeyException, UnsupportedEncodingException {
         if(key.length() != 24) {
             throw new IllegalArgumentException("Key length must be 24!");

@@ -35,6 +35,9 @@ public class AESCipherTest {
 
     @Test
     public void testCycle() throws Exception {
+        if(!isEnabled())
+            return;
+
         SecretKey secretKey = generateNewSecretKey(CryptoUtils.createSalt(), 65536, 256);
         String test = "This is a test AES string";
 
