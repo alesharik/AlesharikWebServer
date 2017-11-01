@@ -7,6 +7,8 @@ Develop: [![Travis-ci](https://travis-ci.org/alesharik/AlesharikWebServer.svg?br
 
 Status: [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8dc12bb283444998223d228061fa7a2)](https://www.codacy.com/app/alesharik/AlesharikWebServer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=alesharik/AlesharikWebServer&amp;utm_campaign=Badge_Grade) 
 
+JCenter:  [ ![Download](https://api.bintray.com/packages/alesharik/com.alesharik/alesharikwebserver/images/download.svg)](https://bintray.com/alesharik/com.alesharik/alesharikwebserver/_latestVersion)
+
 AlesharikWebServer is a web server with unique module system.
 WARNING! This server might not work work on windows/mac!
 
