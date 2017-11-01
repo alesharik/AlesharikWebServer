@@ -26,7 +26,7 @@ allprojects {
     ext.DEPLOY_GROUP = 'deploy'
     ext.NATIVE_GROUP = "native"
 
-    version = "0.1.3"
+    version = "0.1.4"
 }
 
 //====================Some vars====================\\
@@ -259,6 +259,25 @@ task prepareDeploy(dependsOn: [cleanDeployFolder, generateFiles, copyArtifacts])
     doLast {
         println 'Take server at ./deploy folder'
     }
+}
+
+task codeCoverageReport(type: JacocoReport) {
+    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+
+    subprojects.each {
+        sourceSets it.sourceSets.main
+    }
+
+    reports {
+        xml.enabled true
+        xml.destination "${buildDir}/reports/jacoco/report.xml"
+        html.enabled false
+        csv.enabled false
+    }
+}
+
+codeCoverageReport.dependsOn {
+    subprojects*.test
 }
 
 //TODO move error page generators to api
