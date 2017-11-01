@@ -257,7 +257,7 @@ public final class AdminDataStorageImpl implements AdminDataStorage, SecuredStor
             byte[] key = new byte[24];
             System.arraycopy(StringCipher.hashString(logPass, salt, 50, 256), 0, key, 0, 24);
             return Base64Utils.encodeToString(key, false);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (InvalidKeySpecException e) {
             Logger.log(e);
         }
         return "";
