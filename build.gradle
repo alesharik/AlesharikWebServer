@@ -19,6 +19,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id "cz.malohlava" version "1.0.2"
+    id 'jacoco'
 }
 
 //====================Groups====================\\
@@ -262,7 +263,7 @@ task prepareDeploy(dependsOn: [cleanDeployFolder, generateFiles, copyArtifacts])
 }
 
 task codeCoverageReport(type: JacocoReport) {
-    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+    executionData fileTree(project.rootDir.absolutePath).include("**/out/jacoco/*.exec")
 
     subprojects.each {
         sourceSets it.sourceSets.main
