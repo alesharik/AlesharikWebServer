@@ -47,7 +47,7 @@ task cleanDeployFolder(type: Delete) {
 }
 
 clean.dependsOn cleanDeployFolder
-clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean"
+clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean", "alesharikwebserver-agent:clean"
 
 //====================Config====================\\
 
@@ -83,6 +83,7 @@ subprojects {
         }
     }
 
+    apply plugin: 'java'
     apply plugin: 'jacoco'
     apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.bintray'
@@ -128,16 +129,33 @@ subprojects {
             }
         }
     }
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.10'
+        testCompile group: 'org.mockito', name: 'mockito-core', version: '2.7.21'
+    }
 }
 
 //====================Publishing====================\\
 
-task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload', ':alesharikwebserver-main:bintrayUpload', ':alesharikwebserver-database:bintrayUpload', ':alesharikwebserver-internals:bintrayUpload']) {
+task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload',
+                         ':alesharikwebserver-main:bintrayUpload',
+                         ':alesharikwebserver-database:bintrayUpload',
+                         ':alesharikwebserver-internals:bintrayUpload',
+                         ':alesharikwebserver-agent:bintrayUpload',
+                         ':alesharikwebserver-utils:bintrayUpload',
+                         ':alesharikwebserver-logging:bintrayUpload']) {
     description = "Publish artifacts to bintray"
     group = 'distribution'
 }
 
-task publishArtifacts(dependsOn: [':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-database:publishMavenJavaPublicationToMavenLocal', ':alesharikwebserver-internals:publishMavenJavaPublicationToMavenLocal']) {
+task publishArtifacts(dependsOn: [':alesharikwebserver-api:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-main:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-database:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-internals:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-agent:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-utils:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-logging:publishMavenJavaPublicationToMavenLocal']) {
     description = "Publish artifacts to maven local"
     group = 'distribution'
 }
@@ -263,7 +281,7 @@ task prepareDeploy(dependsOn: [cleanDeployFolder, generateFiles, copyArtifacts])
 }
 
 task codeCoverageReport(type: JacocoReport) {
-    executionData fileTree(project.rootDir.absolutePath).include("**/out/jacoco/*.exec")
+    executionData fileTree(project.rootDir.absolutePath).include("/**/out/jacoco/*.exec")
 
     subprojects.each {
         sourceSets it.sourceSets.main
@@ -272,7 +290,7 @@ task codeCoverageReport(type: JacocoReport) {
     reports {
         xml.enabled true
         xml.destination "${buildDir}/reports/jacoco/report.xml"
-        html.enabled false
+        html.enabled true
         csv.enabled false
     }
 }

@@ -83,3 +83,8 @@
 
 /internals/out
 /internals/build
+
+/*/build/
+/*/out/
+
+config.aws

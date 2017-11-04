@@ -1,8 +1,3 @@
-apply plugin: 'java'
-apply plugin: 'idea'
-
-buildDir = new File('./out/')
-
 sourceSets {
     main {
         java {
@@ -16,10 +11,9 @@ sourceSets {
     }
 }
 
-dependencies {
+build {}
 
-    compile project(':alesharikwebserver-agent')
-}
+build.dependsOn test
 
 task packageJavadoc(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
@@ -36,14 +30,13 @@ task packageSources(type: Jar, dependsOn: classes) {
 artifacts {
     archives packageJavadoc
     archives packageSources
-    archives jar
 }
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
             groupId 'com.alesharik'
-            artifactId 'alesharikwebserver-internals'
+            artifactId 'alesharikwebserver-agent'
             version this.version
 
             from components.java
@@ -51,9 +44,12 @@ publishing {
     }
 }
 
-//====================Cleaning====================\\
+dependencies {
+    compile group: 'org.ow2.asm', name: 'asm-all', version: '5.2'
+    compile group: 'io.github.lukehutch', name: 'fast-classpath-scanner', version: '2.0.18'
+    
+    compile project(':alesharikwebserver-utils')
+    compile project(':alesharikwebserver-logging')
 
-clean.doFirst {
-    delete 'build'
-    delete 'out'
+    compile files("${System.properties['java.home']}/../lib/tools.jar")
 }
