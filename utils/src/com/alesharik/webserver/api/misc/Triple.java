@@ -18,70 +18,189 @@
 
 package com.alesharik.webserver.api.misc;
 
+import com.alesharik.webserver.exception.error.BadImplementationError;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
+import java.io.Serializable;
+
 /**
  * This class used for store three values
- * Be free to extends it
  */
-public class Triple<A, B, C> {
-    protected A a;
-    protected B b;
-    protected C c;
-
-    protected Triple() {
-    }
-
-    protected Triple(A a, B b, C c) {
-        this.a = a;
-        this.b = b;
-        this.c = c;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode
+public abstract class Triple<A, B, C> implements Cloneable {
+    /**
+     * Create new immutable triple(you cannot change values)
+     *
+     * @param a   first value
+     * @param b   second value
+     * @param c   third value
+     * @param <A> first value type
+     * @param <B> second value type
+     * @param <C> third value type
+     * @return new triple
+     */
+    @Nonnull
+    public static <A, B, C> Triple<A, B, C> immutable(@Nullable A a, @Nullable B b, @Nullable C c) {
+        return new ImmutableTriple<>(a, b, c);
     }
 
     /**
-     * Create new immutable triple(you cannot change values)
+     * Create new immutable serializable triple(you cannot change values, but you can serialize it)
+     *
+     * @param a   first value
+     * @param b   second value
+     * @param c   third value
+     * @param <A> first value type
+     * @param <B> second value type
+     * @param <C> third value type
+     * @return new triple
      */
-    public static <A, B, C> Triple<A, B, C> immutable(A a, B b, C c) {
-        return new Triple<>(a, b, c);
+    @Nonnull
+    public static <A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> Triple<A, B, C> immutableSerializable(@Nullable A a, @Nullable B b, @Nullable C c) {
+        return new ImmutableSerializableTriple<>(a, b, c);
     }
 
-    public A getA() {
-        return a;
+    /**
+     * Create new mutable triple, where you can change values
+     *
+     * @param a   first value
+     * @param b   second value
+     * @param c   third value
+     * @param <A> first value type
+     * @param <B> second value type
+     * @param <C> third value type
+     * @return new triple
+     */
+    @Nonnull
+    public static <A, B, C> MutableTriple<A, B, C> mutable(@Nullable A a, @Nullable B b, @Nullable C c) {
+        return new MutableTriple<>(a, b, c);
     }
 
-    public B getB() {
-        return b;
+
+    /**
+     * Create new mutable triple, where you can change values. You can serialize it
+     *
+     * @param a   first value
+     * @param b   second value
+     * @param c   third value
+     * @param <A> first value type
+     * @param <B> second value type
+     * @param <C> third value type
+     * @return new triple
+     */
+    @Nonnull
+    public static <A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> MutableTriple<A, B, C> mutableSerializable(@Nullable A a, @Nullable B b, @Nullable C c) {
+        return new MutableSerializableTriple<>(a, b, c);
     }
 
-    public C getC() {
-        return c;
+    public abstract A getA();
+
+    public abstract B getB();
+
+    public abstract C getC();
+
+    @SuppressWarnings("unchecked")
+    public Triple<A, B, C> clone() {
+        try {
+            return (Triple<A, B, C>) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new BadImplementationError("Clone method must be implemented!");
+        }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    @Getter
+    private static class ImmutableTriple<A, B, C> extends Triple<A, B, C> {
+        protected final A a;
+        protected final B b;
+        protected final C c;
 
-        Triple<?, ?, ?> triple = (Triple<?, ?, ?>) o;
+        protected ImmutableTriple() {
+            a = null;
+            b = null;
+            c = null;
+        }
 
-        if(a != null ? !a.equals(triple.a) : triple.a != null) return false;
-        if(b != null ? !b.equals(triple.b) : triple.b != null) return false;
-        return c != null ? c.equals(triple.c) : triple.c == null;
-
+        @Override
+        public Triple<A, B, C> clone() {
+            return new ImmutableTriple<>(a, b, c);
+        }
     }
 
-    @Override
-    public int hashCode() {
-        int result = a != null ? a.hashCode() : 0;
-        result = 31 * result + (b != null ? b.hashCode() : 0);
-        result = 31 * result + (c != null ? c.hashCode() : 0);
-        return result;
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
+    @Getter
+    private static final class ImmutableSerializableTriple<A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> extends ImmutableTriple<A, B, C> implements Serializable {
+        private static final long serialVersionUID = -6012140996629786458L;
+
+        public ImmutableSerializableTriple(A a, B b, C c) {
+            super(a, b, c);
+        }
+
+        @Override
+        public Triple<A, B, C> clone() {
+            return new ImmutableSerializableTriple<>(a, b, c);
+        }
     }
 
-    @Override
-    public String toString() {
-        return "Triple{" +
-                "a=" + a +
-                ", b=" + b +
-                ", c=" + c +
-                '}';
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    @ThreadSafe
+    @AllArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class MutableTriple<A, B, C> extends Triple<A, B, C> {
+        protected A a;
+        protected B b;
+        protected C c;
+
+        protected MutableTriple() {
+        }
+
+        protected Object clone0() {
+            return super.clone();
+        }
+
+        @Override
+        public MutableTriple<A, B, C> clone() {
+            MutableTriple<A, B, C> clone = (MutableTriple<A, B, C>) clone0();
+            clone.a = a;
+            clone.b = b;
+            clone.c = c;
+            return clone;
+        }
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
+    @ThreadSafe
+    private static final class MutableSerializableTriple<A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> extends MutableTriple<A, B, C> implements Serializable {
+        private static final long serialVersionUID = 2186491658888848308L;
+
+        protected MutableSerializableTriple(A a, B b, C c) {
+            super(a, b, c);
+        }
+
+        @Override
+        public MutableTriple<A, B, C> clone() {
+            MutableSerializableTriple<A, B, C> clone = (MutableSerializableTriple<A, B, C>) clone0();
+            clone.a = a;
+            clone.b = b;
+            clone.c = c;
+            return clone;
+        }
     }
 }

@@ -21,57 +21,76 @@ package com.alesharik.webserver.api.misc;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class TripleTest {
-    private Triple<Integer, Integer, Integer> test;
-    private Triple<Integer, Integer, Integer> same;
-    private Triple<Integer, Integer, Integer> notSame;
+    private Triple<Integer, String, String> a;
+    private Triple<Integer, String, String> same;
+    private Triple<Integer, String, String> not;
+
+    private Triple<Integer, String, String> serA;
+    private Triple<Integer, String, String> serSame;
+    private Triple<Integer, String, String> serNot;
+
+    private Triple.MutableTriple<Integer, String, String> mutA;
+    private Triple.MutableTriple<Integer, String, String> mutSame;
+    private Triple.MutableTriple<Integer, String, String> mutNot;
+
+    private Triple.MutableTriple<Integer, String, String> mutSerA;
+    private Triple.MutableTriple<Integer, String, String> mutSerSame;
+    private Triple.MutableTriple<Integer, String, String> mutSerNot;
 
     @Before
     public void setUp() throws Exception {
-        test = Triple.immutable(2133, 2134, 2135);
-        same = Triple.immutable(2133, 2134, 2135);
-        notSame = Triple.immutable(1243, 4320, 43201);
+        a = Triple.immutable(1, "asdfdsf", "bsdaf");
+        same = a.clone();
+        not = Triple.immutable(2, "sdaasdasd", "bsdaf");
+
+        serA = Triple.immutableSerializable(1, "asdfdsf", "bsdaf");
+        same = serA.clone();
+        serNot = Triple.immutableSerializable(2, "sdaasdasd", "bsdaf");
+
+        mutA = Triple.mutable(1, "asdfdsf", "bsdaf");
+        mutSame = mutA.clone();
+        mutNot = Triple.mutable(2, "sdaasdasd", "bsdaf");
+
+        mutSerA = Triple.mutableSerializable(1, "asdfdsf", "bsdaf");
+        mutSerSame = mutSerA.clone();
+        mutSerNot = Triple.mutableSerializable(2, "sdaasdasd", "bsdaf");
     }
 
     @Test
-    public void getATest() throws Exception {
-        assertTrue(test.getA() == 2133);
+    public void testImmutableEquals() throws Exception {
+        assertEquals(a, same);
+        assertFalse(a.equals(not));
+
+        assertEquals(a, serA);
+        assertEquals(a, serSame);
+        assertFalse(a.equals(serNot));
+
+        assertEquals(serA, serSame);
+        assertFalse(serA.equals(serNot));
     }
 
     @Test
-    public void getBTest() throws Exception {
-        assertTrue(test.getB() == 2134);
+    public void testMutableEquals() throws Exception {
+        assertEquals(mutA, mutSame);
+        assertFalse(mutA.equals(mutNot));
+
+        assertEquals(mutA, mutSerA);
+        assertEquals(mutA, mutSerSame);
+        assertFalse(mutA.equals(mutSerNot));
+
+        assertEquals(mutSerA, mutSerSame);
+        assertFalse(mutSerA.equals(mutSerNot));
     }
 
     @Test
-    public void getCTest() throws Exception {
-        assertTrue(test.getC() == 2135);
-    }
-
-    @Test
-    public void equalsSameTest() throws Exception {
-        assertTrue(test.equals(same));
-    }
-
-    @Test
-    public void notEqualsTest() throws Exception {
-        assertFalse(test.equals(notSame));
-    }
-
-    @Test
-    public void equalsHashCodeTest() throws Exception {
-        assertTrue(Integer.compare(test.hashCode(), same.hashCode()) == 0);
-    }
-
-    @Test
-    public void notEqualsHashCodeTest() throws Exception {
-        assertTrue(Integer.compare(test.hashCode(), notSame.hashCode()) != 0);
-    }
-
-    @Test
-    public void toStringTest() throws Exception {
-        assertNotNull(test.toString());
+    public void testClone() throws Exception {
+        assertEquals(a, a.clone());
+        assertEquals(serA, serA.clone());
+        assertEquals(mutA, mutA.clone());
+        assertEquals(mutSerA, mutSerA.clone());
     }
 }
