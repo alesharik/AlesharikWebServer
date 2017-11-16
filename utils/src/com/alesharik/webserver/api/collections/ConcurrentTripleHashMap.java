@@ -19,187 +19,332 @@
 package com.alesharik.webserver.api.collections;
 
 import com.alesharik.webserver.api.functions.TripleConsumer;
-import one.nio.lock.RWLock;
+import com.alesharik.webserver.api.functions.TripleFunction;
+import com.alesharik.webserver.api.misc.Triple;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 
 /**
  * The concurrent version of {@link TripleHashMap}
  */
+//TODO move to per-element fast ExponentialBackoff read/write locks
 public class ConcurrentTripleHashMap<K, V, A> extends TripleHashMap<K, V, A> implements Cloneable {
-    private final RWLock lock = new RWLock();
+    private static final long serialVersionUID = 2975616746052721434L;
 
-    @Override
-    public int size() {
-        try {
-            lock.lockRead();
-            return super.size();
-        } finally {
-            lock.unlockRead();
-        }
-    }
+    protected transient final ReadWriteLock lock = new ReentrantReadWriteLock(false);
 
+    @Nullable
     @Override
-    public boolean isEmpty() {
-        try {
-            lock.lockRead();
-            return super.isEmpty();
-        } finally {
-            lock.unlockRead();
-        }
-    }
+    public V get(@Nullable K key) {
+        if(key == null)
+            return null;
 
-    @Override
-    public V get(Object key) {
         try {
-            lock.lockRead();
+            lock.readLock().lock();
             return super.get(key);
         } finally {
-            lock.unlockRead();
+            lock.readLock().unlock();
         }
     }
 
+    @Nullable
     @Override
-    public A getAddition(Object key) {
+    public A getAddition(@Nullable K key) {
+        if(key == null)
+            return null;
+
         try {
-            lock.lockRead();
+            lock.readLock().lock();
             return super.getAddition(key);
         } finally {
-            lock.unlockRead();
+            lock.readLock().unlock();
         }
     }
 
     @Override
-    public boolean containsKey(Object key) {
+    public boolean containsKey(@Nullable K key) {
+        if(key == null)
+            return false;
+
         try {
-            lock.lockRead();
+            lock.readLock().lock();
             return super.containsKey(key);
         } finally {
-            lock.unlockRead();
+            lock.readLock().unlock();
         }
     }
 
     @Override
-    public boolean containsValue(Object value) {
+    public boolean containsValue(@Nullable V value) {
+        if(value == null)
+            return false;
+
         try {
-            lock.lockRead();
+            lock.readLock().lock();
             return super.containsValue(value);
         } finally {
-            lock.unlockRead();
+            lock.readLock().unlock();
         }
     }
 
     @Override
-    public boolean containsAddition(Object addition) {
+    public boolean containsAddition(@Nullable A addition) {
+        if(addition == null)
+            return false;
+
         try {
-            lock.lockRead();
+            lock.readLock().lock();
             return super.containsAddition(addition);
         } finally {
-            lock.unlockRead();
+            lock.readLock().unlock();
+        }
+    }
+
+    @Nullable
+    @Override
+    public Triple<K, V, A> put(@Nonnull K key, @Nonnull V value, @Nullable A addition) {
+        try {
+            lock.writeLock().lock();
+            return super.put(key, value, addition);
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
     @Override
-    public Object put(K key, V value, A addition) {
+    public void putAll(@Nonnull Map<K, V> m) {
         try {
-            lock.lockWrite();
-            return putUnsafe(key, value, addition);
+            lock.writeLock().lock();
+            super.putAll(m);
         } finally {
-            lock.unlockWrite();
-        }
-    }
-
-    private Object putUnsafe(K key, V value, A addition) {
-        return super.put0(key, value, addition);
-    }
-
-    @Override
-    public void putAll(Map<K, V> m) {
-        try {
-            lock.lockWrite();
-            m.forEach((k, v) -> putUnsafe(k, v, null));
-        } finally {
-            lock.unlockWrite();
+            lock.writeLock().unlock();
         }
     }
 
     @Override
-    public void putAll(TripleHashMap<K, V, A> map) {
+    public void putAll(@Nonnull TripleHashMap<K, V, A> map) {
         try {
-            lock.lockWrite();
-            map.forEach(this::putUnsafe);
+            lock.writeLock().lock();
+            super.putAll(map);
         } finally {
-            lock.unlockWrite();
+            lock.writeLock().unlock();
         }
     }
 
+    @Nullable
     @Override
-    public V remove(K key) {
+    public Triple<K, V, A> remove(@Nullable K key) {
+        if(key == null)
+            return null;
         try {
-            if(!containsKey(key)) {
-                return null;
-            }
-            lock.lockWrite();
-            return super.remove0(key);
+            lock.writeLock().lock();
+            return super.remove(key);
         } finally {
-            lock.unlockWrite();
+            lock.writeLock().unlock();
         }
     }
 
     @Override
     public void clear() {
-        lock.lockWrite();
-        super.clear();
-        lock.unlockWrite();
+        try {
+            lock.writeLock().lock();
+            super.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Nonnull
+    @Override
+    public Set<Triple<K, V, A>> entrySet() {
+        try {
+            lock.readLock().lock();
+            return super.entrySet();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Nullable
+    @Override
+    protected TripleHashMap.Entry<K, V, A> getEntry(@Nullable K key) {
+        try {
+            lock.readLock().lock();
+            return super.getEntry(key);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Override
-    public void forEach(TripleConsumer<K, V, A> action) {
+    public boolean replace(@Nonnull K key, @Nonnull V oldValue, @Nonnull V newValue) {
+        Entry<K, V, A> entry = getEntry(key);
+        if(entry == null)
+            return false;
+
         try {
-            lock.lockRead();
+            lock.readLock().lock();
+            if(!oldValue.equals(entry.getValue()))
+                return false;
+        } finally {
+            lock.readLock().unlock();
+        }
+
+        try {
+            lock.writeLock().lock();
+            entry.setValue(newValue);
+        } finally {
+            lock.writeLock().unlock();
+        }
+        return true;
+    }
+
+    @Override
+    public boolean replace(K key, V oldValue, V newValue, A addition) {
+        Entry<K, V, A> entry = getEntry(key);
+        if(entry == null)
+            return false;
+
+        try {
+            lock.readLock().lock();
+            if(!oldValue.equals(entry.getValue()))
+                return false;
+        } finally {
+            lock.readLock().unlock();
+        }
+
+        try {
+            lock.writeLock().lock();
+            entry.setValue(newValue);
+            entry.setAddition(addition);
+        } finally {
+            lock.writeLock().unlock();
+        }
+        return true;
+    }
+
+    @Override
+    public Triple<K, V, A> computeIfAbsent(@Nonnull K key, @Nonnull Function<? super K, ? extends V> mappingFunction, @Nonnull Function<? super K, ? extends A> additionalFunction) {
+        boolean contains;
+        V value = null;
+        A addition = null;
+        boolean put = false;
+        try {
+            lock.readLock();
+            contains = !containsKey(key);
+
+            if(contains) {
+                value = mappingFunction.apply(key);
+                addition = additionalFunction.apply(key);
+                put = true;
+                return Triple.immutable(key, value, addition);
+            } else
+                return super.getEntry(key).mimic();
+        } finally {
+            lock.readLock().unlock();
+            if(put)
+                put(key, value, addition);
+        }
+    }
+
+    @Nullable
+    @Override
+    public Triple<K, V, A> computeIfPresent(@Nonnull K key, @Nonnull TripleFunction<? super K, ? super V, ? super A, ? extends V> remappingFunction, @Nonnull TripleFunction<? super K, ? super V, ? super A, ? extends A> additionalFunction) {
+        Entry<K, V, A> entry = getEntry(key);
+        if(entry == null)
+            return null;
+        else {
+            try {
+                lock.writeLock().lock();
+                entry.setValue(remappingFunction.apply(entry.getKey(), entry.getValue(), entry.getAddition()));
+                entry.setAddition(additionalFunction.apply(entry.getKey(), entry.getValue(), entry.getAddition()));
+            } finally {
+                lock.writeLock().unlock();
+            }
+            return entry.mimic();
+        }
+    }
+
+    @Nonnull
+    @Override
+    public Triple<K, V, A> compute(@Nonnull K key, @Nonnull TripleFunction<? super K, ? super V, ? super A, ? extends V> remappingFunction, @Nonnull TripleFunction<? super K, ? super V, ? super A, ? extends A> additionalFunction) {
+        try {
+            lock.writeLock().lock();
+
+            Entry<K, V, A> entry = super.getEntry(key);
+            if(entry == null) {
+                V val = remappingFunction.apply(key, null, null);
+                A addition = additionalFunction.apply(key, val, null);
+                super.put(key, val, addition);
+                return Triple.immutable(key, val, addition);
+            } else {
+                entry.setValue(remappingFunction.apply(key, entry.getValue(), entry.getAddition()));
+                entry.setAddition(additionalFunction.apply(key, entry.getValue(), entry.getAddition()));
+                return entry.mimic();
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Nonnull
+    @Override
+    public Triple<K, V, A> merge(@Nonnull K key, @Nonnull V value, @Nonnull A addition, @Nonnull TripleFunction<? super K, ? super V, ? super A, ? extends V> remappingFunction, @Nonnull TripleFunction<? super K, ? super V, ? super A, ? extends A> additionalFunction) {
+        try {
+            lock.writeLock().lock();
+            if(!super.containsKey(key)) {
+                super.put(key, value, addition);
+                return Triple.immutable(key, value, addition);
+            } else
+                return super.compute(key, remappingFunction, additionalFunction);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void forEach(@Nonnull TripleConsumer<K, V, A> action) {
+        try {
+            lock.readLock().lock();
             super.forEach(action);
         } finally {
-            lock.unlockRead();
+            lock.readLock().unlock();
         }
     }
 
     @Override
-    public TripleHashMap clone() throws CloneNotSupportedException {
+    public void replaceAll(@Nonnull TripleFunction<? super K, ? super V, ? super A, ? extends V> remappingFunction, @Nonnull TripleFunction<? super K, ? super V, ? super A, ? extends A> additionalFunction) {
         try {
-            lock.lockRead();
+            lock.writeLock().lock();
+            super.replaceAll(remappingFunction, additionalFunction);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public TripleHashMap<K, V, A> clone() {
+        try {
+            lock.readLock().lock();
             return super.clone();
         } finally {
-            lock.unlockRead();
-        }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        try {
-            lock.lockRead();
-            return super.equals(o);
-        } finally {
-            lock.unlockRead();
-        }
-    }
-
-    @Override
-    public int hashCode() {
-        try {
-            lock.lockRead();
-            return super.hashCode();
-        } finally {
-            lock.unlockRead();
+            lock.readLock().unlock();
         }
     }
 
     @Override
     public String toString() {
         try {
-            lock.lockRead();
+            lock.readLock().lock();
             return super.toString();
         } finally {
-            lock.unlockRead();
+            lock.readLock().unlock();
         }
     }
 }

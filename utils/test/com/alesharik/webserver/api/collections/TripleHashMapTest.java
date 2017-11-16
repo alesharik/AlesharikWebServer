@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("Duplicates")
 public class TripleHashMapTest {
     private TripleHashMap<Integer, Integer, Integer> map;
     private TripleHashMap<Integer, Integer, Integer> toClear;
