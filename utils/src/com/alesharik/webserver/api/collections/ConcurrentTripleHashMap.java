@@ -31,9 +31,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 /**
- * The concurrent version of {@link TripleHashMap}
+ * Concurrent version of {@link TripleHashMap}
  */
-//TODO move to per-element fast ExponentialBackoff read/write locks
+//FIXME move to per-element fast ExponentialBackoff read/write locks
 public class ConcurrentTripleHashMap<K, V, A> extends TripleHashMap<K, V, A> implements Cloneable {
     private static final long serialVersionUID = 2975616746052721434L;
 
@@ -232,24 +232,21 @@ public class ConcurrentTripleHashMap<K, V, A> extends TripleHashMap<K, V, A> imp
     @Override
     public Triple<K, V, A> computeIfAbsent(@Nonnull K key, @Nonnull Function<? super K, ? extends V> mappingFunction, @Nonnull Function<? super K, ? extends A> additionalFunction) {
         boolean contains;
-        V value = null;
-        A addition = null;
-        boolean put = false;
+        V value;
+        A addition;
         try {
-            lock.readLock();
-            contains = !containsKey(key);
+            lock.readLock().lock();
+            contains = !super.containsKey(key);
 
             if(contains) {
                 value = mappingFunction.apply(key);
                 addition = additionalFunction.apply(key);
-                put = true;
+                super.putActual(key, value, addition);
                 return Triple.immutable(key, value, addition);
             } else
                 return super.getEntry(key).mimic();
         } finally {
             lock.readLock().unlock();
-            if(put)
-                put(key, value, addition);
         }
     }
 

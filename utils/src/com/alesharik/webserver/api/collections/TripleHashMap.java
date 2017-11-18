@@ -344,21 +344,23 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
             return null;
 
         Entry<K, V, A> prew = null;
-        Entry<K, V, A> next;
+        Entry<K, V, A> next = null;
         boolean equals = false;//Key exists
         do {
             Entry<K, V, A> prewTemp = entry;
-            entry = entry.next;
-            if(entry == null) {
-                next = null;
-                break;
-            } else
-                next = entry.next;
 
             if(entry.hash == hash && key.equals(entry.getKey())) {
                 equals = true;
                 break;
             }
+
+            entry = entry.next;
+            if(entry == null) {
+                next = null;
+                entry = prewTemp;
+                break;
+            } else
+                next = entry.next;
             prew = prewTemp;
         } while(entry != null);
 

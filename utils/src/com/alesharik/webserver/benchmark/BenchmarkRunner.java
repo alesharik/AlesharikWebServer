@@ -18,14 +18,12 @@
 
 package com.alesharik.webserver.benchmark;
 
-import com.alesharik.webserver.logger.Logger;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.VerboseMode;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.ForkJoinPool;
@@ -53,11 +51,12 @@ public final class BenchmarkRunner {
         } else {
             if(!benchmarks.containsKey(benchName)) {
                 System.out.println("Don't have benchmark " + benchName);
-                stop();
+//                stop();
             } else {
                 options.include(benchmarks.get(benchName).getCanonicalName());
             }
         }
+        options.include("com.alesharik.webserver.api.collections.TripleHashMapBenchmark");
 
 
         try {
@@ -69,7 +68,6 @@ public final class BenchmarkRunner {
 
     private static void scanBenchmarks() {
         new FastClasspathScanner()
-                .overrideClassLoaders(BenchmarkRunner.class.getClassLoader())
                 .matchClassesWithAnnotation(BenchmarkTest.class, BenchmarkRunner::addBenchmark)
                 .scan(pool, PARALLELISM);
     }
@@ -83,24 +81,9 @@ public final class BenchmarkRunner {
         for(int i = 0; i < args.length; i++) {
             String arg = args[i];
             switch (arg) {
-                case "-l":
-                case "--log": {
-                    i++;
-                    String pathString = args[i];
-                    File file = new File(pathString);
-                    if(!file.exists()) {
-                        if(!file.createNewFile()) {
-                            System.err.println("Can't create log file!");
-                            stop();
-                        }
-                    }
-                    Logger.setupLogger(file, 10);
-                    break;
-                }
                 case "-h":
                 case "--help": {
                     System.out.println("-h, --help                                 show help");
-                    System.out.println("-l [file], --log [file]                    log out and err to [file]");
                     System.out.println("-b [benchmark], --benchmark [benchmark]    run benchmark");
                     break;
                 }

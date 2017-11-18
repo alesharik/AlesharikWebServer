@@ -23,7 +23,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -35,10 +34,11 @@ import java.io.Serializable;
 /**
  * This class used for store three values
  */
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode
 public abstract class Triple<A, B, C> implements Cloneable {
+    public Triple() {
+    }
+
     /**
      * Create new immutable triple(you cannot change values)
      *
