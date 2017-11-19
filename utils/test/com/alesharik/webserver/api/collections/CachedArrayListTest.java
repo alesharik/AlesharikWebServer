@@ -18,277 +18,334 @@
 
 package com.alesharik.webserver.api.collections;
 
-import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Spliterator;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
 
 public class CachedArrayListTest {
-    private static final int DEFAULT_LIFE_TIME = 60 * 1000;
+    private static final Field maxArraySize;
 
-    private CachedArrayList<String> list;
+    static {
+        try {
+            maxArraySize = CachedArrayList.class.getDeclaredField("MAX_ARRAY_SIZE");
+            maxArraySize.setAccessible(true);
+            Field mod = Field.class.getDeclaredField("modifiers");
+            mod.setAccessible(true);
+            mod.set(maxArraySize, maxArraySize.getModifiers() & ~Modifier.FINAL | Modifier.VOLATILE);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new Error(e);
+        }
+    }
 
-    @Before
-    public void setUp() throws Exception {
-        list = new CachedArrayList<>();
-        list.stop();
+    private final CachedArrayList<String> list = new CachedArrayList<>();
+
+    @Test
+    public void testAddNull() throws Exception {
+        assertFalse(list.add(null));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void addNegativeLifeTime() throws Exception {
+        list.add("dsa", -1);
+        fail();
     }
 
     @Test
-    public void add() throws Exception {
-        list.add("test");
-        assertTrue(list.contains("test"));
-        assertEquals(list.getTime(0).longValue(), DEFAULT_LIFE_TIME);
+    public void addElement() throws Exception {
+        assertTrue(list.add("asd", 100));
+        assertTrue(list.contains("asd"));
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testCapacityCheckWithNegativeValue() throws Exception {
+        list.checkCapacityAdd(-1);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testNegativeCapacity() throws Exception {
+        list.checkCapacity(-1);
+    }
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testBigCapacity() throws Exception {
+        list.checkCapacity(1000);
     }
 
     @Test
-    public void addWithTime() throws Exception {
-        list.add("test", 100);
-        assertTrue(list.contains("test"));
-        assertEquals(list.getTime(0).longValue(), 100);
+    public void insertElement() throws Exception {
+        list.add("asd");
+        list.add("sdf");
+        list.add(1, "dfg");
+
+        assertEquals("asd", list.get(0));
+        assertEquals("dfg", list.get(1));
+        assertEquals("sdf", list.get(2));
     }
 
     @Test
-    public void addWithIndex() throws Exception {
-        list.add("sdfdsf");
-        list.add("dsfasdsa");
-        list.add("dsfsad");
-        list.add("gfdhgfs");
+    public void setElement() throws Exception {
+        list.add("asd");
+        list.add("sdf");
+        list.add("dfg");
 
-        list.add(2, "test");
-        assertEquals(list.get(2), "test");
-        assertEquals(list.getTime(2).longValue(), DEFAULT_LIFE_TIME);
+        assertEquals("asd", list.get(0));
+        assertEquals("sdf", list.get(1));
+        assertEquals("dfg", list.get(2));
+
+        list.set(1, "qwerty");
+
+        assertEquals("asd", list.get(0));
+        assertEquals("qwerty", list.get(1));
+        assertEquals("dfg", list.get(2));
     }
 
     @Test
-    public void addWithIndexAndTime() throws Exception {
-        list.add("sdfdsf");
-        list.add("dsfasdsa");
-        list.add("dsfsad");
-        list.add("gfdhgfs");
+    public void setPeriod() throws Exception {
+        list.add("asd");
+        list.add("sdf");
+        list.add("dfg");
 
-        list.add(2, "test", 100);
-        assertEquals(list.get(2), "test");
-        assertEquals(list.getTime(2).longValue(), 100);
+        long p1 = list.getLastTime(1) + list.getLiveTime(1);
+        assertEquals(CachedArrayList.DEFAULT_LIFE_TIME_PERIOD, p1);
+
+        list.setPeriod(1, 1234);
+
+        long p2 = list.getLastTime(1) + list.getLiveTime(1);
+        assertEquals(1234, p2);
     }
 
     @Test
-    public void set() throws Exception {
-        list.add("test");
+    public void setObjectPeriod() throws Exception {
+        list.add("asd");
+        list.add("sdf");
+        list.add("dfg");
 
-        list.set(0, "none");
-        assertTrue(list.contains("none"));
-        assertFalse(list.contains("test"));
-        assertEquals(list.getTime(0).longValue(), DEFAULT_LIFE_TIME);
+        long p1 = list.getLastTime("sdf") + list.getLiveTime("sdf");
+        assertEquals(CachedArrayList.DEFAULT_LIFE_TIME_PERIOD, p1);
+
+        assertTrue(list.setPeriod("sdf", 1234));
+
+        long p2 = list.getLastTime("sdf") + list.getLiveTime("sdf");
+        assertEquals(1234, p2);
     }
 
     @Test
-    public void setWithTime() throws Exception {
-        list.add("test");
+    public void setPeriodToNotExistingObject() throws Exception {
+        list.add("as");
+        list.add("asd");
 
-        list.set(0, "none", 100);
-        assertTrue(list.contains("none"));
-        assertFalse(list.contains("test"));
-        assertEquals(list.getTime(0).longValue(), 100);
+        assertFalse(list.setPeriod("asdsadasdsad", 12));
+        assertEquals(-1, list.getLastTime("asdsadasdsad"));
+        assertEquals(-1, list.getLiveTime("asdsadasdsad"));
+    }
+
+    @Test
+    public void resetObjectTime() throws Exception {
+        list.add("as");
+        list.add("asd");
+
+        long live = list.getLiveTime("asd");
+        Thread.sleep(5);
+        assertNotSame(5, live);
+        list.resetTime("asd");
+
+        assertEquals(0, list.getLiveTime("asd"));
+    }
+
+    @Test
+    public void resetTime() throws Exception {
+        list.add("as");
+        list.add("asd");
+
+        long live = list.getLiveTime(1);
+        Thread.sleep(5);
+        assertNotSame(5, live);
+        list.resetTime(1);
+
+        assertEquals(0, list.getLiveTime(1), 1);
     }
 
     @Test
     public void remove() throws Exception {
-        list.add("test");
-        assertTrue(list.contains("test"));
-        assertTrue(list.remove("test"));
-        assertFalse(list.contains("test"));
-    }
+        list.add("as");
+        list.add("dasfsda");
+        list.add("asdsdaasdasd");
 
-    @Test
-    public void removeIndex() throws Exception {
-        list.add("test");
-        assertTrue(list.contains("test"));
-        assertEquals(list.remove(0), "test");
-        assertFalse(list.contains("test"));
+        list.remove(1);
+
+        assertFalse(list.contains("dasfsda"));
+        assertTrue(list.contains("as"));
+        assertTrue(list.contains("asdsdaasdasd"));
     }
 
     @Test
     public void indexOf() throws Exception {
-        for(int i = 0; i < 10; i++) {
-            for(int j = 0; j < 100; j++) {
-                list.add("i = " + j);
-            }
-        }
+        list.add("as");
+        list.add("dasfsda");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
 
-        for(int i = 0; i < 100; i++) {
-            assertEquals(list.indexOf("i = " + i), i);
-        }
-        assertEquals(list.indexOf("asd"), -1);
+        assertEquals(2, list.indexOf("asdsdaasdasd"));
     }
 
     @Test
     public void lastIndexOf() throws Exception {
-        for(int i = 0; i < 10; i++) {
-            for(int j = 0; j < 100; j++) {
-                list.add("i = " + j);
-            }
-        }
+        list.add("as");
+        list.add("dasfsda");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
 
-        for(int i = 0; i < 100; i++) {
-            assertEquals(list.lastIndexOf("i = " + i), i + 9 * 100);
-        }
-        assertEquals(list.indexOf("asd"), -1);
+        assertEquals(6, list.lastIndexOf("asdsdaasdasd"));
     }
 
-    @Test
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
     public void clear() throws Exception {
-        for(int i = 0; i < 100; i++) {
-            list.add("i = " + i);
-        }
-        assertEquals(list.size(), 100);
+        assertTrue(list.isEmpty());
+
+        list.add("as");
+        list.add("dasfsda");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+
+        assertFalse(list.isEmpty());
+
         list.clear();
-        assertEquals(list.size(), 0);
+
+        assertTrue(list.isEmpty());
+        assertEquals(0, list.size());
+        //noinspection ResultOfMethodCallIgnored
+        list.get(0);
+        fail();
     }
-
-    @Test
-    public void addAll() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l);
-
-        for(int i = 0; i < 100; i++) {
-            assertTrue(l.contains(String.valueOf(i)));
-            assertEquals(list.getTime(i).longValue(), DEFAULT_LIFE_TIME);
-        }
-    }
-
-    @Test
-    public void addAllWithTime() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l, 100);
-
-        for(int i = 0; i < 100; i++) {
-            assertTrue(l.contains(String.valueOf(i)));
-            assertEquals(list.getTime(i).longValue(), 100);
-        }
-    }
-
 
     @Test
     public void addAllWithIndex() throws Exception {
-//        list.add("sdfdsf");
-//        list.add("dsfasdsa");
-//        list.add("dsfsad");
-//        list.add("gfdhgfs");
-//
-//        Collection<String> l = new ArrayList<>();
-//        for(int i = 0; i < 100; i++) {
-//            l.add(String.valueOf(i));
-//        }
-//        list.addAll(2, l);
-//
-//        for(int i = 2; i < 102; i++) {
-////            assertTrue(l.contains(String.valueOf(i)));
-////            assertEquals(list.getTime(i).longValue(), DEFAULT_LIFE_TIME);
-//        }
-    }
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
 
-    @Test
-    public void addAllWithIndexAndTime() throws Exception {
-//        list.add("sdfdsf");
-//        list.add("dsfasdsa");
-//        list.add("dsfsad");
-//        list.add("gfdhgfs");
-//
-//        Collection<String> l = new ArrayList<>();
-//        for(int i = 0; i < 100; i++) {
-//            l.add(String.valueOf(i));
-//        }
-//        list.addAll(2, l, 100);
-//
-//        for(int i = 2; i < 102; i++) {
-////            assertTrue(l.contains(String.valueOf(i)));
-////            assertEquals(list.getTime(i).longValue(), 100);
-//        }
+        List<String> b = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            b.add("b" + i);
+        }
+
+        list.addAll(a);
+        list.addAll(50, b);
+        for(int i = 0; i < 50; i++) {
+            assertEquals(a.get(i), list.get(i));
+        }
+
+        for(int i = 0; i < 100; i++) {
+            assertEquals(b.get(i), list.get(i + 50));
+        }
     }
 
     @Test
     public void iterator() throws Exception {
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            list.add("i = " + i);
+            a.add("a" + ((i == 0) ? "c" : i));
         }
 
+        list.addAll(a);
+
         Iterator<String> iterator = list.iterator();
-        int counter = 0;
+        //noinspection Java8CollectionRemoveIf
         while(iterator.hasNext()) {
-            assertEquals(iterator.next(), "i = " + counter);
-            counter++;
+            String next = iterator.next();
+            if(!next.contains("c"))
+                iterator.remove();
+        }
+
+        assertEquals(1, list.size());
+        assertTrue(list.contains("ac"));
+        for(int i = 1; i < 100; i++) {
+            assertFalse(list.contains("a" + i));
         }
     }
 
     @Test
     public void listIterator() throws Exception {
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            list.add("i = " + i);
+            a.add("a" + ((i == 0) ? "c" : i));
         }
 
-        ListIterator<String> listIterator = list.listIterator();
-        int counter = 0;
-        while(listIterator.hasNext()) {
-            assertEquals(listIterator.next(), "i = " + counter);
-            counter++;
+        list.addAll(a);
+
+        Iterator<String> iterator = list.listIterator();
+        //noinspection Java8CollectionRemoveIf
+        while(iterator.hasNext()) {
+            String next = iterator.next();
+            if(!next.contains("c"))
+                list.remove(next);
+        }
+
+        assertEquals(1, list.size());
+        assertTrue(list.contains("ac"));
+        for(int i = 1; i < 100; i++) {
+            assertFalse(list.contains("a" + i));
         }
     }
 
     @Test
     public void listIteratorWithIndex() throws Exception {
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            list.add("i = " + i);
+            a.add("a" + ((i < 5) ? "c" + i : i));
         }
 
-        ListIterator<String> listIterator = list.listIterator(10);
-        int counter = 10;
-        while(listIterator.hasNext()) {
-            assertEquals(listIterator.next(), "i = " + counter);
-            counter++;
-        }
-    }
+        list.addAll(a);
 
-    @Test
-    public void timeMap() throws Exception {
-//        for(int i = 0; i < 100; i++) {
-//            list.add("i = " + i);
-//        }
-//
-//        Map<Long, String> timeMap = list.timeMap();
-//        int counter = 0;
-//        for(Map.Entry<Long, String> entry : timeMap.entrySet()) {
-//            assertEquals(entry.getKey().longValue(), DEFAULT_LIFE_TIME);
-//            assertEquals(entry.getValue(), "i = " + counter);
-//            counter++;
-//        }
+        Iterator<String> iterator = list.listIterator(5);
+        //noinspection Java8CollectionRemoveIf
+        while(iterator.hasNext()) {
+            String next = iterator.next();
+            if(!next.contains("c"))
+                list.remove(next);
+        }
+
+        assertEquals(5, list.size());
+        assertTrue(list.contains("ac0"));
+        assertTrue(list.contains("ac1"));
+        assertTrue(list.contains("ac2"));
+        assertTrue(list.contains("ac3"));
+        assertTrue(list.contains("ac4"));
+        for(int i = 5; i < 100; i++) {
+            assertFalse(list.contains("a" + i));
+        }
     }
 
     @Test
     public void subList() throws Exception {
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            list.add("i = " + i);
+            a.add("a" + i);
         }
 
-        List<String> l = list.subList(10, 30);
-        for(int i = 10, counter = 0; i < 30; i++, counter++) {
-            assertEquals("i = " + i, l.get(counter));
+        list.addAll(a);
+
+        List<String> sub = list.subList(10, 50);
+        for(int i = 10; i < 50; i++) {
+            assertEquals("a" + i, sub.get(i - 10));
         }
     }
 
@@ -297,227 +354,278 @@ public class CachedArrayListTest {
         assertTrue(list.isEmpty());
         list.add("asd");
         assertFalse(list.isEmpty());
+        list.remove("asd");
+        assertTrue(list.isEmpty());
     }
 
     @Test
     public void contains() throws Exception {
         list.add("test");
-        assertFalse(list.contains("df"));
+        list.add("test");
+        list.add("asd");
+        list.add("gf");
+
         assertTrue(list.contains("test"));
+        assertTrue(list.contains("gf"));
+
+        assertFalse(list.contains("asdfasdfasd"));
     }
 
     @Test
-    public void containsAll() throws Exception {
-        List<String> l = new ArrayList<>();
+    public void toObjectArray() throws Exception {
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
+            a.add("a" + i);
         }
-        list.addAll(l);
-        assertTrue(list.containsAll(l));
+
+        list.addAll(a);
+
+        Object[] arr = list.toArray();
+
+        for(int i = 0; i < 100; i++) {
+            assertEquals(a.get(i), arr[i]);
+        }
     }
 
     @Test
     public void toArray() throws Exception {
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            list.add("i = " + i);
+            a.add("a" + i);
         }
 
-        Object[] arr = list.toArray();
-        for(int i = 0; i < arr.length; i++) {
-            assertEquals(arr[i], list.get(i));
+        list.addAll(a);
+
+        assertNull(list.toArray(null));
+        String[] arr = list.toArray(new String[0]);
+
+        for(int i = 0; i < 100; i++) {
+            assertEquals(a.get(i), arr[i]);
         }
     }
 
     @Test
-    public void toNormalArray() throws Exception {
+    public void removeObject() throws Exception {
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            list.add("i = " + i);
+            a.add("a" + i);
         }
 
-        String[] arr = list.toArray(new String[0]);
-        for(int i = 0; i < arr.length; i++) {
-            assertEquals(arr[i], list.get(i));
+        list.addAll(a);
+
+        assertTrue(list.contains("a0"));
+        assertTrue(list.remove("a0"));
+        assertFalse(list.contains("a0"));
+        assertFalse(list.remove("a0"));
+    }
+
+    @Test
+    public void containsAll() throws Exception {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
         }
+
+        list.addAll(a);
+
+        assertTrue(list.containsAll(a));
+
+        a.add("asd");
+        assertFalse(list.containsAll(a));
     }
 
     @Test
     public void removeAll() throws Exception {
-        Collection<String> l = new ArrayList<>();
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
+            a.add("a" + i);
         }
-        list.addAll(l);
+
+        list.addAll(a);
+
         assertFalse(list.isEmpty());
-        list.removeAll(l);
-        assertTrue(list.isEmpty());
+        a.remove("a0");
+        assertTrue(list.removeAll(a));
+
+        assertEquals(1, list.size());
+        assertTrue(list.contains("a0"));
     }
 
     @Test
     public void retainAll() throws Exception {
-        Collection<String> l = new ArrayList<>();
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
+            a.add("a" + i);
         }
-        list.addAll(l);
-        list.add("sdf");
-        list.retainAll(l);
-        assertFalse(list.contains("sdf"));
-    }
 
-    @Test
-    public void retainAllWithTimeUpdate() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l);
-        list.retainAll(l, 100);
-        assertFalse(list.contains("sdf"));
-        for(int i = 0; i < 100; i++) {
-            assertEquals(list.getTime(i).longValue(), 100);
-        }
+        list.addAll(a);
+
+        assertFalse(list.isEmpty());
+        a.remove("a0");
+
+        assertTrue(list.retainAll(a));
+        assertFalse(list.contains("a0"));
+        assertTrue(list.containsAll(a));
     }
 
     @Test
     public void replaceAll() throws Exception {
-        Collection<String> l = new ArrayList<>();
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
+            a.add("a" + i);
         }
-        list.addAll(l);
-        list.replaceAll(s -> s.concat("asd"));
 
-        for(int i = 0; i < 100; i++) {
-            assertEquals(list.get(i), i + "asd");
-        }
+        list.addAll(a);
+
+        assertFalse(list.isEmpty());
+
+        list.replaceAll(s -> "b" + s);
+        for(String s : a)
+            assertTrue(list.contains("b" + s));
     }
 
     @Test
     public void replaceAllWithTime() throws Exception {
-        Collection<String> l = new ArrayList<>();
+        List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
+            a.add("a" + i);
         }
-        list.addAll(l);
-        list.replaceAll(s -> s.concat("asd"), aLong -> 100L);
 
-        for(int i = 0; i < 100; i++) {
-            assertEquals(list.get(i), i + "asd");
-            assertEquals(list.getTime(i).longValue(), 100);
+        list.addAll(a);
+
+        assertFalse(list.isEmpty());
+
+        list.replaceAll(s -> "b" + s, aLong -> -1L);
+        list.update();
+
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void sortDefault() throws Exception {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> sample = list.subList(0, 100);
+        list.sort(null);
+
+        sample.sort(String::compareTo);
+        for(int i = 0; i < sample.size(); i++) {
+            assertEquals(sample.get(i), list.get(i));
         }
     }
 
     @Test
-    public void sort() throws Exception {
-//        list.sort(String::compareTo);
+    public void sortWithComparator() throws Exception {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> sample = list.subList(0, 100);
+        list.sort((o1, o2) -> -o1.compareTo(o2));
+
+        sample.sort((o1, o2) -> -o1.compareTo(o2));
+        for(int i = 0; i < sample.size(); i++) {
+            assertEquals(sample.get(i), list.get(i));
+        }
     }
 
     @Test
     public void spliterator() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l);
-        Spliterator<String> spliterator = list.spliterator();
-        for(int i = 0; i < 100; i++) {
-            AtomicBoolean ok = new AtomicBoolean(false);
-            final int val = i;
-            spliterator.tryAdvance(s -> ok.set(s.equals(String.valueOf(val))));
-            assertTrue(ok.get());
-        }
-    }
-
-    @Test
-    public void removeIf() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l);
-        list.removeIf(s -> Integer.valueOf(s) % 2 == 0);
-        for(String s : list) {
-            assertFalse(Integer.valueOf(s) % 2 == 0);
-        }
-    }
-
-    @Test
-    public void stream() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l);
-        Stream<String> stream = list.stream();
-        List<String> l1 = stream.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        assertTrue(l1.containsAll(list));
-    }
-
-    @Test
-    public void parallelStream() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l);
-        Stream<String> stream = list.parallelStream();
-        List<String> l1 = stream.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        assertTrue(l1.containsAll(list));
-    }
-
-    @Test
-    public void forEach() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l);
-
-        AtomicInteger counter = new AtomicInteger();
-        list.forEach(s -> assertEquals(String.valueOf(counter.getAndIncrement()), s));
-    }
-
-    @Test
-    public void forEach1() throws Exception {
-        Collection<String> l = new ArrayList<>();
-        for(int i = 0; i < 100; i++) {
-            l.add(String.valueOf(i));
-        }
-        list.addAll(l, 100);
-
-        AtomicInteger counter = new AtomicInteger();
-        list.forEach((s, time) -> {
-            assertEquals(String.valueOf(counter.getAndIncrement()), s);
-            assertEquals(time.longValue(), 100);
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        list.spliterator().forEachRemaining(s -> {
+            assertTrue(list.contains(s));
+            list.remove(s);
         });
     }
 
     @Test
-    public void get() throws Exception {
-        list.add("asd");
-        assertEquals(list.get(0), "asd");
+    public void removeIf() throws Exception {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        assertFalse(list.isEmpty());
+        assertTrue(list.removeIf(s -> true));
+        assertTrue(list.isEmpty());
     }
 
     @Test
-    public void getTime() throws Exception {
-        list.add("asd", 100);
-        assertEquals(list.getTime(0).longValue(), 100);
+    public void parallelStream() throws Exception {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        list.parallelStream().forEach(list::remove);
     }
 
     @Test
-    public void size() throws Exception {
-        assertEquals(list.size(), 0);
-        list.add("asd", 100);
-        assertEquals(list.size(), 1);
+    public void forEach() throws Exception {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> a = new ArrayList<>();
+        //noinspection UseBulkOperation
+        list.forEach((Consumer<String>) a::add);
+        assertEquals(a.size(), list.size());
+        assertTrue(list.containsAll(a));
     }
 
     @Test
-    public void equals() throws Exception {
-        list.add("asd");
-        CachedArrayList<String> l = new CachedArrayList<>();
-        l.add("asd");
-        assertTrue(list.equals(l));
+    public void forEachWithTime() throws Exception {
+        list.stop();
+
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> a = new ArrayList<>();
+        //noinspection UseBulkOperation
+        list.forEach((s, aLong) -> a.add(s + ":" + aLong));
+        assertEquals(a.size(), list.size());
+        for(int i = 0; i < list.size(); i++) {
+            assertTrue(a.get(i).startsWith(list.get(i)));
+        }
     }
 
+    @Test
+    public void cloneTest() throws Exception {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> clone = list.clone();
+        assertEquals(clone, list);
+        String t1 = clone.get(0);
+        list.set(0, "asdfsdaassadsasasadsad");
+        assertEquals(t1, clone.get(0));
+    }
 
+    @Test
+    public void isRunning() throws Exception {
+        assertTrue(list.isRunning());
+        list.stop();
+        assertFalse(list.isRunning());
+        list.start();
+        assertTrue(list.isRunning());
+    }
+
+    @Test
+    public void testLogic() throws Exception {
+        for(int i = 0; i < 100; i++) {
+            list.add(Integer.toString(i));
+        }
+        list.add("a", 1);
+        for(int i = 0; i < 100; i++) {
+            list.add(Integer.toString(i));
+        }
+
+        Thread.sleep(2);
+        assertFalse(list.contains("a"));
+
+        list.stop();
+        list.add("a", 1);
+        Thread.sleep(10);
+        assertTrue(list.contains("a"));
+        list.start();
+        Thread.sleep(2);
+        assertFalse(list.contains("a"));
+    }
 }
