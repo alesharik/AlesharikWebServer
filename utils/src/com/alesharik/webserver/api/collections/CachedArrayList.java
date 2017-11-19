@@ -294,11 +294,11 @@ public class CachedArrayList<V> implements Cloneable, List<V>, RandomAccess, Ser
 
     @Override
     public int lastIndexOf(Object o) {
+        if(size == 0)
+            return -1;
+
         long time = System.currentTimeMillis();
         for(int i = size - 1; i >= 0; i--) {
-            if(i >= size || i < 0)
-                return -1;
-
             TimedElement<V> element = elements[i];
             if(!isRunning || element.check(time)) {
                 if(element.t.equals(o)) {
@@ -755,7 +755,7 @@ public class CachedArrayList<V> implements Cloneable, List<V>, RandomAccess, Ser
     }
 
     private final class IteratorImpl<A> implements Iterator<A> {
-        private volatile int index;
+        private int index;
 
         @Override
         public boolean hasNext() {
