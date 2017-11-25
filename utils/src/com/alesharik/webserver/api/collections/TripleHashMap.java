@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import static com.alesharik.webserver.api.collections.CollectionsMathUtils.*;
+
 /**
  * This is a HashMap with three variables: key, value and addition.All functions have same functionality with {@link java.util.HashMap}
  *
@@ -48,11 +50,8 @@ import java.util.function.Function;
 @EqualsAndHashCode
 @NotThreadSafe
 public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
-    private static final long serialVersionUID = 3751846878669761472L;
-
     protected static final int DEFAULT_CAPACITY = 16;
-    protected static final int MAXIMUM_CAPACITY = 1 << 30;
-
+    private static final long serialVersionUID = 3751846878669761472L;
     protected Entry<K, V, A>[] entries;
     protected int size;
     protected int sizeLimit;
@@ -76,6 +75,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Create map with given capacity
+     *
      * @param initialCapacity the map capacity
      */
     @SuppressWarnings("unchecked")
@@ -111,7 +111,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
             return null;
 
         int hash = hash(key);
-        int bucket = getBucket(hash);
+        int bucket = getBucketImpl(hash);
         Entry<K, V, A> entry = entries[bucket];
         if(entry == null)
             return null;
@@ -131,7 +131,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
             return null;
 
         int hash = hash(key);
-        int bucket = getBucket(hash);
+        int bucket = getBucketImpl(hash);
         Entry<K, V, A> entry = entries[bucket];
         if(entry == null)
             return null;
@@ -157,7 +157,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
             return null;
 
         int hash = hash(key);
-        int bucket = getBucket(hash);
+        int bucket = getBucketImpl(hash);
         Entry<K, V, A> entry = entries[bucket];
 
         if(entry == null)
@@ -183,7 +183,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     protected boolean containsKey0(@Nullable K key) {
         int hash = hash(key);
-        int bucket = getBucket(hash);
+        int bucket = getBucketImpl(hash);
 
         Entry entry = entries[bucket];
         if(entry == null)
@@ -259,7 +259,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     @Nullable
     protected Triple<K, V, A> putActual(@Nonnull K key, @Nonnull V value, @Nullable A addition) {
         int hash = hash(key);
-        int bucket = getBucket(hash);
+        int bucket = getBucketImpl(hash);
 
         Entry<K, V, A> old = entries[bucket];
         if(old != null) {
@@ -336,7 +336,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     @Nullable
     protected Triple<K, V, A> removeActual(@Nonnull K key) {
         int hash = hash(key);
-        int bucket = getBucket(hash);
+        int bucket = getBucketImpl(hash);
 
         //Find current entry for key
         Entry<K, V, A> entry = entries[bucket];
@@ -387,6 +387,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Return new map's key set
+     *
      * @return new {@link HashSet} instance
      */
     @Nonnull
@@ -398,6 +399,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Return list of map's values
+     *
      * @return new {@link ArrayList} instance
      */
     @Nonnull
@@ -409,6 +411,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Return list of map's additional values
+     *
      * @return new {@link ArrayList} instance
      */
     @Nonnull
@@ -454,7 +457,8 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * If map contains additional value and it isn't <code>null</code>, it will return key's additional value, overwise default value
-     * @param key additional value's key
+     *
+     * @param key          additional value's key
      * @param defaultValue default value
      * @return value or default value
      */
@@ -486,7 +490,8 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Remove entry by key and value. Entry will be removed if it is exists and it's value equals provided value
-     * @param key the key
+     *
+     * @param key   the key
      * @param value the value
      * @return true if entry removed, overwise false
      */
@@ -501,7 +506,8 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Replace value in entry. If entry no exists, <code>false</code> will be returned
-     * @param key value's key
+     *
+     * @param key      value's key
      * @param newValue new value
      * @param oldValue old value
      * @return <code>true</code> if value is replaced, overwise false
@@ -518,7 +524,8 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Replace value in entry. If entry no exists, <code>false</code> will be returned
-     * @param key value's key
+     *
+     * @param key      value's key
      * @param newValue new value
      * @param oldValue old value
      * @param addition additional value
@@ -537,8 +544,9 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * If map doesn't contains a key, new entry will be created by functions, overwise current entry will be returned
-     * @param key the key
-     * @param mappingFunction value's function
+     *
+     * @param key                the key
+     * @param mappingFunction    value's function
      * @param additionalFunction additional value's function
      * @return new entry or existing entry
      */
@@ -557,8 +565,9 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Remap key's entry
-     * @param key the key
-     * @param remappingFunction value's remapping function
+     *
+     * @param key                the key
+     * @param remappingFunction  value's remapping function
      * @param additionalFunction additional value's remapping function
      * @return existing remapped entry or <code>null</code>
      */
@@ -576,8 +585,9 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Remap existing entry or create new entry
-     * @param key the key
-     * @param remappingFunction value's remapping function
+     *
+     * @param key                the key
+     * @param remappingFunction  value's remapping function
      * @param additionalFunction additional value's remapping function
      * @return remapped entry
      */
@@ -598,10 +608,11 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Same as {@link #compute(Object, TripleFunction, TripleFunction)} function, bu use specified value and addition to create new entry
-     * @param key the key
-     * @param value new value
-     * @param addition new addition
-     * @param remappingFunction value's remapping function
+     *
+     * @param key                the key
+     * @param value              new value
+     * @param addition           new addition
+     * @param remappingFunction  value's remapping function
      * @param additionalFunction additional value's remapping function
      * @return the entry
      */
@@ -616,6 +627,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
 
     /**
      * Iterates over all elements in map
+     *
      * @param action elements consumer
      */
     public void forEach(@Nonnull TripleConsumer<K, V, A> action) {
@@ -689,36 +701,15 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
         }
     }
 
-    protected int getBucket(int hash) {
-        return (entries.length - 1) & hash;
-    }
-
-    protected static int hash(@Nullable Object key) {
-        if(key == null)
-            return 0;
-
-        int h = key.hashCode();
-        return h ^ (h >>> 16);
-    }
-
-    /**
-     * REFERENCE: JAVA SOURCE CODE
-     */
-    protected static int powerOfTwoFor(int cap) {
-        int n = cap - 1;
-        n |= n >>> 1;
-        n |= n >>> 2;
-        n |= n >>> 4;
-        n |= n >>> 8;
-        n |= n >>> 16;
-        return (n < 0) ? 1 : (n >= Integer.MAX_VALUE) ? MAXIMUM_CAPACITY : n + 1;
+    protected int getBucketImpl(int hash) {
+        return getBucket(hash, entries.length);
     }
 
     @Getter
     @ThreadSafe
     @EqualsAndHashCode(callSuper = false)
     @ToString
-    protected static class Entry<K, V, A> extends Triple<K, V, A> implements Serializable {
+    protected static class Entry<K, V, A> extends Triple<K, V, A> implements Serializable, Cloneable {
         private static final long serialVersionUID = 4637937051986902968L;
 
         private volatile K key;
