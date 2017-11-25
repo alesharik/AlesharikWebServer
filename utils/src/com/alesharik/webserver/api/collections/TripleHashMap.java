@@ -709,6 +709,7 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
     @ThreadSafe
     @EqualsAndHashCode(callSuper = false)
     @ToString
+    @NotThreadSafe
     protected static class Entry<K, V, A> extends Triple<K, V, A> implements Serializable, Cloneable {
         private static final long serialVersionUID = 4637937051986902968L;
 
