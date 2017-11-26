@@ -20,6 +20,7 @@ package com.alesharik.webserver.api.server.wrapper.http.util;
 
 import com.alesharik.webserver.api.server.wrapper.http.HttpStatus;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
+import com.alesharik.webserver.api.server.wrapper.util.IpBanManager;
 import org.junit.Before;
 import org.junit.Test;
 

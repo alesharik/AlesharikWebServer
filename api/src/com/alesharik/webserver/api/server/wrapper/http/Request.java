@@ -69,6 +69,8 @@ public class Request implements Recyclable {
     protected InetAddress local;
     protected boolean secure;
 
+    protected final Map<String, Object> data = new ConcurrentHashMap<>();
+
     {
         headerMap = new ConcurrentHashMap<>();
         parameters = new ConcurrentHashMap<>();
@@ -228,6 +230,14 @@ public class Request implements Recyclable {
         return secure;
     }
 
+    public void setData(String key, Object value) {
+        data.put(key, value);
+    }
+
+    public Object getData(String key) {
+        return data.get(key);
+    }
+
     @Override
     public void recycle() {
         cookies = new Cookie[0];
@@ -242,6 +252,7 @@ public class Request implements Recyclable {
         uri = null;
         headers = new String[0];
         headerMap.clear();
+        data.clear();
     }
 
     public static final class Builder extends Request {

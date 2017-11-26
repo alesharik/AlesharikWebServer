@@ -22,6 +22,7 @@ import com.alesharik.webserver.api.server.wrapper.bundle.Filter;
 import com.alesharik.webserver.api.server.wrapper.bundle.FilterChain;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandler;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerResponseDecorator;
+import com.alesharik.webserver.api.server.wrapper.bundle.HttpVisitor;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
 
@@ -31,13 +32,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BasicFilterChain implements FilterChain {
     private final List<Filter> filters;
+    private final List<HttpVisitor> visitors;
 
     public BasicFilterChain() {
         filters = new CopyOnWriteArrayList<>();
+        visitors = new CopyOnWriteArrayList<>();
     }
 
     public BasicFilterChain with(Filter filter) {
         filters.add(filter);
+        return this;
+    }
+
+    public BasicFilterChain with(HttpVisitor visitor) {
+        visitors.add(visitor);
         return this;
     }
 
@@ -54,6 +62,9 @@ public class BasicFilterChain implements FilterChain {
             if(!filter.accept(request, response))
                 return response;
         }
+        for(HttpVisitor visitor : visitors)
+            visitor.visit(request, response);
+
         for(HttpHandler httpHandler : httpHandlers) {
             if(httpHandler.getFilter().accept(request, response)) {
                 httpHandler.handle(request, response);

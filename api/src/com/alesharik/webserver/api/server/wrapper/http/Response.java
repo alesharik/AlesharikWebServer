@@ -183,6 +183,10 @@ public class Response implements Recyclable {
         cookies.add(cookie);
     }
 
+    public Cookie[] getCookies() {
+        return cookies.toArray(new Cookie[0]);
+    }
+
     @Override
     public void recycle() {
         status = null;
