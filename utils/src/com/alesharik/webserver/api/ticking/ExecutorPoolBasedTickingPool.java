@@ -18,12 +18,10 @@
 
 package com.alesharik.webserver.api.ticking;
 
-import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
-import one.nio.mgt.Management;
 import sun.misc.Cleaner;
 
 import javax.annotation.Nonnull;
@@ -31,7 +29,6 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.lang.ref.WeakReference;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
@@ -89,7 +86,6 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
      * @throws IllegalArgumentException if parallelism <= 0
      */
     public ExecutorPoolBasedTickingPool(int parallelism, @Nonnull ThreadFactory threadFactory) {
-        Objects.requireNonNull(threadFactory);
         if(parallelism <= 0) {
             throw new IllegalArgumentException();
         }
@@ -106,7 +102,6 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
 
     @Override
     public void startTicking(@Nonnull Tickable tickable, long periodInMs) {
-        Objects.requireNonNull(tickable);
         if(periodInMs <= 0) {
             throw new IllegalArgumentException();
         }
@@ -235,7 +230,7 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
                     try {
                         tickable.tick();
                     } catch (Exception e) {
-                        Logger.log(e);
+                        e.printStackTrace();
                     }
                 }
             } else {

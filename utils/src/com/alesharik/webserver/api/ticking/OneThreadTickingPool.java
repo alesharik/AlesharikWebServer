@@ -18,11 +18,9 @@
 
 package com.alesharik.webserver.api.ticking;
 
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Prefixes;
 import lombok.AccessLevel;
 import lombok.Getter;
-import one.nio.mgt.Management;
 import sun.misc.Cleaner;
 
 import javax.annotation.Nonnull;
@@ -72,7 +70,7 @@ public final class OneThreadTickingPool implements TickingPool {
      * @throws NullPointerException     if name or threadGroup == null
      * @throws IllegalArgumentException if name is empty
      */
-    public OneThreadTickingPool(String name) {
+    public OneThreadTickingPool(@Nonnull String name) {
         this(name, Thread.currentThread().getThreadGroup());
     }
 
@@ -84,8 +82,9 @@ public final class OneThreadTickingPool implements TickingPool {
      * @throws NullPointerException     if name or threadGroup == null
      * @throws IllegalArgumentException if name is empty
      */
-    public OneThreadTickingPool(String name, @Nonnull ThreadGroup threadGroup) {
-        Utils.requireNotNullOrEmpty(name);
+    public OneThreadTickingPool(@Nonnull String name, @Nonnull ThreadGroup threadGroup) {
+        if(name.isEmpty())
+            throw new IllegalArgumentException("Name can't be empty!");
 
         tickables = new ConcurrentHashMap<>();
         executor = Executors.newSingleThreadScheduledExecutor(r -> new Thread(threadGroup, r, name));
