@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.ticking;
 
+import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.logger.Prefixes;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
@@ -96,8 +97,8 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
 
         this.id = COUNTER.incrementAndGet();
 
-        Management.registerMXBean(this, TickingPoolMXBean.class, "com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id);
-        Cleaner.create(this, () -> Management.unregisterMXBean("com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id));
+        MXBeanManager.registerMXBean(this, TickingPoolMXBean.class, "com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id);
+        Cleaner.create(this, () -> MXBeanManager.unregisterMXBean("com.alesharik.webserver.api.ticking:type=ExecutorPoolBasedTickingPool,id=" + this.id));
     }
 
     @Override

@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.ticking;
 
+import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.logger.Prefixes;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -90,8 +91,8 @@ public final class OneThreadTickingPool implements TickingPool {
         executor = Executors.newSingleThreadScheduledExecutor(r -> new Thread(threadGroup, r, name));
         id = COUNTER.incrementAndGet();
 
-        Management.registerMXBean(this, TickingPoolMXBean.class, "com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + id);
-        cleaner = Cleaner.create(this, () -> Management.unregisterMXBean("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + this.id));
+        MXBeanManager.registerMXBean(this, TickingPoolMXBean.class, "com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + id);
+        cleaner = Cleaner.create(this, () -> MXBeanManager.unregisterMXBean("com.alesharik.webserver.api.ticking:type=OneThreadTickingPool,id=" + this.id));
     }
 
     @Override
