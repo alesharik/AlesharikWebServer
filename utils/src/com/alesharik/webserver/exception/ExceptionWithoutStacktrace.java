@@ -19,9 +19,11 @@
 package com.alesharik.webserver.exception;
 
 /**
- * This class extends {@link Exception} and provide creating exceptions without creating stacktrace
+ * This class extends {@link RuntimeException} and allow to create exceptions without stacktrace
  */
-public class ExceptionWithoutStacktrace extends Exception {
+public class ExceptionWithoutStacktrace extends RuntimeException {
+    private static final long serialVersionUID = -3170919408163655059L;
+
     public ExceptionWithoutStacktrace() {
         super("", null, true, false);
     }

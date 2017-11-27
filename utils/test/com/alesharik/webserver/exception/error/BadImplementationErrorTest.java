@@ -18,22 +18,18 @@
 
 package com.alesharik.webserver.exception.error;
 
-/**
- * This error indicates problem in JVM/Java/Libraries and it's unexpected behavior, missing classes or anything, that server or it's component
- * require to start
- */
-public class UnexpectedBehaviorError extends Error {
-    private static final long serialVersionUID = 2517314639265950737L;
+import org.junit.Test;
 
-    public UnexpectedBehaviorError(String message) {
-        super(message);
-    }
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-    public UnexpectedBehaviorError(Throwable cause) {
-        super(cause);
-    }
-
-    public UnexpectedBehaviorError(String message, Throwable cause) {
-        super(message, cause);
+public class BadImplementationErrorTest {
+    @Test
+    public void ctorWithMessage() throws Exception {
+        BadImplementationError error = new BadImplementationError("test");
+        assertEquals("test", error.getMessage());
+        assertNull(error.getCause());
+        assertNull(error.initCause(new Exception()));
+        assertNull(error.getCause());
     }
 }

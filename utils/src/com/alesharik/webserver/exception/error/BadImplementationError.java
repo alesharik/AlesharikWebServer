@@ -18,11 +18,27 @@
 
 package com.alesharik.webserver.exception.error;
 
+import javax.annotation.Nullable;
+
 /**
- * This means, that class implements method incorrectly
+ * This means that class implements method incorrectly
  */
-public final class BadImplementationError extends Error {
+public final class BadImplementationError extends UnexpectedBehaviorError {
+    private static final long serialVersionUID = -7226837153421331381L;
+
     public BadImplementationError(String message) {
         super(message);
+    }
+
+    @Override
+    @Nullable
+    public Throwable initCause(Throwable cause) {
+        return null;
+    }
+
+    @Override
+    @Nullable
+    public Throwable getCause() {
+        return null;
     }
 }
