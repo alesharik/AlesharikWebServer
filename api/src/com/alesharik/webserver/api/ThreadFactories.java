@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.UtilityClass;

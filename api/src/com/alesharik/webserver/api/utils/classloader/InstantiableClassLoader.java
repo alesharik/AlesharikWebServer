@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.api.utils.classloader;
 
-import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;

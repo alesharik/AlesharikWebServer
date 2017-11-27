@@ -34,7 +34,7 @@ import com.alesharik.database.entity.Unique;
 import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
 import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
-import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.logger.Debug;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;

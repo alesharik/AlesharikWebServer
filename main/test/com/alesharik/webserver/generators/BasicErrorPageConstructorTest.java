@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.generators;
 
-import com.alesharik.webserver.exceptions.ExceptionWithoutStacktrace;
+import com.alesharik.webserver.exception.ExceptionWithoutStacktrace;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.util.HttpStatus;
 import org.junit.BeforeClass;

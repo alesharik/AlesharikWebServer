@@ -18,5 +18,7 @@
 
 package com.alesharik.webserver.exceptions;
 
+import com.alesharik.webserver.exception.ExceptionWithoutStacktrace;
+
 public class FileFoundException extends ExceptionWithoutStacktrace {
 }

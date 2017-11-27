@@ -19,9 +19,7 @@
 package com.alesharik.webserver.api.ticking;
 
 import com.alesharik.webserver.api.TestUtils;
-import com.alesharik.webserver.logger.Logger;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -32,11 +30,6 @@ import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.T
 import static org.junit.Assert.*;
 
 public class TickableCacheManagerTest {
-    @Before
-    public void setUp() throws Exception {
-        Logger.disable();
-    }
-
     @Test
     public void simpleTest() throws Exception {
         Tickable tickable = () -> {

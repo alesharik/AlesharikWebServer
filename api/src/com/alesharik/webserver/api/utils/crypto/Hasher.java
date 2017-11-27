@@ -19,7 +19,7 @@
 package com.alesharik.webserver.api.utils.crypto;
 
 import com.alesharik.webserver.api.utils.crypto.crc.CRC32Provider;
-import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.logger.level.Level;

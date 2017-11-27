@@ -25,7 +25,7 @@ import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.database.exception.DatabaseReadSQLException;
 import com.alesharik.database.exception.DatabaseStoreSQLException;
 import com.alesharik.database.transaction.TransactionManager;
-import com.alesharik.webserver.exceptions.error.UnexpectedBehaviorError;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import lombok.Getter;
 
 import java.sql.Connection;
