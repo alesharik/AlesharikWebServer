@@ -21,6 +21,7 @@ package com.alesharik.webserver.api.mx.bean;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -71,7 +72,7 @@ public class MXBeanManager {
      * @throws IllegalStateException    if instance already registered and server can't unregister it
      * @throws RuntimeException         if exception has thrown in registering stage
      */
-    public static <T, R extends T> void registerMXBean(@Nonnull R object, @Nonnull Class<T> mxBeanInterface, @Nonnull String name) {
+    public static <T, R extends T> void registerMXBean(@Nonnull R object, @Nullable Class<T> mxBeanInterface, @Nonnull String name) {
         try {
             StandardMBean mb = new StandardMBean(object, mxBeanInterface, true);
             MBeanServer beanServer = ManagementFactory.getPlatformMBeanServer();
