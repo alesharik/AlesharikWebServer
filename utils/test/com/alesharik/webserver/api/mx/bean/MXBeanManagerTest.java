@@ -100,7 +100,7 @@ public class MXBeanManagerTest {
         int getTest();
     }
 
-    public class MXBeanImpl implements MXBean {
+    public static class MXBeanImpl implements MXBean {
         private final int t;
 
         public MXBeanImpl(int t) {
@@ -113,7 +113,7 @@ public class MXBeanManagerTest {
         }
     }
 
-    public class MXBeanError implements MBeanRegistration {
+    public static class MXBeanError implements MBeanRegistration {
 
         @Override
         public ObjectName preRegister(MBeanServer server, ObjectName name) {

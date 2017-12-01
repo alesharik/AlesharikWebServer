@@ -21,7 +21,6 @@ package com.alesharik.webserver.api.misc;
 import com.alesharik.webserver.exception.error.BadImplementationError;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -34,7 +33,6 @@ import java.io.Serializable;
 /**
  * This class used for store three values
  */
-@EqualsAndHashCode
 public abstract class Triple<A, B, C> implements Cloneable {
     public Triple() {
     }
@@ -119,8 +117,19 @@ public abstract class Triple<A, B, C> implements Cloneable {
         }
     }
 
+    public boolean equals(Object o) {
+        return o == this || o instanceof Triple && getA().equals(((Triple) o).getA()) && getB().equals(((Triple) o).getB()) && getC().equals(((Triple) o).getC());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getA() != null ? getA().hashCode() : 0;
+        result = 31 * result + (getB() != null ? getB().hashCode() : 0);
+        result = 31 * result + (getC() != null ? getC().hashCode() : 0);
+        return result;
+    }
+
     @AllArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
     @ToString
     @Getter
     private static class ImmutableTriple<A, B, C> extends Triple<A, B, C> {
@@ -140,7 +149,6 @@ public abstract class Triple<A, B, C> implements Cloneable {
         }
     }
 
-    @EqualsAndHashCode(callSuper = true)
     @ToString
     @Getter
     private static final class ImmutableSerializableTriple<A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> extends ImmutableTriple<A, B, C> implements Serializable {
@@ -158,7 +166,6 @@ public abstract class Triple<A, B, C> implements Cloneable {
 
     @Getter
     @Setter
-    @EqualsAndHashCode(callSuper = false)
     @ToString
     @ThreadSafe
     @AllArgsConstructor(access = AccessLevel.PROTECTED)
@@ -184,7 +191,6 @@ public abstract class Triple<A, B, C> implements Cloneable {
         }
     }
 
-    @EqualsAndHashCode(callSuper = true)
     @ToString
     @ThreadSafe
     private static final class MutableSerializableTriple<A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> extends MutableTriple<A, B, C> implements Serializable {

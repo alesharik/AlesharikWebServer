@@ -48,7 +48,7 @@ public class TripleTest {
         not = Triple.immutable(2, "sdaasdasd", "bsdaf");
 
         serA = Triple.immutableSerializable(1, "asdfdsf", "bsdaf");
-        same = serA.clone();
+        serSame = serA.clone();
         serNot = Triple.immutableSerializable(2, "sdaasdasd", "bsdaf");
 
         mutA = Triple.mutable(1, "asdfdsf", "bsdaf");
