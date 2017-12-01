@@ -20,36 +20,62 @@ package com.alesharik.webserver.api.collections;
 
 import com.alesharik.webserver.api.ticking.OneThreadTickingPool;
 import com.alesharik.webserver.api.ticking.Tickable;
-import one.nio.lock.RWLock;
+import com.alesharik.webserver.api.ticking.TickingPool;
+import com.alesharik.webserver.exception.error.BadImplementationError;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.jetbrains.annotations.Contract;
 
-import java.util.ArrayList;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.RandomAccess;
 import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-//TODO write configurable pool
-public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements Tickable, Cloneable {
+/**
+ * This list store values with specific period(life time). It update values from {@link TickingPool}
+ *
+ * @param <V> element type
+ */
+@ThreadSafe
+public class ConcurrentLiveArrayList<V> implements Tickable, Cloneable, Serializable, List<V>, RandomAccess, Stoppable {
+    protected static final long DEFAULT_LIFE_TIME = TimeUnit.MINUTES.toMillis(1);
+    protected static final long DEFAULT_DELAY = 1000;
     private static final OneThreadTickingPool DEFAULT_POOL = new OneThreadTickingPool();
-    private static final int DEFAULT_LIFE_TIME = 60 * 1000;
-    private static final long DEFAULT_DELAY = 1000;
     private static final int DEFAULT_CAPACITY = 16;
+    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+    private static final long serialVersionUID = 1861951523878433866L;
 
-    private ArrayList<Long> times;
-    private final long delay;
-    private final AtomicBoolean isStarted = new AtomicBoolean(false);
-    private final RWLock lock = new RWLock();
+    private final AtomicInteger size;
+    private transient final StampedLock lock = new StampedLock();
+    private final AtomicBoolean started;
+    @Setter
+    @Getter
+    private volatile long defaultPeriod = DEFAULT_LIFE_TIME;
+    private Element<V>[] elements;
+    private volatile long delay;
+    @Getter
+    private volatile TickingPool tickingPool = DEFAULT_POOL;
 
     public ConcurrentLiveArrayList() {
         this(DEFAULT_DELAY, DEFAULT_CAPACITY);
@@ -68,565 +94,844 @@ public class ConcurrentLiveArrayList<V> extends ArrayListWrapper<V> implements T
     }
 
     public ConcurrentLiveArrayList(long delay, int count, boolean autoStart) {
-        super(count);
-        this.times = new ArrayList<>(count);
+        this.elements = new Element[count];
         this.delay = delay;
-        if(autoStart) {
+        this.size = new AtomicInteger(0);
+        this.started = new AtomicBoolean(false);
+        if(autoStart)
             start();
-        }
-    }
-
-    public boolean add(V v) {
-        return add(v, DEFAULT_LIFE_TIME);
-    }
-
-    public boolean add(V v, long lifeTime) {
-        try {
-            lock.lockRead();
-            int address = (super.size() > 0) ? super.size() - 1 : 0;
-
-            lock.upgrade();
-            super.add(address, v);
-            times.add(address, lifeTime);
-            lock.downgrade();
-        } finally {
-            lock.unlockRead();
-        }
-        return true;
     }
 
     @Override
-    public V set(int index, V element) {
-        return set(index, element, DEFAULT_LIFE_TIME);
+    public boolean add(@Nullable V v) {
+        return add(v, defaultPeriod);
     }
 
-    public V set(int index, V element, long lifeTime) {
-        V ret = null;
+    /**
+     * @param period live time period
+     * @return true if collection was changed
+     * @see #add(Object)
+     */
+    public boolean add(@Nullable V v, long period) {
+        if(period < 0)
+            throw new IllegalArgumentException();
+        long write = lock.writeLock();
         try {
-            lock.lockRead();
-            V var = super.get(index);
-            if(var != null) {
-                lock.upgrade();
-                times.set(index, lifeTime);
-                ret = super.set(index, element);
-                lock.downgrade();
+            int i = size.getAndIncrement();
+            if(i >= elements.length)
+                resize(size.get());
+            elements[i] = new Element<>(v, period);
+            return true;
+        } finally {
+            lock.unlockWrite(write);
+        }
+    }
+
+    @Override
+    @Nullable
+    public V set(int index, @Nullable V element) {
+        long l = lock.readLock();
+        try {
+            checkRange(index);
+            long lockLast = l;
+            l = lock.tryConvertToWriteLock(l);
+            if(l == 0) {
+                lock.unlockRead(lockLast);
+                l = lock.writeLock();
+                checkRange(index);
             }
+            Element<V> elem = elements[index];
+            V last = elem.element;
+            elem.element = element;
+            return last;
         } finally {
-            lock.unlockRead();
+            lock.unlock(l);
         }
-        return ret;
     }
 
-    @Override
-    public void add(int index, V element) {
-        add(index, element, DEFAULT_LIFE_TIME);
-    }
-
-    public void add(int index, V element, long lifeTime) {
+    @Nullable
+    public V set(int index, @Nullable V element, long period) {
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            lock.upgrade();
-            super.add(index, element);
-            times.add(index, lifeTime);
+            checkRange(index);
+            long lockLast = l;
+            l = lock.tryConvertToWriteLock(l);
+            if(l == 0) {
+                lock.unlockRead(lockLast);
+                l = lock.writeLock();
+                checkRange(index);
+            }
+            Element<V> elem = elements[index];
+            V last = elem.element;
+            elem.element = element;
+            elem.period = period;
+            return last;
         } finally {
-            lock.downgrade();
-            lock.unlockRead();
+            lock.unlock(l);
+        }
+    }
+
+    public long setPeriod(int index, long period) {
+        long l = lock.readLock();
+        try {
+            checkRange(index);
+            long lockLast = l;
+            l = lock.tryConvertToWriteLock(l);
+            if(l == 0) {
+                lock.unlockRead(lockLast);
+                l = lock.writeLock();
+                checkRange(index);
+            }
+            Element<V> elem = elements[index];
+            long last = elem.period;
+            elem.period = period;
+            return last;
+        } finally {
+            lock.unlock(l);
+        }
+    }
+
+    public long getPeriod(int index) {
+        long l = lock.readLock();
+        try {
+            checkRange(index);
+            return elements[index].period;
+        } finally {
+            lock.unlockRead(l);
+        }
+    }
+
+    public long getLiveTime(int index) {
+        long l = lock.readLock();
+        try {
+            checkRange(index);
+            return elements[index].liveTime();
+        } finally {
+            lock.unlockRead(l);
+        }
+    }
+
+    public void resetTime(int index) {
+        long l = lock.readLock();
+        try {
+            checkRange(index);
+            long lockLast = l;
+            l = lock.tryConvertToWriteLock(l);
+            if(l == 0) {
+                lock.unlockRead(lockLast);
+                l = lock.writeLock();
+                checkRange(index);
+            }
+            elements[index].reset();
+        } finally {
+            lock.unlock(l);
         }
     }
 
     @Override
+    public void add(int index, @Nullable V element) {
+        add(index, element, defaultPeriod);
+    }
+
+    public void add(int index, @Nullable V element, long period) {
+        long l = lock.readLock();
+        try {
+            checkRange(index);
+            long lockLast = l;
+            l = lock.tryConvertToWriteLock(l);
+            if(l == 0) {
+                lock.unlockRead(lockLast);
+                l = lock.writeLock();
+                checkRange(index);
+            }
+            int i = size.getAndIncrement();
+            if(i >= elements.length)
+                resize(size.get());
+            System.arraycopy(elements, index, elements, index + 1, i - index);
+            elements[index] = new Element<>(element, period);
+        } finally {
+            lock.unlock(l);
+        }
+    }
+
+    @Override
+    @Nullable
     public V remove(int index) {
-        return remove0(index);
-    }
-
-    private V remove0(int index) {
-        V ret = null;
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            V var = super.get(index);
-
-            if(var != null) {
-                lock.upgrade();
-                times.remove(index);
-                ret = super.remove(index);
-                lock.downgrade();
+            checkRange(index);
+            long lockLast = l;
+            l = lock.tryConvertToWriteLock(l);
+            if(l == 0) {
+                lock.unlockRead(lockLast);
+                l = lock.writeLock();
+                checkRange(index);
             }
+            return remove0(index);
         } finally {
-            lock.unlockRead();
+            lock.unlock(l);
         }
-        return ret;
+    }
+
+    protected V remove0(int index) {
+        int i = size.getAndDecrement();
+        int move = i - index - 1;
+        Element<V> element = elements[index];
+        if(element == null)
+            return null;
+        if(move > 0)
+            System.arraycopy(elements, index + 1, elements, index, move);
+        elements[i - 1] = null;
+        return element.element;
     }
 
     @Override
-    public int indexOf(Object o) {
-        int ret;
+    public int indexOf(@Nullable Object o) {
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            ret = super.indexOf(o);
+            if(o == null)
+                for(int i = 0; i < size.get(); i++) {
+                    if(elements[i].element == null)
+                        return i;
+                }
+            else
+                for(int i = 0; i < size.get(); i++)
+                    if(o.equals(elements[i].element))
+                        return i;
+            return -1;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(l);
         }
-        return ret;
     }
 
     @Override
-    public int lastIndexOf(Object o) {
-        int ret;
+    public int lastIndexOf(@Nullable Object o) {
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            ret = super.lastIndexOf(o);
+            if(o == null)
+                for(int i = size.get() - 1; i >= 0; i--) {
+                    if(elements[i].element == null)
+                        return i;
+                }
+            else
+                for(int i = size.get() - 1; i >= 0; i--)
+                    if(o.equals(elements[i].element))
+                        return i;
+            return -1;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(l);
         }
-        return ret;
     }
 
     @Override
     public void clear() {
+        long l = lock.writeLock();
         try {
-            lock.lockWrite();
-            super.clear();
-            times.clear();
+            elements = new Element[size.getAndSet(0)];
         } finally {
-            lock.unlockWrite();
+            lock.unlockWrite(l);
         }
     }
 
     @Override
-    public boolean addAll(int index, Collection<? extends V> c) {
-        return addAll(index, c, DEFAULT_LIFE_TIME);
+    public boolean addAll(int index, @Nonnull Collection<? extends V> c) {
+        return addAll(index, c, defaultPeriod);
     }
 
-    public <T extends V> boolean addAll(int index, Collection<T> c, long lifeTime) {
-        int index1 = size() - 1 + index;
-        if(index1 < 0) {
-            index1 = 0;
+    public <T extends V> boolean addAll(int index, @Nonnull Collection<T> c, long period) {
+        if(c.size() < 0)
+            return false;
+        long l = lock.readLock();
+        try {
+            if(index != 0)
+                checkRange(index);
+            long lockLast = l;
+            l = lock.tryConvertToWriteLock(l);
+            if(l == 0) {
+                lock.unlockRead(lockLast);
+                l = lock.writeLock();
+                checkRange(index);
+            }
+            int nextSize = size.get() + c.size();
+            if(elements.length <= nextSize)
+                resize(nextSize);
+            System.arraycopy(elements, index, elements, index + c.size(), size.get() - index);
+            int j = index;
+            for(T t : c) {
+                elements[j] = new Element<>(t, period);
+                j++;
+            }
+            size.set(nextSize);
+        } finally {
+            lock.unlock(l);
         }
-        for(T elem : c) {
-            add(index1, elem, lifeTime);
-        }
-        return true;
+        return c.size() > 0;
     }
 
     @Override
+    @Nonnull
     public Iterator<V> iterator() {
-        Iterator<V> ret;
-        try {
-            lock.lockRead();
-            ret = super.iterator();
-        } finally {
-            lock.unlockRead();
-        }
-        return ret;
+        return new IteratorImpl();
     }
 
     @Override
+    @Nonnull
     public ListIterator<V> listIterator() {
-        ListIterator<V> ret;
-        try {
-            lock.lockRead();
-            ret = super.listIterator();
-        } finally {
-            lock.unlockRead();
-        }
-        return ret;
+        return new ListIteratorImpl();
     }
 
     @Override
+    @Nonnull
     public ListIterator<V> listIterator(int index) {
-        ListIterator<V> ret;
-        try {
-            lock.lockRead();
-            ret = super.listIterator(index);
-        } finally {
-            lock.unlockRead();
-        }
-        return ret;
-    }
-
-    public Map<Long, V> timeMap() {
-        HashMap<Long, V> map;
-        try {
-            lock.lockRead();
-            map = new HashMap<>(size());
-            forEach((v, aLong) -> map.put(aLong, v));
-        } finally {
-            lock.unlockRead();
-        }
-        return Collections.unmodifiableMap(map);
+        return new ListIteratorImpl(index);
     }
 
     @Override
+    @Nonnull
     public List<V> subList(int fromIndex, int toIndex) {
-        List<V> ret;
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            ret = super.subList(fromIndex, toIndex);
+            checkRange(fromIndex);
+            checkRange(toIndex - 1);
+            if(toIndex - fromIndex <= 0)
+                throw new IndexOutOfBoundsException("from: " + fromIndex + ", to: " + toIndex);
+            ConcurrentLiveArrayList<V> list = new ConcurrentLiveArrayList<>(delay, toIndex - fromIndex);
+            System.arraycopy(elements, fromIndex, list.elements, 0, toIndex - fromIndex);
+            list.size.set(toIndex - fromIndex);
+            return list;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(l);
         }
-        return ret;
     }
 
     @Override
     public boolean isEmpty() {
-        boolean ret;
-        try {
-            lock.lockRead();
-            ret = super.isEmpty();
-        } finally {
-            lock.unlockRead();
-        }
-        return ret;
+        return size.get() == 0;
     }
 
     @Override
-    public boolean contains(Object o) {
-        boolean ret;
+    public boolean contains(@Nullable Object o) {
+        long read = lock.readLock();
         try {
-            lock.lockRead();
-            ret = super.contains(o);
+            for(Element<V> element : elements) {
+                if(element == null)
+                    return false;
+
+                if((element.element == null && o == null) || (element.element != null && element.element.equals(o)))
+                    return true;
+            }
+            return false;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(read);
         }
-        return ret;
     }
 
     @Override
+    @Nonnull
     public Object[] toArray() {
-        Object[] objects;
+        long read = lock.readLock();
         try {
-            lock.lockRead();
-            objects = super.toArray();
+            Object[] arr = new Object[size.get()];
+            for(int i = 0; i < size.get(); i++)
+                arr[i] = elements[i].element;
+            return arr;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(read);
         }
-        return objects;
     }
 
-    @SuppressWarnings("SuspiciousToArrayCall")
+    @SuppressWarnings({"unchecked"})
     @Override
-    public <C> C[] toArray(C[] a) {
-        C[] objects;
+    @Nullable
+    @Contract("null -> null; !null -> !null")
+    public <C> C[] toArray(@Nullable C[] a) {
+        if(a == null)
+            return null;
+        long read = lock.readLock();
         try {
-            lock.lockRead();
-            objects = super.toArray(a);
+            C[] arr = Arrays.copyOf(a, size.get());
+            for(int i = 0; i < size.get(); i++)
+                arr[i] = (C) elements[i].element;
+            return arr;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(read);
         }
-        return objects;
     }
 
     @Override
-    public boolean remove(Object o) {
-        boolean ret = false;
+    public boolean remove(@Nullable Object o) {
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            boolean contains = super.contains(o);
-            if(contains) {
-                lock.upgrade();
-                ret = removeNonSync(o);
-                lock.downgrade();
+            for(int i = 0; i < size.get(); i++) {
+                Element<V> element = elements[i];
+                if(element.element.equals(o)) {
+                    long lockLast = l;
+                    l = lock.tryConvertToWriteLock(l);
+                    if(l == 0) {
+                        lock.unlockRead(lockLast);
+                        l = lock.writeLock();
+                    }
+                    remove0(i);
+                    return true;
+                }
             }
         } finally {
-            lock.unlockRead();
+            lock.unlock(l);
         }
-        return ret;
-    }
-
-    private boolean removeNonSync(Object o) {
-        int i = 0;
-        boolean ret = false;
-        Iterator<V> iterator = super.iterator();
-        while(iterator.hasNext()) {
-            V next = iterator.next();
-            if(o.equals(next)) {
-                super.remove(i);
-                times.remove(i);
-                ret = true;
-                break;
-            }
-            i++;
-        }
-        return ret;
+        return false;
     }
 
     @Override
-    public boolean containsAll(Collection<?> c) {
-        boolean ret;
+    public boolean containsAll(@Nonnull Collection<?> c) {
+        long read = lock.readLock();
         try {
-            lock.lockRead();
-            ret = super.containsAll(c);
+            for(Object o : c) {
+                boolean ok = false;
+                for(Element<V> element : elements) {
+                    if(element == null)
+                        return true;
+                    if(o.equals(element.element)) {
+                        ok = true;
+                        break;
+                    }
+                }
+                if(!ok)
+                    return false;
+            }
+            return true;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(read);
         }
-        return ret;
     }
 
     @Override
-    public boolean addAll(Collection<? extends V> c) {
+    public boolean addAll(@Nonnull Collection<? extends V> c) {
         return addAll(0, c);
     }
 
-    public boolean addAll(Collection<? extends V> c, long lifeTime) {
+    public boolean addAll(@Nonnull Collection<? extends V> c, long lifeTime) {
         return addAll(0, c, lifeTime);
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
-        for(Object o : c) {
-            if(!remove(o)) {
+    public boolean removeAll(@Nonnull Collection<?> c) {
+        for(Object o : c)
+            if(!remove(o))
                 return false;
-            }
-        }
         return true;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean retainAll(Collection<?> c) {
+    public boolean retainAll(@Nonnull Collection<?> c) {
         clear();
-        return c.stream()
-                .map(o -> add((V) o))
-                .allMatch(Boolean::booleanValue);
+        return c.stream().allMatch(o -> add((V) o));
     }
 
-    public boolean retainAll(Collection<? extends V> c, long lifeTime) {
+    public boolean retainAll(@Nonnull Collection<? extends V> c, long lifeTime) {
         clear();
         return addAll(c, lifeTime);
     }
 
     @Override
+    @Nonnull
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CachedArrayList {");
-        forEach((v, aLong) -> {
-            sb.append("value=");
-            sb.append(v);
-            sb.append(", time=");
-            sb.append(times);
-            sb.append(';');
-        });
-        sb.replace(sb.lastIndexOf(";"), sb.lastIndexOf(";"), "");
-        sb.append('}');
-        return sb.toString();
-    }
-
-    @Override
-    public void replaceAll(UnaryOperator<V> operator) {
-        for(int i = 0; i < size(); i++) {
-            set(i, operator.apply(get(i)));
+        long write = lock.writeLock();
+        try {
+            return "ConcurrentLiveArrayList{" +
+                    "size=" + size +
+                    ", started=" + started +
+                    ", defaultPeriod=" + defaultPeriod +
+                    ", elements=" + Arrays.toString(elements) +
+                    ", delay=" + delay +
+                    ", tickingPool=" + tickingPool +
+                    '}';
+        } finally {
+            lock.unlockWrite(write);
         }
     }
 
-    public void replaceAll(UnaryOperator<V> operator, UnaryOperator<Long> lifeTimeOperator) {
-        for(int i = 0; i < size(); i++) {
-            set(i, operator.apply(get(i)), lifeTimeOperator.apply(getTime(i)));
+    @Override
+    public void replaceAll(@Nonnull UnaryOperator<V> operator) {
+        long write = lock.writeLock();
+        try {
+            for(Element<V> element : elements) {
+                if(element == null)
+                    return;
+                element.element = operator.apply(element.element);
+                element.reset();
+            }
+        } finally {
+            lock.unlockWrite(write);
         }
     }
 
     /**
-     * This method not used due specific of time holding
+     * Reset timing
+     *
+     * @param operator         the operator
+     * @param lifeTimeOperator life time replacer
      */
-    //TODO write this
-    @Override
-    public void sort(Comparator<? super V> c) {
-        throw new UnsupportedOperationException();
+    public void replaceAll(@Nonnull UnaryOperator<V> operator, @Nonnull UnaryOperator<Long> lifeTimeOperator) {
+        long write = lock.writeLock();
+        try {
+            for(Element<V> element : elements) {
+                if(element == null)
+                    return;
+                element.element = operator.apply(element.element);
+                element.period = lifeTimeOperator.apply(element.period);
+                element.reset();
+            }
+        } finally {
+            lock.unlockWrite(write);
+        }
     }
 
     @Override
+    public void sort(@Nullable Comparator<? super V> c) {
+        long write = lock.writeLock();
+        try {
+            if(c == null) {
+                Arrays.sort(elements, (o1, o2) -> {
+                    if(o1 == null && o2 == null) return 0;
+                    if(o1 == null) return +1;
+                    if(o2 == null) return -1;
+
+                    return ((Comparable<V>) o1.element).compareTo(o2.element);
+                });
+            } else
+                Arrays.sort(elements, (o1, o2) -> {
+                    if(o1 == null && o2 == null) return 0;
+                    if(o1 == null) return +1;
+                    if(o2 == null) return -1;
+
+                    return c.compare(o1.element, o2.element);
+                });
+        } finally {
+            lock.unlockWrite(write);
+        }
+    }
+
+    @Override
+    @Nonnull
     public Spliterator<V> spliterator() {
-        Spliterator<V> ret;
+        long read = lock.readLock();
         try {
-            lock.lockRead();
-            ret = super.spliterator();
+            return Spliterators.spliterator(iterator(), Spliterator.ORDERED, Spliterator.SIZED);
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(read);
         }
-        return ret;
     }
 
     @Override
-    public boolean removeIf(Predicate<? super V> filter) {
-        for(int i = 0; i < size(); i++) {
-            V value = get(i);
-            if(filter.test(value) && !remove(value)) {
-                return false;
-            }
+    public boolean removeIf(@Nonnull Predicate<? super V> filter) {
+        long l = lock.writeLock();
+        try {
+            boolean ok = false;
+            for(int i = 0; i < size.get(); i++)
+                if(filter.test(elements[i].element)) {
+                    remove0(i);
+                    i--;
+                    ok = true;
+                }
+            return ok;
+        } finally {
+            lock.unlockWrite(l);
         }
-        return true;
     }
 
     @Override
+    @Nonnull
     public Stream<V> stream() {
-        Stream<V> ret;
-        try {
-            lock.lockRead();
-            ret = super.stream();
-        } finally {
-            lock.unlockRead();
-        }
-        return ret;
+        Stream.Builder<V> ret = Stream.builder();
+        forEach(ret);
+        return ret.build();
     }
 
     @Override
+    @Nonnull
     public Stream<V> parallelStream() {
-        Stream<V> ret;
-        try {
-            lock.lockRead();
-            ret = super.parallelStream();
-        } finally {
-            lock.unlockRead();
-        }
-        return ret;
+        Stream.Builder<V> ret = Stream.builder();
+        forEach(ret);
+        return ret.build().parallel();
     }
 
     @Override
-    public void forEach(Consumer<? super V> action) {
+    public void forEach(@Nonnull Consumer<? super V> action) {
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            super.forEach(action);
+            for(int i = 0; i < size.get(); i++)
+                action.accept(elements[i].element);
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(l);
         }
     }
 
-    public void forEach(BiConsumer<? super V, ? super Long> action) {
+    public void forEach(@Nonnull BiConsumer<? super V, ? super Long> action) {
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            for(int i = 0; i < super.size(); i++) {
-                action.accept(super.get(i), times.get(i));
-            }
+            for(int i = 0; i < size.get(); i++)
+                action.accept(elements[i].element, elements[i].period);
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(l);
         }
     }
 
     @Override
-    public Object clone() throws CloneNotSupportedException {
-        ConcurrentLiveArrayList list;
+    @Nonnull
+    public ConcurrentLiveArrayList<V> clone() {
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            list = ((ConcurrentLiveArrayList) super.clone());
-            list.times = (ArrayList) times.clone();
+            ConcurrentLiveArrayList<V> liveArrayList = new ConcurrentLiveArrayList<>(defaultPeriod, size.get());
+            liveArrayList.elements = new Element[elements.length];
+            for(int i = 0; i < size.get(); i++)
+                liveArrayList.elements[i] = elements[i].clone();
+            liveArrayList.size.set(size.get());
+            liveArrayList.started.set(started.get());
+            liveArrayList.defaultPeriod = defaultPeriod;
+            liveArrayList.delay = delay;
+            liveArrayList.tickingPool = tickingPool;
+            return liveArrayList;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(l);
         }
-        return list;
     }
 
     @Override
+    @Nullable
     public V get(int index) {
-        V ret;
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            ret = super.get(index);
+            checkRange(index);
+            return elements[index].element;
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(l);
         }
-        return ret;
-    }
-
-    public Long getTime(int index) {
-        return getTime0(index);
-    }
-
-    private Long getTime0(int index) {
-        Long ret;
-        try {
-            lock.lockRead();
-            ret = times.get(index);
-        } finally {
-            lock.unlockRead();
-        }
-        return ret;
     }
 
     @Override
     public int size() {
-        int ret;
-        try {
-            lock.lockRead();
-            ret = super.size();
-        } finally {
-            lock.unlockRead();
-        }
-        return ret;
+        return size.get();
     }
 
     @Override
     public boolean equals(Object o) {
-        ConcurrentLiveArrayList that;
-        try {
-            lock.lockRead();
-            that = this;
-        } finally {
-            lock.unlockRead();
-        }
-        if(that == o) return true;
+        if(this == o) return true;
         if(!(o instanceof ConcurrentLiveArrayList)) return false;
+
+        ConcurrentLiveArrayList<?> that = (ConcurrentLiveArrayList<?>) o;
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            if(!super.equals(o)) return false;
+            return getDefaultPeriod() == that.getDefaultPeriod() && delay == that.delay && size.get() == that.size.get() && Arrays.equals(elements, that.elements) && started.get() == that.started.get();
         } finally {
-            lock.unlockRead();
+            lock.unlockRead(l);
         }
-
-
-        ConcurrentLiveArrayList<?> thatt = (ConcurrentLiveArrayList<?>) o;
-
-        return that.delay == thatt.delay && that.isStarted.get() == thatt.isStarted.get();
     }
 
     @Override
     public int hashCode() {
-        ConcurrentLiveArrayList that;
-        int result;
+        long l = lock.readLock();
         try {
-            lock.lockRead();
-            that = this;
-            result = super.hashCode();
+            int result = size != null ? size.hashCode() : 0;
+            result = 31 * result + (int) (getDefaultPeriod() ^ (getDefaultPeriod() >>> 32));
+            result = 31 * result + Arrays.hashCode(elements);
+            result = 31 * result + (int) (delay ^ (delay >>> 32));
+            result = 31 * result + (started != null ? started.hashCode() : 0);
+            result = 31 * result + (getTickingPool() != null ? getTickingPool().hashCode() : 0);
+            return result;
         } finally {
-            lock.unlockRead();
-        }
-
-        result = 31 * result + (int) (that.delay ^ (that.delay >>> 32));
-        result = 31 * result + (that.isStarted.get() ? 1 : 0);
-        return result;
-    }
-
-    void updateValues(long delta) {
-        for(int i = 0; i < size(); i++) {
-            long current = getTime0(i) - delta;
-            if(current <= 0) {
-                remove(i);
-            } else {
-                times.set(i, current);
-            }
+            lock.unlockRead(l);
         }
     }
 
     public void start() {
-        if(!isStarted.get()) {
-            DEFAULT_POOL.startTicking(this, delay);
-            isStarted.set(true);
-        }
+        if(started.compareAndSet(false, true))
+            tickingPool.startTicking(this, delay);
     }
 
     public void stop() {
-        if(isStarted.get()) {
-            DEFAULT_POOL.stopTicking(this);
-            isStarted.set(false);
-        }
+        if(started.compareAndSet(true, false))
+            tickingPool.stopTicking(this);
+    }
+
+    public void setTickingPool(@Nonnull TickingPool tickingPool, boolean start) {
+        stop();
+        this.tickingPool = tickingPool;
+        if(start)
+            start();
     }
 
     @Override
-    public void tick() throws Exception {
-        updateValues(delay);
+    public boolean isRunning() {
+        return started.get();
+    }
+
+    @Override
+    public void tick() {
+        if(!isRunning())
+            return;
+        long l = lock.writeLock();
+        try {
+            long time = System.currentTimeMillis();
+            for(int i = 0; i < size.get(); i++)
+                if(!elements[i].isAlive(time)) {
+                    remove0(i);
+                    i--;
+                }
+        } finally {
+            lock.unlockWrite(l);
+        }
     }
 
     @Override
     public boolean objectEquals(Object other) {
         return this == other;
+    }
+
+    protected void resize(int required) {
+        int oldCapacity = elements.length;
+        int newCapacity = oldCapacity + (oldCapacity >> 1);
+        if(newCapacity - required < 0)
+            newCapacity = required;
+        if(newCapacity - MAX_ARRAY_SIZE > 0) {
+            if(required < 0)
+                throw new OutOfMemoryError();
+            newCapacity = MAX_ARRAY_SIZE;
+        }
+        elements = Arrays.copyOf(elements, newCapacity);
+    }
+
+    protected void checkRange(int i) {
+        if(i < 0 || i >= size.get())
+            throw new IndexOutOfBoundsException("Index: " + i + ", size: " + size.get());
+    }
+
+    @ToString
+    @EqualsAndHashCode
+    protected static final class Element<V> implements Cloneable {
+        protected volatile V element;
+        protected volatile long creationTime;
+        protected volatile long period;
+
+        public Element(V element, long period) {
+            this.element = element;
+            this.period = period;
+            this.creationTime = System.currentTimeMillis();
+        }
+
+        public boolean isAlive(long current) {
+            return current - creationTime < period;
+        }
+
+        public void reset() {
+            creationTime = System.currentTimeMillis();
+        }
+
+        public long liveTime() {
+            return System.currentTimeMillis() - creationTime;
+        }
+
+        @Override
+        protected Element<V> clone() {
+            Element<V> clone;
+            try {
+                clone = (Element<V>) super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new BadImplementationError("Thrown CloneNotSupportedException!");
+            }
+            clone.element = element;
+            clone.creationTime = creationTime;
+            clone.period = period;
+            return clone;
+        }
+    }
+
+    @ToString
+    @EqualsAndHashCode
+    protected final class IteratorImpl implements Iterator<V> {
+        protected final AtomicInteger index = new AtomicInteger(0);
+
+        @Override
+        public boolean hasNext() {
+            return index.get() < size();
+        }
+
+        @Override
+        public V next() {
+            if(index.get() >= size())
+                throw new NoSuchElementException();
+            return get(index.getAndIncrement());
+        }
+
+        @Override
+        public void remove() {
+            ConcurrentLiveArrayList.this.remove(index.decrementAndGet());
+        }
+    }
+
+    @ToString
+    @EqualsAndHashCode
+    protected final class ListIteratorImpl implements ListIterator<V> {
+        protected final AtomicInteger index;
+
+        public ListIteratorImpl() {
+            this(0);
+        }
+
+        public ListIteratorImpl(int index) {
+            this.index = new AtomicInteger(index);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return index.get() < size();
+        }
+
+        @Override
+        public V next() {
+            if(index.get() < size())
+                return get(index.getAndIncrement());
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public boolean hasPrevious() {
+            return index.get() > 0;
+        }
+
+        @Override
+        public V previous() {
+            if(index.get() <= 0)
+                throw new NoSuchElementException();
+            return get(index.getAndDecrement() - 1);
+        }
+
+        @Override
+        public int nextIndex() {
+            int size = size();
+            if(index.get() < size)
+                return index.get() + 1;
+            return size;
+        }
+
+        @Override
+        public int previousIndex() {
+            return index.get() - 1;
+        }
+
+        @Override
+        public void remove() {
+            ConcurrentLiveArrayList.this.remove(index.decrementAndGet());
+        }
+
+        @Override
+        public void set(V v) {
+            ConcurrentLiveArrayList.this.set(index.get(), v);
+        }
+
+        @Override
+        public void add(V v) {
+            ConcurrentLiveArrayList.this.add(index.get(), v);
+        }
     }
 }

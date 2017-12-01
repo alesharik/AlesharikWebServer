@@ -18,347 +18,572 @@
 
 package com.alesharik.webserver.api.collections;
 
-import org.junit.BeforeClass;
+import com.alesharik.webserver.api.ticking.OneThreadTickingPool;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ListIterator;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
 
 public class ConcurrentLiveArrayListTest {
-    private static ConcurrentLiveArrayList<Integer> wr;
-    private static ConcurrentLiveArrayList<Integer> wrDouble;
-    private static ConcurrentLiveArrayList<Integer> forSort;
-    private static ConcurrentLiveArrayList<Integer> readOnly;
-    private static ConcurrentLiveArrayList<Integer> sameAsReadOnly;
-    private static ConcurrentLiveArrayList<Integer> clear;
-    private static ConcurrentLiveArrayList<Integer> empty;
+    private final ConcurrentLiveArrayList<String> list = new ConcurrentLiveArrayList<>(1L);
 
-    @BeforeClass
-    public static void setUp() throws Exception {
-        wr = new ConcurrentLiveArrayList<>(2000);
-        readOnly = new ConcurrentLiveArrayList<>(2000);
-        readOnly.stop();
-        sameAsReadOnly = new ConcurrentLiveArrayList<>(2000);
-        sameAsReadOnly.stop();
-        for(int i = 0; i <= 100; i++) {
-            wr.add(i);
-            readOnly.add(i);
-            sameAsReadOnly.add(i);
-        }
-        for(int i = 101; i <= 1000; i++) {
-            wr.add(0);
-        }
-        for(int i = 300; i < 350; i++) {
-            wr.set(i, i);
-        }
-        wr.add(306);
-        clear = new ConcurrentLiveArrayList<>(2000);
-        for(int i = 0; i < 1000; i++) {
-            clear.add(i);
-        }
-        empty = new ConcurrentLiveArrayList<>(2000);
+    @Test
+    public void testAddNull() {
+        assertTrue(list.add(null));
+    }
 
-        forSort = new ConcurrentLiveArrayList<>(2000);
-        forSort.stop();
-        for(int i = 0; i < 100; i++) {
-            forSort.add(99 - i);
-        }
-
-        wrDouble = new ConcurrentLiveArrayList<>();
-        wrDouble.addAll(wr);
+    @Test(expected = IllegalArgumentException.class)
+    public void addNegativeLifeTime() {
+        list.add("dsa", -1);
+        fail();
     }
 
     @Test
-    public void constructorTest() throws Exception { //Test constructor works
-        ConcurrentLiveArrayList<String> list = new ConcurrentLiveArrayList<>(1L);
+    public void addElement() {
+        assertTrue(list.add("asd", 100));
+        assertTrue(list.contains("asd"));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testNegativeCapacity() {
+        list.checkRange(-1);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testBigCapacity() {
+        list.checkRange(1000);
+    }
+
+    @Test
+    public void insertElement() {
+        list.add("asd");
         list.add("sdf");
-        assertTrue(list.contains("sdf"));
+        list.add(1, "dfg");
+
+        assertEquals("asd", list.get(0));
+        assertEquals("dfg", list.get(1));
+        assertEquals("sdf", list.get(2));
     }
 
     @Test
-    public void add() throws Exception {
-        assertTrue(wr.add(1000));
+    public void setElement() {
+        list.add("asd");
+        list.add("sdf");
+        list.add("dfg");
+
+        assertEquals("asd", list.get(0));
+        assertEquals("sdf", list.get(1));
+        assertEquals("dfg", list.get(2));
+
+        list.set(1, "qwerty");
+
+        assertEquals("asd", list.get(0));
+        assertEquals("qwerty", list.get(1));
+        assertEquals("dfg", list.get(2));
     }
 
     @Test
-    public void addWithLifeTime() throws Exception {
-        assertTrue(wr.add(1001, 10L));
+    public void setPeriod() {
+        list.add("asd");
+        list.add("sdf");
+        list.add("dfg");
+
+        assertEquals(ConcurrentLiveArrayList.DEFAULT_LIFE_TIME, list.getPeriod(1));
+        list.setPeriod(1, 10);
+        assertEquals(10, list.getPeriod(1));
     }
 
     @Test
-    public void addWithPosition() throws Exception {
-        wr.add(401, Integer.valueOf(1002));
-    }
-
-    @Test
-    public void addWithPositionAndLifeTime() throws Exception {
-        wr.add(400, 1003, 10L);
-    }
-
-    @Test
-    public void set() throws Exception {
-        assertTrue(Integer.compare(wr.set(300, 1004), 300) == 0);
-    }
-
-    @Test
-    public void setWithLifeTime() throws Exception {
-        assertTrue(Integer.compare(wr.set(301, 1004, 10L), 301) == 0);
-    }
-
-    @Test
-    public void remove() throws Exception {
-        assertTrue(wr.remove(302) != null);
-    }
-
-    @Test
-    public void indexOf() throws Exception {
-        assertTrue(Integer.compare(readOnly.indexOf(20), 19) == 0);
-    }
-
-    @Test
-    public void lastIndexOf() throws Exception {
-        assertTrue(Integer.compare(readOnly.lastIndexOf(90), 89) == 0);
-    }
-
-    @Test
-    public void clear() throws Exception {
-        clear.clear();
-        assertTrue(clear.isEmpty());
-    }
-
-    @Test
-    public void addAll() throws Exception {
-        assertTrue(wr.addAll(Arrays.asList(600, 601, 602)));
-    }
-
-    @Test
-    public void addAllWithLifeTime() throws Exception {
-        assertTrue(wr.addAll(Arrays.asList(600, 601, 602), 10L));
-    }
-
-    @Test
-    public void addAllWithIndex() throws Exception {
-        assertTrue(wr.addAll(0, Arrays.asList(600, 601, 602)));
-    }
-
-    @Test
-    public void addAllWithIndexAndLifeTime() throws Exception {
-        assertTrue(wr.addAll(1, Arrays.asList(600, 601, 602), 10L));
-    }
-
-    @Test
-    public void iterator() throws Exception {
-        assertNotNull(readOnly.iterator());
-    }
-
-    @Test
-    public void listIterator() throws Exception {
-        assertNotNull(readOnly.listIterator());
-    }
-
-    @Test
-    public void listIteratorWithIndex() throws Exception {
-        assertNotNull(readOnly.listIterator(10));
-    }
-
-    @Test
-    public void timeMap() throws Exception {
-        assertNotNull(readOnly.timeMap());
-    }
-
-    @Test
-    public void subList() throws Exception {
-        assertNotNull(readOnly.subList(1, 6));
-    }
-
-    @Test
-    public void isEmpty() throws Exception {
-        assertTrue(empty.isEmpty());
-        assertFalse(readOnly.isEmpty());
-    }
-
-    @Test
-    public void contains() throws Exception {
-        assertTrue(readOnly.contains(2));
-        assertFalse(readOnly.contains(567));
-    }
-
-    @Test
-    public void toArray() throws Exception {
-        assertNotNull(readOnly.toArray());
-    }
-
-    @Test
-    public void toArray1() throws Exception {
-        assertNotNull(readOnly.toArray(new Object[0]));
-    }
-
-    @Test
-    public void containsAll() throws Exception {
-        assertTrue(readOnly.containsAll(Arrays.asList(1, 2, 3)));
-    }
-
-    @Test
-    public void removeAll() throws Exception {
-        assertTrue(wr.removeAll(Arrays.asList(305, 306, 307)));
-        assertFalse(wr.removeAll(Arrays.asList(5412, 45123)));
-    }
-
-    @Test
-    public void retainAll() throws Exception {
-        List<Integer> c = new ArrayList<>();
-        c.addAll(wrDouble);
-        assertTrue(wrDouble.retainAll(c));
-        assertFalse(wrDouble.contains(310));
-    }
-
-    @Test
-    public void retainAll1() throws Exception {
-        List<Integer> c = new ArrayList<>();
-        c.addAll(wr);
-        c.remove(Integer.valueOf(310));
-        assertTrue(wrDouble.retainAll(c, 60_000L));
-        assertFalse(wrDouble.contains(310));
-    }
-
-    @Test
-    public void toStringTest() throws Exception {
-        assertNotNull(readOnly.toString());
-    }
-
-    @Test
-    public void replaceAll() throws Exception {
-        wr.replaceAll(integer -> {
-            if(integer.compareTo(311) == 0) {
-                return 5600;
-            } else {
-                return integer;
-            }
-        });
-        assertTrue(wr.contains(5600));
-    }
-
-    @Test
-    public void replaceAll1() throws Exception {
-        wrDouble.replaceAll(integer -> {
-            if(integer.compareTo(311) == 0) {
-                return 3200;
-            } else {
-                return integer;
-            }
-        }, aLong -> aLong + 1);
-        assertTrue(wrDouble.contains(3200));
-    }
-
-    @Test(expected = UnsupportedOperationException.class) //TODO write this
-    public void sort() throws Exception {
-        forSort.sort(Integer::compareTo);
-    }
-
-    @Test
-    public void spliterator() throws Exception {
-        assertNotNull(readOnly.spliterator());
-    }
-
-    @Test
-    public void removeIf() throws Exception {
-        assertTrue(wr.removeIf(integer -> integer.compareTo(320) == 0));
-        assertFalse(wr.contains(320));
-        wr.add(320);
-        assertFalse(wr.removeIf(integer -> {
-            boolean ok = integer.compareTo(320) == 0;
-            if(ok) {
-                wr.remove(integer);
-            }
-            return ok;
-        }));
-    }
-
-    @Test
-    public void stream() throws Exception {
-        assertNotNull(readOnly.stream());
-    }
-
-    @Test
-    public void parallelStream() throws Exception {
-        assertNotNull(readOnly.parallelStream());
-    }
-
-    @Test
-    public void forEach() throws Exception {
-        AtomicBoolean isOk = new AtomicBoolean(false);
-        readOnly.forEach(integer -> isOk.set(integer >= 0));
-        assertTrue(isOk.get());
-    }
-
-    @Test
-    public void forEach1() throws Exception {
-        AtomicBoolean isOk = new AtomicBoolean(false);
-        readOnly.forEach((integer, aLong) -> isOk.set(integer >= 0 && aLong >= 0));
-        assertTrue(isOk.get());
-    }
-
-    @Test
-    public void cloneTest() throws Exception {
-        ConcurrentLiveArrayList<Integer> copy = (ConcurrentLiveArrayList<Integer>) sameAsReadOnly.clone();
-        assertTrue(copy.equals(sameAsReadOnly));
-    }
-
-    @Test
-    public void get() throws Exception {
-        assertTrue(readOnly.get(2) == 3);
-    }
-
-    @Test
-    public void getTime() throws Exception {
-        assertTrue(readOnly.getTime(2) > 0);
-    }
-
-    @Test
-    public void size() throws Exception {
-        assertTrue(readOnly.size() > 0);
-        assertTrue(empty.size() == 0);
-    }
-
-    @Test
-    public void equals() throws Exception {
-        assertTrue(readOnly.equals(sameAsReadOnly));
-        assertFalse(readOnly.equals(wr));
-    }
-
-    @Test
-    public void start() throws Exception {
-        wr.start();
-    }
-
-    @Test
-    public void stop() throws Exception {
-        wr.stop();
-    }
-
-    @Test
-    public void tick() throws Exception {
-        wr.tick();
-    }
-
-    @Test
-    public void hashCodeTest() throws Exception {
-        assertTrue(Integer.compare(readOnly.hashCode(), sameAsReadOnly.hashCode()) == 0);
-        assertFalse(Integer.compare(readOnly.hashCode(), wr.hashCode()) == 0);
-    }
-
-    @Test
-    public void testArrayWorks() throws Exception {
-        ConcurrentLiveArrayList<Integer> list = new ConcurrentLiveArrayList<>(1, 10, false);
-        for(int i = 0; i < 100; i++) {
-            list.add(i, (long) i);
-        }
+    public void resetTime() throws Exception {
         list.start();
-        Thread.sleep(500);
+        list.add("as");
+        list.add("asd");
+
+        Thread.sleep(5);
+        assertEquals(5, list.getLiveTime(1), 2);
+        list.resetTime(1);
+
+        assertEquals(0, list.getLiveTime(1), 2);
+    }
+
+    @Test
+    public void remove() {
+        list.add("as");
+        list.add("dasfsda");
+        list.add("asdsdaasdasd");
+
+        list.remove(1);
+
+        assertFalse(list.contains("dasfsda"));
+        assertTrue(list.contains("as"));
+        assertTrue(list.contains("asdsdaasdasd"));
+    }
+
+    @Test
+    public void indexOf() {
+        list.add("as");
+        list.add("dasfsda");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+
+        assertEquals(2, list.indexOf("asdsdaasdasd"));
+    }
+
+    @Test
+    public void lastIndexOf() {
+        list.add("as");
+        list.add("dasfsda");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+
+        assertEquals(6, list.lastIndexOf("asdsdaasdasd"));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void clear() {
         assertTrue(list.isEmpty());
+
+        list.add("as");
+        list.add("dasfsda");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+        list.add("asdsdaasdasd");
+
+        assertFalse(list.isEmpty());
+
+        list.clear();
+
+        assertTrue(list.isEmpty());
+        assertEquals(0, list.size());
+        //noinspection ResultOfMethodCallIgnored
+        list.get(0);
+        fail();
+    }
+
+    @Test
+    public void addAllWithIndex() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        List<String> b = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            b.add("b" + i);
+        }
+
+        list.addAll(a);
+        list.addAll(50, b);
+        for(int i = 0; i < 50; i++) {
+            assertEquals(a.get(i), list.get(i));
+        }
+
+        for(int i = 0; i < 100; i++) {
+            assertEquals(b.get(i), list.get(i + 50));
+        }
+    }
+
+    @Test
+    public void iterator() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + ((i == 0) ? "c" : i));
+        }
+
+        list.addAll(a);
+
+        Iterator<String> iterator = list.iterator();
+        //noinspection Java8CollectionRemoveIf
+        while(iterator.hasNext()) {
+            String next = iterator.next();
+            if(!next.contains("c"))
+                iterator.remove();
+        }
+
+        assertEquals(1, list.size());
+        assertTrue(list.contains("ac"));
+        for(int i = 1; i < 100; i++) {
+            assertFalse(list.contains("a" + i));
+        }
+    }
+
+    @Test
+    public void listIterator() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + ((i == 0) ? "c" : i));
+        }
+
+        list.addAll(a);
+
+        ListIterator<String> iterator = list.listIterator();
+        //noinspection Java8CollectionRemoveIf,WhileLoopReplaceableByForEach
+        while(iterator.hasNext()) {
+            String next = iterator.next();
+            if(!next.contains("c"))
+                iterator.remove();
+        }
+
+        assertEquals(1, list.size());
+        assertTrue(list.contains("ac"));
+        for(int i = 1; i < 100; i++) {
+            assertFalse(list.contains("a" + i));
+        }
+    }
+
+    @Test
+    public void listIteratorWithIndex() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + ((i < 5) ? "c" + i : i));
+        }
+
+        list.addAll(a);
+
+        ListIterator<String> iterator = list.listIterator(5);
+        //noinspection Java8CollectionRemoveIf
+        while(iterator.hasNext()) {
+            String next = iterator.next();
+            if(!next.contains("c"))
+                iterator.remove();
+        }
+
+        assertEquals(5, list.size());
+        assertTrue(list.contains("ac0"));
+        assertTrue(list.contains("ac1"));
+        assertTrue(list.contains("ac2"));
+        assertTrue(list.contains("ac3"));
+        assertTrue(list.contains("ac4"));
+        for(int i = 5; i < 100; i++) {
+            assertFalse(list.contains("a" + i));
+        }
+    }
+
+    @Test
+    public void subList() {
+        list.stop();
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        List<String> sub = list.subList(10, 51);
+        for(int i = 10; i < 50; i++) {
+            assertEquals("a" + i, sub.get(i - 10));
+        }
+    }
+
+    @Test
+    public void isEmpty() {
+        assertTrue(list.isEmpty());
+        list.add("asd");
+        assertFalse(list.isEmpty());
+        list.remove("asd");
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void contains() {
+        list.add("test");
+        list.add("test");
+        list.add("asd");
+        list.add("gf");
+
+        assertTrue(list.contains("test"));
+        assertTrue(list.contains("gf"));
+
+        assertFalse(list.contains("asdfasdfasd"));
+    }
+
+    @Test
+    public void toObjectArray() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        Object[] arr = list.toArray();
+
+        for(int i = 0; i < 100; i++) {
+            assertEquals(a.get(i), arr[i]);
+        }
+    }
+
+    @Test
+    public void toArray() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        assertNull(list.toArray(null));
+        String[] arr = list.toArray(new String[0]);
+
+        for(int i = 0; i < 100; i++) {
+            assertEquals(a.get(i), arr[i]);
+        }
+    }
+
+    @Test
+    public void removeObject() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        assertTrue(list.contains("a0"));
+        assertTrue(list.remove("a0"));
+        assertFalse(list.contains("a0"));
+        assertFalse(list.remove("a0"));
+    }
+
+    @Test
+    public void containsAll() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        assertTrue(list.containsAll(a));
+
+        a.add("asd");
+        assertFalse(list.containsAll(a));
+    }
+
+    @Test
+    public void removeAll() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        assertFalse(list.isEmpty());
+        a.remove("a0");
+        assertTrue(list.removeAll(a));
+
+        assertEquals(1, list.size());
+        assertTrue(list.contains("a0"));
+    }
+
+    @Test
+    public void retainAll() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        assertFalse(list.isEmpty());
+        a.remove("a0");
+
+        assertTrue(list.retainAll(a));
+        assertFalse(list.contains("a0"));
+        assertTrue(list.containsAll(a));
+    }
+
+    @Test
+    public void replaceAll() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        assertFalse(list.isEmpty());
+
+        list.replaceAll(s -> "b" + s);
+        for(String s : a)
+            assertTrue(list.contains("b" + s));
+    }
+
+    @Test
+    public void replaceAllWithTime() {
+        List<String> a = new ArrayList<>();
+        for(int i = 0; i < 100; i++) {
+            a.add("a" + i);
+        }
+
+        list.addAll(a);
+
+        assertFalse(list.isEmpty());
+
+        list.replaceAll(s -> "b" + s, aLong -> -1L);
+        list.tick();
+
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void sortDefault() {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> sample = list.subList(0, 100);
+        list.sort(null);
+
+        sample.sort(String::compareTo);
+        for(int i = 0; i < sample.size(); i++) {
+            assertEquals(sample.get(i), list.get(i));
+        }
+    }
+
+    @Test
+    public void sortWithComparator() {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> sample = list.subList(0, 100);
+        list.sort((o1, o2) -> -o1.compareTo(o2));
+
+        sample.sort((o1, o2) -> -o1.compareTo(o2));
+        for(int i = 0; i < sample.size(); i++) {
+            assertEquals(sample.get(i), list.get(i));
+        }
+    }
+
+    @Test
+    public void spliterator() {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        list.spliterator().forEachRemaining(s -> {
+            assertTrue(list.contains(s));
+            list.remove(s);
+        });
+    }
+
+    @Test
+    public void removeIf() {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        assertFalse(list.isEmpty());
+        assertTrue(list.removeIf(s -> true));
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void parallelStream() {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        list.parallelStream().forEach(list::remove);
+    }
+
+    @Test
+    public void forEach() {
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> a = new ArrayList<>();
+        //noinspection UseBulkOperation
+        list.forEach((Consumer<String>) a::add);
+        assertEquals(a.size(), list.size());
+        assertTrue(list.containsAll(a));
+    }
+
+    @Test
+    public void forEachWithTime() {
+        list.stop();
+
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> a = new ArrayList<>();
+        //noinspection UseBulkOperation
+        list.forEach((s, aLong) -> a.add(s + ":" + aLong));
+        assertEquals(a.size(), list.size());
+        for(int i = 0; i < list.size(); i++) {
+            assertTrue(a.get(i).startsWith(list.get(i)));
+        }
+    }
+
+    @Test
+    public void cloneTest() {
+        list.stop();
+        ThreadLocalRandom.current().ints(100)
+                .mapToObj(operand -> "a" + Integer.toString(operand))
+                .forEach(list::add);
+        List<String> clone = list.clone();
+        assertEquals(clone, list);
+        String t1 = clone.get(0);
+        list.set(0, "asdfsdaassadsasasadsad");
+        assertEquals(t1, clone.get(0));
+    }
+
+    @Test
+    public void isRunning() {
+        assertTrue(list.isRunning());
+        list.stop();
+        assertFalse(list.isRunning());
+        list.start();
+        assertTrue(list.isRunning());
+    }
+
+    @Test
+    public void testLogic() throws Exception {
+        list.start();
+        for(int i = 0; i < 100; i++) {
+            list.add(Integer.toString(i));
+        }
+        list.add("a", 1);
+        for(int i = 0; i < 100; i++) {
+            list.add(Integer.toString(i));
+        }
+
+        Thread.sleep(1);
+        list.tick();
+        Thread.sleep(5);
+        assertFalse(list.contains("a"));
+
+        list.stop();
+        list.add("a", 1);
+        Thread.sleep(10);
+        assertTrue(list.contains("a"));
+        list.start();
+        Thread.sleep(2);
+        assertFalse(list.contains("a"));
+    }
+
+    @Test
+    public void testChangePools() {
+        assertTrue(list.isRunning());
+        OneThreadTickingPool pool1 = new OneThreadTickingPool();
+        list.setTickingPool(pool1, false);
+        assertFalse(list.isRunning());
+        assertSame(pool1, list.getTickingPool());
+
+        OneThreadTickingPool pool2 = new OneThreadTickingPool();
+        list.setTickingPool(pool2, true);
+        assertTrue(list.isRunning());
+        assertSame(pool2, list.getTickingPool());
     }
 }
