@@ -25,20 +25,20 @@ import static org.junit.Assert.assertSame;
 
 public class ExceptionWithoutStacktraceTest {
     @Test
-    public void ctor() throws Exception {
+    public void ctor() {
         ExceptionWithoutStacktrace exceptionWithoutStacktrace = new ExceptionWithoutStacktrace();
         assertEquals(0, exceptionWithoutStacktrace.getStackTrace().length);
     }
 
     @Test
-    public void ctorWithMessage() throws Exception {
+    public void ctorWithMessage() {
         ExceptionWithoutStacktrace exceptionWithoutStacktrace = new ExceptionWithoutStacktrace("test");
         assertEquals(0, exceptionWithoutStacktrace.getStackTrace().length);
         assertEquals("test", exceptionWithoutStacktrace.getMessage());
     }
 
     @Test
-    public void ctorWithCause() throws Exception {
+    public void ctorWithCause() {
         Exception cause = new RuntimeException();
         ExceptionWithoutStacktrace exceptionWithoutStacktrace = new ExceptionWithoutStacktrace(cause);
         assertEquals(0, exceptionWithoutStacktrace.getStackTrace().length);
@@ -46,7 +46,7 @@ public class ExceptionWithoutStacktraceTest {
     }
 
     @Test
-    public void ctorWithCauseAndMessage() throws Exception {
+    public void ctorWithCauseAndMessage() {
         Exception cause = new RuntimeException();
         ExceptionWithoutStacktrace exceptionWithoutStacktrace = new ExceptionWithoutStacktrace("test", cause);
         assertEquals(0, exceptionWithoutStacktrace.getStackTrace().length);

@@ -34,26 +34,26 @@ public class TickableCacheTest {
     private TickableCache notEquals;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         tickableCache = new TickableCache(TICKABLE);
         equals = new TickableCache(TICKABLE);
         notEquals = new TickableCache(TICKABLE1);
     }
 
     @Test
-    public void equalsTest() throws Exception {
+    public void equalsTest() {
         assertTrue(tickableCache.equals(equals));
         assertFalse(tickableCache.equals(notEquals));
     }
 
     @Test
-    public void hashCodeTest() throws Exception {
+    public void hashCodeTest() {
         assertEquals(tickableCache.hashCode(), equals.getHashCode());
         assertFalse(Integer.compare(tickableCache.hashCode(), notEquals.hashCode()) == 0);
     }
 
     @Test
-    public void hashCodeSaveTest() throws Exception {
+    public void hashCodeSaveTest() {
         assertEquals(TICKABLE.hashCode(), tickableCache.hashCode());
         assertEquals(TICKABLE.hashCode(), equals.hashCode());
     }

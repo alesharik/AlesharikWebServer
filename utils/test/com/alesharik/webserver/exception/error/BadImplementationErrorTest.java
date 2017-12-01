@@ -25,7 +25,7 @@ import static org.junit.Assert.assertNull;
 
 public class BadImplementationErrorTest {
     @Test
-    public void ctorWithMessage() throws Exception {
+    public void ctorWithMessage() {
         BadImplementationError error = new BadImplementationError("test");
         assertEquals("test", error.getMessage());
         assertNull(error.getCause());

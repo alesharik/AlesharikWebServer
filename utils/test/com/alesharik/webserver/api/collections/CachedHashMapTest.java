@@ -39,13 +39,13 @@ public class CachedHashMapTest {
     private CachedHashMap<Integer, Integer> map;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         map = new CachedHashMap<>();
         map.stop();
     }
 
     @Test
-    public void size() throws Exception {
+    public void size() {
         assertEquals(0, map.size());
         for(int i = 0; i < 100; i++) {
             map.put(i, i);
@@ -54,7 +54,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void isEmpty() throws Exception {
+    public void isEmpty() {
         assertTrue(map.isEmpty());
         map.put(1, 1);
         assertFalse(map.isEmpty());
@@ -63,7 +63,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void containsKey() throws Exception {
+    public void containsKey() {
         assertFalse(map.containsKey(null));
 
         assertFalse(map.containsKey(1));
@@ -76,7 +76,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void containsValue() throws Exception {
+    public void containsValue() {
         assertFalse(map.containsValue(null));
         assertFalse(map.containsValue(1));
 
@@ -91,7 +91,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void get() throws Exception {
+    public void get() {
         assertNull(map.get(null));
 
         for(int i = 0; i < 100; i++)
@@ -104,7 +104,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void period() throws Exception {
+    public void period() {
         assertEquals(-1, map.getPeriod(1));
         map.put(1, 1);
         assertEquals(CachedHashMap.DEFAULT_LIFE_TIME, map.getPeriod(1));
@@ -125,20 +125,20 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void put() throws Exception {
+    public void put() {
         assertNull(map.put(1, 1));
         assertEquals(1, map.put(1, 2).intValue());
     }
 
     @Test
-    public void remove() throws Exception {
+    public void remove() {
         assertNull(map.remove(1));
         map.put(1, 1);
         assertEquals(1, map.remove(1).intValue());
     }
 
     @Test
-    public void putAllFromMap() throws Exception {
+    public void putAllFromMap() {
         Map<Integer, Integer> mapa = new HashMap<>();
         for(int i = 0; i < 100; i++)
             mapa.put(i, i);
@@ -151,7 +151,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void putAllFromMapWithPeriod() throws Exception {
+    public void putAllFromMapWithPeriod() {
         Map<Integer, Integer> mapa = new HashMap<>();
         for(int i = 0; i < 100; i++)
             mapa.put(i, i);
@@ -164,7 +164,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void putAllFromMapWithPeriodSupplier() throws Exception {
+    public void putAllFromMapWithPeriodSupplier() {
         Map<Integer, Integer> mapa = new HashMap<>();
         for(int i = 0; i < 100; i++)
             mapa.put(i, i);
@@ -177,7 +177,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void putAllFromCachedMap() throws Exception {
+    public void putAllFromCachedMap() {
         CachedHashMap<Integer, Integer> mapa = new CachedHashMap<>();
         mapa.stop();
         for(int i = 0; i < 100; i++)
@@ -191,7 +191,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void clear() throws Exception {
+    public void clear() {
         assertTrue(map.isEmpty());
 
         for(int i = 0; i < 100; i++)
@@ -202,7 +202,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void keySet() throws Exception {
+    public void keySet() {
         Set<Integer> keys = map.keySet();
         assertTrue(keys.isEmpty());
         map.put(1, 1);
@@ -242,19 +242,19 @@ public class CachedHashMapTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void keySetAdd() throws Exception {
+    public void keySetAdd() {
         map.keySet().add(1);
         fail();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void keySetAddAll() throws Exception {
+    public void keySetAddAll() {
         map.keySet().addAll(asList(1, 2));
         fail();
     }
 
     @Test
-    public void valueCollection() throws Exception {
+    public void valueCollection() {
         Collection<Integer> values = map.values();
         assertTrue(values.isEmpty());
         map.put(1, 1);
@@ -294,19 +294,19 @@ public class CachedHashMapTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void valueCollectionAdd() throws Exception {
+    public void valueCollectionAdd() {
         map.values().add(1);
         fail();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void valueCollectionAddAll() throws Exception {
+    public void valueCollectionAddAll() {
         map.values().addAll(asList(1, 2));
         fail();
     }
 
     @Test
-    public void entrySet() throws Exception {
+    public void entrySet() {
         Set<Map.Entry<Integer, Integer>> values = map.entrySet();
         assertTrue(values.isEmpty());
         map.put(1, 1);
@@ -346,13 +346,13 @@ public class CachedHashMapTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void entrySetAdd() throws Exception {
+    public void entrySetAdd() {
         map.entrySet().add(of(1, 2));
         fail();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void entrySetAddAll() throws Exception {
+    public void entrySetAddAll() {
         map.entrySet().addAll(asList(of(1, 1), of(2, 2)));
         fail();
     }
@@ -372,7 +372,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void forEach() throws Exception {
+    public void forEach() {
         List<Integer> list = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             map.put(i, i);
@@ -383,7 +383,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void forEachWithTime() throws Exception {
+    public void forEachWithTime() {
         List<Long> list = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             map.put(i, i, i);
@@ -394,7 +394,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void replaceAll() throws Exception {
+    public void replaceAll() {
         for(int i = 0; i < 100; i++)
             map.put(i, i);
 
@@ -404,7 +404,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void replaceAllWithTime() throws Exception {
+    public void replaceAllWithTime() {
         for(int i = 0; i < 100; i++)
             map.put(i, i, i);
 
@@ -416,7 +416,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void putIfAbsent() throws Exception {
+    public void putIfAbsent() {
         //noinspection UnnecessaryBoxing
         Integer integer = new Integer(234);
         assertNull(map.putIfAbsent(1, integer));
@@ -424,7 +424,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void putIfAbsentWithTime() throws Exception {
+    public void putIfAbsentWithTime() {
         //noinspection UnnecessaryBoxing
         Integer integer = new Integer(234);
         assertNull(map.putIfAbsent(1, integer, 1));
@@ -433,7 +433,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void removeKV() throws Exception {
+    public void removeKV() {
         assertTrue(map.isEmpty());
         assertFalse(map.remove(1, 1));
         map.put(1, 2);
@@ -443,7 +443,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void replaceWithCheck() throws Exception {
+    public void replaceWithCheck() {
         assertTrue(map.isEmpty());
         assertFalse(map.replace(1, 1, 2));
         map.put(1, 2);
@@ -454,7 +454,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void replace() throws Exception {
+    public void replace() {
         assertTrue(map.isEmpty());
         assertNull(map.replace(1, 10));
         map.put(1, 1);
@@ -463,7 +463,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void computeIfAbsent() throws Exception {
+    public void computeIfAbsent() {
         map.put(1, 1);
         assertEquals(1, map.computeIfAbsent(1, integer -> 10).intValue());
         map.remove(1);
@@ -471,7 +471,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void computeIfAbsentWithTime() throws Exception {
+    public void computeIfAbsentWithTime() {
         map.put(1, 1);
         assertEquals(1, map.computeIfAbsent(1, integer -> 10, (integer, integer2) -> 10L).intValue());
         assertEquals(CachedHashMap.DEFAULT_LIFE_TIME, map.getPeriod(1));
@@ -481,7 +481,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void computeIfPresent() throws Exception {
+    public void computeIfPresent() {
         assertNull(map.computeIfPresent(1, (integer, integer2) -> 10));
         map.put(1, 1);
         assertEquals(10, map.computeIfPresent(1, (integer, integer2) -> 10).intValue());
@@ -489,7 +489,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void computeIfPresentWithTime() throws Exception {
+    public void computeIfPresentWithTime() {
         assertNull(map.computeIfPresent(1, (integer, integer2) -> 10, (integer, integer2, aLong) -> 10L));
         map.put(1, 1);
         assertEquals(10, map.computeIfPresent(1, (integer, integer2) -> 10, (integer, integer2, aLong) -> 10L).intValue());
@@ -498,7 +498,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void compute() throws Exception {
+    public void compute() {
         assertTrue(map.isEmpty());
         assertEquals(10, map.compute(1, (integer, integer2) -> 10).intValue());
         assertEquals(10, map.get(1).intValue());
@@ -508,7 +508,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void computeWithTime() throws Exception {
+    public void computeWithTime() {
         assertTrue(map.isEmpty());
         assertEquals(10, map.compute(1, (integer, integer2) -> 10, (integer, integer2, aLong) -> 100L).intValue());
         assertEquals(10, map.get(1).intValue());
@@ -520,7 +520,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void merge() throws Exception {
+    public void merge() {
         assertTrue(map.isEmpty());
         assertEquals(10, map.merge(1, 10, (integer, integer2) -> 20).intValue());
         assertEquals(10, map.get(1).intValue());
@@ -530,7 +530,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void mergeWithTime() throws Exception {
+    public void mergeWithTime() {
         assertTrue(map.isEmpty());
         assertEquals(10, map.merge(1, 10, 100L, (integer, integer2) -> 20).intValue());
         assertEquals(10, map.get(1).intValue());
@@ -542,7 +542,7 @@ public class CachedHashMapTest {
     }
 
     @Test
-    public void cloneTest() throws Exception {
+    public void cloneTest() {
         for(int i = 0; i < 100; i++)
             map.put(i, i);
 

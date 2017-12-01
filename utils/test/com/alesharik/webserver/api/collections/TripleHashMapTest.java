@@ -39,7 +39,7 @@ public class TripleHashMapTest {
     private TripleHashMap<Integer, Integer, Integer> toPut1;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         map = new TripleHashMap<>();
         for(int i = 1; i <= 13; i++) {
             map.put(i, i, i);
@@ -72,104 +72,104 @@ public class TripleHashMapTest {
     }
 
     @Test
-    public void size() throws Exception {
+    public void size() {
         assertTrue(readOnly.size() == 10);
     }
 
     @Test
-    public void isEmpty() throws Exception {
+    public void isEmpty() {
         assertFalse(readOnly.isEmpty());
         assertTrue(empty.isEmpty());
     }
 
     @Test
-    public void get() throws Exception {
+    public void get() {
         assertTrue(readOnly.get(1) == 1);
         assertTrue(readOnly.get(1000) == null);
     }
 
     @Test
-    public void getAddition() throws Exception {
+    public void getAddition() {
         assertTrue(readOnly.getAddition(1) == 1);
         assertTrue(readOnly.getAddition(1000) == null);
     }
 
     @Test
-    public void containsKey() throws Exception {
+    public void containsKey() {
         assertTrue(readOnly.containsKey(1));
         assertFalse(readOnly.containsKey(100));
     }
 
     @Test
-    public void containsValue() throws Exception {
+    public void containsValue() {
         assertTrue(readOnly.containsValue(1));
         assertFalse(readOnly.containsValue(1000));
     }
 
     @Test
-    public void containsAddition() throws Exception {
+    public void containsAddition() {
         assertTrue(readOnly.containsAddition(2));
         assertFalse(readOnly.containsAddition(1000));
     }
 
     @Test
-    public void put() throws Exception {
+    public void put() {
         map.put(100, 100, 100);
         assertTrue(map.containsKey(100) && map.get(100) == 100 && map.getAddition(100) == 100);
     }
 
     @Test
-    public void putAll() throws Exception {
+    public void putAll() {
         map.putAll(toPut);
         assertTrue(map.containsKey(175));
     }
 
     @Test
-    public void putAll1() throws Exception {
+    public void putAll1() {
         map.putAll(toPut1);
         assertTrue(map.containsKey(275));
     }
 
     @Test
-    public void remove() throws Exception {
+    public void remove() {
         map.remove(9);
         assertFalse(map.containsKey(9));
     }
 
     @Test
-    public void clear() throws Exception {
+    public void clear() {
         toClear.clear();
         assertTrue(toClear.isEmpty());
     }
 
     @Test
-    public void keySet() throws Exception {
+    public void keySet() {
         assertTrue(readOnly.keySet().contains(1));
     }
 
     @Test
-    public void values() throws Exception {
+    public void values() {
         assertTrue(readOnly.values().contains(1));
     }
 
     @Test
-    public void additions() throws Exception {
+    public void additions() {
         assertTrue(readOnly.additions().contains(1));
     }
 
     @Test
-    public void entrySet() throws Exception {
+    public void entrySet() {
         assertTrue(!readOnly.entrySet().isEmpty());
     }
 
     @Test
-    public void getOrDefault() throws Exception {
+    public void getOrDefault() {
         assertTrue(readOnly.getOrDefault(1, 100) == 1);
         assertTrue(readOnly.getOrDefault(100, 90) == 90);
     }
 
     @Test
-    public void putIfAbsent() throws Exception {
+    public void putIfAbsent() {
         map.putIfAbsent(1, 100, 100);
         assertFalse(map.get(1) == 100);
         map.putIfAbsent(900, 110, 100);
@@ -177,7 +177,7 @@ public class TripleHashMapTest {
     }
 
     @Test
-    public void remove1() throws Exception {
+    public void remove1() {
         map.remove(8, 10);
         assertTrue(map.containsKey(8));
         map.remove(8, 8);
@@ -185,7 +185,7 @@ public class TripleHashMapTest {
     }
 
     @Test
-    public void replace() throws Exception {
+    public void replace() {
         map.replace(7, 10, 99);
         assertTrue(map.get(7) == 7);
         map.replace(7, 7, 99);
@@ -193,13 +193,13 @@ public class TripleHashMapTest {
     }
 
     @Test
-    public void replace1() throws Exception {
+    public void replace1() {
         map.replace(6, 6, 99, 24);
         assertTrue(map.get(6) == 99 && map.getAddition(6) == 24);
     }
 
     @Test
-    public void computeIfAbsent() throws Exception {
+    public void computeIfAbsent() {
         assertFalse(map.containsKey(999));
         map.computeIfAbsent(5, integer -> 100, integer -> 100);
         assertTrue(map.get(5) == 5);
@@ -208,7 +208,7 @@ public class TripleHashMapTest {
     }
 
     @Test
-    public void computeIfPresent() throws Exception {
+    public void computeIfPresent() {
         map.computeIfPresent(700, (integer, integer2, integer3) -> 100, (integer, integer2, integer3) -> 100);
         assertFalse(map.containsKey(700));
         map.computeIfPresent(11, (integer, integer2, integer3) -> 99, (integer, integer2, integer3) -> 99);
@@ -216,7 +216,7 @@ public class TripleHashMapTest {
     }
 
     @Test
-    public void compute() throws Exception {
+    public void compute() {
         map.compute(601, (integer, integer2, integer3) -> 99, (integer, integer2, integer3) -> 99);
         assertTrue(map.get(601) == 99 && map.getAddition(601) == 99);
         map.compute(12, (integer, integer2, integer3) -> 99, (integer, integer2, integer3) -> 99);
@@ -224,7 +224,7 @@ public class TripleHashMapTest {
     }
 
     @Test
-    public void merge() throws Exception {
+    public void merge() {
         map.merge(602, 99, 99, (integer, integer2, integer3) -> 110, (integer, integer2, integer3) -> 110);
         assertTrue(map.get(602) == 99 && map.getAddition(602) == 99);
         map.merge(13, 110, 110, (integer, integer2, integer3) -> 99, (integer, integer2, integer3) -> 99);
@@ -232,14 +232,14 @@ public class TripleHashMapTest {
     }
 
     @Test
-    public void forEach() throws Exception {
+    public void forEach() {
         AtomicInteger integer = new AtomicInteger(0);
         readOnly.forEach((integer1, integer2, integer3) -> integer.incrementAndGet());
         assertTrue(integer.get() == 10);
     }
 
     @Test
-    public void replaceAll() throws Exception {
+    public void replaceAll() {
         replaceAll.replaceAll((integer, integer2, integer3) -> 99, (integer, integer2, integer3) -> 100);
         for(int i = 0; i < 100; i++) {
             assertTrue(replaceAll.get(i) == 99 && replaceAll.getAddition(i) == 100);

@@ -25,20 +25,20 @@ import static org.junit.Assert.assertSame;
 
 public class UnexpectedBehaviorErrorTest {
     @Test
-    public void ctorWithMessage() throws Exception {
+    public void ctorWithMessage() {
         UnexpectedBehaviorError error = new UnexpectedBehaviorError("test");
         assertEquals("test", error.getMessage());
     }
 
     @Test
-    public void ctorWithCause() throws Exception {
+    public void ctorWithCause() {
         Exception cause = new RuntimeException();
         UnexpectedBehaviorError error = new UnexpectedBehaviorError(cause);
         assertSame(cause, error.getCause());
     }
 
     @Test
-    public void ctorWithCauseAndMessage() throws Exception {
+    public void ctorWithCauseAndMessage() {
         Exception cause = new RuntimeException();
         UnexpectedBehaviorError error = new UnexpectedBehaviorError("test", cause);
         assertSame(cause, error.getCause());

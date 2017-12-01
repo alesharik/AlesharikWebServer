@@ -30,13 +30,13 @@ public class TripleFunctionTest {
     private Function<Integer, Integer> functionB;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         functionA = (integer, integer2, integer3) -> integer + integer2 + integer3;
         functionB = integer -> integer + 1;
     }
 
     @Test
-    public void andThen() throws Exception {
+    public void andThen() {
         assertTrue((functionA.andThen(functionB).apply(1, 2, 3)) == 7);
     }
 

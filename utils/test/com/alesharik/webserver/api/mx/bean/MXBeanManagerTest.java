@@ -66,32 +66,32 @@ public class MXBeanManagerTest {
     }
 
     @Test
-    public void testUtilityClass() throws Exception {
+    public void testUtilityClass() {
         TestUtils.assertUtilityClass(MXBeanManager.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void registerMXBeanWithMalformedName() throws Exception {
+    public void registerMXBeanWithMalformedName() {
         MXBeanManager.registerMXBean(new MXBeanImpl(1), "asdfasdsad");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void registerMXBeanWithException() throws Exception {
+    public void registerMXBeanWithException() {
         MXBeanManager.registerMXBean(new MXBeanError(), "com.alesharik.webserver.api.mx.bean.test:asd=4");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void registerNotCompliantMXBean() throws Exception {
+    public void registerNotCompliantMXBean() {
         MXBeanManager.registerMXBean(new Not(), "com.alesharik.webserver.api.mx.bean.test:asd=5");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void unregisterMXBeanWithMalformedName() throws Exception {
+    public void unregisterMXBeanWithMalformedName() {
         MXBeanManager.unregisterMXBean("asdfasdsad");
     }
 
     @Test(expected = RuntimeException.class)
-    public void unregisterMXBeanWithException() throws Exception {
+    public void unregisterMXBeanWithException() {
         MXBeanManager.registerMXBean(new MXBeanErrorPost(), "com.alesharik.webserver.api.mx.bean.test:asd=6");
         MXBeanManager.unregisterMXBean("com.alesharik.webserver.api.mx.bean.test:asd=6");
     }
@@ -116,7 +116,7 @@ public class MXBeanManagerTest {
     public class MXBeanError implements MBeanRegistration {
 
         @Override
-        public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
+        public ObjectName preRegister(MBeanServer server, ObjectName name) {
             throw new RuntimeException("asd");
         }
 
@@ -125,7 +125,7 @@ public class MXBeanManagerTest {
         }
 
         @Override
-        public void preDeregister() throws Exception {
+        public void preDeregister() {
 
         }
 
@@ -138,7 +138,7 @@ public class MXBeanManagerTest {
     public class MXBeanErrorPost implements MBeanRegistration {
 
         @Override
-        public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
+        public ObjectName preRegister(MBeanServer server, ObjectName name) {
             return name;
         }
 
@@ -147,7 +147,7 @@ public class MXBeanManagerTest {
         }
 
         @Override
-        public void preDeregister() throws Exception {
+        public void preDeregister() {
 
             throw new RuntimeException("asd");
         }

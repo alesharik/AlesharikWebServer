@@ -65,27 +65,27 @@ public class OneThreadTickingPoolTest {
     }
 
     @Test
-    public void getThreadCountTest() throws Exception {
+    public void getThreadCountTest() {
         assertTrue(forMBeanTest.getThreadCount() == 1);
     }
 
     @Test
-    public void getTotalTaskCount() throws Exception {
+    public void getTotalTaskCount() {
         assertTrue(forMBeanTest.getTotalTaskCount() == 4);
     }
 
     @Test
-    public void getRunningTaskCount() throws Exception {
+    public void getRunningTaskCount() {
         assertTrue(forMBeanTest.getRunningTaskCount() == 3);
     }
 
     @Test
-    public void getPauseTaskCount() throws Exception {
+    public void getPauseTaskCount() {
         assertTrue(forMBeanTest.getPauseTaskCount() == 1);
     }
 
     @Test
-    public void getIdTest() throws Exception {
+    public void getIdTest() {
         assertTrue(pool.getId() > 0);
     }
 
@@ -105,32 +105,32 @@ public class OneThreadTickingPoolTest {
     }
 
     @Test
-    public void startTicking() throws Exception {
+    public void startTicking() {
         pool.startTicking(dude, 1000);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void startTickingIllegal() throws Exception {
+    public void startTickingIllegal() {
         pool.startTicking(dude, -1);
     }
 
     @Test
-    public void stopTicking() throws Exception {
+    public void stopTicking() {
         pool.stopTicking(dude);
     }
 
     @Test
-    public void pauseTickable() throws Exception {
+    public void pauseTickable() {
         pool.pauseTickable(dude);
     }
 
     @Test
-    public void resumeTickable() throws Exception {
+    public void resumeTickable() {
         pool.resumeTickable(dude);
     }
 
     @Test
-    public void isRunning() throws Exception {
+    public void isRunning() {
         assertTrue("Running tickable is not running!", pool.isRunning(imOK));
         assertFalse("Sleeping tickable is running!", pool.isRunning(sleepy));
 
@@ -139,12 +139,12 @@ public class OneThreadTickingPoolTest {
     }
 
     @Test
-    public void shutdown() throws Exception {
+    public void shutdown() {
         pool.shutdown();
     }
 
     @Test
-    public void shutdownNow() throws Exception {
+    public void shutdownNow() {
         pool.shutdownNow();
     }
 
@@ -159,18 +159,18 @@ public class OneThreadTickingPoolTest {
     }
 
     @Test
-    public void equals() throws Exception {
+    public void equals() {
         assertFalse(pool.equals(not));
         assertFalse(not.equals(not1));
     }
 
     @Test
-    public void hashCodeTest() throws Exception {
+    public void hashCodeTest() {
         assertTrue(Integer.compare(pool.hashCode(), not.hashCode()) != 0);
     }
 
     @Test
-    public void toStringTest() throws Exception {
+    public void toStringTest() {
         assertNotNull(pool.toString());
     }
 }

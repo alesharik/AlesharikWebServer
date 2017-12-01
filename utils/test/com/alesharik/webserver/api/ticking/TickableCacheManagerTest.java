@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
 
 public class TickableCacheManagerTest {
     @Test
-    public void simpleTest() throws Exception {
+    public void simpleTest() {
         Tickable tickable = () -> {
         };
         TickableCacheManager.addTickable(tickable);
@@ -39,13 +39,13 @@ public class TickableCacheManagerTest {
     }
 
     @Test
-    public void notFoundTest() throws Exception {
+    public void notFoundTest() {
         assertNull(TickableCacheManager.forTickable(() -> {
         }));
     }
 
     @Test
-    public void addExistsTickable() throws Exception {
+    public void addExistsTickable() {
         Tickable tickable = () -> {
         };
         TickableCache tickableCache = TickableCacheManager.addTickable(tickable);
@@ -56,7 +56,7 @@ public class TickableCacheManagerTest {
     @SuppressFBWarnings("DM_GC")
     @Test
     @Ignore("unstable")
-    public void tryEnqueueVariable() throws Exception {
+    public void tryEnqueueVariable() {
         Tickable tickable = () -> {
         };
         WeakReference<TickableCache> weakReference = new WeakReference<>(TickableCacheManager.addTickable(tickable));
@@ -70,7 +70,7 @@ public class TickableCacheManagerTest {
     }
 
     @Test
-    public void testUtilityClass() throws Exception {
+    public void testUtilityClass() {
         TestUtils.assertUtilityClass(ExecutorPoolBasedTickingPool.TickableCacheManager.class);
     }
 }

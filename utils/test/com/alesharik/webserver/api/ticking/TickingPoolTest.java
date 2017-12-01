@@ -28,17 +28,17 @@ public class TickingPoolTest {
     private Tickable dude = () -> System.out.println("Hi!");
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         pool = new OneThreadTickingPool();
     }
 
     @Test
-    public void startTicking() throws Exception {
+    public void startTicking() {
         pool.startTicking(dude, 100, TimeUnit.SECONDS);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void startTickingIllegal() throws Exception {
+    public void startTickingIllegal() {
         pool.startTicking(dude, -100, TimeUnit.SECONDS);
     }
 }

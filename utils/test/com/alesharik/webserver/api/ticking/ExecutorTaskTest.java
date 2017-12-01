@@ -27,8 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.TickableCache;
 import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.TickableCacheManager;
 
-;
-
 public class ExecutorTaskTest {
     private Tickable tickable;
     private ExecutorPoolBasedTickingPool.ExecutorTask executorTask;
@@ -36,7 +34,7 @@ public class ExecutorTaskTest {
     private ConcurrentHashMap<TickableCache, Boolean> map = new ConcurrentHashMap<>();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         tickable = () -> {
         };
 
@@ -51,17 +49,17 @@ public class ExecutorTaskTest {
     }
 
     @Test
-    public void runNormal() throws Exception {
+    public void runNormal() {
         executorTask.run();
     }
 
     @Test
-    public void runException() throws Exception {
+    public void runException() {
         exception.run();
     }
 
     @Test(expected = RuntimeException.class)
-    public void stop() throws Exception {
+    public void stop() {
         TickableCache tickableCache = TickableCacheManager.forTickable(tickable);
         if(tickableCache != null) {
             map.remove(tickableCache);

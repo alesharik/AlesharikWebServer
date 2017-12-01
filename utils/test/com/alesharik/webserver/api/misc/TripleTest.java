@@ -42,7 +42,7 @@ public class TripleTest {
     private Triple.MutableTriple<Integer, String, String> mutSerNot;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         a = Triple.immutable(1, "asdfdsf", "bsdaf");
         same = a.clone();
         not = Triple.immutable(2, "sdaasdasd", "bsdaf");
@@ -61,7 +61,7 @@ public class TripleTest {
     }
 
     @Test
-    public void testImmutableEquals() throws Exception {
+    public void testImmutableEquals() {
         assertEquals(a, same);
         assertFalse(a.equals(not));
 
@@ -74,7 +74,7 @@ public class TripleTest {
     }
 
     @Test
-    public void testMutableEquals() throws Exception {
+    public void testMutableEquals() {
         assertEquals(mutA, mutSame);
         assertFalse(mutA.equals(mutNot));
 
@@ -87,7 +87,7 @@ public class TripleTest {
     }
 
     @Test
-    public void testClone() throws Exception {
+    public void testClone() {
         assertEquals(a, a.clone());
         assertEquals(serA, serA.clone());
         assertEquals(mutA, mutA.clone());

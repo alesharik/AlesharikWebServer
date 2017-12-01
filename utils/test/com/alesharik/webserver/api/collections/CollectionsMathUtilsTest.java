@@ -24,7 +24,7 @@ import static org.junit.Assert.*;
 
 public class CollectionsMathUtilsTest {
     @Test
-    public void getBucketRangeTest() throws Exception {
+    public void getBucketRangeTest() {
         for(int i = 0; i < 1000; i++) {
             int bucket = CollectionsMathUtils.getBucket(i * 16, 16);
             assertTrue(bucket > -1);
@@ -33,7 +33,7 @@ public class CollectionsMathUtilsTest {
     }
 
     @Test
-    public void powerOfTwoTest() throws Exception {
+    public void powerOfTwoTest() {
         for(int i = 129; i < 255; i++) {
             assertEquals(256, CollectionsMathUtils.powerOfTwoFor(i));
         }
@@ -47,7 +47,7 @@ public class CollectionsMathUtilsTest {
     }
 
     @Test
-    public void getHashCodeTest() throws Exception {
+    public void getHashCodeTest() {
         assertEquals(0, CollectionsMathUtils.hash(null));
         for(int i = 0; i < 100; i++) {
             Object o = new Object();
