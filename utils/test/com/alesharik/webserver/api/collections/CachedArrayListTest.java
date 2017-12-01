@@ -1,3 +1,5 @@
+package com.alesharik.webserver.api.collections;
+
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -7,10 +9,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
-
-Except
-
-        package com.alesharik.webserver.api.collections;
 
 public class CachedArrayListTest {
 
