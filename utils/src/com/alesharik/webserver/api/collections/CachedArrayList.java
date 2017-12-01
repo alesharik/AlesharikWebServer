@@ -682,12 +682,12 @@ public class CachedArrayList<V> implements Cloneable, List<V>, RandomAccess, Ser
 
     protected void checkCapacity(int index) {
         if(index < 0 || index >= size)
-            throw new ArrayIndexOutOfBoundsException(index);
+            throw new IndexOutOfBoundsException("index: " + index + ", size: " + size);
     }
 
     protected boolean checkCapacityAdd(int index) {
         if(index < 0)
-            throw new ArrayIndexOutOfBoundsException(index);
+            throw new IndexOutOfBoundsException("index: " + index + ", size: " + size);
         return index < elements.length || grow(index);
     }
 

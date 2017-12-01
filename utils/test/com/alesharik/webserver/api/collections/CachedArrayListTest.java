@@ -1,27 +1,5 @@
-/*
- *  This file is part of AlesharikWebServer.
- *
- *     AlesharikWebServer is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     AlesharikWebServer is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
- *
- *     You should have received a copy of the GNU General Public License
- *     along with AlesharikWebServer.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
-package com.alesharik.webserver.api.collections;
-
 import org.junit.Test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,57 +8,48 @@ import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
 
-public class CachedArrayListTest {
-    private static final Field maxArraySize;
+Except
 
-    static {
-        try {
-            maxArraySize = CachedArrayList.class.getDeclaredField("MAX_ARRAY_SIZE");
-            maxArraySize.setAccessible(true);
-            Field mod = Field.class.getDeclaredField("modifiers");
-            mod.setAccessible(true);
-            mod.set(maxArraySize, maxArraySize.getModifiers() & ~Modifier.FINAL | Modifier.VOLATILE);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new Error(e);
-        }
-    }
+        package com.alesharik.webserver.api.collections;
+
+public class CachedArrayListTest {
 
     private final CachedArrayList<String> list = new CachedArrayList<>();
 
     @Test
-    public void testAddNull() throws Exception {
+    public void testAddNull() {
         assertFalse(list.add(null));
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void addNegativeLifeTime() throws Exception {
+    public void addNegativeLifeTime() {
         list.add("dsa", -1);
         fail();
     }
 
     @Test
-    public void addElement() throws Exception {
+    public void addElement() {
         assertTrue(list.add("asd", 100));
         assertTrue(list.contains("asd"));
     }
 
-    @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void testCapacityCheckWithNegativeValue() throws Exception {
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testCapacityCheckWithNegativeValue() {
         list.checkCapacityAdd(-1);
     }
 
-    @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void testNegativeCapacity() throws Exception {
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testNegativeCapacity() {
         list.checkCapacity(-1);
     }
 
-    @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void testBigCapacity() throws Exception {
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testBigCapacity() {
         list.checkCapacity(1000);
     }
 
     @Test
-    public void insertElement() throws Exception {
+    public void insertElement() {
         list.add("asd");
         list.add("sdf");
         list.add(1, "dfg");
@@ -91,7 +60,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void setElement() throws Exception {
+    public void setElement() {
         list.add("asd");
         list.add("sdf");
         list.add("dfg");
@@ -108,7 +77,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void setPeriod() throws Exception {
+    public void setPeriod() {
         list.add("asd");
         list.add("sdf");
         list.add("dfg");
@@ -123,7 +92,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void setObjectPeriod() throws Exception {
+    public void setObjectPeriod() {
         list.add("asd");
         list.add("sdf");
         list.add("dfg");
@@ -138,7 +107,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void setPeriodToNotExistingObject() throws Exception {
+    public void setPeriodToNotExistingObject() {
         list.add("as");
         list.add("asd");
 
@@ -151,10 +120,10 @@ public class CachedArrayListTest {
     public void resetObjectTime() throws Exception {
         list.add("as");
         list.add("asd");
+        list.start();
 
-        long live = list.getLiveTime("asd");
         Thread.sleep(5);
-        assertNotSame(5, live);
+        assertEquals(5, list.getLiveTime("asd"), 1);
         list.resetTime("asd");
 
         assertEquals(0, list.getLiveTime("asd"));
@@ -164,17 +133,17 @@ public class CachedArrayListTest {
     public void resetTime() throws Exception {
         list.add("as");
         list.add("asd");
+        list.start();
 
-        long live = list.getLiveTime(1);
         Thread.sleep(5);
-        assertNotSame(5, live);
+        assertEquals(5, list.getLiveTime(1), 1);
         list.resetTime(1);
 
         assertEquals(0, list.getLiveTime(1), 1);
     }
 
     @Test
-    public void remove() throws Exception {
+    public void remove() {
         list.add("as");
         list.add("dasfsda");
         list.add("asdsdaasdasd");
@@ -187,7 +156,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void indexOf() throws Exception {
+    public void indexOf() {
         list.add("as");
         list.add("dasfsda");
         list.add("asdsdaasdasd");
@@ -200,7 +169,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void lastIndexOf() throws Exception {
+    public void lastIndexOf() {
         list.add("as");
         list.add("dasfsda");
         list.add("asdsdaasdasd");
@@ -212,8 +181,8 @@ public class CachedArrayListTest {
         assertEquals(6, list.lastIndexOf("asdsdaasdasd"));
     }
 
-    @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void clear() throws Exception {
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void clear() {
         assertTrue(list.isEmpty());
 
         list.add("as");
@@ -236,7 +205,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void addAllWithIndex() throws Exception {
+    public void addAllWithIndex() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -259,7 +228,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void iterator() throws Exception {
+    public void iterator() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + ((i == 0) ? "c" : i));
@@ -283,7 +252,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void listIterator() throws Exception {
+    public void listIterator() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + ((i == 0) ? "c" : i));
@@ -292,7 +261,7 @@ public class CachedArrayListTest {
         list.addAll(a);
 
         Iterator<String> iterator = list.listIterator();
-        //noinspection Java8CollectionRemoveIf
+        //noinspection Java8CollectionRemoveIf,WhileLoopReplaceableByForEach
         while(iterator.hasNext()) {
             String next = iterator.next();
             if(!next.contains("c"))
@@ -307,7 +276,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void listIteratorWithIndex() throws Exception {
+    public void listIteratorWithIndex() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + ((i < 5) ? "c" + i : i));
@@ -335,7 +304,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void subList() throws Exception {
+    public void subList() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -350,7 +319,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void isEmpty() throws Exception {
+    public void isEmpty() {
         assertTrue(list.isEmpty());
         list.add("asd");
         assertFalse(list.isEmpty());
@@ -359,7 +328,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void contains() throws Exception {
+    public void contains() {
         list.add("test");
         list.add("test");
         list.add("asd");
@@ -372,7 +341,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void toObjectArray() throws Exception {
+    public void toObjectArray() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -388,7 +357,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void toArray() throws Exception {
+    public void toArray() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -405,7 +374,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void removeObject() throws Exception {
+    public void removeObject() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -420,7 +389,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void containsAll() throws Exception {
+    public void containsAll() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -435,7 +404,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void removeAll() throws Exception {
+    public void removeAll() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -452,7 +421,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void retainAll() throws Exception {
+    public void retainAll() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -469,7 +438,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void replaceAll() throws Exception {
+    public void replaceAll() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -485,7 +454,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void replaceAllWithTime() throws Exception {
+    public void replaceAllWithTime() {
         List<String> a = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             a.add("a" + i);
@@ -502,7 +471,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void sortDefault() throws Exception {
+    public void sortDefault() {
         ThreadLocalRandom.current().ints(100)
                 .mapToObj(operand -> "a" + Integer.toString(operand))
                 .forEach(list::add);
@@ -516,7 +485,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void sortWithComparator() throws Exception {
+    public void sortWithComparator() {
         ThreadLocalRandom.current().ints(100)
                 .mapToObj(operand -> "a" + Integer.toString(operand))
                 .forEach(list::add);
@@ -530,7 +499,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void spliterator() throws Exception {
+    public void spliterator() {
         ThreadLocalRandom.current().ints(100)
                 .mapToObj(operand -> "a" + Integer.toString(operand))
                 .forEach(list::add);
@@ -541,7 +510,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void removeIf() throws Exception {
+    public void removeIf() {
         ThreadLocalRandom.current().ints(100)
                 .mapToObj(operand -> "a" + Integer.toString(operand))
                 .forEach(list::add);
@@ -551,7 +520,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void parallelStream() throws Exception {
+    public void parallelStream() {
         ThreadLocalRandom.current().ints(100)
                 .mapToObj(operand -> "a" + Integer.toString(operand))
                 .forEach(list::add);
@@ -559,7 +528,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void forEach() throws Exception {
+    public void forEach() {
         ThreadLocalRandom.current().ints(100)
                 .mapToObj(operand -> "a" + Integer.toString(operand))
                 .forEach(list::add);
@@ -571,7 +540,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void forEachWithTime() throws Exception {
+    public void forEachWithTime() {
         list.stop();
 
         ThreadLocalRandom.current().ints(100)
@@ -587,7 +556,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void cloneTest() throws Exception {
+    public void cloneTest() {
         ThreadLocalRandom.current().ints(100)
                 .mapToObj(operand -> "a" + Integer.toString(operand))
                 .forEach(list::add);
@@ -599,7 +568,7 @@ public class CachedArrayListTest {
     }
 
     @Test
-    public void isRunning() throws Exception {
+    public void isRunning() {
         assertTrue(list.isRunning());
         list.stop();
         assertFalse(list.isRunning());
