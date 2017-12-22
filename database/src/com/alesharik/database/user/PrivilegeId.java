@@ -16,19 +16,19 @@
  *
  */
 
-package com.alesharik.database.exception;
+package com.alesharik.database.user;
+
+import javax.annotation.Nonnull;
 
 /**
- * This exception means what something in database driver went wrong. This exception always has message
+ * Privilege ID is unique ID for {@link Privilege}
  */
-public class DatabaseInternalException extends DatabaseException {
-    private static final long serialVersionUID = -705246367661547607L;
-
-    public DatabaseInternalException(String message) {
-        super(message);
-    }
-
-    public DatabaseInternalException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public interface PrivilegeId {
+    /**
+     * Return privilege name
+     *
+     * @return privilege name
+     */
+    @Nonnull
+    String getName();
 }

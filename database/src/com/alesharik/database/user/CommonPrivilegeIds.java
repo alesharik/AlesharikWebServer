@@ -16,19 +16,21 @@
  *
  */
 
-package com.alesharik.database.exception;
+package com.alesharik.database.user;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
- * This exception means what something in database driver went wrong. This exception always has message
+ * This is common {@link PrivilegeId}s, which supported by all DBs
  */
-public class DatabaseInternalException extends DatabaseException {
-    private static final long serialVersionUID = -705246367661547607L;
+@AllArgsConstructor
+@Getter
+public enum CommonPrivilegeIds implements PrivilegeId {
+    SELECT("SELECT"),
+    UPDATE("UPDATE"),
+    INSERT("INSERT"),
+    DELETE("DELETE");
 
-    public DatabaseInternalException(String message) {
-        super(message);
-    }
-
-    public DatabaseInternalException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    private final String name;
 }

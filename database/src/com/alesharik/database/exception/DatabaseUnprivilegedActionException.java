@@ -18,17 +18,31 @@
 
 package com.alesharik.database.exception;
 
-/**
- * This exception means what something in database driver went wrong. This exception always has message
- */
-public class DatabaseInternalException extends DatabaseException {
-    private static final long serialVersionUID = -705246367661547607L;
+import org.jetbrains.annotations.Contract;
 
-    public DatabaseInternalException(String message) {
+import javax.annotation.Nullable;
+
+/**
+ * This exception will be thrown if current user can't do requested action because of the rights
+ */
+public abstract class DatabaseUnprivilegedActionException extends DatabaseException {
+    private static final long serialVersionUID = 642431061973138017L;
+
+    public DatabaseUnprivilegedActionException(String message) {
         super(message);
     }
 
-    public DatabaseInternalException(String message, Throwable cause) {
-        super(message, cause);
+    @Nullable
+    @Contract("-> null")
+    @Override
+    public Throwable getCause() {
+        return null;
+    }
+
+    @Override
+    @Contract("_ -> null")
+    @Nullable
+    public Throwable initCause(Throwable cause) {
+        return null;
     }
 }

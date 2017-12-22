@@ -20,6 +20,7 @@ package com.alesharik.database.driver;
 
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.transaction.TransactionManager;
+import com.alesharik.database.user.UserManager;
 
 import java.sql.Connection;
 
@@ -38,9 +39,9 @@ public interface DatabaseDriver {
 
     void update();
 
-    String getCurrentUser();
-
     TransactionManager getTransactionManager();
 
     void updateTransactional(boolean is);
+
+    UserManager<?, ?, ?> getUserManager();
 }

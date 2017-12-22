@@ -19,16 +19,12 @@
 package com.alesharik.database.exception;
 
 /**
- * This exception means what something in database driver went wrong. This exception always has message
+ * This will be thrown if user tries to do some operations on already closed connection
  */
-public class DatabaseInternalException extends DatabaseException {
-    private static final long serialVersionUID = -705246367661547607L;
+public final class DatabaseClosedException extends DatabaseException {
+    private static final long serialVersionUID = 29513472612284152L;
 
-    public DatabaseInternalException(String message) {
-        super(message);
-    }
-
-    public DatabaseInternalException(String message, Throwable cause) {
-        super(message, cause);
+    public DatabaseClosedException() {
+        super("Database closed!");
     }
 }

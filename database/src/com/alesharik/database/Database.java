@@ -23,6 +23,8 @@ import com.alesharik.database.driver.DatabaseDriver;
 import com.alesharik.database.exception.DatabaseCloseSQLException;
 import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.database.transaction.TransactionManager;
+import com.alesharik.database.user.User;
+import com.alesharik.database.user.UserManager;
 import lombok.Getter;
 
 import java.sql.Connection;
@@ -32,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * WARNING! Database has many ways to do SQL injection, so DO NOT EXPOSE IT!
- */
+ *///TODO add cache update system
 public class Database {
     @Getter
     protected final Connection connection;
@@ -86,8 +88,12 @@ public class Database {
         return databaseDriver.getSchema(name, createIfNotExists);
     }
 
-    public String getCurrentUser() {
-        return databaseDriver.getCurrentUser();
+    public User getCurrentUser() {
+        return databaseDriver.getUserManager().getMe();
+    }
+
+    public UserManager<?, ?, ?> getUserManager() {
+        return databaseDriver.getUserManager();
     }
 
     /**

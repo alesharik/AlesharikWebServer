@@ -19,16 +19,12 @@
 package com.alesharik.database.exception;
 
 /**
- * This exception means what something in database driver went wrong. This exception always has message
+ * This will be thrown current user can't write requested data
  */
-public class DatabaseInternalException extends DatabaseException {
-    private static final long serialVersionUID = -705246367661547607L;
+public final class DatabaseModifyingNotPermittedException extends DatabaseUnprivilegedActionException {
+    private static final long serialVersionUID = 7929271456681667317L;
 
-    public DatabaseInternalException(String message) {
+    public DatabaseModifyingNotPermittedException(String message) {
         super(message);
-    }
-
-    public DatabaseInternalException(String message, Throwable cause) {
-        super(message, cause);
     }
 }

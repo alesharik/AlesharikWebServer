@@ -36,23 +36,20 @@
 
 package com.alesharik.database.exception;
 
-import lombok.Getter;
-
 import java.sql.SQLException;
 
 /**
  * Thrown on error then tries to close some resources(like connection, statement, result set, etc)
  */
-public final class DatabaseCloseSQLException extends DatabaseException {
-    @Getter
-    private final SQLException exception;
+public final class DatabaseCloseSQLException extends DatabaseInternalException {
+    private static final long serialVersionUID = 3703970215085203715L;
 
     public DatabaseCloseSQLException(SQLException exception) {
-        this.exception = exception;
+        super("Exception on close", exception);
     }
 
     @Override
-    public synchronized Throwable getCause() {
-        return exception;
+    public Throwable initCause(Throwable cause) {
+        return getCause();
     }
 }

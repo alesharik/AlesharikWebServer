@@ -16,19 +16,37 @@
  *
  */
 
-package com.alesharik.database.exception;
+package com.alesharik.database.user;
+
+import com.alesharik.database.data.Schema;
+import com.alesharik.database.data.Table;
+
+import javax.annotation.Nullable;
 
 /**
- * This exception means what something in database driver went wrong. This exception always has message
+ * Privilege is object, which represent DB privilege for table/schema
  */
-public class DatabaseInternalException extends DatabaseException {
-    private static final long serialVersionUID = -705246367661547607L;
+public interface Privilege {
+    /**
+     * Return privilege name
+     *
+     * @return privilege name
+     */
+    String getName();
 
-    public DatabaseInternalException(String message) {
-        super(message);
-    }
+    /**
+     * Return privilege's table
+     *
+     * @return table or <code>null</code> if privilege is for schema
+     */
+    @Nullable
+    Table<?> getTable();
 
-    public DatabaseInternalException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    /**
+     * Return privilege's schema
+     *
+     * @return schema or <code>null</code> if privilege is for table
+     */
+    @Nullable
+    Schema getSchema();
 }

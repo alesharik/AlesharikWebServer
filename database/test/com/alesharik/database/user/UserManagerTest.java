@@ -16,19 +16,21 @@
  *
  */
 
-package com.alesharik.database.exception;
+package com.alesharik.database.user;
 
-/**
- * This exception means what something in database driver went wrong. This exception always has message
- */
-public class DatabaseInternalException extends DatabaseException {
-    private static final long serialVersionUID = -705246367661547607L;
+import org.junit.Test;
 
-    public DatabaseInternalException(String message) {
-        super(message);
-    }
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
-    public DatabaseInternalException(String message, Throwable cause) {
-        super(message, cause);
+public class UserManagerTest {
+    @Test
+    public void testCreateUserWithBasicMethod() {
+        UserManager userManager = mock(UserManager.class);
+        doCallRealMethod().when(userManager).createUser(anyString(), anyString(), any(), anyBoolean());
+        userManager.createUser("asd", "qwe", null, true);
+        verify(userManager).createUser("asd", "qwe", null, true, true, true, true);
     }
 }
