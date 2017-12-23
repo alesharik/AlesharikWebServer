@@ -61,7 +61,7 @@ import java.util.stream.Stream;
 public class ConcurrentLiveArrayList<V> implements Tickable, Cloneable, Serializable, List<V>, RandomAccess, Stoppable {
     protected static final long DEFAULT_LIFE_TIME = TimeUnit.MINUTES.toMillis(1);
     protected static final long DEFAULT_DELAY = 1000;
-    private static final OneThreadTickingPool DEFAULT_POOL = new OneThreadTickingPool();
+    static final OneThreadTickingPool DEFAULT_POOL = new OneThreadTickingPool();
     private static final int DEFAULT_CAPACITY = 16;
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
     private static final long serialVersionUID = 1861951523878433866L;
