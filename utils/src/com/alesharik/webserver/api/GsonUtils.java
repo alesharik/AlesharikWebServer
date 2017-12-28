@@ -18,6 +18,10 @@
 
 package com.alesharik.webserver.api;
 
+import com.alesharik.webserver.base.mode.Mode;
+import com.alesharik.webserver.base.mode.ModeClient;
+import com.alesharik.webserver.base.mode.ModeGetter;
+import com.alesharik.webserver.base.mode.ModeSwitch;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.experimental.UtilityClass;
@@ -29,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This class is in production mode by default.
  */
 @UtilityClass
+@ModeClient
 public class GsonUtils {
     private static final Gson production;
     private static final Gson debug;
@@ -74,6 +79,7 @@ public class GsonUtils {
     /**
      * Enable debug mode
      */
+    @ModeSwitch({Mode.DEBUG, Mode.DEVELOPMENT, Mode.TESTING, Mode.CI})
     public static void debugMode() {
         isDebug.set(true);
     }
@@ -81,6 +87,7 @@ public class GsonUtils {
     /**
      * Disable debug mode
      */
+    @ModeSwitch({Mode.STAGING, Mode.PRODUCTION})
     public static void productionMode() {
         isDebug.set(false);
     }
@@ -90,6 +97,8 @@ public class GsonUtils {
      *
      * @return true if this class is in debug mode
      */
+    @ModeGetter(value = Mode.DEBUG, when = ModeGetter.GetterMode.TRUE)
+    @ModeGetter(value = Mode.PRODUCTION, when = ModeGetter.GetterMode.FALSE)
     public static boolean isInDebug() {
         return isDebug.get();
     }
