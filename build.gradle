@@ -144,7 +144,8 @@ task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload',
                          ':alesharikwebserver-internals:bintrayUpload',
                          ':alesharikwebserver-agent:bintrayUpload',
                          ':alesharikwebserver-utils:bintrayUpload',
-                         ':alesharikwebserver-logging:bintrayUpload']) {
+                         ':alesharikwebserver-logging:bintrayUpload',
+                         ':alesharikwebserver-base:bintrayUpload']) {
     description = "Publish artifacts to bintray"
     group = 'distribution'
 }
@@ -155,7 +156,8 @@ task publishArtifacts(dependsOn: [':alesharikwebserver-api:publishMavenJavaPubli
                                   ':alesharikwebserver-internals:publishMavenJavaPublicationToMavenLocal',
                                   ':alesharikwebserver-agent:publishMavenJavaPublicationToMavenLocal',
                                   ':alesharikwebserver-utils:publishMavenJavaPublicationToMavenLocal',
-                                  ':alesharikwebserver-logging:publishMavenJavaPublicationToMavenLocal']) {
+                                  ':alesharikwebserver-logging:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-base:publishMavenJavaPublicationToMavenLocal']) {
     description = "Publish artifacts to maven local"
     group = 'distribution'
 }
