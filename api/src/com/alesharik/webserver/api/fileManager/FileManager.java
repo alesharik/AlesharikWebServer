@@ -648,7 +648,7 @@ public final class FileManager {
                 if(mode == FileHoldingMode.NO_HOLD) {
                     return Files.readAllBytes(file.toPath());
                 } else if(isCompressionEnabled) {
-                    return CompressionUtils.decompress(data);
+                    return CompressionUtils.deflateDecompress(data);
                 } else {
                     return data;
                 }
@@ -668,7 +668,7 @@ public final class FileManager {
             try {
                 if(mode != FileHoldingMode.NO_HOLD) {
                     if(isCompressionEnabled) {
-                        this.data = CompressionUtils.compress(data, compressionLevel);
+                        this.data = CompressionUtils.deflateCompress(data, CompressionUtils.CompressLevel.valueOf(compressionLevel));
                     } else {
                         this.data = data;
                     }
@@ -692,7 +692,7 @@ public final class FileManager {
             if(mode != FileHoldingMode.NO_HOLD) {
                 try {
                     if(isCompressionEnabled) {
-                        this.data = CompressionUtils.compress(Files.readAllBytes(file.toPath()), compressionLevel);
+                        this.data = CompressionUtils.deflateCompress(Files.readAllBytes(file.toPath()), CompressionUtils.CompressLevel.valueOf(compressionLevel));
                     } else {
                         this.data = Files.readAllBytes(file.toPath());
                     }

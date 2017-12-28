@@ -18,8 +18,10 @@
 
 package com.alesharik.webserver.api;
 
+import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
+import javax.annotation.Nonnull;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.DataFormatException;
@@ -27,22 +29,22 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 /**
- * This class compress and decompress <code>byte</code> arrays
+ * This class compress and decompress <code>byte</code> arrays with deflate algorithm
  */
 @UtilityClass
 public final class CompressionUtils {
-    private static final Deflater deflater = new Deflater();
-    private static final Inflater inflater = new Inflater();
+    private static final ThreadLocal<Deflater> deflater = ThreadLocal.withInitial(Deflater::new);
+    private static final ThreadLocal<Inflater> inflater = ThreadLocal.withInitial(Inflater::new);
 
     /**
      * Compress <code>byte</code> array with default compression level
      *
      * @param bytes <code>byte</code> array to compress
      * @return compressed <code>byte</code> array
-     * @throws IOException if anything happens
      */
-    public static byte[] compress(byte[] bytes) throws IOException {
-        return compress(bytes, CompressLevel.DEFAULT_COMPRESSION.getValue());
+    @Nonnull
+    public static byte[] deflateCompress(@Nonnull byte[] bytes) {
+        return deflateCompress(bytes, CompressLevel.DEFAULT_COMPRESSION);
     }
 
     /**
@@ -50,14 +52,15 @@ public final class CompressionUtils {
      * @param bytes <code>byte</code> array to compress
      * @param level compress level. See {@link CompressLevel}
      * @return compressed <code>byte</code> array
-     * @throws IOException if anything happens
      */
-    public static byte[] compress(byte[] bytes, int level) throws IOException {
+    @Nonnull
+    @SneakyThrows(IOException.class) //Will never happen
+    public static byte[] deflateCompress(@Nonnull byte[] bytes, @Nonnull CompressLevel level) {
+        Deflater deflater = CompressionUtils.deflater.get();
         deflater.setInput(bytes);
-        deflater.setLevel(level);
+        deflater.setLevel(level.value);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bytes.length);
-
         deflater.finish();
         byte[] buffer = new byte[1024];
         while(!deflater.finished()) {
@@ -76,9 +79,11 @@ public final class CompressionUtils {
      * @param bytes <code>byte</code> array to decompress
      * @return decompressed <code>byte</code> array
      * @throws DataFormatException if anything happens
-     * @throws IOException if anything happens
      */
-    public static byte[] decompress(byte[] bytes) throws DataFormatException, IOException {
+    @Nonnull
+    @SneakyThrows(IOException.class) //Will never happen
+    public static byte[] deflateDecompress(@Nonnull byte[] bytes) throws DataFormatException {
+        Inflater inflater = CompressionUtils.inflater.get();
         inflater.setInput(bytes);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bytes.length);
@@ -122,13 +127,11 @@ public final class CompressionUtils {
             this.value = value;
         }
 
-        /**
-         * Return int value for {@link #compress(byte[], int)} or {@link Deflater}
-         */
         public int getValue() {
             return value;
         }
 
+        @Nonnull
         public static CompressLevel valueOf(int level) {
             switch (level) {
                 case 0:

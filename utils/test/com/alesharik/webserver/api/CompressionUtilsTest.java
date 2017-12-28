@@ -32,44 +32,44 @@ public class CompressionUtilsTest {
     public void compress() throws Exception {
         byte[] arr = new byte[1024];
         SECURE_RANDOM.nextBytes(arr);
-        byte[] compressed = CompressionUtils.compress(arr);
+        byte[] compressed = CompressionUtils.deflateCompress(arr);
         assertFalse(Arrays.equals(compressed, arr));
-        assertArrayEquals(CompressionUtils.decompress(compressed), arr);
+        assertArrayEquals(CompressionUtils.deflateDecompress(compressed), arr);
     }
 
     @Test
     public void compressWithNoCompression() throws Exception {
         byte[] arr = new byte[1024];
         SECURE_RANDOM.nextBytes(arr);
-        byte[] ret = CompressionUtils.compress(arr, CompressionUtils.CompressLevel.NO_COMPRESSION.getValue());
-        assertArrayEquals(CompressionUtils.decompress(ret), arr);
+        byte[] ret = CompressionUtils.deflateCompress(arr, CompressionUtils.CompressLevel.NO_COMPRESSION);
+        assertArrayEquals(CompressionUtils.deflateDecompress(ret), arr);
     }
 
     @Test
     public void assertWithBestSpeed() throws Exception {
         byte[] arr = new byte[1024];
         SECURE_RANDOM.nextBytes(arr);
-        byte[] ret = CompressionUtils.compress(arr, CompressionUtils.CompressLevel.BEST_SPEED.getValue());
+        byte[] ret = CompressionUtils.deflateCompress(arr, CompressionUtils.CompressLevel.BEST_SPEED);
         assertFalse(Arrays.equals(ret, arr));
-        assertArrayEquals(CompressionUtils.decompress(ret), arr);
+        assertArrayEquals(CompressionUtils.deflateDecompress(ret), arr);
     }
 
     @Test
     public void assertWithBestCompression() throws Exception {
         byte[] arr = new byte[1024];
         SECURE_RANDOM.nextBytes(arr);
-        byte[] ret = CompressionUtils.compress(arr, CompressionUtils.CompressLevel.BEST_COMPRESSION.getValue());
+        byte[] ret = CompressionUtils.deflateCompress(arr, CompressionUtils.CompressLevel.BEST_COMPRESSION);
         assertFalse(Arrays.equals(ret, arr));
-        assertArrayEquals(CompressionUtils.decompress(ret), arr);
+        assertArrayEquals(CompressionUtils.deflateDecompress(ret), arr);
     }
 
     @Test
     public void assertWithDefaultCompression() throws Exception {
         byte[] arr = new byte[1024];
         SECURE_RANDOM.nextBytes(arr);
-        byte[] ret = CompressionUtils.compress(arr, CompressionUtils.CompressLevel.DEFAULT_COMPRESSION.getValue());
+        byte[] ret = CompressionUtils.deflateCompress(arr, CompressionUtils.CompressLevel.DEFAULT_COMPRESSION);
         assertFalse(Arrays.equals(ret, arr));
-        assertArrayEquals(CompressionUtils.decompress(ret), arr);
+        assertArrayEquals(CompressionUtils.deflateDecompress(ret), arr);
     }
 
     @Test
