@@ -22,7 +22,6 @@ import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Objects;
 
 /**
  * This class used for encode login and password
@@ -35,10 +34,8 @@ public final class LoginPasswordCoder {
      * @param password password to encode
      * @return encoded string
      */
+    @Nonnull
     public static String encode(@Nonnull String login, @Nonnull String password) {
-        Objects.requireNonNull(login);
-        Objects.requireNonNull(password);
-
         StringBuilder sb = new StringBuilder();
         char[] log = login.toCharArray();
         char[] pass = password.toCharArray();
@@ -67,6 +64,7 @@ public final class LoginPasswordCoder {
      * @param logpass  second logPass
      * @return true if they are equals
      */
+    @Nonnull
     public static boolean isEquals(@Nullable String login, @Nullable String password, @Nullable String logpass) {
         return (login == null && password == null && logpass == null) || !(login == null || password == null || logpass == null) && encode(login, password).equals(logpass);
     }
