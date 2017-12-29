@@ -39,61 +39,84 @@ package com.alesharik.webserver.api.reflection;
 import com.alesharik.webserver.api.MiscUtils;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+import static com.alesharik.webserver.api.reflection.PackageUtils.getPackage;
 
 /**
  * Iterates only packages with package-info class
  */
-public class ParentPackageIterator implements Iterator<Package> {
-    private String[] pkg;
-    private int i;
-
-    private ParentPackageIterator(String pkg) {
-        this.pkg = pkg.split(".");
-        i = this.pkg.length - 1;
-    }
-
+public final class ParentPackageIterator {
     public static Iterator<Package> forPackage(@Nonnull String pkg) {
-        return new ParentPackageIterator(pkg);
+        return new IteratorImpl(getPackages(pkg));
     }
 
-    public static Iterator<Package> reversePackage(@Nonnull String pkg) {
-        return new ReverseIterator(pkg);
+    public static Iterator<Package> forPackageReverse(@Nonnull String pkg) {
+        return new ReverseIterator(getPackages(pkg));
     }
 
-    @Override
-    public boolean hasNext() {
-        return i >= 0;
-    }
-
-    @Override
-    public Package next() {
-        Package next;
-        for(; (next = PackageUtils.getPackage(MiscUtils.sliceString(pkg, i))) == null; i--) {
+    private static Package[] getPackages(String pkg) {
+        String[] p = pkg.split("\\.");
+        int index = 0;
+        Package[] arr = new Package[p.length];
+        for(int i = 0; i <= p.length; i++) {
+            String pk = MiscUtils.sliceString(p, i, ".");
+            Package pack = getPackage(pk);
+            if(pack != null) {
+                arr[index] = pack;
+                index++;
+            }
         }
-        return next;
+        return Arrays.copyOf(arr, index);
     }
 
-    private static final class ReverseIterator implements Iterator<Package> {
-        private String[] pkg;
+    private static final class IteratorImpl implements Iterator<Package> {
+        private final Package[] packages;
         private int i;
 
-        private ReverseIterator(String pkg) {
-            this.pkg = pkg.split(".");
-            i = 1;
+        public IteratorImpl(Package[] packages) {
+            this.packages = packages;
+            this.i = 0;
         }
 
         @Override
         public boolean hasNext() {
-            return i <= pkg.length;
+            return i < packages.length;
         }
 
         @Override
         public Package next() {
-            Package next;
-            for(; (next = PackageUtils.getPackage(MiscUtils.sliceString(pkg, i))) == null; i++) {
-            }
-            return next;
+            if(i >= packages.length)
+                throw new NoSuchElementException();
+            Package p = packages[i];
+            i++;
+            return p;
+        }
+    }
+
+    private static final class ReverseIterator implements Iterator<Package> {
+        private final Package[] packages;
+        private int i;
+
+        public ReverseIterator(Package[] packages) {
+            this.packages = packages;
+            this.i = packages.length - 1;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return i >= 0;
+        }
+
+        @Override
+        public Package next() {
+            if(i < 0)
+                throw new NoSuchElementException();
+            Package p = packages[i];
+            i--;
+            return p;
         }
     }
 }

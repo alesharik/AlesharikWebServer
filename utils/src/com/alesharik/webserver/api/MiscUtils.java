@@ -22,11 +22,13 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class MiscUtils {
-    public static String sliceString(String[] arr, int count) {
+    public static String sliceString(String[] arr, int count, String separator) {
         if(count > arr.length)
             throw new ArrayIndexOutOfBoundsException();
         StringBuilder stringBuilder = new StringBuilder();
         for(int i = 0; i < count; i++) {
+            if(i > 0)
+                stringBuilder.append(separator);
             stringBuilder.append(arr[i]);
         }
         return stringBuilder.toString();
@@ -36,7 +38,7 @@ public class MiscUtils {
         if(count > arr.length)
             throw new ArrayIndexOutOfBoundsException();
         if(!reverse)
-            return sliceString(arr, count);
+            return sliceString(arr, count, "");
 
         StringBuilder stringBuilder = new StringBuilder();
         for(int i = arr.length - 1; i < (arr.length - count); i--) {
