@@ -21,7 +21,11 @@ package com.alesharik.webserver.exception;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+/**
+ * Exception wrappers wraps {@link Exception} to make same {@link RuntimeException}
+ */
 public abstract class ExceptionWrapper extends RuntimeException {
+    private static final long serialVersionUID = 2241354341974139323L;
     protected final Exception exception;
 
     protected ExceptionWrapper(Exception exception) {
