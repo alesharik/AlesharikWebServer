@@ -18,15 +18,21 @@
 
 package com.alesharik.webserver.api;
 
+import com.alesharik.webserver.exception.exception.compression.DataFormatRuntimeException;
+import com.alesharik.webserver.exception.exception.compression.ZipRuntimeException;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.Inflater;
+import java.util.zip.ZipException;
 
 /**
  * This class compress and decompress <code>byte</code> arrays with deflate algorithm
@@ -62,7 +68,7 @@ public final class CompressionUtils {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bytes.length);
         deflater.finish();
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[4096];
         while(!deflater.finished()) {
             int count = deflater.deflate(buffer);
             outputStream.write(buffer, 0, count);
@@ -78,19 +84,25 @@ public final class CompressionUtils {
      * Decompress <code>byte</code> array
      * @param bytes <code>byte</code> array to decompress
      * @return decompressed <code>byte</code> array
-     * @throws DataFormatException if anything happens
+     * @throws DataFormatRuntimeException if anything happens
      */
     @Nonnull
     @SneakyThrows(IOException.class) //Will never happen
-    public static byte[] deflateDecompress(@Nonnull byte[] bytes) throws DataFormatException {
+    public static byte[] deflateDecompress(@Nonnull byte[] bytes) {
         Inflater inflater = CompressionUtils.inflater.get();
         inflater.setInput(bytes);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bytes.length);
 
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[4096];
         while(!inflater.finished()) {
-            int count = inflater.inflate(buffer);
+            int count;
+            try {
+                count = inflater.inflate(buffer);
+            } catch (DataFormatException e) {
+                inflater.reset();
+                throw new DataFormatRuntimeException(e);
+            }
             outputStream.write(buffer, 0, count);
         }
         outputStream.close();
@@ -98,6 +110,53 @@ public final class CompressionUtils {
         byte[] output = outputStream.toByteArray();
         inflater.reset();
         return output;
+    }
+
+    /**
+     * Compress GZIP byte data
+     *
+     * @param data the data to compres
+     * @return compressed data
+     */
+    @Nonnull
+    @SneakyThrows(IOException.class) //Never happen
+    public static byte[] gzipCompress(@Nonnull byte[] data) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (GZIPOutputStream gzip = new GZIPOutputStream(out)) {
+            gzip.write(data);
+            gzip.finish();
+        }
+
+        byte[] ret = out.toByteArray();
+        out.close();
+        return ret;
+    }
+
+    /**
+     * Decompress GZIP byte data
+     *
+     * @param data the data to decompress
+     * @return decompressed data
+     * @throws ZipRuntimeException if stream throws {@link ZipException}
+     */
+    @Nonnull
+    @SneakyThrows(IOException.class)//Never happen
+    public static byte[] gzipDecompress(@Nonnull byte[] data) {
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (GZIPInputStream gzip = new GZIPInputStream(in)) {
+            byte[] buf = new byte[4096];
+            int nRead;
+            while((nRead = gzip.read(buf, 0, buf.length)) != -1)
+                out.write(buf, 0, nRead);
+        } catch (ZipException e) {
+            throw new ZipRuntimeException(e);
+        }
+
+        byte[] ret = out.toByteArray();
+        out.close();
+        in.close();
+        return ret;
     }
 
     /**

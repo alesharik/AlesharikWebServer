@@ -20,60 +20,59 @@ package com.alesharik.webserver.api;
 
 import org.junit.Test;
 
-import java.security.SecureRandom;
 import java.util.Arrays;
 
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.junit.Assert.*;
 
 public class CompressionUtilsTest {
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Test
-    public void compress() throws Exception {
-        byte[] arr = new byte[1024];
-        SECURE_RANDOM.nextBytes(arr);
+    public void compress() {
+        byte[] arr = new byte[1024 * 1024 * 4];
+        current().nextBytes(arr);
         byte[] compressed = CompressionUtils.deflateCompress(arr);
         assertFalse(Arrays.equals(compressed, arr));
         assertArrayEquals(CompressionUtils.deflateDecompress(compressed), arr);
     }
 
     @Test
-    public void compressWithNoCompression() throws Exception {
-        byte[] arr = new byte[1024];
-        SECURE_RANDOM.nextBytes(arr);
+    public void compressWithNoCompression() {
+        byte[] arr = new byte[1024 * 1024 * 4];
+        current().nextBytes(arr);
         byte[] ret = CompressionUtils.deflateCompress(arr, CompressionUtils.CompressLevel.NO_COMPRESSION);
         assertArrayEquals(CompressionUtils.deflateDecompress(ret), arr);
     }
 
     @Test
-    public void assertWithBestSpeed() throws Exception {
-        byte[] arr = new byte[1024];
-        SECURE_RANDOM.nextBytes(arr);
+    public void assertWithBestSpeed() {
+        byte[] arr = new byte[1024 * 1024 * 4];
+        current().nextBytes(arr);
         byte[] ret = CompressionUtils.deflateCompress(arr, CompressionUtils.CompressLevel.BEST_SPEED);
         assertFalse(Arrays.equals(ret, arr));
         assertArrayEquals(CompressionUtils.deflateDecompress(ret), arr);
     }
 
     @Test
-    public void assertWithBestCompression() throws Exception {
-        byte[] arr = new byte[1024];
-        SECURE_RANDOM.nextBytes(arr);
+    public void assertWithBestCompression() {
+        byte[] arr = new byte[1024 * 1024 * 4];
+        current().nextBytes(arr);
         byte[] ret = CompressionUtils.deflateCompress(arr, CompressionUtils.CompressLevel.BEST_COMPRESSION);
         assertFalse(Arrays.equals(ret, arr));
         assertArrayEquals(CompressionUtils.deflateDecompress(ret), arr);
     }
 
     @Test
-    public void assertWithDefaultCompression() throws Exception {
-        byte[] arr = new byte[1024];
-        SECURE_RANDOM.nextBytes(arr);
+    public void assertWithDefaultCompression() {
+        byte[] arr = new byte[1024 * 1024 * 4];
+        current().nextBytes(arr);
         byte[] ret = CompressionUtils.deflateCompress(arr, CompressionUtils.CompressLevel.DEFAULT_COMPRESSION);
         assertFalse(Arrays.equals(ret, arr));
         assertArrayEquals(CompressionUtils.deflateDecompress(ret), arr);
     }
 
     @Test
-    public void compressionLevelValueOfTest() throws Exception {
+    public void compressionLevelValueOfTest() {
         CompressionUtils.CompressLevel no = CompressionUtils.CompressLevel.valueOf(0);
         CompressionUtils.CompressLevel bestCompression = CompressionUtils.CompressLevel.valueOf(9);
         CompressionUtils.CompressLevel bestSpeed = CompressionUtils.CompressLevel.valueOf(1);
@@ -86,7 +85,18 @@ public class CompressionUtilsTest {
     }
 
     @Test
-    public void testUtility() throws Exception {
+    public void testUtility() {
         TestUtils.assertUtilityClass(CompressionUtils.class);
+    }
+
+    @Test
+    public void testGZIP() {
+        byte[] data = new byte[1024 * 1024 * 4];
+        current().nextBytes(data);
+
+        byte[] compressed = CompressionUtils.gzipCompress(data);
+        byte[] decompressed = CompressionUtils.gzipDecompress(compressed);
+
+        assertArrayEquals(data, decompressed);
     }
 }
