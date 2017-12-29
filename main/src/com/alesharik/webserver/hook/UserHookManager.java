@@ -22,7 +22,7 @@ import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
-import com.alesharik.webserver.internals.ClassInstantiator;
+import com.alesharik.webserver.internals.instance.ClassInstantiator;
 import lombok.experimental.UtilityClass;
 import org.w3c.dom.Element;
 
