@@ -669,7 +669,8 @@ public class TripleHashMap<K, V, A> implements Cloneable, Serializable {
         TripleHashMap<K, V, A> map = ((TripleHashMap<K, V, A>) super.clone());
         map.entries = new Entry[entries.length];
         for(int i = 0; i < entries.length; i++)
-            map.entries[i] = entries[i].clone();
+            if(entries[i] != null)
+                map.entries[i] = entries[i].clone();
         map.size = size;
         map.sizeLimit = sizeLimit;
         return map;
