@@ -16,8 +16,9 @@
  *
  */
 
-package com.alesharik.webserver.internals;
+package com.alesharik.webserver.internals.instance;
 
+import com.alesharik.webserver.internals.UnsafeAccess;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
@@ -25,14 +26,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * This class provides class creation methods
+ * This class provides class creation methods. Most cases will be covered by {@link #instantiate(Class)} method
  */
 @UtilityClass
 public class ClassInstantiator {
     /**
      * Instantiate class without calling it's constructor
      */
-    public static Object instantiateUnsafe(Class<?> clazz) {
+    private static Object instantiateUnsafe(Class<?> clazz) {
         return UnsafeAccess.INSTANCE.newInstance(clazz);
     }
 

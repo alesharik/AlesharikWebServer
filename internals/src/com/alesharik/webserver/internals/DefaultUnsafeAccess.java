@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.internals;
 
+import com.alesharik.webserver.internals.instance.ClassInstantiationException;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;

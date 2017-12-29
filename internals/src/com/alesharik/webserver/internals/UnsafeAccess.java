@@ -21,8 +21,8 @@ package com.alesharik.webserver.internals;
 
 import java.lang.reflect.Field;
 
-abstract class UnsafeAccess {
-    static final UnsafeAccess INSTANCE;
+public abstract class UnsafeAccess {
+    public static final UnsafeAccess INSTANCE;
 
     static {
         if(unsafeSupported())
