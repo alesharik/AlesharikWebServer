@@ -20,10 +20,10 @@ package com.alesharik.webserver.logger.storing;
 
 
 import com.alesharik.webserver.logger.Logger;
-import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Timer;
@@ -48,7 +48,7 @@ public final class DelayedStoringStrategy extends StoringStrategy {
             public void run() {
                 try {
                     String str = stringBuffer.toString();
-                    Files.write(file.toPath(), str.getBytes(Charsets.UTF8_CHARSET), StandardOpenOption.APPEND);
+                    Files.write(file.toPath(), str.getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
                     stringBuffer.delete(0, str.length());
                 } catch (IOException e) {
                     Logger.log(e);
@@ -71,7 +71,7 @@ public final class DelayedStoringStrategy extends StoringStrategy {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         timerTask.run();
         timer.cancel();
     }

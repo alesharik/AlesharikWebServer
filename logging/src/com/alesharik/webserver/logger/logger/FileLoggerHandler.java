@@ -19,14 +19,13 @@
 package com.alesharik.webserver.logger.logger;
 
 import lombok.SneakyThrows;
-import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.ErrorManager;
 import java.util.logging.Filter;
@@ -38,7 +37,7 @@ import java.util.logging.LogRecord;
  */
 public final class FileLoggerHandler extends LoggerHandler {
     private FileOutputStream outputStream;
-    private AtomicReference<Charset> charset = new AtomicReference<>(Charsets.UTF8_CHARSET);
+    private AtomicReference<Charset> charset = new AtomicReference<>(StandardCharsets.UTF_8);
 
     /**
      * Create new FileConsoleHandler. Use {@link Level#ALL} by default
@@ -68,7 +67,7 @@ public final class FileLoggerHandler extends LoggerHandler {
      * @throws IllegalArgumentException if file is folder, can't write to file or can't create new file
      */
     public FileLoggerHandler(File file) {
-        this(file, Charsets.UTF8_CHARSET);
+        this(file, StandardCharsets.UTF_8);
     }
 
     @Override
@@ -86,18 +85,18 @@ public final class FileLoggerHandler extends LoggerHandler {
     }
 
     @Override
-    public synchronized void setEncoding(String encoding) throws SecurityException, UnsupportedEncodingException {
-        Charset charset = Charset.forName(encoding);
-        this.charset.set(charset);
+    public synchronized String getEncoding() {
+        if(this.charset == null)
+            this.charset = new AtomicReference<>(StandardCharsets.UTF_8);
+        if(this.charset.get() == null)
+            this.charset.set(StandardCharsets.UTF_8);
+        return this.charset.get().toString();
     }
 
     @Override
-    public synchronized String getEncoding() {
-        if(this.charset == null)
-            this.charset = new AtomicReference<>(Charsets.UTF8_CHARSET);
-        if(this.charset.get() == null)
-            this.charset.set(Charsets.UTF8_CHARSET);
-        return this.charset.get().toString();
+    public synchronized void setEncoding(String encoding) throws SecurityException {
+        Charset charset = Charset.forName(encoding);
+        this.charset.set(charset);
     }
 
     @Override

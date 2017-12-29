@@ -19,11 +19,11 @@
 package com.alesharik.webserver.logger.storing;
 
 import com.alesharik.webserver.logger.Logger;
-import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 public final class WriteOnLogStoringStrategy extends StoringStrategy {
@@ -36,7 +36,7 @@ public final class WriteOnLogStoringStrategy extends StoringStrategy {
     @Override
     public void open() throws IOException {
         checkFile();
-        writer = Files.newBufferedWriter(file.toPath(), Charsets.UTF8_CHARSET);
+        writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
     }
 
     @Override

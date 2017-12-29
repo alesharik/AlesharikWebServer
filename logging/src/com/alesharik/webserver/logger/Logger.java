@@ -49,7 +49,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -416,7 +415,7 @@ public final class Logger {
                 MXBeanManager.registerMXBean(bean, LoggerMXBean.class, "com.alesharik.webserver.logger:type=Logger");
                 MXBeanManager.registerMXBean(loggingLevelManager, LoggingLevelManagerMXBean.class, "com.alesharik.webserver.logger:type=LoggingLevelManager");
                 log("Logger successfully started");
-            } catch (SecurityException | UnsupportedEncodingException e) {
+            } catch (SecurityException e) {
                 e.printStackTrace(SYSTEM_ERR);
             }
         } else {
@@ -674,7 +673,7 @@ public final class Logger {
 
             String prefix = prefixes.get(clazz);
             if(prefix != null)
-                prefixes.setTime(clazz, CONTAINS_TIME);
+                prefixes.setPeriod(clazz, CONTAINS_TIME);
             return prefix;
         }
 

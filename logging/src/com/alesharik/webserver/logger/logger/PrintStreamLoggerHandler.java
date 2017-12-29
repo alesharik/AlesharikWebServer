@@ -18,13 +18,11 @@
 
 package com.alesharik.webserver.logger.logger;
 
-import org.glassfish.grizzly.utils.Charsets;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.ErrorManager;
 import java.util.logging.Filter;
 import java.util.logging.Level;
@@ -38,13 +36,13 @@ public final class PrintStreamLoggerHandler extends LoggerHandler {
      * Default encoding is <code>UTF-8</code>
      */
     public PrintStreamLoggerHandler() {
-        charset = Charsets.UTF8_CHARSET;
+        charset = StandardCharsets.UTF_8;
     }
 
     @Override
     public synchronized void setOutputStream(OutputStream out) throws SecurityException {
         if(charset == null)
-            charset = Charsets.UTF8_CHARSET;
+            charset = StandardCharsets.UTF_8;
 
         if(this.writer != null) {
             try {
@@ -95,7 +93,7 @@ public final class PrintStreamLoggerHandler extends LoggerHandler {
     }
 
     @Override
-    public synchronized void setEncoding(String encoding) throws SecurityException, UnsupportedEncodingException {
+    public synchronized void setEncoding(String encoding) throws SecurityException {
         if(encoding == null)
             return;
         charset = Charset.forName(encoding);
