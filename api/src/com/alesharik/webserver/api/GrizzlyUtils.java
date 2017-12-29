@@ -20,6 +20,7 @@ package com.alesharik.webserver.api;
 
 import org.glassfish.grizzly.http.Cookie;
 
+@Deprecated
 public class GrizzlyUtils {
     /**
      * Find cookie for name in cookies list
