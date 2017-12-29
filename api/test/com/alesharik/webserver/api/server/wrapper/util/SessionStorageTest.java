@@ -41,7 +41,7 @@ public class SessionStorageTest {
 
     @Test
     public void visit() throws Exception {
-        Request request = new Request();
+        Request request = Request.Builder.start("GET / HTTP/2").withHeaders("").withBody(new byte[0]);
         Response response = Response.getResponse();
 
         sessionStorage.visit(request, response);
@@ -60,7 +60,7 @@ public class SessionStorageTest {
 
         assertEquals(storage, SessionStorage.forUntrustedRequest(request1));
 
-        Thread.sleep(1010);
+        Thread.sleep(2000);
 
         Request request2 = new Request1(id);
         sessionStorage.visit(request2, response);

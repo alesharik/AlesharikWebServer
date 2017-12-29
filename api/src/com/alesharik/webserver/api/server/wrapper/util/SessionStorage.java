@@ -38,7 +38,7 @@ public final class SessionStorage implements HttpVisitor {
     private final Storage.Factory factory;
     private final int storeTime;
 
-    private final ConcurrentLiveHashMap<String, Storage> sessions = new ConcurrentLiveHashMap<>();
+    private final ConcurrentLiveHashMap<String, Storage> sessions = new ConcurrentLiveHashMap<>(1000L);
 
     /**
      * @param factory   storage instances supply
@@ -93,7 +93,7 @@ public final class SessionStorage implements HttpVisitor {
         Storage storage = factory.newInstance(request);
         String id = UUID.randomUUID().toString();
         sessions.put(id, storage, storeTime * 1000);
-        request.setData(id, storage);
+        request.setData("session-storage", storage);
 
         Cookie cookie = new Cookie("_sessionID", id);
         cookie.setHttpOnly(true);
