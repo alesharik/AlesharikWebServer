@@ -18,39 +18,46 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.logger.Logger;
-
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * This class is basic implementation of {@link Future}. Used for create and set future. This class is thread-safe!
+ * This {@link Future} implementation uses {@link #set(Object)} method to complete it
  *
- * @param <V>
+ * @param <V> return argument type
  */
-public class ConcurrentCompletableFuture<V> implements Future<V> {
+@ThreadSafe
+public final class ConcurrentCompletableFuture<V> implements Future<V> {
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
     private final AtomicBoolean isDone = new AtomicBoolean(false);
     private volatile V value;
 
-    public ConcurrentCompletableFuture() {
-    }
+    private final List<Thread> waiting = new CopyOnWriteArrayList<>();
 
     /**
      * @param mayInterruptIfRunning don't used
      */
-    @Override //TODO rewrite
+    @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        isCancelled.set(true);
-        return true;
+        if(isCancelled.compareAndSet(false, true)) {
+            for(Thread thread : waiting) {
+                if(!thread.isInterrupted())
+                    LockSupport.unpark(thread);
+            }
+            waiting.clear();
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -64,38 +71,38 @@ public class ConcurrentCompletableFuture<V> implements Future<V> {
     }
 
     @Override
-    public V get() throws InterruptedException, ExecutionException {
-        if(Thread.interrupted()) {
+    @Nullable
+    public V get() {
+        if(Thread.interrupted())
             return null;
-        }
-        while(value == null) {
-            Signaller signaller = new Signaller(0L, 0L, new SoftReference<>(value));
+        while(!isDone.get() && !isCancelled.get()) {
+            Signaller signaller = new Signaller(0L, 0L, new SoftReference<>(value), isCancelled, isDone);
             waitForSignaller(signaller);
         }
         return value;
     }
 
     @Override
-    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        Objects.requireNonNull(unit);
-        if(Thread.interrupted()) {
+    @Nullable
+    public V get(long timeout, @Nonnull TimeUnit unit) {
+        if(Thread.interrupted())
             return null;
-        }
         long nanos = unit.toNanos(timeout);
-        if(value == null) {
+        if(!isDone.get()) {
             long d = System.nanoTime() + nanos;
-            Signaller signaller = new Signaller(nanos, d == 0L ? 1L : d, new SoftReference<>(value));
+            Signaller signaller = new Signaller(nanos, d == 0L ? 1L : d, new SoftReference<>(value), isCancelled, isDone);
             waitForSignaller(signaller);
         }
         return value;
     }
 
     private void waitForSignaller(Signaller signaller) {
-        if(signaller.thread != null && value == null) {
+        if(signaller.thread != null && !isDone.get() && !isCancelled.get()) {
             try {
+                waiting.add(signaller.thread);
                 ForkJoinPool.managedBlock(signaller);
             } catch (InterruptedException e) {
-                Logger.log(e);
+                e.printStackTrace();
                 Thread.currentThread().interrupt();
             }
         }
@@ -104,19 +111,28 @@ public class ConcurrentCompletableFuture<V> implements Future<V> {
     /**
      * Set value and complete future
      */
-    public void set(V value) {
-        Objects.requireNonNull(value);
-        this.value = value;
-        isDone.set(true);
+    public void set(@Nonnull V value) {
+        if(isDone.compareAndSet(false, true)) {
+            this.value = value;
+            for(Thread thread : waiting) {
+                if(!thread.isInterrupted())
+                    LockSupport.unpark(thread);
+            }
+            waiting.clear();
+        }
     }
 
     private static final class Signaller implements ForkJoinPool.ManagedBlocker {
         long nanos;
         final long deadline;
         final Reference<?> value;
+        final AtomicBoolean isCancelled;
+        final AtomicBoolean isDone;
         volatile Thread thread;
 
-        Signaller(long nanos, long deadline, Reference<?> value) {
+        Signaller(long nanos, long deadline, Reference<?> value, AtomicBoolean isCancelled, AtomicBoolean isDone) {
+            this.isCancelled = isCancelled;
+            this.isDone = isDone;
             this.thread = Thread.currentThread();
             this.nanos = nanos;
             this.deadline = deadline;
@@ -140,7 +156,7 @@ public class ConcurrentCompletableFuture<V> implements Future<V> {
                 thread = null;
                 return true;
             }
-            return value.get() != null;
+            return isDone.get() || isCancelled.get();
         }
     }
 }
