@@ -121,11 +121,12 @@ final class ClassPathScannerThread extends Thread {
     private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners) {
         if(clazz.isAnnotationPresent(Ignored.class))
             return;
+        if(listeners.containsKey(clazz))
+            return;
 
         Stream.of(clazz.getDeclaredMethods())
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
                 .filter(method -> method.isAnnotationPresent(ListenAnnotation.class) || method.isAnnotationPresent(ListenClass.class) || method.isAnnotationPresent(ListenInterface.class))
-                .filter(method -> !listeners.containsAddition(method))
                 .forEach(method -> {
                     if(method.isAnnotationPresent(ListenAnnotation.class)) {
                         ListenAnnotation annotation = method.getAnnotation(ListenAnnotation.class);
