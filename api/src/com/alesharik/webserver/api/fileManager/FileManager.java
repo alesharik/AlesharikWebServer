@@ -49,7 +49,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.zip.DataFormatException;
 
 @Prefixes("[FileManager]")
 @Deprecated
@@ -652,7 +651,7 @@ public final class FileManager {
                 } else {
                     return data;
                 }
-            } catch (IOException | DataFormatException e) {
+            } catch (IOException e) {
                 Logger.log("Error in reading file " + file);
                 Logger.log(e);
             } catch (SecurityException e) {
