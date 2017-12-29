@@ -16,9 +16,27 @@
  *
  */
 
+/*
+ *  This file is part of AlesharikWebServer.
+ *
+ *     AlesharikWebServer is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     AlesharikWebServer is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with AlesharikWebServer.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package com.alesharik.webserver.api.reflection;
 
-import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.api.MiscUtils;
 
 import javax.annotation.Nonnull;
 import java.util.Iterator;
@@ -51,7 +69,7 @@ public class ParentPackageIterator implements Iterator<Package> {
     @Override
     public Package next() {
         Package next;
-        for(; (next = PackageUtils.getPackage(Utils.sliceString(pkg, i))) == null; i--) {
+        for(; (next = PackageUtils.getPackage(MiscUtils.sliceString(pkg, i))) == null; i--) {
         }
         return next;
     }
@@ -73,7 +91,7 @@ public class ParentPackageIterator implements Iterator<Package> {
         @Override
         public Package next() {
             Package next;
-            for(; (next = PackageUtils.getPackage(Utils.sliceString(pkg, i))) == null; i++) {
+            for(; (next = PackageUtils.getPackage(MiscUtils.sliceString(pkg, i))) == null; i++) {
             }
             return next;
         }
