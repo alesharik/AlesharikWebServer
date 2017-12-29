@@ -18,11 +18,11 @@
 
 package com.alesharik.webserver.logger.logger;
 
-import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.logging.Formatter;
@@ -97,7 +97,7 @@ public class PrintStreamLoggerHandlerTest {
 
         @Override
         public void write(byte[] buf, int off, int len) {
-            messages.add(new String(buf, Charsets.UTF8_CHARSET).replaceAll("\u0000", ""));
+            messages.add(new String(buf, StandardCharsets.UTF_8).replaceAll("\u0000", ""));
         }
 
         public String take() {
