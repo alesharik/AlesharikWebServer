@@ -27,7 +27,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -139,51 +138,47 @@ final class SharedStorageClassVisitor extends ClassVisitor {//FIXME
 
         @Override
         public void visitCode() {
-            try {
-                if(type > -1) {
-                    super.visitCode();
-                    if(type == 1) {// Is a get method
-                        Type returnType = Type.getReturnType(ret);
+            if(type > -1) {
+                super.visitCode();
+                if(type == 1) {// Is a get method
+                    Type returnType = Type.getReturnType(ret);
 
-                        mv.visitCode();
-                        mv.visitLdcInsn(id); // First parameter - id
-                        mv.visitLdcInsn(result.get()); // Second parameter - field name
-                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "get", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;"); // get result
-                        if(ret.contains(";")) { //If return need object
-                            mv.visitTypeInsn(CHECKCAST, ret.substring(ret.indexOf("()") + 3, ret.lastIndexOf(";"))); //check cast to return object
-                        } else { //If return need primitive
-                            mv.visitTypeInsn(CHECKCAST, getBoxedType(returnType).getInternalName()); // check cast to boxed primitive
-                            unBoxForSignature(getTypeSignature(returnType.getSort())); //Unbox primitive
-                        }
-                        mv.visitInsn(getReturnOpcodeForType(returnType)); //Return
-                        //Return
-                        mv.visitEnd();
-                    } else if(type == 0) { // Is a set method
-                        if(argCount <= 0) {
-                            System.out.println("Can't transform method! Setter must have args > 0!");
-                            mv.visitEnd();
-                            return;
-                        }
-                        Type arg = args[0];
-                        Type boxedArg = getBoxedType(arg);
-                        String typeSignature = String.valueOf(getTypeSignature(arg.getSort()));
-
-                        mv.visitCode();
-                        mv.visitLdcInsn(id); // First parameter - id
-                        mv.visitLdcInsn(result.get()); // Second parameter - field name
-                        mv.visitVarInsn(getLoadOpcodeForType(arg), 1); // load var
-                        if(!typeSignature.equals("L")) { // Has a primitive
-                            mv.visitMethodInsn(INVOKESTATIC, boxedArg.getInternalName(), "valueOf", "(" + typeSignature + ")L" + boxedArg.getInternalName() + ";"); //Cast to boxed primitive
-                        }
-                        mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "set", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V"); //Set object
-                        mv.visitInsn(RETURN); // Return void
-                        mv.visitEnd();
+                    mv.visitCode();
+                    mv.visitLdcInsn(id); // First parameter - id
+                    mv.visitLdcInsn(result.get()); // Second parameter - field name
+                    mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "get", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;", false); // get result
+                    if(ret.contains(";")) { //If return need object
+                        mv.visitTypeInsn(CHECKCAST, ret.substring(ret.indexOf("()") + 3, ret.lastIndexOf(";"))); //check cast to return object
+                    } else { //If return need primitive
+                        mv.visitTypeInsn(CHECKCAST, getBoxedType(returnType).getInternalName()); // check cast to boxed primitive
+                        unBoxForSignature(getTypeSignature(returnType.getSort())); //Unbox primitive
                     }
-                } else {
-                    super.visitCode();
+                    mv.visitInsn(getReturnOpcodeForType(returnType)); //Return
+                    //Return
+                    mv.visitEnd();
+                } else if(type == 0) { // Is a set method
+                    if(argCount <= 0) {
+                        System.out.println("Can't transform method! Setter must have args > 0!");
+                        mv.visitEnd();
+                        return;
+                    }
+                    Type arg = args[0];
+                    Type boxedArg = getBoxedType(arg);
+                    String typeSignature = String.valueOf(getTypeSignature(arg.getSort()));
+
+                    mv.visitCode();
+                    mv.visitLdcInsn(id); // First parameter - id
+                    mv.visitLdcInsn(result.get()); // Second parameter - field name
+                    mv.visitVarInsn(getLoadOpcodeForType(arg), 1); // load var
+                    if(!typeSignature.equals("L")) { // Has a primitive
+                        mv.visitMethodInsn(INVOKESTATIC, boxedArg.getInternalName(), "valueOf", "(" + typeSignature + ")L" + boxedArg.getInternalName() + ";", false); //Cast to boxed primitive
+                    }
+                    mv.visitMethodInsn(INVOKESTATIC, "com/alesharik/webserver/api/sharedStorage/GetterSetterManager", "set", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V", false); //Set object
+                    mv.visitInsn(RETURN); // Return void
+                    mv.visitEnd();
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                System.err.println(e);
+            } else {
+                super.visitCode();
             }
         }
 
@@ -276,22 +271,22 @@ final class SharedStorageClassVisitor extends ClassVisitor {//FIXME
                 case 'B':
                 case 'S':
                 case 'I':
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I", false);
                     break;
                 case 'J':
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J", false);
                     break;
                 case 'F':
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F", false);
                     break;
                 case 'D':
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
                     break;
                 case 'Z':
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
                     break;
                 case 'C':
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
                     break;
                 default: //Is a object - do nothing
                     break;
