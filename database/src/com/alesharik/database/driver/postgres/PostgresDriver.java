@@ -25,6 +25,7 @@ import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.database.exception.DatabaseReadSQLException;
 import com.alesharik.database.exception.DatabaseStoreSQLException;
 import com.alesharik.database.transaction.TransactionManager;
+import com.alesharik.database.user.UserManager;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import lombok.Getter;
 
@@ -94,16 +95,16 @@ public final class PostgresDriver implements DatabaseDriver {
     }
 
     @Override
-    public String getCurrentUser() {
-        return currentUser;
-    }
-
-    @Override
     public void updateTransactional(boolean is) {
         if(is)
             transactionManager = new PostgresTransactionManager(connection);
         else
             transactionManager = null;
+    }
+
+    @Override
+    public UserManager<?, ?, ?> getUserManager() {
+        return null;//FIXME
     }
 
     private void createSchema(Schema schema) {
