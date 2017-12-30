@@ -1,9 +1,9 @@
 AlesharikWebServer
 ==================
 
-Master: [![Travis-ci](https://api.travis-ci.org/alesharik/AlesharikWebServer.svg?branch=master)](https://travis-ci.org/alesharik/AlesharikWebServer) [![codecov.io](https://codecov.io/github/alehsarik/AlesharikWebServer/coverage.svg?branch=master)](https://codecov.io/github/alesharik/AlesharikWebServer?branch=master)
+Master: [![Travis-ci](https://api.travis-ci.org/alesharik/AlesharikWebServer.svg?branch=master)](https://travis-ci.org/alesharik/AlesharikWebServer)[![codecov](https://codecov.io/gh/alesharik/AlesharikWebServer/branch/master/graph/badge.svg)](https://codecov.io/gh/alesharik/AlesharikWebServer)
 
-Develop: [![Travis-ci](https://travis-ci.org/alesharik/AlesharikWebServer.svg?branch=develop)](https://travis-ci.org/alesharik/AlesharikWebServer) [![codecov.io](https://codecov.io/github/alehsarik/AlesharikWebServer/coverage.svg?branch=develop)](https://codecov.io/github/alesharik/AlesharikWebServer?branch=develop)
+Develop: [![Travis-ci](https://travis-ci.org/alesharik/AlesharikWebServer.svg?branch=develop)](https://travis-ci.org/alesharik/AlesharikWebServer)[![codecov](https://codecov.io/gh/alesharik/AlesharikWebServer/branch/develop/graph/badge.svg)](https://codecov.io/gh/alesharik/AlesharikWebServer)
 
 Status: [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a8dc12bb283444998223d228061fa7a2)](https://www.codacy.com/app/alesharik/AlesharikWebServer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=alesharik/AlesharikWebServer&amp;utm_campaign=Badge_Grade) 
 
