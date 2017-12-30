@@ -266,21 +266,15 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
             int bucket = getBucket(hash, nodes.length());
             LockedNode<K, V> node = nodes.get(bucket);
             if(node == null) {
-                System.out.println("Before switch to write");
-                long _temp = nodesLock;
                 this.nodesLock.unlockRead(nodesLock);
                 nodesLock = this.nodesLock.writeLock();
-                System.out.println("Switch to write: from: " + _temp + " to " + nodesLock);
                 bucket = getBucket(hash, nodes.length());
                 node = nodes.get(bucket);
                 if(node == null) {
                     LockedNode<K, V> newNode = new LockedNode<>(key, value, period);
                     nodes.set(bucket, newNode);
                     size.incrementAndGet();
-                    System.out.println("Before checkSize");
-                    long temp_old = nodesLock;
                     nodesLock = checkSize(0, nodesLock, true);
-                    System.out.println("Before checkSize:" + temp_old + ", after: " + nodesLock);
                     return null;
                 }
             }
@@ -288,7 +282,6 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
 
             try {
                 if(node.key.equals(key)) {
-                    System.out.println("Node equality: first: " + node.key + ", second: " + key);
                     old = node.value;
                     node.value = value;
                     node.reset();
@@ -302,7 +295,6 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
                     } else {
                         Node<K, V> n = node.next;
                         if(n.key.equals(key)) {
-                            System.out.println("Node equality: first: " + node.key + ", second: " + key);
                             old = n.value;
                             n.value = value;
                             n.reset();
@@ -322,10 +314,7 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
                             if(setNext) {
                                 n.next = newNode;
                                 size.incrementAndGet();
-                                System.out.println("Before checkSize on setNext");
-                                long temp_old = nodesLock;
                                 nodesLock = checkSize(0, nodesLock, false);
-                                System.out.println("Before checkSize:" + temp_old + ", after: " + nodesLock);
                             }
                         }
                     }
@@ -336,7 +325,6 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
 
 
         } finally {
-            System.out.println("Write: " + this.nodesLock.isWriteLocked() + ", read: " + this.nodesLock.isReadLocked() + ", lock: " + nodesLock);
             this.nodesLock.unlock(nodesLock);
         }
         return old;
@@ -345,14 +333,10 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
     private long checkSize(int required, final long lock, boolean write) {
         long l = lock;
         if(!write) {
-            System.out.println("checkSize: try write lock OK!");
             l = nodesLock.tryConvertToWriteLock(lock);
-            System.out.println("checkSize: try write lock ended: l: " + l);
             if(l == 0) {
-                System.out.println("checkSize: try acquire failure!");
                 nodesLock.unlockRead(lock);
                 l = nodesLock.writeLock();
-                System.out.println("checkSize: write lock acquired!");
             }
         }
         try {
@@ -383,7 +367,6 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }
-        System.out.println("checkSize: Before return: lock: " + lock + ", return lock: " + l);
         return l;
     }
 
