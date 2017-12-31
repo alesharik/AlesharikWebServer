@@ -179,7 +179,7 @@ public class Cookie implements Cloneable {
     }
 
     @Override
-    protected Cookie clone() throws CloneNotSupportedException {
+    public Cookie clone() throws CloneNotSupportedException {
         super.clone();
 
         Cookie clone = new Cookie(name, value);

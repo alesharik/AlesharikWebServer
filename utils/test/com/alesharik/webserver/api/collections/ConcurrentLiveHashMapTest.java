@@ -423,7 +423,7 @@ public class ConcurrentLiveHashMapTest {
     @Test
     public void putIfAbsent() {
         //noinspection UnnecessaryBoxing
-        Integer integer = new Integer(234);
+        Integer integer = Integer.valueOf(10000);
         assertNull(map.putIfAbsent(1, integer));
         assertSame(integer, map.putIfAbsent(1, integer));
     }
@@ -431,7 +431,7 @@ public class ConcurrentLiveHashMapTest {
     @Test
     public void putIfAbsentWithTime() {
         //noinspection UnnecessaryBoxing
-        Integer integer = new Integer(234);
+        Integer integer = Integer.valueOf(10000);
         assertNull(map.putIfAbsent(1, integer, 1));
         assertSame(integer, map.putIfAbsent(1, integer));
         assertEquals(1, map.getPeriod(1));

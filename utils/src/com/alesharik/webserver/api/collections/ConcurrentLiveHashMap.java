@@ -880,7 +880,7 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
     }
 
     @Override
-    protected ConcurrentLiveHashMap<K, V> clone() {
+    public ConcurrentLiveHashMap<K, V> clone() {
         ConcurrentLiveHashMap<K, V> map = new ConcurrentLiveHashMap<>(sizeLimit);
         map.started.set(started.get());
         map.size.set(size.get());
@@ -980,7 +980,7 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
 
     @Getter
     @Setter
-    private static final class LockedNode<K, V> extends Node<K, V> implements Map.Entry<K, V>, Periodic {
+    private static final class LockedNode<K, V> extends Node<K, V> implements Map.Entry<K, V>, Periodic, Cloneable {
         private final transient StampedLock lock = new StampedLock();
 
         public LockedNode(K key, V value, long period) {

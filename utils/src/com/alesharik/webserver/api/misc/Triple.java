@@ -132,7 +132,7 @@ public abstract class Triple<A, B, C> implements Cloneable {
     @AllArgsConstructor
     @ToString
     @Getter
-    private static class ImmutableTriple<A, B, C> extends Triple<A, B, C> {
+    private static class ImmutableTriple<A, B, C> extends Triple<A, B, C> implements Cloneable {
         protected final A a;
         protected final B b;
         protected final C c;
@@ -151,7 +151,7 @@ public abstract class Triple<A, B, C> implements Cloneable {
 
     @ToString
     @Getter
-    private static final class ImmutableSerializableTriple<A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> extends ImmutableTriple<A, B, C> implements Serializable {
+    private static final class ImmutableSerializableTriple<A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> extends ImmutableTriple<A, B, C> implements Serializable, Cloneable {
         private static final long serialVersionUID = -6012140996629786458L;
 
         public ImmutableSerializableTriple(A a, B b, C c) {
@@ -169,7 +169,7 @@ public abstract class Triple<A, B, C> implements Cloneable {
     @ToString
     @ThreadSafe
     @AllArgsConstructor(access = AccessLevel.PROTECTED)
-    public static class MutableTriple<A, B, C> extends Triple<A, B, C> {
+    public static class MutableTriple<A, B, C> extends Triple<A, B, C> implements Cloneable {
         protected A a;
         protected B b;
         protected C c;
@@ -193,7 +193,7 @@ public abstract class Triple<A, B, C> implements Cloneable {
 
     @ToString
     @ThreadSafe
-    private static final class MutableSerializableTriple<A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> extends MutableTriple<A, B, C> implements Serializable {
+    private static final class MutableSerializableTriple<A extends Object & Serializable, B extends Object & Serializable, C extends Object & Serializable> extends MutableTriple<A, B, C> implements Serializable, Cloneable {
         private static final long serialVersionUID = 2186491658888848308L;
 
         protected MutableSerializableTriple(A a, B b, C c) {

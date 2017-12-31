@@ -733,7 +733,7 @@ public class CachedArrayList<V> implements Cloneable, List<V>, RandomAccess, Ser
         }
 
         @Override
-        protected TimedElement<T> clone() {
+        public TimedElement<T> clone() {
             TimedElement<T> clone;
             try {
                 clone = (TimedElement<T>) super.clone();

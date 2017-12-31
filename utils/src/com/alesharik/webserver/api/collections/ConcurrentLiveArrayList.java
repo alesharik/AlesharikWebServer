@@ -832,7 +832,7 @@ public class ConcurrentLiveArrayList<V> implements Tickable, Cloneable, Serializ
         }
 
         @Override
-        protected Element<V> clone() {
+        public Element<V> clone() {
             Element<V> clone;
             try {
                 clone = (Element<V>) super.clone();
