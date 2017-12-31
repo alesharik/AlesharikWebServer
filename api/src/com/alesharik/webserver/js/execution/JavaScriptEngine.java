@@ -20,7 +20,6 @@ package com.alesharik.webserver.js.execution;
 
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.SneakyThrows;
-import org.glassfish.grizzly.utils.Charsets;
 
 import javax.annotation.Nonnull;
 import javax.script.ScriptEngine;
@@ -31,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -101,7 +101,7 @@ public final class JavaScriptEngine {
      * @throws IOException           if anything happens
      */
     public void load(@Nonnull File file) throws IOException, ScriptException {
-        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), Charsets.UTF8_CHARSET)) {
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             engine.eval(reader);
             inputListeners.forEach(inputListener -> inputListener.listenFile(file));
         } catch (ScriptException e) {
@@ -167,7 +167,7 @@ public final class JavaScriptEngine {
     public static void main(String[] args) {
         System.out.println("Started! Use exit to exit");
         JavaScriptEngine javaScriptEngine = new JavaScriptEngine(false, true);
-        Scanner scanner = new Scanner(System.in, Charsets.UTF8_CHARSET.name());
+        Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8.name());
         String line;
         while(!(line = scanner.nextLine()).equals("exit")) {
             try {
