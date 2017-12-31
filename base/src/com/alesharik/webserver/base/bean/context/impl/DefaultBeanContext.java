@@ -31,7 +31,7 @@ import javax.annotation.Nonnull;
 @Manager(DefaultBeanContext.Manager.class)
 @SuppressMemoryLeakSafety(warning = false)
 public final class DefaultBeanContext implements BeanContext {
-    private DefaultBeanContext() {
+    DefaultBeanContext() {
     }
 
     @Override
@@ -55,7 +55,7 @@ public final class DefaultBeanContext implements BeanContext {
     }
 
     public static final class Manager implements BeanContextManager {
-        private Manager() {
+        Manager() {
         }
 
         @Nonnull
