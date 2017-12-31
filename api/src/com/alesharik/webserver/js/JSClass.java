@@ -27,6 +27,7 @@ import java.util.stream.Stream;
  * This class is abstraction of js class. Used for works with class(change methods, add constructor, etc)
  */
 //TODO use regexp to detect methods
+@Deprecated
 public class JSClass {
     private static final Pattern classRegexp = Pattern.compile("class ([^ ]*)");
     private static final Pattern extendRegexp = Pattern.compile("class ([^ ]*)");
@@ -47,6 +48,17 @@ public class JSClass {
         constructor = "";
         constructorParams = "";
         methods = new TripleHashMap<>();
+    }
+
+    //TODO write this
+    public static JSClass parse(String clazz) {
+        String name = classRegexp.matcher(clazz).group(0).substring("class ".length());
+        String extend = extendRegexp.matcher(clazz).group();
+        if(!extend.isEmpty()) {
+            extend = extend.substring("extends ".length());
+        }
+//        String methods = clazz.substring(("class " + name + " " + ((extend.isEmpty()) ? "" : "extends " + extend) + " {").length(), clazz.lastIndexOf("}") - 1);
+        return new JSClass(name, extend);
     }
 
     public void setExtends(String extend) {
@@ -140,17 +152,6 @@ public class JSClass {
 
     public String getMinimizedCode() {
         return CodeFormatter.minimize(getCode(), CodeFormatter.JS_SPACE_REGEXP, CodeFormatter.JS_NEXT_LINE_REGEXP);
-    }
-
-    //TODO write this
-    public static JSClass parse(String clazz) {
-        String name = classRegexp.matcher(clazz).group(0).substring("class ".length());
-        String extend = extendRegexp.matcher(clazz).group();
-        if(!extend.isEmpty()) {
-            extend = extend.substring("extends ".length());
-        }
-//        String methods = clazz.substring(("class " + name + " " + ((extend.isEmpty()) ? "" : "extends " + extend) + " {").length(), clazz.lastIndexOf("}") - 1);
-        return new JSClass(name, extend);
     }
 
     @Override

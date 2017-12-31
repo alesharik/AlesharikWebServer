@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.js;
 
+@Deprecated
 public final class CodeFormatter {
     public static final String JS_SPACE_REGEXP = "(?!((^(?=\"|')$).*(^(?=\").$)))(\\s)";
     //TODO write space regexp
