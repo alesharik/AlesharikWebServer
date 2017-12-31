@@ -21,7 +21,7 @@
  * The java class is in this package named Mutex.java
  * @type {{Mutex}}
  */
-var Mutex = {};
+Mutex = {};
 
 /**
  * @readonly

@@ -16,8 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.js;
+package com.alesharik.webserver.api.utils.scheduler;
 
-public class JSFile {
-
+public interface BackoffRunnable extends Runnable {
 }

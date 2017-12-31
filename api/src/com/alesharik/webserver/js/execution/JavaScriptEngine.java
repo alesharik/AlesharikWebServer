@@ -69,18 +69,18 @@ public final class JavaScriptEngine {
             private StringBuilder stringBuilder = new StringBuilder();
 
             @Override
-            public void write(char[] cbuf, int off, int len) throws IOException {
+            public void write(char[] cbuf, int off, int len) {
                 stringBuilder.append(cbuf, off, len);
             }
 
             @Override
-            public void flush() throws IOException {
+            public void flush() {
                 outputListeners.forEach(javaScriptOutputListener -> javaScriptOutputListener.listen(stringBuilder.toString()));
                 stringBuilder.delete(0, stringBuilder.length());
             }
 
             @Override
-            public void close() throws IOException {
+            public void close() {
                 //Okay
             }
         });
@@ -88,8 +88,8 @@ public final class JavaScriptEngine {
 
     @SneakyThrows //Because this lines can't throw any exception
     private void loadThreadApi() {
-        engine.eval("var Thread = com.alesharik.webserver.js.execution.javaScript.JSThread;");
-        engine.eval("var Mutex = com.alesharik.webserver.js.execution.javaScript.Mutex;");
+        engine.eval("var Thread = com.alesharik.webserver.js.execution.js.JSThread;");
+        engine.eval("var Mutex = com.alesharik.webserver.js.execution.js.Mutex;");
     }
 
     /**

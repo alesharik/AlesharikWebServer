@@ -54,10 +54,10 @@ Thread.prototype.interrupt = function () {
 };
 
 /**
- * @return {boolean} is thread interrupted or not running
+ * @return {boolean} is thread running
  * @readonly
  */
-Thread.prototype.isInterrupted = function () {
+Thread.prototype.isRunning = function () {
 };
 
 /**
@@ -66,4 +66,33 @@ Thread.prototype.isInterrupted = function () {
  * @return {object}
  */
 Thread.prototype.getSharedStorage = function () {
+};
+
+/**
+ * Set thread name
+ * @param {string} name
+ */
+Thread.prototype.setName = function (name) {
+};
+
+/**
+ * Return thread name
+ * @return {string} thread name
+ */
+Thread.prototype.getName = function () {
+};
+
+
+/**
+ * Set thread daemon
+ * @param {boolean} is is daemon
+ */
+Thread.prototype.setDaemon = function (is) {
+};
+
+/**
+ * Return true if this thread is a daemon
+ * @return {boolean} is this thread a daemon
+ */
+Thread.prototype.getDaemon = function () {
 };

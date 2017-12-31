@@ -16,9 +16,11 @@
  *
  */
 
-package com.alesharik.webserver.js.execution.javaScript;
+package com.alesharik.webserver.js.execution.js;
 
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.api.scripting.AbstractJSObject;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class used ONLY in js code.
@@ -26,12 +28,13 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror;
  * The thread documentation is in <code>Thread.js</code> class in this folder
  */
 public final class JSThread {
-    private final ScriptObjectMirror runnable;
+    private final AbstractJSObject runnable;
     private final Object sharedStorage;
-    private Thread thread;
-    private boolean isInterrupted = true;
 
-    public JSThread(ScriptObjectMirror runnable, Object sharedStorage) {
+    private final AtomicBoolean interrupted = new AtomicBoolean(true);
+    private Thread thread;
+
+    public JSThread(AbstractJSObject runnable, Object sharedStorage) {
         this.runnable = runnable;
         this.sharedStorage = sharedStorage;
     }
@@ -41,10 +44,8 @@ public final class JSThread {
     }
 
     public synchronized void start() {
-        if(isInterrupted) {
-            isInterrupted = false;
+        if(interrupted.compareAndSet(true, false))
             JSThreadExecutor.execute(this);
-        }
     }
 
     public void run() {
@@ -52,17 +53,33 @@ public final class JSThread {
     }
 
     public synchronized void interrupt() {
-        if(!isInterrupted) {
-            isInterrupted = true;
+        if(interrupted.compareAndSet(false, true)) {
             thread.interrupt();
+            JSThreadExecutor.invokeChecker();
         }
     }
 
-    public boolean isInterrupted() {
-        return isInterrupted;
+    public boolean isRunning() {
+        return !interrupted.get();
     }
 
     public synchronized Object getSharedStorage() {
         return sharedStorage;
+    }
+
+    public void setName(String name) {
+        thread.setName(name);
+    }
+
+    public String getName() {
+        return thread.getName();
+    }
+
+    public void setDaemon(boolean is) {
+        thread.setDaemon(is);
+    }
+
+    public boolean isDaemon() {
+        return thread.isDaemon();
     }
 }
