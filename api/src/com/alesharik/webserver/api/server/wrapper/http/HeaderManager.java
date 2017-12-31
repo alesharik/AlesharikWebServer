@@ -528,7 +528,7 @@ public class HeaderManager {
 
         @Override
         public String toString(TkType tkType) {
-            return "" + tkType.getSymbol();
+            return String.valueOf(tkType.getSymbol());
         }
     }
 

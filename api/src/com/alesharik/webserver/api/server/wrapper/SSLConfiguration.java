@@ -55,12 +55,12 @@ public final class SSLConfiguration {
         }
 
         public static KeyStoreConfiguration getConfiguration(@Nonnull Element element) {
-            String type = XmlHelper.getString("type", element, false);
             File file = XmlHelper.getFile("file", element, true);
             if(!file.exists() || file.isDirectory())
                 throw new ConfigurationParseError("File must be real file!");
 
             String password = XmlHelper.getString("password", element, true);
+            String type = XmlHelper.getString("type", element, false);
             return new KeyStoreConfiguration(type, file, password);
         }
     }

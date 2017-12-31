@@ -98,13 +98,13 @@ public class CachedHashMap<K, V> implements Cloneable, Map<K, V>, Serializable, 
         if(key == null)
             return false;
 
-        long time = System.currentTimeMillis();
         int hash = hash(key);
         int bucket = getBucket(hash, entries.length);
         Entry<K, V> entry = entries[bucket];
         if(entry == null)
             return false;
 
+        long time = System.currentTimeMillis();
         do {
             while(entry.isExpired(time)) {
                 Entry<K, V> n = removeEntry(bucket, entry);
@@ -969,10 +969,10 @@ public class CachedHashMap<K, V> implements Cloneable, Map<K, V>, Serializable, 
         }
 
         final Entry<K, V> nextNode() {
-            Entry<K, V>[] t;
             Entry<K, V> e = next;
             if(e == null)
                 throw new NoSuchElementException();
+            Entry<K, V>[] t;
             if((next = (current = e).next) == null && (t = entries) != null) {
                 do {
                 } while(index < t.length && (next = t[index++]) == null);

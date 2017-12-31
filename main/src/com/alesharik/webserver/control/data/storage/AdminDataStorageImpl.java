@@ -70,7 +70,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.List;
@@ -79,7 +78,7 @@ import java.util.List;
  * This class used ONLY in AlesharikWebServer. Do not use it!
  */
 @Prefixes(value = {"[ServerControl]", "[AdminDataStorage]"})
-public final class AdminDataStorageImpl implements AdminDataStorage, SecuredStoreAccessController {
+public final class AdminDataStorageImpl implements AdminDataStorage, SecuredStoreAccessController {//FIXME
     private static SecretKey SECRET_KEY;
 
     static {
@@ -106,7 +105,6 @@ public final class AdminDataStorageImpl implements AdminDataStorage, SecuredStor
     @Override
     public void parse(@Nullable Element configNode) {
         File adminKey = XmlHelper.getFile("adminKeyFile", configNode, true);
-        File adminData = XmlHelper.getFile("adminDataFile", configNode, true);
         if(!adminKey.exists()) {
             try {
                 if(!adminKey.createNewFile()) {
@@ -116,6 +114,7 @@ public final class AdminDataStorageImpl implements AdminDataStorage, SecuredStor
                 throw new ConfigurationParseError(e);
             }
         }
+        File adminData = XmlHelper.getFile("adminDataFile", configNode, true);
         if(!adminData.exists()) {
             try {
                 if(!adminData.createNewFile()) {

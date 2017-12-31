@@ -75,12 +75,12 @@ public class UserHookManager {
      * @param hookElement hook element(name, factory, config and etc)
      */
     public static void parseHook(@Nonnull Element hookElement) {
-        String name = XmlHelper.getString("name", hookElement, true);
         String factory = XmlHelper.getString("factory", hookElement, true);
         if(!hookFactories.containsKey(factory))
             throw new ConfigurationParseError("Can't find hook factory " + factory);
 
         Element config = XmlHelper.getXmlElement("configuration", hookElement, true);
+        String name = XmlHelper.getString("name", hookElement, true);
         Hook hook = hookFactories.get(factory).create(config, name);
         HookManager.add(name, hook);
     }

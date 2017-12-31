@@ -275,10 +275,10 @@ public class ConcurrentLiveArrayList<V> implements Tickable, Cloneable, Serializ
 
     protected V remove0(int index) {
         int i = size.getAndDecrement();
-        int move = i - index - 1;
         Element<V> element = elements[index];
         if(element == null)
             return null;
+        int move = i - index - 1;
         if(move > 0)
             System.arraycopy(elements, index + 1, elements, index, move);
         elements[i - 1] = null;
