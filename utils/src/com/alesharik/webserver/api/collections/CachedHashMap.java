@@ -195,13 +195,13 @@ public class CachedHashMap<K, V> implements Cloneable, Map<K, V>, Serializable, 
     protected Entry<K, V> getEntry(@Nullable Object key) {
         if(key == null)
             return null;
-        long time = System.currentTimeMillis();
         int hash = hash(key);
         int bucket = getBucket(hash, entries.length);
         Entry<K, V> entry = entries[bucket];
         if(entry == null)
             return null;
 
+        long time = System.currentTimeMillis();
         do {
             while(entry.isExpired(time)) {
                 Entry<K, V> n = removeEntry(bucket, entry);

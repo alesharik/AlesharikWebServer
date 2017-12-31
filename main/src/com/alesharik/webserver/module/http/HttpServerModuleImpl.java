@@ -103,7 +103,6 @@ public final class HttpServerModuleImpl implements HttpServerModule {
         if(groupName == null)
             groupName = getName();
 
-        ThreadGroup threadGroup = new ThreadGroup(groupName);
 
         Element poolConfig = getXmlElement("pool", configNode, true);
 
@@ -117,6 +116,7 @@ public final class HttpServerModuleImpl implements HttpServerModule {
 
         ExecutorPool executorPool;
 
+        ThreadGroup threadGroup = new ThreadGroup(groupName);
         try {
             Constructor<?> constructor = poolClass.getDeclaredConstructor(int.class, int.class, ThreadGroup.class);
             constructor.setAccessible(true);
