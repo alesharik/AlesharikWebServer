@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 public class MemoryReserveUtilsTest {
 
     @Test
-    public void reserveMemoryTest() throws Exception {
+    public void reserveMemoryTest() {
         long first = SharedSecrets.getJavaNioAccess().getDirectBufferPool().getMemoryUsed();
 
         Cleaner cleaner = MemoryReserveUtils.reserveMemory(this, 120);
@@ -40,7 +40,7 @@ public class MemoryReserveUtilsTest {
     }
 
     @Test
-    public void reserveBigMemoryTest() throws Exception {
+    public void reserveBigMemoryTest() {
         long freeMemory = Runtime.getRuntime().freeMemory();
         long bigReserveSize = (long) Integer.MAX_VALUE + 512;
         if(freeMemory < bigReserveSize) {
@@ -59,12 +59,12 @@ public class MemoryReserveUtilsTest {
     }
 
     @Test(expected = OutOfMemoryError.class)
-    public void reserveOutOfMemoryErrorTest() throws Exception {
+    public void reserveOutOfMemoryErrorTest() {
         MemoryReserveUtils.reserveMemory(this, Long.MAX_VALUE);
     }
 
     @Test
-    public void unreserveMemoryTest() throws Exception {
+    public void unreserveMemoryTest() {
         long first = SharedSecrets.getJavaNioAccess().getDirectBufferPool().getMemoryUsed();
 
         MemoryReserveUtils.reserveMemory(this, 120);
@@ -77,7 +77,7 @@ public class MemoryReserveUtilsTest {
     }
 
     @Test
-    public void unreserveBigMemoryTest() throws Exception {
+    public void unreserveBigMemoryTest() {
         long freeMemory = Runtime.getRuntime().freeMemory();
         long bigReserveSize = (long) Integer.MAX_VALUE + 512;
         if(freeMemory < bigReserveSize) {

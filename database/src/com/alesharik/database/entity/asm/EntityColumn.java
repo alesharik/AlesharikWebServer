@@ -18,7 +18,7 @@
 
 package com.alesharik.database.entity.asm;
 
-import com.alesharik.webserver.internals.FieldAccessor;
+import com.alesharik.webserver.internals.reflect.FieldAccessor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;

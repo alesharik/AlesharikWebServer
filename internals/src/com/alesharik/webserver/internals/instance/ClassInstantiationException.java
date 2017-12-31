@@ -36,6 +36,9 @@
 
 package com.alesharik.webserver.internals.instance;
 
+/**
+ * This exception indicates class instantiation error
+ */
 public final class ClassInstantiationException extends RuntimeException {
     private static final long serialVersionUID = -8230181649236391881L;
 

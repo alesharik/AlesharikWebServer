@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.internals;
 
-import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import sun.misc.Cleaner;
 import sun.misc.VM;
@@ -78,11 +77,10 @@ public class MemoryReserveUtils {
             size -= delta;
             try {
                 reserveMemory1(delta);
-            } catch (InvocationTargetException e) {
-                if(e.getCause() instanceof Error)
-                    throw (Error) e.getCause();
-                else
-                    throw new RuntimeException(e.getCause());
+            } catch (Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e.getCause());
             }
         }
     }
@@ -93,7 +91,9 @@ public class MemoryReserveUtils {
             size -= delta;
             try {
                 unreserveMemory(delta);
-            } catch (InvocationTargetException e) {
+            } catch (Error e) {
+                throw e;
+            } catch (Throwable e) {
                 throw new RuntimeException(e.getCause());
             }
         }
@@ -105,8 +105,7 @@ public class MemoryReserveUtils {
      * @param size memory size to reserve
      * @throws InvocationTargetException if anything like OOME happens
      */
-    @SneakyThrows
-    private static void reserveMemory1(int size) throws InvocationTargetException {
+    private static void reserveMemory1(int size) throws Throwable {
         boolean pa = VM.isDirectMemoryPageAligned();
         int ps = UnsafeAccess.INSTANCE.pageSize();
         long s = Math.max(1L, (long) size + (pa ? ps : 0));
@@ -119,8 +118,7 @@ public class MemoryReserveUtils {
      * @param size memory size to unreserve
      * @throws InvocationTargetException if anything like OOME happens
      */
-    @SneakyThrows
-    private static void unreserveMemory(int size) throws InvocationTargetException {
+    private static void unreserveMemory(int size) throws Throwable {
         boolean pa = VM.isDirectMemoryPageAligned();
         int ps = UnsafeAccess.INSTANCE.pageSize();
         long s = Math.max(1L, (long) size + (pa ? ps : 0));

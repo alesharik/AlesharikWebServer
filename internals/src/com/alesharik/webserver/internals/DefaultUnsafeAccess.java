@@ -36,7 +36,7 @@ final class DefaultUnsafeAccess extends UnsafeAccess {
         }
     }
 
-    public DefaultUnsafeAccess() {
+    DefaultUnsafeAccess() {
     }
 
     @Override
