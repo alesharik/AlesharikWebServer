@@ -16,27 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.control.commands;
+package com.alesharik.webserver.api.utils.scheduler;
 
-import com.alesharik.webserver.control.IServerConsoleCommand;
+public interface Wakeup {
+    void wakeUp();
 
-import java.util.HashMap;
-
-@Deprecated
-public class DirCommand implements IServerConsoleCommand {
-    private HashMap<String, String> map;
-
-    @Override
-    public String handle(String params) {
-        if(map.get("currentPath") == null) {
-            return "/";
-        }
-        return map.get("currentPath");
-    }
-
-    @Override
-    public IServerConsoleCommand setTemporalyStore(HashMap<String, String> map) {
-        this.map = map;
-        return this;
-    }
+    void cancel();
 }

@@ -91,8 +91,7 @@ public class FieldAccessor {
         field.set(o, val);
     }
 
-    @Deprecated
-    public static Field findField(Class<?> clazz, String name) {
+    private static Field findField(Class<?> clazz, String name) {
         for(Field field : ReflectUtils.getAllDeclaredFields(clazz)) {
             if(field.getName().equals(name))
                 return field;

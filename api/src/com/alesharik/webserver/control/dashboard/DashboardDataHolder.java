@@ -37,6 +37,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 
+@Deprecated
 public final class DashboardDataHolder implements Module {
     private final Menu menu;
     private final ArrayList<MenuPlugin> menuPlugins;

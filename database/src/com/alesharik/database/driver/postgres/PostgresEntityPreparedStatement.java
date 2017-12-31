@@ -174,6 +174,7 @@ final class PostgresEntityPreparedStatement<E> implements EntityPreparedStatemen
     }
 
     @Override
+    @Deprecated
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         wrapper.setUnicodeStream(parameterIndex, x, length);
     }

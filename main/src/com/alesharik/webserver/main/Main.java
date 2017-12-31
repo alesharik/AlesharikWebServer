@@ -55,7 +55,7 @@ public class Main {
     private static Configurator configurator;
     private static Configuration configuration;
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws IOException {
         preMain();
 
         boolean noConfig = false;

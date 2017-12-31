@@ -16,20 +16,16 @@
  *
  */
 
-package com.alesharik.webserver.api.server.wrapper.addon;
+package com.alesharik.webserver.control.file.explorer;
 
-import lombok.Getter;
+import com.alesharik.webserver.configuration.Module;
 
-@Getter
-public class ConditionException extends RuntimeException {
-    private final UseCondition condition;
+import javax.annotation.Nonnull;
 
-    public ConditionException(Throwable throwable, UseCondition condition) {
-        super(throwable);
-        this.condition = condition;
-    }
-
-    public ConditionException(UseCondition condition) {
-        this.condition = condition;
+public interface FileExplorerModule extends Module {
+    @Nonnull
+    @Override
+    default String getName() {
+        return "dashboard-file-explorer";
     }
 }

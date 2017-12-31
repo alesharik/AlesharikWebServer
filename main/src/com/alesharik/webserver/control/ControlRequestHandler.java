@@ -20,7 +20,6 @@ package com.alesharik.webserver.control;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
-import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
@@ -38,11 +37,9 @@ import java.util.UUID;
 public class ControlRequestHandler implements RequestHandler {
     private final ConcurrentLiveArrayList<UUID> sessions = new ConcurrentLiveArrayList<>();
     private final AdminDataStorageImpl holder;
-    private final FileManager fileManager;
 
-    public ControlRequestHandler(FileManager fileManager, AdminDataStorageImpl holder) {
+    public ControlRequestHandler(AdminDataStorageImpl holder) {
         this.holder = holder;
-        this.fileManager = fileManager;
     }
 
     @Override

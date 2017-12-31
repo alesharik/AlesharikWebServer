@@ -16,17 +16,18 @@
  *
  */
 
-package com.alesharik.webserver.control;
+package com.alesharik.webserver.control.file.explorer;
 
-import java.net.URI;
+import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlugin;
+import com.alesharik.webserver.control.dashboard.websocket.WebSocketSender;
 
-@Deprecated
-public class ServerController {
+public final class FileExplorerDashboardWebSocketPlugin extends DashboardWebSocketPlugin {
+    public FileExplorerDashboardWebSocketPlugin(WebSocketSender sender) {
+        super(sender);
+    }
 
-    public WebSocketClientEndpoint connect(String server, String login, String password) throws Exception {
-        WebSocketClientEndpoint endpoint = new WebSocketClientEndpoint(new URI(server), login, password);
-        endpoint.sendMessage("Hello");
-        return endpoint;
+    @Override
+    public String getName() {
+        return "file-explorer";
     }
 }
-

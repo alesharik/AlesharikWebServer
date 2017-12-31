@@ -16,14 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.control.commands;
+package com.alesharik.webserver.configuration.config.advanced;
 
-import com.alesharik.webserver.control.IServerConsoleCommand;
+import com.alesharik.webserver.configuration.config.ConfigTypedObject;
 
-@Deprecated
-public class TestCommand implements IServerConsoleCommand {
-    @Override
-    public String handle(String params) {
-        return "test";
-    }
+public interface ModuleConfig extends ConfigTypedObject {
+
 }

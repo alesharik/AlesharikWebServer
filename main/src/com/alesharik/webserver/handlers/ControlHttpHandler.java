@@ -58,7 +58,7 @@ public final class ControlHttpHandler extends HttpHandler {
     public ControlHttpHandler(FileManager fileManager, AdminDataStorageImpl adminDataStorageImpl, boolean logRequests, File logFile, ErrorPageGenerator errorPageGenerator) {
         this.errorPageGenerator = errorPageGenerator;
         this.logRequests = logRequests;
-        this.requestHandler = new ControlRequestHandler(fileManager, adminDataStorageImpl);
+        this.requestHandler = new ControlRequestHandler(adminDataStorageImpl);
         this.fileManager = fileManager;
         this.requestHandlerList = new RequestHandlerList();
 
