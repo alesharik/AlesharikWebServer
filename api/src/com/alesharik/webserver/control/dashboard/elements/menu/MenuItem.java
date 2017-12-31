@@ -27,6 +27,7 @@ import javax.annotation.concurrent.Immutable;
  * This class is the base item of menu
  */
 @Immutable
+@Deprecated
 public abstract class MenuItem {
     private static final String NONE_TYPE = "none";
 

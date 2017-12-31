@@ -28,6 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * This class hold dashboard navigation menu
  */
 @ThreadSafe
+@Deprecated
 public final class Menu {
     private final CopyOnWriteArrayList<MenuItem> items;
 

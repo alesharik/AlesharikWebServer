@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.control.dashboard.elements.menu;
 
-import com.alesharik.webserver.js.JSClass;
 import org.jsoup.nodes.Element;
 
 import java.util.HashMap;
@@ -36,11 +35,13 @@ import java.util.HashMap;
  * WARNING! If you use non-transient fields in your plugin, you must deserialize it by overriding <code>deserialize</code> method.
  * If you override this method, you need to call super, or deserialize all class manually!
  */
-public final class MenuPlugin extends JSClass {
+@Deprecated
+public final class MenuPlugin {
     private boolean isActive = false;
     private int width = 0;
     private Element HTMLElement;
     private HashMap<String, String> defaultParameters = new HashMap<>();
+    private String name;
 
     /**
      * Initialize class extends form "MenuPlugin"
@@ -48,7 +49,7 @@ public final class MenuPlugin extends JSClass {
      * @param name if name no contains word "Plugin" at the end, constructor will place it.
      */
     public MenuPlugin(String name) {
-        super(name, "MenuPlugin");
+        this.name = name;
         if(name.lastIndexOf("Plugin") == -1) {
 //            this.name += "Plugin";
         }
@@ -63,7 +64,6 @@ public final class MenuPlugin extends JSClass {
      *
      * @throws UnsupportedOperationException always
      */
-    @Override
     public void setExtends(String extend) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
@@ -79,7 +79,6 @@ public final class MenuPlugin extends JSClass {
     /**
      * Set it's name. If name no contains word "Plugin" at the end, method will place it.
      */
-    @Override
     public void setName(String name) {
         this.name = name;
         if(name.lastIndexOf("Plugin") == -1) {
@@ -87,7 +86,6 @@ public final class MenuPlugin extends JSClass {
         }
     }
 
-    @Override
     public String getName() {
         return name;
     }
@@ -103,27 +101,23 @@ public final class MenuPlugin extends JSClass {
     /**
      * Add method. If method name is "isActive", "getWidth", "getCode", "getText" it do nothing.
      */
-    @Override
     public void addMethod(String methodName, String arguments, String code) {
         if(methodName.equals("isActive") || methodName.equals("getWidth")
                 || methodName.equals("getCode") || methodName.equals("getText") || methodName.equals("setParameter")
                 || methodName.equals("getDefaultParameters")) {
             return;
         }
-        super.addMethod(methodName, arguments, code);
     }
 
     /**
      * Remove method. If method name is "isActive", "getWidth", "getCode", "getText" it do nothing.
      */
-    @Override
     public void removeMethod(String methodName) {
         if(methodName.equals("isActive") || methodName.equals("getWidth")
                 || methodName.equals("getCode") || methodName.equals("getText") || methodName.equals("setParameter")
                 || methodName.equals("getDefaultParameters")) {
             return;
         }
-        super.removeMethod(methodName);
     }
 
     /**
@@ -142,24 +136,7 @@ public final class MenuPlugin extends JSClass {
     }
 
     public String getCode() {
-        methods.put("isActive", "", "return " + isActive + ";");
-        methods.put("getWidth", "", "return " + width + ";");
-        methods.put("getCode", "", "return \"" + HTMLElement.html().replace("\"", "\'").replace("\n", "") + "\";");
-        StringBuilder defaultParametersObject = new StringBuilder();
-        defaultParameters.forEach((s, s2) -> {
-            defaultParametersObject.append(s);
-            defaultParametersObject.append(": ");
-            defaultParametersObject.append(s2);
-            defaultParametersObject.append(",");
-        });
-        String defaultParametersString = defaultParametersObject.toString();
-        int lastIndex = defaultParametersString.lastIndexOf(",") == -1 ? defaultParametersString.length() : defaultParametersString.lastIndexOf(",");
-        String substring = defaultParametersString.substring(0, lastIndex);
-        methods.put("getDefaultParameters", "", "return {" + substring + "};");
-        if(!constructor.startsWith("super();this.name = \"" + name + "\";")) {
-            constructor = "super();this.name = \"" + name + "\"; this.parameters = {" + substring + "}" + constructor;
-        }
-        return super.getCode();
+        return "";
     }
 
     @Override

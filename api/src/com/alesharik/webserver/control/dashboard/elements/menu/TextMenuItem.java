@@ -28,6 +28,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * This class represent text item with link on content
  */
 @ThreadSafe
+@Deprecated
 public final class TextMenuItem extends MenuItem {
     private static final String TEXT_ITEM_TYPE = "text";
 

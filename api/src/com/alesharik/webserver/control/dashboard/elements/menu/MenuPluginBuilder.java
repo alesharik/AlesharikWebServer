@@ -25,6 +25,7 @@ import java.util.HashMap;
 /**
  * This class used for build simple {@link MenuPlugin} with no problems.
  */
+@Deprecated
 public class MenuPluginBuilder {
     private String name = "";
     private int width = -1;

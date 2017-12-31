@@ -30,6 +30,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * This class used as dropdown in menu
  */
 @ThreadSafe
+@Deprecated
 public final class MenuDropdown extends MenuItem {
     private static final String TYPE_NAME = "dropdown";
 
