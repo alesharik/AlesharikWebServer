@@ -24,7 +24,6 @@ import com.alesharik.webserver.exception.ExceptionWithoutStacktrace;
 import com.alesharik.webserver.logger.Logger;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.utils.Charsets;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -32,9 +31,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class ModularErrorPageGeneratorTest {
     private static ModularErrorPageGenerator generator;
@@ -288,7 +285,7 @@ public class ModularErrorPageGeneratorTest {
     @Test
     public void containsErrorPageConstructor() throws Exception {
         assertFalse(generator.containsErrorPageConstructor(null));
-        Assert.assertTrue(generator.containsErrorPageConstructor(custom));
+        assertTrue(generator.containsErrorPageConstructor(custom));
     }
 
     @Test(expected = UnsupportedOperationException.class)

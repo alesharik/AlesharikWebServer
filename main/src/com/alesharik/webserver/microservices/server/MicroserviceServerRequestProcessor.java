@@ -34,9 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Prefixes({"[Microservices]", "[MicroserviceServer]", "[MicroserviceServerRequestProcessor]"})
 class MicroserviceServerRequestProcessor {
-    private static final byte EVENT_BYTE = 0x01;
-    private static final byte SET_SERIALIZER_BYTE = 0x02;
-    private static final byte GET_SERIALIZER_BYTE = 0x03;
 
     private final String host;
     private final int port;

@@ -23,7 +23,6 @@ import lombok.SneakyThrows;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.util.UUID;
@@ -36,7 +35,7 @@ final class SharedStorageClassVisitor extends ClassVisitor {//FIXME
     private String id = "";
 
     public SharedStorageClassVisitor(ClassVisitor cv) {
-        super(Opcodes.ASM5, cv);
+        super(ASM5, cv);
     }
 
     private void registerId(String name) {
@@ -75,7 +74,7 @@ final class SharedStorageClassVisitor extends ClassVisitor {//FIXME
         private ConcurrentCompletableFuture<String> ret;
 
         public AnnotationValueExtractor(ConcurrentCompletableFuture<String> string) {
-            super(Opcodes.ASM5);
+            super(ASM5);
             ret = string;
         }
 
@@ -114,7 +113,7 @@ final class SharedStorageClassVisitor extends ClassVisitor {//FIXME
         private Type[] args;
 
         public MethodReplacer(MethodVisitor mv, String id, String ret, int agrCount, String desc) {
-            super(Opcodes.ASM5, mv);
+            super(ASM5, mv);
             this.id = id;
             this.result = new ConcurrentCompletableFuture<>();
             this.ret = ret;

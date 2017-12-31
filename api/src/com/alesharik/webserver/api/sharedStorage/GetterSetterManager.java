@@ -18,14 +18,12 @@
 
 package com.alesharik.webserver.api.sharedStorage;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * This class used for getters and setters. Do not use it!
  */
 public final class GetterSetterManager {
-    private static final ConcurrentHashMap<String, String> access = new ConcurrentHashMap<>();
     private static final CopyOnWriteArrayList<String> uuid = new CopyOnWriteArrayList<>();
     private static final CopyOnWriteArrayList<String> s2s = new CopyOnWriteArrayList<>();
 

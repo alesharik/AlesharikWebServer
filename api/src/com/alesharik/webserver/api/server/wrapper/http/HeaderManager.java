@@ -350,7 +350,7 @@ public class HeaderManager {
         //Caching
         headers.put("Age", new IntHeader("Age"));
         headers.put("Expires", new ObjectHeader<>("Expires", new DateFactory()));
-        headers.put("Pragma", new ConstantHeader("Pragma", "no-cache"));
+        headers.put("Pragma", new ConstantHeader("Pragma"));
         headers.put("Warning", new ObjectHeader<>("Warning", new WarningFactory()));
 
         //Conditionals
@@ -371,7 +371,7 @@ public class HeaderManager {
         headers.put("Accept-Language", new AcceptLanguageHeader());
 
         //Controls
-        headers.put("Expect", new ConstantHeader("Expect", "100-continue"));
+        headers.put("Expect", new ConstantHeader("Expect"));
 
         headers.put("Cookie", new CookieHeader());
         headers.put("Set-Cookie", new SetCookieHeader());

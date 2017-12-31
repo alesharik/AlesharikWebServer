@@ -18,13 +18,13 @@
 
 package com.alesharik.webserver.api.ticking;
 
-import com.alesharik.webserver.api.TestUtils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.ref.WeakReference;
 
+import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
 import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.TickableCache;
 import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.TickableCacheManager;
 import static org.junit.Assert.*;
@@ -71,6 +71,6 @@ public class TickableCacheManagerTest {
 
     @Test
     public void testUtilityClass() {
-        TestUtils.assertUtilityClass(ExecutorPoolBasedTickingPool.TickableCacheManager.class);
+        assertUtilityClass(ExecutorPoolBasedTickingPool.TickableCacheManager.class);
     }
 }

@@ -21,11 +21,9 @@ package com.alesharik.webserver.api.server.wrapper.http.header;
 import com.alesharik.webserver.api.server.wrapper.http.Header;
 
 public class ConstantHeader extends Header<Void> {
-    private final String value;
 
-    public ConstantHeader(String name, String value) {
+    public ConstantHeader(String name) {
         super(name);
-        this.value = value;
     }
 
     @Override
