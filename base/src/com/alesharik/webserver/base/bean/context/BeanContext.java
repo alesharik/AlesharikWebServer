@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean.context;
+package com.alesharik.webserver.base.bean.context;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean.context;
+package com.alesharik.webserver.base.bean;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -25,11 +25,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation links {@link BeanContextManager} and {@link BeanContext}
+ * This annotation indicates default constructor in bean
  */
-@Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Manager {
-    Class<? extends BeanContextManager> value();
+@Target(ElementType.CONSTRUCTOR)
+@Documented
+public @interface DefaultConstructor {
 }

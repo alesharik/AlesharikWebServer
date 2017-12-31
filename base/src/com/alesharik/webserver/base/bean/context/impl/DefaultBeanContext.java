@@ -16,12 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean.context.impl;
+package com.alesharik.webserver.base.bean.context.impl;
 
-import com.alesharik.webserver.api.agent.bean.context.BeanContext;
-import com.alesharik.webserver.api.agent.bean.context.BeanContextManager;
-import com.alesharik.webserver.api.agent.bean.context.Manager;
-import com.alesharik.webserver.api.agent.bean.context.SuppressMemoryLeakSafety;
+import com.alesharik.webserver.base.bean.context.BeanContext;
+import com.alesharik.webserver.base.bean.context.BeanContextManager;
+import com.alesharik.webserver.base.bean.context.Manager;
+import com.alesharik.webserver.base.bean.context.SuppressMemoryLeakSafety;
 
 import javax.annotation.Nonnull;
 

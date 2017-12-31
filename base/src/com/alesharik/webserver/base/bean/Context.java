@@ -16,17 +16,26 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean;
+package com.alesharik.webserver.base.bean;
 
-import javax.annotation.Nonnull;
+
+import com.alesharik.webserver.base.bean.context.BeanContext;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * This factory create beans
+ * Bean's context allows bean to use k/v store, divide beans into groups and send to them information.
+ * All classes without this annotation will use default context. It doesn't support k/v store, but it has disabled memory leak protection
+ *
+ * @see com.alesharik.webserver.base.bean.context.SuppressMemoryLeakSafety
  */
-public interface BeanFactory {
-    /**
-     * Create new bean
-     */
-    @Nonnull
-    Object createBean();
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
+public @interface Context {
+    Class<? extends BeanContext> value();
 }

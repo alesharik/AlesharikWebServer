@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean;
+package com.alesharik.webserver.base.bean;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -26,8 +26,6 @@ import java.lang.annotation.Target;
 
 /**
  * Annotated class will be processed as bean
- *
- * @see Beans
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

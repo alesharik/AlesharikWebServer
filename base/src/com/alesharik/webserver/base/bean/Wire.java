@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean;
+package com.alesharik.webserver.base.bean;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -28,8 +28,8 @@ import java.lang.annotation.Target;
  * This annotation enables/disables wiring for field/constructor args.
  * Wiring ignore all final fields.
  * Special wiring conditions:<br>
- * 1. {@link com.alesharik.webserver.api.agent.bean.context.BeanContext} or it's children will be wired to current bean context<br>
- * 2. {@link com.alesharik.webserver.api.agent.bean.context.BeanContextManager} or it's children be wired to current bean context manager<br>
+ * 1. {@link com.alesharik.webserver.base.bean.context.BeanContext} or it's children will be wired to current bean context<br>
+ * 2. {@link com.alesharik.webserver.base.bean.context.BeanContextManager} or it's children be wired to current bean context manager<br>
  * 3. Field with name <code>me</code> will be wired to current class instance
  */
 @Documented

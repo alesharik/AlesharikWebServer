@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver.api.agent.bean;
 
+import com.alesharik.webserver.base.bean.Bean;
+import com.alesharik.webserver.base.bean.DefaultConstructor;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

@@ -15,27 +15,20 @@
  *     along with AlesharikWebServer.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+package com.alesharik.webserver.base.bean.context;
 
-package com.alesharik.webserver.api.agent.bean;
-
-import com.alesharik.webserver.api.agent.bean.context.BeanContext;
-import com.alesharik.webserver.api.agent.bean.context.BeanContextManager;
-
-import javax.annotation.Nonnull;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * InvocationContext represents current context for {@link javax.annotation.PostConstruct} and {@link javax.annotation.PreDestroy} methods
+ * This annotation links {@link BeanContextManager} and {@link BeanContext}
  */
-public interface InvocationContext {
-    /**
-     * Return current bean context
-     */
-    @Nonnull
-    BeanContext getContext();
-
-    /**
-     * Return current bean cotext manager
-     */
-    @Nonnull
-    BeanContextManager getManager();
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Manager {
+    Class<? extends BeanContextManager> value();
 }

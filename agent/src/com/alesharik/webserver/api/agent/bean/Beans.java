@@ -18,14 +18,21 @@
 
 package com.alesharik.webserver.api.agent.bean;
 
-import com.alesharik.webserver.api.agent.bean.context.BeanContext;
-import com.alesharik.webserver.api.agent.bean.context.BeanContextManager;
-import com.alesharik.webserver.api.agent.bean.context.Manager;
-import com.alesharik.webserver.api.agent.bean.context.SuppressMemoryLeakSafety;
-import com.alesharik.webserver.api.agent.bean.context.impl.DefaultBeanContext;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
 import com.alesharik.webserver.api.collections.CachedHashMap;
 import com.alesharik.webserver.api.reflection.ReflectUtils;
+import com.alesharik.webserver.base.bean.Bean;
+import com.alesharik.webserver.base.bean.BeanFactory;
+import com.alesharik.webserver.base.bean.Context;
+import com.alesharik.webserver.base.bean.DefaultConstructor;
+import com.alesharik.webserver.base.bean.InvocationContext;
+import com.alesharik.webserver.base.bean.MemoryLeakSafetyException;
+import com.alesharik.webserver.base.bean.Wire;
+import com.alesharik.webserver.base.bean.context.BeanContext;
+import com.alesharik.webserver.base.bean.context.BeanContextManager;
+import com.alesharik.webserver.base.bean.context.Manager;
+import com.alesharik.webserver.base.bean.context.SuppressMemoryLeakSafety;
+import com.alesharik.webserver.base.bean.context.impl.DefaultBeanContext;
 import com.alesharik.webserver.internals.instance.ClassInstantiator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +59,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * Implementation for base.beans
  * @see BeanCreator
  * @see Wire
  * @see javax.annotation.PreDestroy

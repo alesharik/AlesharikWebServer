@@ -16,9 +16,9 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean.context;
+package com.alesharik.webserver.base.bean.context;
 
-import com.alesharik.webserver.api.agent.bean.BeanFactory;
+import com.alesharik.webserver.base.bean.BeanFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

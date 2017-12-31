@@ -16,9 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean;
-
-import com.alesharik.webserver.api.agent.bean.context.BeanContext;
+package com.alesharik.webserver.base.bean.context;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -27,14 +25,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Bean's context allows bean to use k/v store, divide beans into groups and send to them information.
- * All classes without this annotation will use default context. It doesn't support k/v store, but it has disabled memory leak protection
- *
- * @see com.alesharik.webserver.api.agent.bean.context.SuppressMemoryLeakSafety
+ * Memory leak protection deny singletons to get their contexts.
+ * This annotation disables memory leak protection by allowing singletons to use the context. Use it on {@link BeanContext}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-public @interface Context {
-    Class<? extends BeanContext> value();
+public @interface SuppressMemoryLeakSafety {
+    /**
+     * Write warning in the console on every possible memory leak problem
+     */
+    boolean warning() default true;
 }

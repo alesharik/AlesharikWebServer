@@ -16,19 +16,26 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.bean;
+package com.alesharik.webserver.base.bean;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.alesharik.webserver.base.bean.context.BeanContext;
+import com.alesharik.webserver.base.bean.context.BeanContextManager;
+
+import javax.annotation.Nonnull;
 
 /**
- * This annotation indicates default constructor in bean
+ * InvocationContext represents current context for {@link javax.annotation.PostConstruct} and {@link javax.annotation.PreDestroy} methods
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.CONSTRUCTOR)
-@Documented
-public @interface DefaultConstructor {
+public interface InvocationContext {
+    /**
+     * Return current bean context
+     */
+    @Nonnull
+    BeanContext getContext();
+
+    /**
+     * Return current bean cotext manager
+     */
+    @Nonnull
+    BeanContextManager getManager();
 }

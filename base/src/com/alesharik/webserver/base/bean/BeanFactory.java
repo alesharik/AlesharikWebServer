@@ -15,18 +15,17 @@
  *     along with AlesharikWebServer.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+package com.alesharik.webserver.base.bean;
 
-package com.alesharik.webserver.api.agent.bean;
+import javax.annotation.Nonnull;
 
 /**
- * This annotation will be thrown if singleton tries to use bean context
- *
- * @see com.alesharik.webserver.api.agent.bean.context.SuppressMemoryLeakSafety
+ * This factory create beans
  */
-public final class MemoryLeakSafetyException extends RuntimeException {
-    private static final long serialVersionUID = -6285379664645241086L;
-
-    public MemoryLeakSafetyException() {
-        super("Singletons can't use bean context!");
-    }
+public interface BeanFactory {
+    /**
+     * Create new bean
+     */
+    @Nonnull
+    Object createBean();
 }

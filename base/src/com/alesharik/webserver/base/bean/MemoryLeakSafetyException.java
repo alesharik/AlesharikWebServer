@@ -15,25 +15,19 @@
  *     along with AlesharikWebServer.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+package com.alesharik.webserver.base.bean;
 
-package com.alesharik.webserver.api.agent.bean.context;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.alesharik.webserver.base.bean.context.SuppressMemoryLeakSafety;
 
 /**
- * Memory leak protection deny singletons to get their contexts.
- * This annotation disables memory leak protection by allowing singletons to use the context. Use it on {@link BeanContext}
+ * This annotation will be thrown if singleton tries to use bean context
+ *
+ * @see SuppressMemoryLeakSafety
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@Documented
-public @interface SuppressMemoryLeakSafety {
-    /**
-     * Write warning in the console on every possible memory leak problem
-     */
-    boolean warning() default true;
+public final class MemoryLeakSafetyException extends RuntimeException {
+    private static final long serialVersionUID = -6285379664645241086L;
+
+    public MemoryLeakSafetyException() {
+        super("Singletons can't use bean context!");
+    }
 }
