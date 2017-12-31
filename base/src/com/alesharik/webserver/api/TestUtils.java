@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api;
 
+import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Constructor;
@@ -27,11 +28,8 @@ import java.lang.reflect.Modifier;
 /**
  * USE ONLY FOR TESTING PURPOSES!
  */
+@UtilityClass
 public final class TestUtils {
-    private TestUtils() {
-        throw new UnsupportedOperationException();
-    }
-
     /**
      * Check if class is utility class
      *
@@ -42,6 +40,8 @@ public final class TestUtils {
             throw new AssertionError("Utility class must be final!");
         }
         Constructor<?>[] constructors = ArrayUtils.addAll(clazz.getConstructors(), clazz.getDeclaredConstructors());
+        if(constructors.length == 0)
+            throw new AssertionError("Utility class must have no public/protected constructors!");
         for(Constructor<?> constructor : constructors) {
             if(!Modifier.isPrivate(constructor.getModifiers())) {
                 throw new AssertionError("Utility class must have no public/protected constructors!");
