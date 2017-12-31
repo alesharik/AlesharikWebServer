@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.handlers;
 
-import com.alesharik.webserver.api.GrizzlyUtils;
 import com.alesharik.webserver.api.MIMETypes;
 import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.api.fileManager.FileManager;
@@ -105,6 +104,15 @@ public final class ControlHttpHandler extends HttpHandler {
         requestHandlerList.remove(handler);
     }
 
+    private static Cookie getCookieForName(String name, Cookie[] cookies) {
+        for(Cookie cookie : cookies) {
+            if(cookie.getName().equals(name)) {
+                return cookie;
+            }
+        }
+        return null;
+    }
+
     private void handleRequest(Request request, Response response) throws IOException {
         String uri = request.getDecodedRequestURI();
         String file = uri.equals("/") ? "/index.html" : uri;
@@ -112,7 +120,7 @@ public final class ControlHttpHandler extends HttpHandler {
             if(!file.equals("/index.html") && !file.equals("/lib/font-awesome/font-awesome.min.css") && !file.equals("/styles/bootstrap.css")
                     && !file.equals("/styles/main.css") && !file.equals("/lib/jquery/jquery.min.js") && !file.equals("/lib/bootstrap/bootstrap.min.js")
                     && !file.equals("/lib/jquery/jquery.min.map") && !file.equals("/lib/bootstrap/fonts.css") && !file.equals("/lib/bootstrap/fonts/CWB0XYA8bzo0kSThX0UTuA.woff2")) {
-                Cookie uuid = GrizzlyUtils.getCookieForName("UUID", request.getCookies());
+                Cookie uuid = getCookieForName("UUID", request.getCookies());
                 UUID uuid1;
                 try {
                     uuid1 = UUID.fromString(uuid.getValue());

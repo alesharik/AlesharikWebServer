@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.control;
 
-import com.alesharik.webserver.api.GrizzlyUtils;
 import com.alesharik.webserver.api.LoginPasswordCoder;
 import com.alesharik.webserver.api.collections.ConcurrentLiveArrayList;
 import com.alesharik.webserver.api.fileManager.FileManager;
@@ -75,8 +74,17 @@ public class ControlRequestHandler implements RequestHandler {
         return sessions.contains(sessionID);
     }
 
+    private static Cookie getCookieForName(String name, Cookie[] cookies) {
+        for(Cookie cookie : cookies) {
+            if(cookie.getName().equals(name)) {
+                return cookie;
+            }
+        }
+        return null;
+    }
+
     private void handleLoginPasswordChangeCommand(Request request, Response response) throws IOException {
-        Cookie uuidCookie = GrizzlyUtils.getCookieForName("UUID", request.getCookies());
+        Cookie uuidCookie = getCookieForName("UUID", request.getCookies());
         if(uuidCookie == null || !isSessionValid(UUID.fromString(uuidCookie.getValue()))) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
             return;
@@ -144,7 +152,7 @@ public class ControlRequestHandler implements RequestHandler {
     }
 
     private void handleLogoutCommand(Request request, Response response) throws IOException {
-        Cookie uuidCookie = GrizzlyUtils.getCookieForName("UUID", request.getCookies());
+        Cookie uuidCookie = getCookieForName("UUID", request.getCookies());
         if(uuidCookie == null || !isSessionValid(UUID.fromString(uuidCookie.getValue()))) {
             response.setStatus(HttpStatus.FORBIDDEN_403);
             return;

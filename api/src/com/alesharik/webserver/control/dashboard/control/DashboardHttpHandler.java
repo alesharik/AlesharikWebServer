@@ -16,23 +16,18 @@
  *
  */
 
-package com.alesharik.webserver.api;
+package com.alesharik.webserver.control.dashboard.control;
 
-import org.glassfish.grizzly.http.Cookie;
+import org.glassfish.grizzly.http.server.HttpHandler;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
 
-@Deprecated
-public class GrizzlyUtils {
-    /**
-     * Find cookie for name in cookies list
-     *
-     * @return {@link Cookie} if it find needed cookie, overwise <code>null</code>
-     */
-    public static Cookie getCookieForName(String name, Cookie[] cookies) {
-        for(Cookie cookie : cookies) {
-            if(cookie.getName().equals(name)) {
-                return cookie;
-            }
+public class DashboardHttpHandler extends HttpHandler {
+    @Override
+    public void service(Request request, Response response) throws Exception {
+        String path = request.getContextPath();
+        if("/login".equals(path)) {
+
         }
-        return null;
     }
 }
