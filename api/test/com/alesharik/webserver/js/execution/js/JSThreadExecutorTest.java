@@ -69,6 +69,7 @@ public class JSThreadExecutorTest {
         assertEquals(1, JSThreadExecutor.threads.size());
 
         thread.interrupt();
+        Thread.sleep(100);
         assertTrue(ok.get());
     }
 
