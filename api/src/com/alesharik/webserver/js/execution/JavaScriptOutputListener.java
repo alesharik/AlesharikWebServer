@@ -18,10 +18,12 @@
 
 package com.alesharik.webserver.js.execution;
 
+import javax.annotation.Nonnull;
+
 /**
  * Listen JavaScript output
  */
 @FunctionalInterface
 public interface JavaScriptOutputListener {
-    void listen(String str);
+    void listen(@Nonnull String str);
 }

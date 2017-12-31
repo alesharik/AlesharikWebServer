@@ -22,6 +22,7 @@ import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.SneakyThrows;
 import org.glassfish.grizzly.utils.Charsets;
 
+import javax.annotation.Nonnull;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.io.File;
@@ -30,7 +31,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -100,12 +100,13 @@ public final class JavaScriptEngine {
      * @throws ScriptException       if there are any errors along script execution
      * @throws IOException           if anything happens
      */
-    public void load(File file) throws IOException, ScriptException {
+    public void load(@Nonnull File file) throws IOException, ScriptException {
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), Charsets.UTF8_CHARSET)) {
             engine.eval(reader);
             inputListeners.forEach(inputListener -> inputListener.listenFile(file));
         } catch (ScriptException e) {
             exceptionHandler.handle(e);
+            throw e;
         }
     }
 
@@ -115,47 +116,48 @@ public final class JavaScriptEngine {
      * @param code the code
      * @throws ScriptException if there are any errors along script execution
      */
-    public void execute(String code) throws ScriptException {
+    public void execute(@Nonnull String code) throws ScriptException {
         try {
-            Objects.requireNonNull(code);
             engine.eval(code);
             inputListeners.forEach(inputListener -> inputListener.listen(code));
         } catch (ScriptException e) {
             exceptionHandler.handle(e);
+            throw e;
         }
     }
 
     //====================Listeners and Exception Handler====================\\
 
-    public void addInputListener(JavaScriptInputListener inputListener) {
+    public void addInputListener(@Nonnull JavaScriptInputListener inputListener) {
         inputListeners.add(inputListener);
     }
 
-    public void removeInputListener(JavaScriptInputListener listener) {
+    public void removeInputListener(@Nonnull JavaScriptInputListener listener) {
         inputListeners.remove(listener);
     }
 
-    public boolean containsInputListener(JavaScriptInputListener inputListener) {
+    public boolean containsInputListener(@Nonnull JavaScriptInputListener inputListener) {
         return inputListeners.contains(inputListener);
     }
 
-    public void addOutputListener(JavaScriptOutputListener inputListener) {
+    public void addOutputListener(@Nonnull JavaScriptOutputListener inputListener) {
         outputListeners.add(inputListener);
     }
 
-    public void removeOutputListener(JavaScriptOutputListener listener) {
+    public void removeOutputListener(@Nonnull JavaScriptOutputListener listener) {
         outputListeners.remove(listener);
     }
 
-    public boolean containsOutputListener(JavaScriptOutputListener inputListener) {
+    public boolean containsOutputListener(@Nonnull JavaScriptOutputListener inputListener) {
         return outputListeners.contains(inputListener);
     }
 
+    @Nonnull
     public JavaScriptExceptionHandler getExceptionHandler() {
         return exceptionHandler;
     }
 
-    public void setExceptionHandler(JavaScriptExceptionHandler exceptionHandler) {
+    public void setExceptionHandler(@Nonnull JavaScriptExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
     }
 

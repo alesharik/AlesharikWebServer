@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.js.execution;
 
+import javax.annotation.Nonnull;
 import javax.script.ScriptException;
 
 /**
@@ -25,5 +26,5 @@ import javax.script.ScriptException;
  */
 @FunctionalInterface
 public interface JavaScriptExceptionHandler {
-    void handle(ScriptException e) throws ScriptException;
+    void handle(@Nonnull ScriptException e) throws ScriptException;
 }
