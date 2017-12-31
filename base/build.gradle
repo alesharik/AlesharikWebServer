@@ -53,4 +53,6 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.7.21'
 
     compile group: 'org.projectlombok', name: 'lombok', version: '1.16.10'
+
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5'
 }

@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api;
+package com.alesharik.webserver.api.reflection;
 
 import lombok.experimental.UtilityClass;
 
@@ -29,19 +29,6 @@ public class MiscUtils {
         for(int i = 0; i < count; i++) {
             if(i > 0)
                 stringBuilder.append(separator);
-            stringBuilder.append(arr[i]);
-        }
-        return stringBuilder.toString();
-    }
-
-    public static String sliceString(String[] arr, int count, boolean reverse) {
-        if(count > arr.length)
-            throw new ArrayIndexOutOfBoundsException();
-        if(!reverse)
-            return sliceString(arr, count, "");
-
-        StringBuilder stringBuilder = new StringBuilder();
-        for(int i = arr.length - 1; i < (arr.length - count); i--) {
             stringBuilder.append(arr[i]);
         }
         return stringBuilder.toString();

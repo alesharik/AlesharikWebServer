@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.internals.reflect;
+package com.alesharik.webserver.api.reflection;
 
 import org.junit.Test;
 

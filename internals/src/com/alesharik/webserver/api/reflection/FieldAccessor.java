@@ -16,7 +16,25 @@
  *
  */
 
-package com.alesharik.webserver.internals.reflect;
+/*
+ *  This file is part of AlesharikWebServer.
+ *
+ *     AlesharikWebServer is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     AlesharikWebServer is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with AlesharikWebServer.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+package com.alesharik.webserver.api.reflection;
 
 import com.alesharik.webserver.internals.InternalHackingError;
 import lombok.SneakyThrows;
@@ -75,15 +93,11 @@ public class FieldAccessor {
 
     @Deprecated
     public static Field findField(Class<?> clazz, String name) {
-        try {
-            return clazz.getDeclaredField(name);
-        } catch (NoSuchFieldException e) {
-            try {
-                return clazz.getField(name);
-            } catch (NoSuchFieldException e1) {
-                return null;
-            }
+        for(Field field : ReflectUtils.getAllDeclaredFields(clazz)) {
+            if(field.getName().equals(name))
+                return field;
         }
+        return null;
     }
 
     private static final class ErrorImpl extends InternalHackingError {
