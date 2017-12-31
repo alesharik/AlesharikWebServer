@@ -40,7 +40,7 @@ public class MicroserviceClient {
 
         if(mode == WorkingMode.ADVANCED) {
             //FIXME
-            server = new MicroserviceServer(Utils.getExternalIp(), 6800, MicroserviceServer.WorkingMode.SIMPLE, Utils.getExternalIp(), 6000);
+            server = new MicroserviceServer(Utils.getExternalIp(), 6800, MicroserviceServer.WorkingMode.SIMPLE, Utils.getExternalIp());
         }
         Logger.log("Microservice client successfully initialized!");
     }

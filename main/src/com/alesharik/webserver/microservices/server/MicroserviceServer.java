@@ -36,7 +36,7 @@ public class MicroserviceServer extends Server implements Runnable {
     private volatile RingBuffer<Event> ringBuffer;
     private MicroserviceServerRequestProcessor processor;
 
-    public MicroserviceServer(String host, int port, WorkingMode mode, String routerIp, int routerHost) {
+    public MicroserviceServer(String host, int port, WorkingMode mode, String routerIp) {
         super(host, port);
         //TODO use CPU L3 cache size without 1024
         disruptor = new Disruptor<>(new EventFactoryImpl(), 1024, new DisruptorThreadFactory());

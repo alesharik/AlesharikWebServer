@@ -71,6 +71,6 @@ public class TickableCacheManagerTest {
 
     @Test
     public void testUtilityClass() {
-        assertUtilityClass(ExecutorPoolBasedTickingPool.TickableCacheManager.class);
+        assertUtilityClass(TickableCacheManager.class);
     }
 }
