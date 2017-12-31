@@ -22,6 +22,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +32,7 @@ public class BeanContextTest {
     public void getProperty() {
         BeanContext context = mock(BeanContext.class);
         when(context.getProperty("test")).thenReturn("test");
+        when(context.getProperty(anyString(), any())).thenCallRealMethod();
 
         assertEquals("test", context.getProperty("test"));
 
