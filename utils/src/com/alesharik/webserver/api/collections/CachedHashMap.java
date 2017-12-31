@@ -297,7 +297,6 @@ public class CachedHashMap<K, V> implements Cloneable, Map<K, V>, Serializable, 
 
     @Nullable
     protected Map.Entry<K, V> removeActual(@Nonnull Object key) {
-        long time = System.currentTimeMillis();
         int hash = hash(key);
         int bucket = getBucket(hash, entries.length);
 
@@ -309,6 +308,7 @@ public class CachedHashMap<K, V> implements Cloneable, Map<K, V>, Serializable, 
         Entry<K, V> prew = null;
         Entry<K, V> next = null;
         boolean equals = false;//Key exists
+        long time = System.currentTimeMillis();
         do {
             Entry<K, V> prewTemp = entry;
 
