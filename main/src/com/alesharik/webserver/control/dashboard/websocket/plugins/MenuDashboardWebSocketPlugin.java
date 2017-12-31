@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.control.dashboard.websocket.plugins;
 
-import com.alesharik.webserver.api.GsonUtils;
 import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlugin;
 import com.alesharik.webserver.control.dashboard.websocket.WebSocketSender;
 import com.alesharik.webserver.logger.Prefixes;
@@ -43,7 +42,6 @@ public class MenuDashboardWebSocketPlugin extends DashboardWebSocketPlugin {
     public void receive(@Nonnull String command, @Nonnull String text) {
         switch (command) {
             case "update":
-                send("set", GsonUtils.getGson().toJson(getDashboardDataHolder().getMenu()));
                 send("render", "");
                 break;
             default:
