@@ -88,8 +88,8 @@ public final class JavaScriptEngine {
 
     @SneakyThrows //Because this lines can't throw any exception
     private void loadThreadApi() {
-        engine.eval("var Thread = com.alesharik.webserver.js.execution.js.JSThread;");
-        engine.eval("var Mutex = com.alesharik.webserver.js.execution.js.Mutex;");
+        engine.eval("var Thread = Java.type('com.alesharik.webserver.js.execution.js.JSThread');");
+        engine.eval("var Mutex = Java.type('com.alesharik.webserver.js.execution.js.Mutex');");
     }
 
     /**
@@ -102,8 +102,8 @@ public final class JavaScriptEngine {
      */
     public void load(@Nonnull File file) throws IOException, ScriptException {
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
-            engine.eval(reader);
             inputListeners.forEach(inputListener -> inputListener.listenFile(file));
+            engine.eval(reader);
         } catch (ScriptException e) {
             exceptionHandler.handle(e);
             throw e;
@@ -118,8 +118,8 @@ public final class JavaScriptEngine {
      */
     public void execute(@Nonnull String code) throws ScriptException {
         try {
-            engine.eval(code);
             inputListeners.forEach(inputListener -> inputListener.listen(code));
+            engine.eval(code);
         } catch (ScriptException e) {
             exceptionHandler.handle(e);
             throw e;

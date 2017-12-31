@@ -19,6 +19,7 @@
 package com.alesharik.webserver.js.execution.js;
 
 import jdk.nashorn.api.scripting.AbstractJSObject;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -35,6 +36,11 @@ public final class JSThread {
     private Thread thread;
 
     public JSThread(AbstractJSObject runnable, Object sharedStorage) {
+        this.runnable = runnable;
+        this.sharedStorage = sharedStorage;
+    }
+
+    public JSThread(ScriptObjectMirror runnable, Object sharedStorage) {
         this.runnable = runnable;
         this.sharedStorage = sharedStorage;
     }
@@ -67,19 +73,19 @@ public final class JSThread {
         return sharedStorage;
     }
 
-    public void setName(String name) {
-        thread.setName(name);
-    }
-
     public String getName() {
         return thread.getName();
     }
 
-    public void setDaemon(boolean is) {
-        thread.setDaemon(is);
+    public void setName(String name) {
+        thread.setName(name);
     }
 
     public boolean isDaemon() {
         return thread.isDaemon();
+    }
+
+    public void setDaemon(boolean is) {
+        thread.setDaemon(is);
     }
 }
