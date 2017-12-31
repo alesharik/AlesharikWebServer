@@ -20,12 +20,21 @@ package com.alesharik.webserver.api.agent.bean;
 
 import com.alesharik.webserver.api.agent.bean.context.BeanContext;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * Bean's context allows bean to use k/v store, divide beans into groups and send to them information.
  * All classes without this annotation will use default context. It doesn't support k/v store, but it has disabled memory leak protection
  *
  * @see com.alesharik.webserver.api.agent.bean.context.SuppressMemoryLeakSafety
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
 public @interface Context {
     Class<? extends BeanContext> value();
 }

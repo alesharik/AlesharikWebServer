@@ -43,7 +43,7 @@ public @interface Bean {
      * Return <code>true</code> if class must be instantiated after registration. <code>false</code> means that class
      * will be instantiated after first request
      */
-    boolean instantlyInstatiated() default true;
+    boolean instantlyInstantiated() default true;
 
     /**
      * Return class factory
@@ -58,7 +58,8 @@ public @interface Bean {
     boolean autowire() default true;
 
     /**
-     * Return <code>true</code> if this class can be collected by GC. <code>false</code> will create storing reference
+     * Return <code>true</code> if this class can be collected by GC. <code>false</code> will create storing reference.
+     * WARNING! Can create memory leaks!
      */
     boolean canBeGarbage() default true;
 }

@@ -19,6 +19,7 @@
 package com.alesharik.webserver.api.agent.bean;
 
 import com.alesharik.webserver.api.agent.bean.context.BeanContext;
+import com.alesharik.webserver.api.agent.bean.context.BeanContextManager;
 
 import javax.annotation.Nonnull;
 
@@ -31,4 +32,10 @@ public interface InvocationContext {
      */
     @Nonnull
     BeanContext getContext();
+
+    /**
+     * Return current bean cotext manager
+     */
+    @Nonnull
+    BeanContextManager getManager();
 }
