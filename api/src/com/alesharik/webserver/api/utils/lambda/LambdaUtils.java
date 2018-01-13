@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -89,6 +90,29 @@ public class LambdaUtils {
      */
     public static <C, R> void fire(@Nonnull Action<C, R> action, @Nullable C arg) {
         action.call(arg);
+    }
+
+    @Nonnull
+    public static ExceptionalRunnable exceptional(@Nonnull ExceptionRunnable runnable) {
+        return new ExceptionalRunnable(runnable);
+    }
+
+    @Nonnull
+    public static <V> ExceptionalCallable<V> exceptional(@Nonnull Callable<V> runnable) {
+        return new ExceptionalCallable<>(runnable);
+    }
+
+    private static final Consumer<Exception> sout = e -> e.printStackTrace(System.out);
+    private static final Consumer<Exception> serr = e -> e.printStackTrace(System.err);
+
+    @Nonnull
+    public static Consumer<Exception> printToSystemOut() {
+        return sout;
+    }
+
+    @Nonnull
+    public static Consumer<Exception> printToSystemErr() {
+        return serr;
     }
 
     /**
