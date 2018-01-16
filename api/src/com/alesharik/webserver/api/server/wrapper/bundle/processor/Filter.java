@@ -25,5 +25,5 @@ import javax.annotation.Nonnull;
 
 @FunctionalInterface
 public interface Filter {
-    boolean flter(@Nonnull Request request, @Nonnull Response response) throws Exception;
+    boolean filter(@Nonnull Request request, @Nonnull Response response) throws Exception;
 }

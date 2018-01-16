@@ -92,7 +92,7 @@ public class HttpChainProcessor implements HttpProcessor {
 
         @Override
         public boolean process(Request request, Response response) throws Exception {
-            return filter.flter(request, response);
+            return filter.filter(request, response);
         }
     }
 

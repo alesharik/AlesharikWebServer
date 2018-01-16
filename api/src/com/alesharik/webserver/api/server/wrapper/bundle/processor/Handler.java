@@ -18,12 +18,29 @@
 
 package com.alesharik.webserver.api.server.wrapper.bundle.processor;
 
+import com.alesharik.webserver.api.server.wrapper.bundle.processor.impl.ReThrowException;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
 
 import javax.annotation.Nonnull;
 
 @FunctionalInterface
-public interface Handler {
+public interface Handler extends HttpProcessor {
+    /**
+     * Do not throw {@link ReThrowException}
+     *
+     * @param request
+     * @param response
+     * @throws Exception
+     */
     void handle(@Nonnull Request request, @Nonnull Response response) throws Exception;
+
+    @Override
+    default void process(@Nonnull Request request, @Nonnull Response response) {
+        try {
+            handle(request, response);
+        } catch (Exception e) {
+            throw new ReThrowException(e);
+        }
+    }
 }
