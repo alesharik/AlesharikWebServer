@@ -38,6 +38,9 @@ import java.util.function.Supplier;
 @UtilityClass
 @NotThreadSafe
 public class LambdaUtils {
+    private static final Consumer<Exception> sout = e -> e.printStackTrace(System.out);
+    private static final Consumer<Exception> serr = e -> e.printStackTrace(System.err);
+
     /**
      * Create new {@link Action}
      *
@@ -101,9 +104,6 @@ public class LambdaUtils {
     public static <V> ExceptionalCallable<V> exceptional(@Nonnull Callable<V> runnable) {
         return new ExceptionalCallable<>(runnable);
     }
-
-    private static final Consumer<Exception> sout = e -> e.printStackTrace(System.out);
-    private static final Consumer<Exception> serr = e -> e.printStackTrace(System.err);
 
     @Nonnull
     public static Consumer<Exception> printToSystemOut() {
