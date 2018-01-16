@@ -87,7 +87,7 @@ public class HttpChainProcessorTest {
                 .onError(httpErrorHandler)
                 .process(mock(Request.class), Response.getResponse());
 
-        verify(httpErrorHandler, times(1)).handleException(any(TestException.class));
+        verify(httpErrorHandler, times(1)).handleException(any(TestException.class), any(), any());
     }
 
     @Test
@@ -102,7 +102,7 @@ public class HttpChainProcessorTest {
                 .onError(httpErrorHandler)
                 .process(mock(Request.class), Response.getResponse());
 
-        verify(httpErrorHandler, times(1)).handleException(any(TestException.class));
+        verify(httpErrorHandler, times(1)).handleException(any(TestException.class), any(), any());
     }
 
     @Test

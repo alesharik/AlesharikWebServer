@@ -23,6 +23,15 @@ import com.alesharik.webserver.api.server.wrapper.http.Response;
 
 import javax.annotation.Nonnull;
 
+/**
+ * HTTP processors handle HTTP requests. They usually edit Responses
+ */
 public interface HttpProcessor {
+    /**
+     * Process the request
+     *
+     * @param request  the request
+     * @param response the bound response
+     */
     void process(@Nonnull Request request, @Nonnull Response response);
 }

@@ -18,6 +18,21 @@
 
 package com.alesharik.webserver.api.server.wrapper.bundle.processor;
 
+import com.alesharik.webserver.api.server.wrapper.http.Request;
+import com.alesharik.webserver.api.server.wrapper.http.Response;
+
+import javax.annotation.Nonnull;
+
+/**
+ * This handler handle all exceptions in HTTP processor
+ */
 public interface HttpErrorHandler {
-    void handleException(Exception e);
+    /**
+     * Handle the exception
+     *
+     * @param e        the exception
+     * @param request  the bound request
+     * @param response the bound response
+     */
+    void handleException(@Nonnull Exception e, @Nonnull Request request, @Nonnull Response response);
 }

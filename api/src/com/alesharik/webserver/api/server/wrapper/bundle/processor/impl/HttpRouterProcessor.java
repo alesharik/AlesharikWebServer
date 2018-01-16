@@ -26,11 +26,25 @@ import org.apache.commons.collections4.Trie;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 
+/**
+ * This class represent router for requests
+ */
+@ThreadSafe
 public class HttpRouterProcessor implements HttpProcessor {
     protected final Trie<String, HttpProcessor> processors = new PatriciaTrie<>();
     protected volatile HttpErrorHandler errorHandler;
     protected volatile HttpProcessor def;
+
+    /**
+     * Create new instance
+     *
+     * @return new instance
+     */
+    public static HttpRouterProcessor router() {
+        return new HttpRouterProcessor();
+    }
 
     @Override
     public void process(@Nonnull Request request, @Nonnull Response response) {
@@ -43,28 +57,50 @@ public class HttpRouterProcessor implements HttpProcessor {
             processor.process(request, response);
         } catch (ReThrowException e) {
             if(errorHandler != null)
-                errorHandler.handleException(e.getCause());
+                errorHandler.handleException(e.getCause(), request, response);
             else
                 throw e;
         } catch (Exception e) {
             if(errorHandler == null)
                 throw new ReThrowException(e);
             else
-                errorHandler.handleException(e);
+                errorHandler.handleException(e, request, response);
         }
     }
 
-    public HttpRouterProcessor path(String path, HttpProcessor processor) {
+    /**
+     * Add processor to router
+     *
+     * @param path      the path
+     * @param processor the processor
+     * @return this instance
+     */
+    @Nonnull
+    public HttpRouterProcessor path(@Nonnull String path, @Nonnull HttpProcessor processor) {
         processors.put(path, processor);
         return this;
     }
 
-    public HttpRouterProcessor defaultPath(HttpProcessor processor) {
+    /**
+     * Add default processor to router
+     *
+     * @param processor the processor
+     * @return this instance
+     */
+    @Nonnull
+    public HttpRouterProcessor defaultPath(@Nonnull HttpProcessor processor) {
         def = processor;
         return this;
     }
 
-    public HttpRouterProcessor onError(HttpErrorHandler httpErrorHandler) {
+    /**
+     * Add local error handler to the chain. It will handle all exceptions from this chain and subprocessors
+     *
+     * @param httpErrorHandler the error handler
+     * @return this instance
+     */
+    @Nonnull
+    public HttpRouterProcessor onError(@Nonnull HttpErrorHandler httpErrorHandler) {
         errorHandler = httpErrorHandler;
         return this;
     }

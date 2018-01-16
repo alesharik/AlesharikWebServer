@@ -25,6 +25,7 @@ import com.alesharik.webserver.api.server.wrapper.http.Response;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import static com.alesharik.webserver.api.server.wrapper.bundle.processor.impl.HttpRouterProcessor.router;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -41,7 +42,7 @@ public class HttpRouterProcessorTest {
 
     @Test
     public void goToPath() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         Handler def = mock(Handler.class);
         mockHandler(handler);
@@ -62,7 +63,7 @@ public class HttpRouterProcessorTest {
 
     @Test
     public void goToDefaultPath() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         Handler def = mock(Handler.class);
         mockHandler(handler);
@@ -83,7 +84,7 @@ public class HttpRouterProcessorTest {
 
     @Test
     public void errorInHandlerWithErrorHandler() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         doThrow(new TestException()).when(handler).handle(any(), any());
         Handler def = mock(Handler.class);
@@ -99,12 +100,12 @@ public class HttpRouterProcessorTest {
         processor.onError(httpErrorHandler);
         processor.process(request, Response.getResponse());
 
-        verify(httpErrorHandler, times(1)).handleException(any(TestException.class));
+        verify(httpErrorHandler, times(1)).handleException(any(TestException.class), any(), any());
     }
 
     @Test
     public void errorInDefaultHandlerWithErrorHandler() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         Handler def = mock(Handler.class);
         mockHandler(handler);
@@ -120,12 +121,12 @@ public class HttpRouterProcessorTest {
         processor.onError(httpErrorHandler);
         processor.process(request, Response.getResponse());
 
-        verify(httpErrorHandler, times(1)).handleException(any(TestException.class));
+        verify(httpErrorHandler, times(1)).handleException(any(TestException.class), any(), any());
     }
 
     @Test
     public void errorInHandlerWithErrorHandlerWithReThrow() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         doThrow(new ReThrowException(new TestException())).when(handler).handle(any(), any());
         Handler def = mock(Handler.class);
@@ -141,12 +142,12 @@ public class HttpRouterProcessorTest {
         processor.onError(httpErrorHandler);
         processor.process(request, Response.getResponse());
 
-        verify(httpErrorHandler, times(1)).handleException(any(TestException.class));
+        verify(httpErrorHandler, times(1)).handleException(any(TestException.class), any(), any());
     }
 
     @Test
     public void errorInDefaultHandlerWithErrorHandlerWithReThrow() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         Handler def = mock(Handler.class);
         mockHandler(handler);
@@ -162,12 +163,12 @@ public class HttpRouterProcessorTest {
         processor.onError(httpErrorHandler);
         processor.process(request, Response.getResponse());
 
-        verify(httpErrorHandler, times(1)).handleException(any(TestException.class));
+        verify(httpErrorHandler, times(1)).handleException(any(TestException.class), any(), any());
     }
 
     @Test
     public void errorInHandlerWithNoErrorHandler() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         doThrow(new TestException()).when(handler).handle(any(), any());
         Handler def = mock(Handler.class);
@@ -190,7 +191,7 @@ public class HttpRouterProcessorTest {
 
     @Test
     public void errorInDefaultHandlerNoWithErrorHandler() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         Handler def = mock(Handler.class);
         mockHandler(handler);
@@ -213,7 +214,7 @@ public class HttpRouterProcessorTest {
 
     @Test
     public void errorInHandlerWithNoErrorHandlerAndWithReThrow() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         doThrow(new ReThrowException(new TestException())).when(handler).handle(any(), any());
         Handler def = mock(Handler.class);
@@ -236,7 +237,7 @@ public class HttpRouterProcessorTest {
 
     @Test
     public void errorInDefaultHandlerNoWithErrorHandlerAndWithReThrow() throws Exception {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Handler handler = mock(Handler.class);
         Handler def = mock(Handler.class);
         mockHandler(handler);
@@ -259,7 +260,7 @@ public class HttpRouterProcessorTest {
 
     @Test
     public void goToNull() {
-        HttpRouterProcessor processor = new HttpRouterProcessor();
+        HttpRouterProcessor processor = router();
         Request request = mock(Request.class);
         when(request.getContextPath()).thenReturn("/test");
 

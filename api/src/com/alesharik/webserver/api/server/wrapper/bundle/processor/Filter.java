@@ -23,7 +23,18 @@ import com.alesharik.webserver.api.server.wrapper.http.Response;
 
 import javax.annotation.Nonnull;
 
+/**
+ * This interface filters requests
+ */
 @FunctionalInterface
 public interface Filter {
+    /**
+     * Filter the request
+     *
+     * @param request  the request
+     * @param response the response
+     * @return true - ok, false - not passed
+     * @throws Exception may exception will be handled by {@link HttpErrorHandler} or {@link com.alesharik.webserver.api.server.wrapper.bundle.ErrorHandler}
+     */
     boolean filter(@Nonnull Request request, @Nonnull Response response) throws Exception;
 }

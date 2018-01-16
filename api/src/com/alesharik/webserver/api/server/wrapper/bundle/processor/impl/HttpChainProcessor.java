@@ -30,11 +30,20 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This processor represent filtered handler chain(something like a stream for requests)
+ */
 @ThreadSafe
 public class HttpChainProcessor implements HttpProcessor {
     protected final List<ChainElement> elements = new ArrayList<>();
     protected volatile HttpErrorHandler errorHandler;
 
+    /**
+     * Create new instance
+     *
+     * @return new instance
+     */
+    @Nonnull
     public static HttpChainProcessor chain() {
         return new HttpChainProcessor();
     }
@@ -47,34 +56,62 @@ public class HttpChainProcessor implements HttpProcessor {
                     return;
             } catch (ReThrowException e) {
                 if(errorHandler != null)
-                    errorHandler.handleException(e.getCause());
+                    errorHandler.handleException(e.getCause(), request, response);
                 else
                     throw e;
             } catch (Exception e) {
                 if(errorHandler == null)
                     throw new ReThrowException(e);
                 else
-                    errorHandler.handleException(e);
+                    errorHandler.handleException(e, request, response);
             }
         }
     }
 
-    public HttpChainProcessor filter(Filter filter) {
+    /**
+     * Add filter to the chain
+     *
+     * @param filter the filter
+     * @return this instance
+     */
+    @Nonnull
+    public HttpChainProcessor filter(@Nonnull Filter filter) {
         elements.add(new FilterElement(filter));
         return this;
     }
 
-    public HttpChainProcessor then(Handler handler) {
+    /**
+     * Add handler to the chain
+     *
+     * @param handler the handler
+     * @return this instance
+     */
+    @Nonnull
+    public HttpChainProcessor then(@Nonnull Handler handler) {
         elements.add(new HandlerElement(handler));
         return this;
     }
 
-    public HttpChainProcessor process(HttpProcessor processor) {
+    /**
+     * Add processor to the chain
+     *
+     * @param processor th processor
+     * @return this instance
+     */
+    @Nonnull
+    public HttpChainProcessor process(@Nonnull HttpProcessor processor) {
         elements.add(new ProcessorElement(processor));
         return this;
     }
 
-    public HttpChainProcessor onError(HttpErrorHandler httpErrorHandler) {
+    /**
+     * Add local error handler to the chain. It will handle all exceptions from this chain and subprocessors
+     *
+     * @param httpErrorHandler the error handler
+     * @return this instance
+     */
+    @Nonnull
+    public HttpChainProcessor onError(@Nonnull HttpErrorHandler httpErrorHandler) {
         errorHandler = httpErrorHandler;
         return this;
     }

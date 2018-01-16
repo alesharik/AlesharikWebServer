@@ -24,14 +24,16 @@ import com.alesharik.webserver.api.server.wrapper.http.Response;
 
 import javax.annotation.Nonnull;
 
+/**
+ * Handlers usually are using to do primary request handling
+ */
 @FunctionalInterface
 public interface Handler extends HttpProcessor {
     /**
-     * Do not throw {@link ReThrowException}
-     *
-     * @param request
-     * @param response
-     * @throws Exception
+     * Handle the request
+     * @param request the request
+     * @param response the bound response
+     * @throws Exception may exception will be handled by {@link HttpErrorHandler} or {@link com.alesharik.webserver.api.server.wrapper.bundle.ErrorHandler}
      */
     void handle(@Nonnull Request request, @Nonnull Response response) throws Exception;
 

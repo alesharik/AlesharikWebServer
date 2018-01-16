@@ -18,6 +18,9 @@
 
 package com.alesharik.webserver.api.server.wrapper.bundle.processor.impl;
 
+/**
+ * Used by processors to throw checked exceptions
+ */
 public final class ReThrowException extends RuntimeException {
     private static final long serialVersionUID = -2297370387314710039L;
 
