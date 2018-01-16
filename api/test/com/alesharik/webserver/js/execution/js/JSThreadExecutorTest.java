@@ -40,6 +40,7 @@ public class JSThreadExecutorTest {
         err = System.err;
         mock = mock(PrintStream.class);
         System.setErr(mock);
+        JSThreadExecutor.threads.clear();
     }
 
     @After
@@ -69,7 +70,7 @@ public class JSThreadExecutorTest {
         assertEquals(1, JSThreadExecutor.threads.size());
 
         thread.interrupt();
-        Thread.sleep(100);
+        Thread.sleep(500);
         assertTrue(ok.get());
     }
 
