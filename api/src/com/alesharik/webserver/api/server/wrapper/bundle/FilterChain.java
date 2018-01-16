@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 /**
  * This class contains filter chain and router
  */
+@Deprecated
 public interface FilterChain extends Filter {
     @Nonnull
     Response handleRequest(Request request, HttpHandler[] httpHandlers, HttpHandlerResponseDecorator decorator);

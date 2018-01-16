@@ -16,29 +16,14 @@
  *
  */
 
-package com.alesharik.webserver.api.server.wrapper.addon;
+package com.alesharik.webserver.api.server.wrapper.bundle.processor;
 
-import com.alesharik.webserver.api.memory.impl.ByteOffHeapVector;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
 
-import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 
-@Deprecated
-public interface Addon<A extends AddonAPI> {
-    Response respond(Request request);
-
-    void handleBytes(ByteOffHeapVector vector, long address);
-
-    void setSender(ByteSender byteSender);
-
-    A getApi();
-
-    void close();
-
-    interface ByteSender {
-        void send(ByteBuffer byteBuffer);
-
-        void close();
-    }
+@FunctionalInterface
+public interface Filter {
+    boolean flter(@Nonnull Request request, @Nonnull Response response) throws Exception;
 }

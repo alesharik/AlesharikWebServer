@@ -20,6 +20,7 @@ package com.alesharik.webserver.api.server.wrapper.bundle;
 
 import com.alesharik.webserver.api.server.wrapper.addon.AddonAPI;
 
+@Deprecated
 public interface AddonHandler {
     void handleAddon(String name, AddonAPI addonAPI);
 

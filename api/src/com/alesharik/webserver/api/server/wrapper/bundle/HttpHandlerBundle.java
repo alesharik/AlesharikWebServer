@@ -18,25 +18,41 @@
 
 package com.alesharik.webserver.api.server.wrapper.bundle;
 
+import com.alesharik.webserver.api.server.wrapper.bundle.processor.HttpProcessor;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * This must be annotated with {@link HttpBundle} annotation!
  */
 public interface HttpHandlerBundle {
     Validator getValidator();
 
+    @Deprecated
     RequestRouter getRouter();
 
+    @Deprecated
     FilterChain[] getFilterChains();
 
+    @Deprecated
     HttpHandler[] getHttpHandlers();
 
+    @Nonnull
     ErrorHandler getErrorHandler();
 
+    @Deprecated
     default HttpHandlerResponseDecorator getReponseDecorator() {
         return HttpHandlerResponseDecorator.Ignore.INSTANCE;
     }
 
+    @Deprecated
     default AddonHandler getAddonHandler() {
         return AddonHandler.None.INSTANCE;
+    }
+
+    @Nullable//temporary
+    default HttpProcessor getProcessor() {
+        return null;
     }
 }

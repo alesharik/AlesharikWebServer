@@ -24,6 +24,7 @@ import com.alesharik.webserver.api.server.wrapper.http.Response;
 /**
  * This class filter requests and can decorate it. If request is not valid, you MUST respond with error code!
  */
+@Deprecated
 public interface Filter {
     /**
      * Accept and decorate request

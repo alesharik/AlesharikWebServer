@@ -21,6 +21,7 @@ package com.alesharik.webserver.api.server.wrapper.bundle;
 /**
  * This Http handler use yourself as filter
  */
+@Deprecated
 public interface FilteredHttpHandler extends HttpHandler, Filter {
     @Override
     default Filter getFilter() {

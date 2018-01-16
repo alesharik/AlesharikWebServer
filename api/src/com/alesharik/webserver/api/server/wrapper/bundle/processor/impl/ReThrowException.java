@@ -16,29 +16,17 @@
  *
  */
 
-package com.alesharik.webserver.api.server.wrapper.addon;
+package com.alesharik.webserver.api.server.wrapper.bundle.processor.impl;
 
-import com.alesharik.webserver.api.memory.impl.ByteOffHeapVector;
-import com.alesharik.webserver.api.server.wrapper.http.Request;
-import com.alesharik.webserver.api.server.wrapper.http.Response;
+public final class ReThrowException extends RuntimeException {
+    private static final long serialVersionUID = -2297370387314710039L;
 
-import java.nio.ByteBuffer;
+    public ReThrowException(Exception cause) {
+        super(cause);
+    }
 
-@Deprecated
-public interface Addon<A extends AddonAPI> {
-    Response respond(Request request);
-
-    void handleBytes(ByteOffHeapVector vector, long address);
-
-    void setSender(ByteSender byteSender);
-
-    A getApi();
-
-    void close();
-
-    interface ByteSender {
-        void send(ByteBuffer byteBuffer);
-
-        void close();
+    @Override
+    public Exception getCause() {
+        return (Exception) super.getCause();
     }
 }

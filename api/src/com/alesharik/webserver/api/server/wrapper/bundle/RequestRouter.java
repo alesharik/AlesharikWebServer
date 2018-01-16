@@ -23,6 +23,7 @@ import com.alesharik.webserver.api.server.wrapper.http.Request;
 /**
  * This interface selects true {@link FilterChain} for request
  */
+@Deprecated
 public interface RequestRouter {
     FilterChain route(Request request, FilterChain[] chains);
 }

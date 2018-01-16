@@ -24,6 +24,7 @@ import com.alesharik.webserver.api.server.wrapper.http.Response;
 /**
  * This class handles HTTP requests
  */
+@Deprecated
 public interface HttpHandler {
     /**
      * Return own HttpHandler filter. This filter CAN'T change response!

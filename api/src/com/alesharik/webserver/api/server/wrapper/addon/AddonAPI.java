@@ -21,5 +21,6 @@ package com.alesharik.webserver.api.server.wrapper.addon;
 /**
  * This interface allow to create different API for different addons
  */
+@Deprecated
 public interface AddonAPI {
 }

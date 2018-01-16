@@ -24,6 +24,7 @@ import com.alesharik.webserver.api.server.wrapper.http.Response;
 /**
  * Provides ability to decorate request before sending
  */
+@Deprecated
 public interface HttpHandlerResponseDecorator {
     /**
      * Executes after {@link HttpHandler} handles request

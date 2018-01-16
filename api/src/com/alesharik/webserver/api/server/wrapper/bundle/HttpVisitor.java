@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 /**
  * Visitors can change request/response AFTER filters
  */
+@Deprecated
 public interface HttpVisitor {
     /**
      * Called AFTER filters

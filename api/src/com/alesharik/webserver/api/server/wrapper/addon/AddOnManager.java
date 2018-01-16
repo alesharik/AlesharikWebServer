@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @ClassPathScanner
 @UtilityClass
+@Deprecated
 public class AddOnManager {
     private static final Map<String, Class<?>> addons = new ConcurrentHashMap<>();
 
