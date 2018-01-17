@@ -47,7 +47,7 @@ task cleanDeployFolder(type: Delete) {
 }
 
 clean.dependsOn cleanDeployFolder
-clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean", "alesharikwebserver-agent:clean"
+clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean", "alesharikwebserver-agent:clean", "alesharikwebserver-jcstress:cleat", "alesharikwebserver-utils:clean", "alesharikwebserver-logging:clean", "alesharikwebserver-base:clean"
 
 //====================Config====================\\
 
@@ -92,6 +92,7 @@ subprojects {
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
+    buildDir = new File('./out/')
 
     repositories {
         mavenCentral()
