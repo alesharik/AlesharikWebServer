@@ -31,6 +31,7 @@ public class BeanContextTest {
     @Test
     public void getProperty() {
         BeanContext context = mock(BeanContext.class);
+        when(context.getProperty(anyString())).thenReturn(null);
         when(context.getProperty("test")).thenReturn("test");
         when(context.getProperty(anyString(), any())).thenCallRealMethod();
 
@@ -38,6 +39,8 @@ public class BeanContextTest {
 
         String prop = context.getProperty("test", String.class);
         assertEquals("test", prop);
+
+        assertNull(context.getProperty("tadsfsad", String.class));
     }
 
     @Test
