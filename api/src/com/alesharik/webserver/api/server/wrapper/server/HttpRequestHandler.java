@@ -18,7 +18,15 @@
 
 package com.alesharik.webserver.api.server.wrapper.server;
 
+import com.alesharik.webserver.api.server.wrapper.addon.AddOn;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOnSocketHandler;
+import com.alesharik.webserver.api.server.wrapper.addon.Message;
+import com.alesharik.webserver.api.server.wrapper.addon.MessageProcessor;
+import com.alesharik.webserver.api.server.wrapper.addon.MessageSender;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * HttpRequestHandler handle all requests. Realisation must be named with {@link com.alesharik.webserver.api.name.Named} and
@@ -26,4 +34,11 @@ import com.alesharik.webserver.api.server.wrapper.http.Request;
  */
 public interface HttpRequestHandler {
     void handleRequest(Request request, ExecutorPool executorPool, Sender sender);
+
+    @Nullable
+    AddOnSocketHandler getAddOnSocketHandler(@Nonnull Request request, @Nonnull ExecutorPool executorPool, @Nonnull AddOn addOn);
+
+    void handleMessage(@Nonnull MessageProcessor messageProcessor, @Nonnull Message message, @Nonnull MessageSender messageSender, @Nonnull ExecutorPool executorPool, @Nonnull AddOn addOn, @Nonnull Object sync);
+
+    void handleMessageTask(@Nonnull Runnable task, @Nonnull ExecutorPool executorPool, @Nonnull AddOn addOn, @Nonnull Object sync);
 }

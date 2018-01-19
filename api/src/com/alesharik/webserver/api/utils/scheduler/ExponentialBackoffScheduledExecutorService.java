@@ -16,11 +16,17 @@
  *
  */
 
-package com.alesharik.webserver.api.server.wrapper.addon;
+package com.alesharik.webserver.api.utils.scheduler;
 
-/**
- * This interface allow to create different API for different addons
- */
-@Deprecated
-public interface AddonAPI {
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+public interface ExponentialBackoffScheduledExecutorService extends ScheduledExecutorService {
+
+    Wakeup scheduleAtBackoffRate(BackoffRunnable runnable, long delay, long period, TimeUnit timeUnit);
+
+    static int exponentialBackoff(int count, int max) {
+        double v = (Math.pow(2, count) - 1) / 2;
+        return v > max ? max : (int) v;
+    }
 }

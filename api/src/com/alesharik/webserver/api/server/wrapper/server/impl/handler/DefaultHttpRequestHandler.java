@@ -19,8 +19,14 @@
 package com.alesharik.webserver.api.server.wrapper.server.impl.handler;
 
 import com.alesharik.webserver.api.name.Named;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOn;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOnSocketHandler;
+import com.alesharik.webserver.api.server.wrapper.addon.Message;
+import com.alesharik.webserver.api.server.wrapper.addon.MessageProcessor;
+import com.alesharik.webserver.api.server.wrapper.addon.MessageSender;
 import com.alesharik.webserver.api.server.wrapper.bundle.ErrorHandler;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerBundle;
+import com.alesharik.webserver.api.server.wrapper.bundle.MessageProcessorParameters;
 import com.alesharik.webserver.api.server.wrapper.bundle.processor.HttpProcessor;
 import com.alesharik.webserver.api.server.wrapper.bundle.processor.impl.ReThrowException;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
@@ -46,6 +52,31 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
     @Override
     public void handleRequest(Request request, ExecutorPool executorPool, Sender sender) {
         executorPool.executeWorkerTask(new BundleSelectTask(bundles, request, executorPool, sender));
+    }
+
+    @Override
+    public AddOnSocketHandler getAddOnSocketHandler(Request request, ExecutorPool executorPool, AddOn addOn) {
+        HttpHandlerBundle bundle = null;
+        for(HttpHandlerBundle httpHandlerBundle : bundles) {
+            if(httpHandlerBundle.getValidator().isRequestValid(request)) {
+                bundle = httpHandlerBundle;
+                break;
+            }
+        }
+        if(bundle != null)
+            return addOn.getHandler(bundle.getMessageProcessor(addOn.getName(), new MessageProcessorParametersImpl(request)));
+        return null;
+    }
+
+    @Override
+    public void handleMessage(MessageProcessor messageProcessor, Message message, MessageSender messageSender, ExecutorPool executorPool, AddOn addOn, Object sync) {
+        //noinspection unchecked
+        executorPool.executeWorkerTask(new HandleMessageTask(messageProcessor, message, messageSender, sync));
+    }
+
+    @Override
+    public void handleMessageTask(Runnable task, ExecutorPool executorPool, AddOn addOn, Object sync) {
+        executorPool.executeWorkerTask(new MessageTaskImpl(task, sync));
     }
 
     @AllArgsConstructor
@@ -109,6 +140,58 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
         @Override
         public Object getKey() {
             return key;
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static final class HandleMessageTask implements BatchingRunnableTask<Object> {
+        private final MessageProcessor<Message, MessageSender<Message>> processor;
+        private final Message message;
+        private final MessageSender<Message> messageSender;
+        private final Object sync;
+
+        @Override
+        public Object getKey() {
+            return sync;
+        }
+
+        @Override
+        public void run() {
+            processor.processMessage(message, messageSender);
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static final class MessageTaskImpl implements BatchingRunnableTask<Object> {
+        private final Runnable runnable;
+        private final Object sync;
+
+        @Override
+        public Object getKey() {
+            return sync;
+        }
+
+        @Override
+        public void run() {
+            runnable.run();
+        }
+    }
+
+    private static final class MessageProcessorParametersImpl implements MessageProcessorParameters {
+        private final Request request;
+
+        public MessageProcessorParametersImpl(Request request) {
+            this.request = request.clone();
+        }
+
+        @Override
+        public String getPath() {
+            return request.getContextPath();
+        }
+
+        @Override
+        public Request getHandshakeRequest() {
+            return request;
         }
     }
 }

@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.server.wrapper.bundle;
 
+import com.alesharik.webserver.api.server.wrapper.addon.MessageProcessor;
 import com.alesharik.webserver.api.server.wrapper.bundle.processor.HttpProcessor;
 
 import javax.annotation.Nonnull;
@@ -46,13 +47,13 @@ public interface HttpHandlerBundle {
         return HttpHandlerResponseDecorator.Ignore.INSTANCE;
     }
 
-    @Deprecated
-    default AddonHandler getAddonHandler() {
-        return AddonHandler.None.INSTANCE;
-    }
-
     @Nullable//temporary
     default HttpProcessor getProcessor() {
+        return null;
+    }
+
+    @Nullable
+    default MessageProcessor<?, ?> getMessageProcessor(String name, MessageProcessorParameters parameters) {
         return null;
     }
 }

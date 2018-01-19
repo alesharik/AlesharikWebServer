@@ -37,6 +37,11 @@
 package com.alesharik.webserver.api.server.wrapper.server.impl.handler;
 
 import com.alesharik.webserver.api.name.Named;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOn;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOnSocketHandler;
+import com.alesharik.webserver.api.server.wrapper.addon.Message;
+import com.alesharik.webserver.api.server.wrapper.addon.MessageProcessor;
+import com.alesharik.webserver.api.server.wrapper.addon.MessageSender;
 import com.alesharik.webserver.api.server.wrapper.bundle.ErrorHandler;
 import com.alesharik.webserver.api.server.wrapper.bundle.FilterChain;
 import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandler;
@@ -51,6 +56,7 @@ import com.alesharik.webserver.api.server.wrapper.server.Sender;
 import com.alesharik.webserver.logger.Debug;
 import lombok.AllArgsConstructor;
 
+import javax.annotation.Nonnull;
 import java.util.Set;
 
 /**
@@ -67,6 +73,21 @@ public class DeprecatedHttpRequestHandler implements HttpRequestHandler {
     @Override
     public void handleRequest(Request request, ExecutorPool executorPool, Sender sender) {
         executorPool.executeWorkerTask(new BundleSelectTask(bundles, request, executorPool, sender));
+    }
+
+    @Override
+    public AddOnSocketHandler getAddOnSocketHandler(Request request, ExecutorPool executorPool, AddOn addOn) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void handleMessage(@Nonnull MessageProcessor messageProcessor, @Nonnull Message message, @Nonnull MessageSender messageSender, @Nonnull ExecutorPool executorPool, @Nonnull AddOn addOn, @Nonnull Object sync) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void handleMessageTask(@Nonnull Runnable task, @Nonnull ExecutorPool executorPool, @Nonnull AddOn addOn, @Nonnull Object sync) {
+        throw new UnsupportedOperationException();
     }
 
     @AllArgsConstructor

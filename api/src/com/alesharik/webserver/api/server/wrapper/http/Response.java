@@ -60,9 +60,12 @@ public class Response implements Recyclable {
     protected final Set<Cookie> cookies = new CopyOnWriteArraySet<>();
     @Getter
     protected long creationTime = System.currentTimeMillis();
+    @Getter
+    protected String upgrade;
 
     /**
      * 0 - is Content-Length header set
+     * 1 - Upgrade
      */
     protected final BitSet marks = new BitSet(8);
 
@@ -118,6 +121,15 @@ public class Response implements Recyclable {
         stringBuilder.append("\r\n");
         stringBuilder.append(new String(buffer.toByteArray(), writer.charset));
         return stringBuilder.toString();
+    }
+
+    public void upgrade(String protocol) {
+        this.upgrade = upgrade;
+        this.marks.set(1, true);
+    }
+
+    public boolean isUpgraded() {
+        return marks.get(1);
     }
 
     public byte[] toByteArray() {

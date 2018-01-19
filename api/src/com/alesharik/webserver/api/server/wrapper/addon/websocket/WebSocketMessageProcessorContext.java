@@ -16,20 +16,19 @@
  *
  */
 
-package com.alesharik.webserver.api.server.wrapper.bundle;
+package com.alesharik.webserver.api.server.wrapper.addon.websocket;
 
-import com.alesharik.webserver.api.server.wrapper.addon.AddonAPI;
+import com.alesharik.webserver.api.server.wrapper.addon.MessageProcessorContext;
+import com.alesharik.webserver.api.server.wrapper.http.Request;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@Deprecated
-public interface AddonHandler {
-    void handleAddon(String name, AddonAPI addonAPI);
+import java.util.concurrent.atomic.AtomicLong;
 
-    final class None implements AddonHandler {
-        public static final None INSTANCE = new None();
-
-        @Override
-        public void handleAddon(String name, AddonAPI addonAPI) {
-
-        }
-    }
+@Getter
+@RequiredArgsConstructor
+public class WebSocketMessageProcessorContext implements MessageProcessorContext {
+    private static final AtomicLong counter = new AtomicLong();
+    protected final Request handshakeRequest;
+    protected final long id = counter.getAndIncrement();
 }

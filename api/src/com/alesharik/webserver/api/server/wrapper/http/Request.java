@@ -31,13 +31,14 @@ import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("WeakerAccess")
-public class Request implements Recyclable {
+public class Request implements Recyclable, Cloneable {
     /**
      * URI parameters. Stored as Key:Value
      */
@@ -253,6 +254,25 @@ public class Request implements Recyclable {
         headers = new String[0];
         headerMap.clear();
         data.clear();
+    }
+
+    @Override
+    public Request clone() {
+        Request clone = new Request();
+        clone.parameters.putAll(parameters);
+        clone.cookies = Arrays.copyOf(cookies, cookies.length);
+        clone.method = method;
+        clone.httpVersion = httpVersion;
+        clone.body = Arrays.copyOf(body, body.length);
+        clone.rawUri = rawUri;
+        clone.remote = remote;
+        clone.local = local;
+        clone.secure = secure;
+        clone.uri = uri;
+        clone.headerMap.putAll(headerMap);
+        clone.headers = headers;
+        clone.data.putAll(data);
+        return clone;
     }
 
     public static final class Builder extends Request {
