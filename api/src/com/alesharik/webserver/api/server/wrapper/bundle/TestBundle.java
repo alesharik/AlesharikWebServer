@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.server.wrapper.bundle;
 
+import com.alesharik.webserver.api.GsonUtils;
 import com.alesharik.webserver.api.server.wrapper.addon.MessageProcessor;
 import com.alesharik.webserver.api.server.wrapper.addon.websocket.WebSocketMessageProcessor;
 import com.alesharik.webserver.api.server.wrapper.addon.websocket.WebSocketRequestUpgrader;
@@ -42,7 +43,12 @@ public class TestBundle implements HttpHandlerBundle {
                 .path("/test/string", chain().then((request, response) -> {
                     response.respond(HttpStatus.OK_200);
                     response.getWriter().write("test");
-                }));
+                }))
+                .path("/test/json", chain().then((request, response) -> {
+                    response.respond(HttpStatus.OK_200);
+                    response.getWriter().write(GsonUtils.getGson().toJson("test"));
+                }))
+                .defaultPath((request, response) -> response.respond(HttpStatus.NOT_FOUND_404));
     }
 
     @Override

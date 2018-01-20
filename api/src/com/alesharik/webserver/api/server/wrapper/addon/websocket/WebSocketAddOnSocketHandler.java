@@ -36,6 +36,8 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
     private final WebSocketMessageProcessor processor;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicBoolean opened = new AtomicBoolean(false);
+    private final AtomicBoolean reading = new AtomicBoolean(false);
+    private final AtomicBoolean handlingMessageBuffer = new AtomicBoolean(false);
     private final ByteBuffer primitiveBuilder = ByteBuffer.allocate(8);
     private long buffer;
 
@@ -74,14 +76,25 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
     }
 
     private void readMessage(AddOnSocketContext context) {
+        if(buffer == 0) {
+            System.err.println("Warning! Try to read message on empty buffer!");
+            return;
+        }
+        reading.set(true);
+        if(closed.get()) {
+            reading.set(false);
+            return;
+        }
+
         if(!writingMessage) {
             writingMessage = true;
             readingState = ReadingState.FIRST_BYTE;
         }
         if(readingState == ReadingState.FIRST_BYTE) {
-            byte firstByte = byteVector.cut(buffer, 1)[0];
+            byte[] cut = byteVector.cut(buffer, 1);
+            byte firstByte = cut[0];
             fin = (firstByte & CUT_FIN) == CUT_FIN;
-            byte opcode = (byte) ((firstByte & CUT_OPCODE) << 4);
+            byte opcode = (byte) (firstByte & CUT_OPCODE);
             if(opcode == CONTINUE)
                 opcode = this.opcode;
             this.opcode = opcode;
@@ -89,7 +102,8 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
             return;
         }
         if(readingState == ReadingState.SECOND_BYTE) {
-            byte second = byteVector.cut(buffer, 1)[0];
+            byte[] cut = byteVector.cut(buffer, 1);
+            byte second = cut[0];
             maskEnabled = (second & CUT_MASK) == CUT_MASK;
             this.length = (byte) (second & CUT_LENGTH);//set basic length
             if(this.length < 126)
@@ -120,9 +134,12 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
             return;
         }
         if(readingState == ReadingState.DATA) {
+            long messageBuffer = this.messageBuffer;
             if(messageBuffer == 0)
-                messageBuffer = byteVector.allocate();
-
+                this.messageBuffer = messageBuffer = byteVector.allocate();
+            long buffer = this.buffer;
+            if(buffer == 0)
+                return;
             long last = length - dataCursor;
             int canRead = (int) Math.min(last, byteVector.size(buffer));//Does not support long messages. Use fragmentation
             byte[] read = byteVector.cut(buffer, canRead);
@@ -130,9 +147,14 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
                 read[i] = (byte) (read[i] ^ mask[i % 4]);
             byteVector.write(messageBuffer, read);
             dataCursor += canRead;
-            if(dataCursor == length)
+            if(dataCursor == length) {
+                handlingMessageBuffer.set(true);
+                reading.set(false);
                 flushMessage(context);
+                return;
+            }
         }
+        reading.set(false);
     }
 
     private void flushMessage(AddOnSocketContext context) {
@@ -190,6 +212,7 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
 
         byteVector.free(messageBuffer);
         messageBuffer = 0;
+        handlingMessageBuffer.set(false);
         readingState = ReadingState.NONE;
         fin = false;
         maskEnabled = false;
@@ -201,14 +224,15 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
 
     @Override
     public void close(@Nonnull AddOnSocketContext context) {
-        if(!opened.get() || closed.get())
+        if(!opened.get() || closed.compareAndSet(false, true))
             return;
-
+        while(reading.get()) ;
         processor.onClose(-1);
         byteVector.free(buffer);
         buffer = 0;
-        if(messageBuffer != 0)
-            byteVector.free(messageBuffer);
+        if(!handlingMessageBuffer.get())
+            if(messageBuffer != 0)
+                byteVector.free(messageBuffer);
     }
 
     enum ReadingState {

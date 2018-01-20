@@ -301,6 +301,7 @@ final class SelectorContextImpl implements SelectorContext {
                 }
             } else {
                 try {
+                    byteBuffer.position(0);
                     int nRead;
                     while((nRead = socketChannel.read(byteBuffer)) == 2048) {
                         vector = data.write(vector, byteBuffer.array());
@@ -311,7 +312,7 @@ final class SelectorContextImpl implements SelectorContext {
                         return false;
 
                     if(nRead > 0) {
-                        vector = data.write(vector, byteBuffer.array(), 0, nRead);
+                        vector = data.write(vector, byteBuffer.array(), byteBuffer.position() - nRead, nRead);
                         check();
                     }
                     return true;

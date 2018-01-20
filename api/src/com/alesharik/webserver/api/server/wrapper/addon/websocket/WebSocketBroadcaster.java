@@ -25,7 +25,6 @@ import com.alesharik.webserver.api.server.wrapper.addon.MessageSender;
 import javax.annotation.Nonnull;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static com.alesharik.webserver.api.server.wrapper.addon.websocket.WebSocketConstants.*;
 
@@ -33,11 +32,9 @@ public class WebSocketBroadcaster implements MessageSender<WebSocketMessage> {
     private static final ThreadLocal<QDataStream> dataStreams = ThreadLocal.withInitial(QDataStream::new);
     private static final ThreadLocal<ByteArrayOutputStream> buffers = ThreadLocal.withInitial(() -> new ByteArrayOutputStream(4096));
     private final AddOnSocketContext context;
-    private final byte[] mask = new byte[4];
 
     public WebSocketBroadcaster(AddOnSocketContext context) {
         this.context = context;
-        ThreadLocalRandom.current().nextBytes(mask);
     }
 
     @Override
@@ -62,65 +59,67 @@ public class WebSocketBroadcaster implements MessageSender<WebSocketMessage> {
     }
 
     public void sendPing() {
-        sendMessage(true, PING, false, 0, null, null);
+        sendMessage(true, PING, 0, null);
     }
 
     public void sendPong() {
-        sendMessage(true, PONG, false, 0, null, null);
+        sendMessage(true, PONG, 0, null);
     }
 
     public void sendMessage(String message) {
         byte[] data = message.getBytes(StandardCharsets.UTF_8);
-        sendMessage(true, TEXT, true, data.length, mask, data);
+        sendMessage(true, TEXT, data.length, data);
     }
 
     public void sendMessage(byte[] message) {
-        sendMessage(true, BYTE, true, message.length, mask, message);
+        sendMessage(true, BYTE, message.length, message);
     }
 
     public void sendFragment(boolean last, boolean first, byte[] fragment) {
         byte opcode = first ? BYTE : CONTINUE;
-        sendMessage(last, opcode, true, fragment.length, mask, fragment);
+        sendMessage(last, opcode, fragment.length, fragment);
     }
 
     public void sendFragment(boolean last, boolean first, String fragment) {
         byte opcode = first ? BYTE : CONTINUE;
         byte[] data = fragment.getBytes(StandardCharsets.UTF_8);
-        sendMessage(last, opcode, true, data.length, mask, data);
+        sendMessage(last, opcode, data.length, data);
     }
 
     public void close() {
         byte[] c = Integer.toString(1000).getBytes(StandardCharsets.UTF_8);
-        sendMessage(true, CLOSE, true, c.length, mask, c);
+        sendMessage(true, CLOSE, c.length, c);
     }
 
     public void close(int code) {//FIXME use enums
         byte[] c = Integer.toString(code).getBytes(StandardCharsets.UTF_8);
-        sendMessage(true, CLOSE, true, c.length, mask, c);
+        sendMessage(true, CLOSE, c.length, c);
     }
 
-    private void sendMessage(boolean fin, byte opcode, boolean maskEnabled, long length, byte[] mask, byte[] data) {
+    private void sendMessage(boolean fin, byte opcode, long length, byte[] data) {//server can't mask any frames
         QDataStream stream = dataStreams.get();
         try {
-            byte first = fin ? CUT_FIN : 0;
-            first |= opcode >>> 4;
+            int size = 1;
+            int first = fin ? CUT_FIN : 0;
+            first |= opcode;
             stream.writeByte(first);
-            byte second = maskEnabled ? CUT_MASK : 0;
+            int second = 0;
             if(length < 125) {
                 second |= length;
                 stream.writeByte(second);
+                size++;
             } else if(length < 65536) {
                 second |= 126;
                 stream.writeByte(second);
                 stream.writeUnsignedShort((int) (length - 126));
+                size += 3;
             } else {
                 second |= 127;
                 stream.writeByte(second);
                 stream.writeUnsignedLong(length);
+                size += 9;
             }
-            if(maskEnabled)
-                stream.write(mask, 0, 4);
-            byte[] header = new byte[(int) stream.size()];//Can't overflow
+            byte[] header = new byte[size];//Can't overflow
             stream.readFully(header);
             context.writeBytes(header);
         } finally {
@@ -129,13 +128,13 @@ public class WebSocketBroadcaster implements MessageSender<WebSocketMessage> {
         if(length == 0)
             return;
         //Write data:
-        ByteArrayOutputStream buffer = buffers.get();
+        ByteArrayOutputStream buffer = buffers.get();//FIXME remove
         try {
             int nRead = 0;
             while(nRead < data.length) {
                 int read = Math.min(1024, data.length - nRead);
                 for(int i = 0; i < read; i++)
-                    buffer.write(data[nRead + i] ^ mask[(nRead + i) % 4]);
+                    buffer.write(data[nRead + i]);
                 context.writeBytes(buffer.toByteArray());
                 buffer.reset();
                 nRead += read;
