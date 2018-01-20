@@ -22,6 +22,7 @@ import com.alesharik.webserver.api.server.wrapper.bundle.FilterChain;
 import com.alesharik.webserver.api.server.wrapper.bundle.RequestRouter;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 
+@Deprecated
 public class OneChainRequestRouter implements RequestRouter {
     @Override
     public FilterChain route(Request request, FilterChain[] chains) {

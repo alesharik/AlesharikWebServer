@@ -19,12 +19,11 @@
 package com.alesharik.webserver.api.server.wrapper.addon;
 
 import javax.annotation.Nonnull;
-import java.nio.ByteBuffer;
 
 public interface AddOnSocketHandler {
     void init(@Nonnull AddOnSocketContext context);
 
-    void handle(@Nonnull ByteBuffer byteBuffer, @Nonnull AddOnSocketContext context);
+    void handle(@Nonnull byte[] byteBuffer, @Nonnull AddOnSocketContext context);
 
     void close(@Nonnull AddOnSocketContext context);
 }

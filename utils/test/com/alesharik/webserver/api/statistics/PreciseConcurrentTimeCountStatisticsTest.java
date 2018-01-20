@@ -22,23 +22,24 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Timer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.assertEquals;
 
 public class PreciseConcurrentTimeCountStatisticsTest {
     private PreciseConcurrentTimeCountStatistics statistics;
-    private Timer timer;
+    private ScheduledExecutorService timer;
 
     @Before
     public void setUp() throws Exception {
-        timer = new Timer();
+        timer = Executors.newSingleThreadScheduledExecutor();
         statistics = new PreciseConcurrentTimeCountStatistics(1, timer);
     }
 
     @After
     public void tearDown() throws Exception {
-        timer.purge();
+        timer.shutdown();
     }
 
     @Test
@@ -46,7 +47,7 @@ public class PreciseConcurrentTimeCountStatisticsTest {
         statistics.measure(1);
         statistics.measure(100);
         assertEquals(101, statistics.getCount());
-
+        Thread.sleep(2);
         statistics.update();
         assertEquals(0, statistics.getCount());
     }

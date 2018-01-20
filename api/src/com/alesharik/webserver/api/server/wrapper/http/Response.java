@@ -124,7 +124,7 @@ public class Response implements Recyclable {
     }
 
     public void upgrade(String protocol) {
-        this.upgrade = upgrade;
+        this.upgrade = protocol;
         this.marks.set(1, true);
     }
 

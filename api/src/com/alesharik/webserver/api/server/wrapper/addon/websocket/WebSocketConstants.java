@@ -33,11 +33,11 @@ class WebSocketConstants {
     static final byte PONG = (byte) ByteOrderUtils.format(0x0A, ENDIAN);
     static final byte CONTINUE = (byte) ByteOrderUtils.format(0x00, ENDIAN);
 
-    static final byte CUT_FIN = (byte) ByteOrderUtils.format(0b10000000, ENDIAN);
-    static final byte CUT_SRV1 = (byte) ByteOrderUtils.format(0b01000000, ENDIAN);
-    static final byte CUT_SRV2 = (byte) ByteOrderUtils.format(0b00100000, ENDIAN);
-    static final byte CUT_SRV3 = (byte) ByteOrderUtils.format(0b00010000, ENDIAN);
-    static final byte CUT_OPCODE = (byte) ByteOrderUtils.format(0b00001111, ENDIAN);
-    static final byte CUT_MASK = (byte) ByteOrderUtils.format(0b10000000, ENDIAN);
-    static final byte CUT_LENGTH = (byte) ByteOrderUtils.format(0b01111111, ENDIAN);
+    static final byte CUT_FIN = 0b1000000;
+    static final byte CUT_SRV1 = 0b01000000;
+    static final byte CUT_SRV2 = 0b00100000;
+    static final byte CUT_SRV3 = 0b00010000;
+    static final byte CUT_OPCODE = 0b00001111;
+    static final byte CUT_MASK = 0b1000000;
+    static final byte CUT_LENGTH = 0b0111111;
 }

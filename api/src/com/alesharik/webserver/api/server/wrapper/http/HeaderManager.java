@@ -325,6 +325,27 @@ import java.util.TreeMap;
  * <td>String</td>
  * <td>Upgrade: websocket</td>
  * </tr>
+ * <tr>
+ * <td colspan="5" scope="colgroup"><center>WebSocket</center></td>
+ * </tr>
+ * <tr>
+ * <td>Sec-WebSocket-Version</td>
+ * <td>String</td>
+ * <td>Sec-WebSocket-Version: 13</td>
+ * <td>Provide requested WebSocket protocol version</td>
+ * </tr>
+ * <tr>
+ * <td>Sec-WebSocket-Key</td>
+ * <td>String</td>
+ * <td>Sec-WebSocket-Key: Iv8io/9s+lYFgZWcXczP8Q==</td>
+ * <td>Provide Base64 encoded WS key</td>
+ * </tr>
+ * <tr>
+ * <td>Sec-WebSocket-Accept</td>
+ * <td>String</td>
+ * <td>Sec-WebSocket-Accept: hsBlbuDTkk24srzEOTBUlZAlC2g=</td>
+ * <td>Allow browser to manage WS connections</td>
+ * </tr>
  * </tbody>
  * </table>
  * DO not support AWS4-HMAC-SHA256 authorization header<br>
@@ -410,6 +431,11 @@ public class HeaderManager {
 
         //Other
         headers.put("Upgrade", new StringHeader("Upgrade"));
+
+        //WebSocket
+        headers.put("Sec-WebSocket-Version", new IntHeader("Sec-WebSocket-Version"));
+        headers.put("Sec-WebSocket-Key", new StringHeader("Sec-WebSocket-Key"));
+        headers.put("Sec-WebSocket-Accept", new StringHeader("Sec-WebSocket-Accept"));
     }
 
     public static <T extends Header> T getHeaderByName(String name, Class<T> clazz) {

@@ -31,13 +31,25 @@ public interface HttpHandlerBundle {
     Validator getValidator();
 
     @Deprecated
-    RequestRouter getRouter();
+    default RequestRouter getRouter() {
+        return null;
+    }
+
+    ;
 
     @Deprecated
-    FilterChain[] getFilterChains();
+    default FilterChain[] getFilterChains() {
+        return new FilterChain[0];
+    }
+
+    ;
 
     @Deprecated
-    HttpHandler[] getHttpHandlers();
+    default HttpHandler[] getHttpHandlers() {
+        return new HttpHandler[0];
+    }
+
+    ;
 
     @Nonnull
     ErrorHandler getErrorHandler();

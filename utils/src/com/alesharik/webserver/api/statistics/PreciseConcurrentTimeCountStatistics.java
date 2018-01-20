@@ -18,22 +18,24 @@
 
 package com.alesharik.webserver.api.statistics;
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class PreciseConcurrentTimeCountStatistics implements TimeCountStatistics {
-    private static final Timer DEFAULT_TIMER = new Timer("PreciseConcurrentTimeCountStatistics-DefaultTimer", true);
+    private static final ScheduledExecutorService DEFAULT_TIMER = Executors.newSingleThreadScheduledExecutor((r) -> {
+        Thread thread = new Thread(r);
+        thread.setName("PreciseConcurrentTimeCountStatistics-DefaultTimer");
+        thread.setDaemon(true);
+        thread.setPriority(Thread.MAX_PRIORITY - 1);
+        return thread;
+    });
 
     private final long delay;
 
     private final AtomicLong counter;
     private final AtomicLong time;
-
-    private final AtomicInteger readerCount = new AtomicInteger();
-    private final AtomicBoolean updateInProgress = new AtomicBoolean();
 
 
     public PreciseConcurrentTimeCountStatistics(long delay) {
@@ -43,46 +45,36 @@ public class PreciseConcurrentTimeCountStatistics implements TimeCountStatistics
     /**
      * @param delay in milliseconds
      */
-    public PreciseConcurrentTimeCountStatistics(long delay, Timer timer) {
+    public PreciseConcurrentTimeCountStatistics(long delay, ScheduledExecutorService timer) {
         this.delay = delay;
         this.counter = new AtomicLong();
         this.time = new AtomicLong();
 
-        TimerTask timerTask = new TimerTaskImpl();
         //noinspection StatementWithEmptyBody
         while((System.nanoTime() % 1000000) < 900000) ;
-        timer.scheduleAtFixedRate(timerTask, 0, delay);
+        timer.scheduleAtFixedRate(this::update, 0, delay, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void measure(int count) {
         //noinspection StatementWithEmptyBody
-        while(updateInProgress.get()) ;
-
-        readerCount.incrementAndGet();
-        long last = counter.get();
-        long calc = last + count;
-        while(!counter.compareAndSet(last, calc)) {
-            last = counter.get();
-            calc = last + count;
-        }
-        readerCount.decrementAndGet();
+        counter.addAndGet(count);
     }
 
     @Override
     public void update() {
         long currentTime = System.currentTimeMillis();
-        //noinspection StatementWithEmptyBody
-        while(currentTime - time.get() < delay)
-            currentTime = System.currentTimeMillis();
+        long l = time.get();
+        if(currentTime - l < delay)
+            return;
 
-        updateInProgress.set(true);
-        //Wait for threads
-        //noinspection StatementWithEmptyBody
-        while(readerCount.get() > 0) ;
+        while(!time.compareAndSet(l, currentTime)) {
+            currentTime = System.currentTimeMillis();
+            l = time.get();
+            if(currentTime - l < delay)
+                return;
+        }
         counter.set(0);
-        time.set(currentTime);
-        updateInProgress.set(false);
     }
 
     @Override
@@ -90,22 +82,4 @@ public class PreciseConcurrentTimeCountStatistics implements TimeCountStatistics
         return counter.get();
     }
 
-    private final class TimerTaskImpl extends TimerTask {
-
-        @Override
-        public void run() {
-            long currentTime = System.currentTimeMillis();
-            //noinspection StatementWithEmptyBody
-            while(currentTime - time.get() < delay)
-                currentTime = System.currentTimeMillis();
-
-            updateInProgress.set(true);
-            //Wait for threads
-            //noinspection StatementWithEmptyBody
-            while(readerCount.get() > 0) ;
-            counter.set(0);
-            time.set(currentTime);
-            updateInProgress.set(false);
-        }
-    }
 }

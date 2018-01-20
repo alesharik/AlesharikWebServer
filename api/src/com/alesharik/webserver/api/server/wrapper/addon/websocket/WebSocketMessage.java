@@ -19,7 +19,6 @@
 package com.alesharik.webserver.api.server.wrapper.addon.websocket;
 
 import com.alesharik.webserver.api.server.wrapper.addon.Message;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nonnull;
@@ -31,9 +30,7 @@ import java.nio.charset.StandardCharsets;
 public class WebSocketMessage implements Message {
     protected final Type type;
     protected final DataType dataType;
-    @Getter
     protected final boolean fragment;
-    @Getter
     protected final boolean end;
     protected final byte[] data;
 
@@ -45,12 +42,24 @@ public class WebSocketMessage implements Message {
         return type == Type.PONG;
     }
 
-    public boolean isString() {
-        return dataType == DataType.STRING;
-    }
-
     public boolean isClose() {
         return type == Type.CLOSE;
+    }
+
+    public boolean isString() {
+        return dataType == DataType.STRING && type == Type.MESSAGE;
+    }
+
+    public boolean isByte() {
+        return dataType == DataType.BYTE && type == Type.MESSAGE;
+    }
+
+    public boolean isEnd() {
+        return type != Type.MESSAGE || end;
+    }
+
+    public boolean isFragment() {
+        return fragment & type == Type.MESSAGE;
     }
 
     @Nonnull

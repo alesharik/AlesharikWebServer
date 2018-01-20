@@ -61,6 +61,7 @@ public final class HttpServerModuleImpl implements HttpServerModule {
     private final Set<ServerSocketWrapper> wrappers;
     private final Set<HttpHandlerBundle> bundles;
     private final HttpServerStatisticsImpl httpServerStatistics = new HttpServerStatisticsImpl();
+    private final List<String> addons = new ArrayList<>();
 
     @Getter
     private volatile ExecutorPool pool;
@@ -192,11 +193,13 @@ public final class HttpServerModuleImpl implements HttpServerModule {
             throw new ConfigurationParseError(e);
         }
 
+        addons.addAll(getList("addons", "addon", configNode, true));
+
         this.handler = httpRequestHandler;
 
         this.mainLayer = new MainLayerImpl(wrappers, pool);
         this.acceptorThread = new AcceptorThread(threadGroup, executorPool);
-        this.factory = () -> new SelectorContextImpl(httpServerStatistics, httpRequestHandler, executorPool);
+        this.factory = () -> new SelectorContextImpl(httpServerStatistics, httpRequestHandler, executorPool, addons);
     }
 
     @Override

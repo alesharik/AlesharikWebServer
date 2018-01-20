@@ -21,6 +21,9 @@ package com.alesharik.webserver.module.http;
 import com.alesharik.webserver.api.cache.object.Recyclable;
 import com.alesharik.webserver.api.cache.object.SmartCachedObjectFactory;
 import com.alesharik.webserver.api.memory.impl.ByteOffHeapVector;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOn;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOnSocketContext;
+import com.alesharik.webserver.api.server.wrapper.addon.AddOnSocketHandler;
 import com.alesharik.webserver.api.server.wrapper.http.HeaderManager;
 import com.alesharik.webserver.api.server.wrapper.http.Request;
 import com.alesharik.webserver.api.server.wrapper.http.Response;
@@ -34,6 +37,7 @@ import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
 import lombok.Getter;
 import org.jctools.queues.atomic.MpscAtomicArrayQueue;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -45,11 +49,13 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.StampedLock;
 
 final class SelectorContextImpl implements SelectorContext {
     private static final SmartCachedObjectFactory<Session> sessionFactory = new SmartCachedObjectFactory<>(Session::new);
@@ -61,14 +67,14 @@ final class SelectorContextImpl implements SelectorContext {
     private final HttpServerModuleImpl.HttpServerStatisticsImpl statistics;
     private final HttpRequestHandler requestHandler;
     private final ExecutorPool executorPool;
-    private final StampedLock lock;
     private final AtomicBoolean isWriteLocked = new AtomicBoolean(false);
-    private final AtomicBoolean isInRegisterBlock = new AtomicBoolean(false);
+    private final List<String> addons;
 
-    public SelectorContextImpl(HttpServerModuleImpl.HttpServerStatisticsImpl statistics, HttpRequestHandler requestHandler, ExecutorPool executorPool) {
+    public SelectorContextImpl(HttpServerModuleImpl.HttpServerStatisticsImpl statistics, HttpRequestHandler requestHandler, ExecutorPool executorPool, List<String> addons) {
         this.statistics = statistics;
         this.requestHandler = requestHandler;
         this.executorPool = executorPool;
+        this.addons = addons;
         try {
             readSelector = Selector.open();
             writeSelector = Selector.open();
@@ -77,7 +83,6 @@ final class SelectorContextImpl implements SelectorContext {
             throw new RuntimeException(e);
         }
         counter = new AtomicLong(0);
-        lock = new StampedLock();
     }
 
     @Override
@@ -91,20 +96,15 @@ final class SelectorContextImpl implements SelectorContext {
             return;
         try {
             statistics.aliveConnections.incrementAndGet();
-            long stamp = -1;
             try {
                 Session fill = sessionFactory.getInstance().fill(manager, socketChannel, counter, requestHandler, executorPool, statistics, writeSelector);
-                initQueue.add(fill);
+                fill.fillAddOn(addons);
                 isWriteLocked.set(true);
+                initQueue.add(fill);
                 readSelector.wakeup();
-                stamp = lock.readLock();
-                isInRegisterBlock.set(true);
                 socket.register(readSelector, SelectionKey.OP_READ, fill);
             } finally {
-                if(lock.validate(stamp))
-                    lock.unlockRead(stamp);
                 isWriteLocked.set(false);
-                isInRegisterBlock.set(false);
             }
             counter.incrementAndGet();
         } catch (ClosedChannelException ignored) {
@@ -118,12 +118,8 @@ final class SelectorContextImpl implements SelectorContext {
 
             int ops = readSelector.select();
 
-            if(isWriteLocked.get()) {
-                while(!isInRegisterBlock.get() && isWriteLocked.get()) {
-                    //NOP
-                }
-                lock.unlockWrite(lock.writeLock());
-            }
+            if(isWriteLocked.get())
+                while(isWriteLocked.get()) ;
 
             Session s;
             while((s = initQueue.poll()) != null) {
@@ -221,11 +217,12 @@ final class SelectorContextImpl implements SelectorContext {
         }
     }
 
-    private static final class Session implements Recyclable, Sender {
+    private static final class Session implements Recyclable, Sender, AddOnSocketContext {
         private static final ByteOffHeapVector data = ByteOffHeapVector.instance();
         private static final Charset CHARSET = Charset.forName("ISO-8859-1");
 
         private final ByteBuffer byteBuffer;
+        private final Map<String, Object> params = new ConcurrentHashMap<>();
 
         private volatile SocketProvider.SocketManager socketManager;
         private volatile SocketChannel socketChannel;
@@ -241,8 +238,17 @@ final class SelectorContextImpl implements SelectorContext {
 
         private volatile SmartCachedObjectFactory<Session> deleteAuto;
 
+        private volatile AddOnSocketHandler socketHandler = null;
+        private volatile AddOn addOn;
+        private volatile List<String> addons;
+
         public Session() {
             byteBuffer = ByteBuffer.allocate(2048);
+        }
+
+        public Session fillAddOn(List<String> addons) {
+            this.addons = addons;
+            return this;
         }
 
         public Session fill(SocketProvider.SocketManager manager, SocketChannel socketChannel, AtomicLong counter, HttpRequestHandler httpRequestHandler, ExecutorPool executorPool, HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics, Selector readSelector) {
@@ -323,6 +329,11 @@ final class SelectorContextImpl implements SelectorContext {
             if(data.size(vector) == 0)
                 return false;
 
+            if(socketHandler != null) {
+                requestHandler.handleMessageTask(() -> socketHandler.handle(data.cut(vector, (int) Math.min(data.size(vector), Integer.MAX_VALUE)), this), executorPool, addOn, this);
+                return true;
+            }
+
             String str = new String(data.toByteArray(vector), CHARSET);
             while(str.startsWith("\r\n"))
                 str = str.replaceFirst("\r\n", "");
@@ -398,10 +409,56 @@ final class SelectorContextImpl implements SelectorContext {
             this.state.set(Session.State.NOTHING);
         }
 
+        @Override
+        public void writeBytes(@Nonnull byte[] byteBuffer) {
+            if(socketManager.hasCustomRW(socketChannel)) {
+                try {
+                    socketManager.write(socketChannel, byteBuffer);
+                } catch (CloseSocketException e) {
+                    close();
+                }
+            } else {
+                ByteBuffer bb = ByteBuffer.wrap(byteBuffer);
+                try {
+                    while(bb.remaining() > 0) {
+                        if(socketChannel.write(bb) == 0) {
+                            socketChannel.register(writeSelector, SelectionKey.OP_WRITE, DelayedWrite.factory.getInstance().fill(bb, socketChannel));
+                            return;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    close();
+                }
+            }
+        }
+
+        @Nonnull
+        @Override
+        public SocketChannel getChannel() {
+            return socketChannel;
+        }
+
+        @Override
+        public void setParameter(@Nonnull String name, @Nullable Object o) {
+            if(o == null)
+                params.remove(name);
+            else
+                params.put(name, o);
+        }
+
+        @Nullable
+        @Override
+        public Object getParameter(@Nonnull String name) {
+            return params.get(name);
+        }
+
         public void close() {
             if(!socketChannel.isOpen())
                 return;
             try {
+                if(socketHandler != null)
+                    socketHandler.close(this);
                 counter.decrementAndGet();
                 statistics.aliveConnections.decrementAndGet();
                 socketManager.listenSocketClose(socketChannel);
@@ -409,6 +466,11 @@ final class SelectorContextImpl implements SelectorContext {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        @Override
+        public Request getHandshakeRequest() {
+            return null;
         }
 
         @Override
@@ -427,6 +489,10 @@ final class SelectorContextImpl implements SelectorContext {
             state = null;
             builder = null;
             deleteAuto = null;
+            addOn = null;
+            socketHandler = null;
+            addons = null;
+            params.clear();
         }
 
         @Override
@@ -461,6 +527,21 @@ final class SelectorContextImpl implements SelectorContext {
 //            if(((request.getHttpVersion() == HttpVersion.HTTP_1_0 || request.getHttpVersion() == HttpVersion.HTTP_0_9) && !request.containsHeader("Connection: keep-alive")) || request.containsHeader("Connection: close")) {
 //                close();
 //            }
+            if(response.isUpgraded()) {
+                if(!addons.contains(response.getUpgrade())) {
+                    System.err.println("AddOn is not registered! Name: " + response.getUpgrade());
+                    return;
+                }
+                AddOn addOn = AddOnManager.getAddOn(response.getUpgrade());
+                if(addOn == null) {
+                    System.err.println("AddOn with name not found! Name: " + response.getUpgrade());
+                    return;
+                }
+                AddOnSocketHandler handler = requestHandler.getAddOnSocketHandler(request, executorPool, addOn);
+                this.socketHandler = handler;
+                this.addOn = addOn;
+                handler.init(this);
+            }
 
             statistics.addResponseTimeAvg(System.currentTimeMillis() - response.getCreationTime());
             if(response.getResponseCode() > 499 && response.getResponseCode() < 600)
@@ -471,6 +552,8 @@ final class SelectorContextImpl implements SelectorContext {
 
             if(deleteAuto != null)
                 deleteAuto.putInstance(this);
+
+
         }
 
         enum State {

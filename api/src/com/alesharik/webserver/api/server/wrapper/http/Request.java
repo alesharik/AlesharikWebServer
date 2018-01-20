@@ -260,10 +260,10 @@ public class Request implements Recyclable, Cloneable {
     public Request clone() {
         Request clone = new Request();
         clone.parameters.putAll(parameters);
-        clone.cookies = Arrays.copyOf(cookies, cookies.length);
+        clone.cookies = cookies != null ? Arrays.copyOf(cookies, cookies.length) : null;
         clone.method = method;
         clone.httpVersion = httpVersion;
-        clone.body = Arrays.copyOf(body, body.length);
+        clone.body = body != null ? Arrays.copyOf(body, body.length) : null;
         clone.rawUri = rawUri;
         clone.remote = remote;
         clone.local = local;

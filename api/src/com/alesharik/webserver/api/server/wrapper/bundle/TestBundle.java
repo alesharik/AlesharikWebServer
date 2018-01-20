@@ -18,57 +18,69 @@
 
 package com.alesharik.webserver.api.server.wrapper.bundle;
 
+import com.alesharik.webserver.api.server.wrapper.addon.MessageProcessor;
+import com.alesharik.webserver.api.server.wrapper.addon.websocket.WebSocketMessageProcessor;
+import com.alesharik.webserver.api.server.wrapper.addon.websocket.WebSocketRequestUpgrader;
+import com.alesharik.webserver.api.server.wrapper.bundle.processor.HttpProcessor;
+import com.alesharik.webserver.api.server.wrapper.bundle.processor.impl.HttpRouterProcessor;
 import com.alesharik.webserver.api.server.wrapper.http.HttpStatus;
-import com.alesharik.webserver.api.server.wrapper.http.Request;
-import com.alesharik.webserver.api.server.wrapper.http.Response;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import static com.alesharik.webserver.api.server.wrapper.bundle.processor.impl.HttpChainProcessor.chain;
+import static com.alesharik.webserver.api.server.wrapper.bundle.processor.impl.HttpRouterProcessor.router;
 
 @HttpBundle("test")
 @Deprecated
 public class TestBundle implements HttpHandlerBundle {
+    private final HttpRouterProcessor test;
+
+    public TestBundle() {
+        test = router()
+                .path("/test", new WebSocketRequestUpgrader())
+                .path("/test/string", chain().then((request, response) -> {
+                    response.respond(HttpStatus.OK_200);
+                    response.getWriter().write("test");
+                }));
+    }
+
     @Override
     public Validator getValidator() {
         return request -> true;
     }
 
-    @Override
-    public RequestRouter getRouter() {
-        return (request, chains) -> chains[0];
-    }
-
-    @Override
-    public FilterChain[] getFilterChains() {
-        return new FilterChain[]{
-                new FilterChain() {
-                    @Nonnull
-                    @Override
-                    public Response handleRequest(Request request, HttpHandler[] httpHandlers, HttpHandlerResponseDecorator decorator) {
-                        Response response = Response.getResponse();
-                        httpHandlers[0].handle(request, response);
-                        return response;
-                    }
-
-                    @Override
-                    public boolean accept(Request request, Response response) {
-                        return true;
-                    }
-                }
-        };
-    }
-
-    @Override
-    public HttpHandler[] getHttpHandlers() {
-        return new HttpHandler[]{
-                (request, response) -> {
-                    response.setContentLength(0);
-                    response.respond(HttpStatus.OK_200);
-                }
-        };
-    }
-
+    @Nonnull
     @Override
     public ErrorHandler getErrorHandler() {
-        return null;
+        return (e, request, response, pool) -> e.printStackTrace();
+    }
+
+    @Nullable
+    @Override
+    public HttpProcessor getProcessor() {
+        return test;
+    }
+
+    @Nullable
+    @Override
+    public MessageProcessor<?, ?> getMessageProcessor(String name, MessageProcessorParameters parameters) {
+        return new WebSocketMessageProcessor() {
+            @Override
+            public void onConnect() {
+                System.out.println("Connect");
+            }
+
+            @Override
+            public void onMessage(String message) {
+                System.out.println("Message: " + message);
+                broadcaster.sendMessage(message);
+            }
+
+            @Override
+            public void onClose(int code) {
+                System.out.println("Close: " + code);
+            }
+        };
     }
 }

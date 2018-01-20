@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Deprecated
 public class BasicFilterChain implements FilterChain {
     private final List<Filter> filters;
     private final List<HttpVisitor> visitors;

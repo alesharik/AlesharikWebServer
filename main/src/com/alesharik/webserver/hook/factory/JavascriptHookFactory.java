@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.hook.factory;
 
+import com.alesharik.webserver.api.agent.Ignored;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import com.alesharik.webserver.hook.Hook;
@@ -68,6 +69,7 @@ public final class JavascriptHookFactory implements HookFactory {
         return "javascript";
     }
 
+    @Ignored
     private static final class JSHook implements Hook {
         private final String name;
         private final Invocable invocable;

@@ -67,9 +67,9 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
     }
 
     @Override
-    public void handle(@Nonnull ByteBuffer byteBuffer, @Nonnull AddOnSocketContext context) {
-        buffer = byteVector.write(buffer, byteBuffer.array());
-        while(byteVector.size(buffer) > 0)
+    public void handle(@Nonnull byte[] byteBuffer, @Nonnull AddOnSocketContext context) {
+        buffer = byteVector.write(buffer, byteBuffer);
+        while(byteVector.size(buffer) > 0 && !(readingState == ReadingState.LENGTH && ((byteVector.size(buffer) < 2 && this.length == 126) || (byteVector.size(buffer) < 8 && this.length == 127))))
             readMessage(context);
     }
 
@@ -92,7 +92,10 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
             byte second = byteVector.cut(buffer, 1)[0];
             maskEnabled = (second & CUT_MASK) == CUT_MASK;
             this.length = (byte) (second & CUT_LENGTH);//set basic length
-            readingState = ReadingState.LENGTH;
+            if(this.length < 126)
+                readingState = ReadingState.MASK;
+            else
+                readingState = ReadingState.LENGTH;
             return;
         }
         if(readingState == ReadingState.LENGTH && this.length == 126 && byteVector.size(buffer) >= 2) {
