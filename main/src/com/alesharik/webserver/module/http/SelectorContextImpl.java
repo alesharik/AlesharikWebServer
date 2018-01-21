@@ -480,7 +480,7 @@ final class SelectorContextImpl implements SelectorContext {
             socketChannel = null;
             time = 0;
             byteBuffer.clear();
-            data.clear(vector);
+            data.free(vector);
             vector = 0;
             counter = null;
             requestHandler = null;
