@@ -28,7 +28,7 @@ import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 
 /**
- * This module store passwords in secured store
+ * This module store passwords and strings in secured store
  */
 public interface SecuredStoreModule extends Module {
     /**
@@ -36,7 +36,7 @@ public interface SecuredStoreModule extends Module {
      *
      * @param controller access controller
      * @param name       password name in store
-     * @throws IllegalAccessException if controller already binded
+     * @throws IllegalAccessException if controller already bound
      */
     void storeString(@Nonnull SecuredStoreAccessController controller, @Nonnull String name) throws IllegalAccessException;
 
@@ -60,6 +60,6 @@ public interface SecuredStoreModule extends Module {
     @Nonnull
     @Override
     default String getName() {
-        return "server-password-store";
+        return "secured-password-store";
     }
 }

@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.module.security;
 
+import javax.annotation.Nonnull;
 import javax.crypto.SecretKey;
 
 /**
@@ -30,10 +31,11 @@ public interface SecuredStoreAccessController {
      * @param clazz class, that tries to access
      * @return can class access password(s)
      */
-    boolean grantAccess(Class<?> clazz);
+    boolean grantAccess(@Nonnull Class<?> clazz);
 
     /**
      * Must be same all load cycles
      */
+    @Nonnull
     SecretKey passwordKey();
 }
