@@ -16,20 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.api.server.wrapper.addon;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Deprecated
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface HttpServerAddOn {
-
-    /**
-     * Addon name. Used in Upgrade request
-     */
-    String value();
-}
+/**
+ * This package contains Background Executor API
+ *
+ * @see com.alesharik.webserver.module.execution.background.BackgroundExecutor
+ * @see com.alesharik.webserver.module.execution.background.BackgroundTask
+ */
+package com.alesharik.webserver.module.execution.background;
