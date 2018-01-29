@@ -38,6 +38,6 @@ public class TaskProgressTest {
         doReturn("test").when(progress).getExecutionStateName();
 
         assertTrue(progress.hasExecutionStateName());
-        verify(progress, times(1)).getExecutionStateName();
+        verify(progress, times(2)).getExecutionStateName();
     }
 }

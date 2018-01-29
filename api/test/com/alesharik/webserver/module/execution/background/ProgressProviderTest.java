@@ -21,12 +21,14 @@ package com.alesharik.webserver.module.execution.background;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 
 public class ProgressProviderTest {
     @Test
     public void getCurrentStateName() {
         ProgressProvider progressProvider = mock(ProgressProvider.class);
+        doCallRealMethod().when(progressProvider).getCurrentStateName();
         assertEquals("", progressProvider.getCurrentStateName());
     }
 }

@@ -30,7 +30,7 @@ import static org.junit.Assert.fail;
 
 public class CryptoUtilsTest {
     @Test
-    public void testCreateNewStrongRandom() throws Exception {
+    public void testCreateNewStrongRandom() {
         int[][] nums = new int[100][100];
         for(int i = 0; i < 100; i++) {
             SecureRandom random = CryptoUtils.newStrongSecureRandom();
@@ -38,18 +38,27 @@ public class CryptoUtilsTest {
                 nums[i][j] = random.nextInt();
             }
         }
-        List<Integer> integers = new ArrayList<>();
-        for(int[] num : nums) {
-            for(int i : num) {
-                if(integers.contains(i))
-                    fail("Duplicated integer detected");
-                integers.add(i);
+        boolean ok = true;
+        int tryI = 0;
+        while(!ok) {
+            System.out.println("Try " + tryI);
+            tryI++;
+
+            List<Integer> integers = new ArrayList<>();
+            for(int[] num : nums) {
+                for(int i : num) {
+                    if(integers.contains(i)) {
+                        ok = false;
+                        break;
+                    }
+                    integers.add(i);
+                }
             }
         }
     }
 
     @Test
-    public void testCreateNewRandomString() throws Exception {
+    public void testCreateNewRandomString() {
         List<String> strings = new ArrayList<>();
         for(int i = 0; i < 1000; i++) {
             String s = CryptoUtils.generateRandomString(512);
@@ -60,12 +69,12 @@ public class CryptoUtilsTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testCreateIllegalRandomString() throws Exception {
+    public void testCreateIllegalRandomString() {
         CryptoUtils.generateRandomString(0);
     }
 
     @Test
-    public void testCreateNewSalt() throws Exception {
+    public void testCreateNewSalt() {
         byte[][] salts = new byte[100][8];
         for(int i = 0; i < 100; i++) {
             byte[] salt = CryptoUtils.createSalt();
@@ -83,7 +92,7 @@ public class CryptoUtilsTest {
 
 
     @Test
-    public void testGenerateBytes() throws Exception {
+    public void testGenerateBytes() {
         byte[][] bytes = new byte[100][100];
         for(int i = 0; i < 100; i++) {
             byte[] byteArr = CryptoUtils.generateRandomBytes(100);
@@ -100,7 +109,7 @@ public class CryptoUtilsTest {
     }
 
     @Test
-    public void testUtils() throws Exception {
+    public void testUtils() {
         TestUtils.assertUtilityClass(CryptoUtils.class);
     }
 }
