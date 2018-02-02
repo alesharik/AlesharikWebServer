@@ -52,9 +52,13 @@ final class AgentClassTransformer implements ClassFileTransformer {
     private static final ConcurrentHashMap<String, CopyOnWriteArrayList<MethodHolder>> transformers = new ConcurrentHashMap<>();
     private static final CopyOnWriteArrayList<MethodHolder> allTransformers = new CopyOnWriteArrayList<>();
 
-    static void addTransformer(Class<?> transformer) {
+    static void addTransformer(Class<?> transformer, boolean replace) {
         if(transformerClasses.contains(transformer)) {
-            return;
+            if(replace) {
+                transformerClasses.remove(transformer);
+                transformerClasses.add(transformer);
+            } else
+                return;
         } else {
             transformerClasses.add(transformer);
         }

@@ -90,6 +90,10 @@ public final class Agent {
         ClassPathScannerTransformer.tryScanClassLoader(classLoader);
     }
 
+    public static void reloadClassLoader(@Nonnull ClassLoader classLoader) {
+        ClassPathScannerTransformer.reloadClassLoader(classLoader);
+    }
+
     /**
      * Return <code>true</code> if ClassPathScanner scanning some classloaders
      */

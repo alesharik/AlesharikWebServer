@@ -28,6 +28,7 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
+import org.jctools.queues.atomic.MpscLinkedAtomicQueue;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -56,7 +57,9 @@ final class ClassPathScannerThread extends Thread {
 
     private final ForkJoinPool workerPool;
     private final LinkedBlockingQueue<ClassLoader> classLoaderQueue;
+    private final MpscLinkedAtomicQueue<ClassLoader> rescanQueue;
     private final CopyOnWriteArraySet<ClassLoader> classLoaders;
+    private final Object scanLock = new Object();
 
     private final ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners;
 
@@ -66,6 +69,7 @@ final class ClassPathScannerThread extends Thread {
 
         workerPool = new ForkJoinPool(PARALLELISM);
         classLoaderQueue = new LinkedBlockingQueue<>();
+        rescanQueue = new MpscLinkedAtomicQueue<>();
         classLoaders = new CopyOnWriteArraySet<>();
         listeners = new ConcurrentTripleHashMap<>();
     }
@@ -82,47 +86,96 @@ final class ClassPathScannerThread extends Thread {
 
     private void iteration() throws InterruptedException {
         try {
-            ClassLoader classLoader = classLoaderQueue.take();
-            taskCount.incrementAndGet();
-            ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners = new ConcurrentTripleHashMap<>();
-
-            ScanResult result = new FastClasspathScanner()
-                    .overrideClassLoaders(classLoader)
-                    .matchClassesWithAnnotation(ClassPathScanner.class, classWithAnnotation -> matchClassPathScanner(classWithAnnotation, newListeners))
-                    .matchClassesWithAnnotation(ClassTransformer.class, transformer -> {
-                        if(transformer.isAnnotationPresent(Ignored.class))
-                            return;
-                        AgentClassTransformer.addTransformer(transformer);
-                    })
-                    .verbose(false)
-                    .scanAsync(workerPool, PARALLELISM)
-                    .get();
-
-            if(result.getMatchProcessorExceptions().size() > 0) {
-                System.err.println("Exceptions detected while processing classloader!");
-                for(Throwable throwable : result.getMatchProcessorExceptions())
-                    throwable.printStackTrace();
+            synchronized (scanLock) {
+                scanLock.wait();
             }
 
-            new ClassLoaderScanTask(listeners, Collections.singleton(classLoader), workerPool).run();
-            classLoaders.add(classLoader);
-            new ClassLoaderScanTask(newListeners, classLoaders, workerPool).run();
-            listeners.putAll(newListeners);
-            taskCount.decrementAndGet();
+            ClassLoader classLoader = classLoaderQueue.poll();
+            if(classLoader != null)
+                scanClassLoader(classLoader);
+            ClassLoader toRescan = rescanQueue.poll();
+            if(toRescan != null)
+                rescanClassLoaderImpl(toRescan);
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
     }
 
-    public void addClassLoader(ClassLoader classLoader) {
-        classLoaderQueue.add(classLoader);
+    private void scanClassLoader(ClassLoader classLoader) throws InterruptedException, ExecutionException {
+        taskCount.incrementAndGet();
+        ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners = new ConcurrentTripleHashMap<>();
+
+        ScanResult result = new FastClasspathScanner()
+                .ignoreParentClassLoaders()
+                .overrideClassLoaders(classLoader)
+                .matchClassesWithAnnotation(ClassPathScanner.class, classWithAnnotation -> matchClassPathScanner(classWithAnnotation, newListeners, false))
+                .matchClassesWithAnnotation(ClassTransformer.class, transformer -> {
+                    if(transformer.isAnnotationPresent(Ignored.class))
+                        return;
+                    AgentClassTransformer.addTransformer(transformer, false);
+                })
+                .verbose(false)
+                .scanAsync(workerPool, PARALLELISM)
+                .get();
+
+        if(result.getMatchProcessorExceptions().size() > 0) {
+            System.err.println("Exceptions detected while processing classloader!");
+            for(Throwable throwable : result.getMatchProcessorExceptions())
+                throwable.printStackTrace();
+        }
+
+        new ClassLoaderScanTask(listeners, Collections.singleton(classLoader), workerPool).run();
+        classLoaders.add(classLoader);
+        new ClassLoaderScanTask(newListeners, classLoaders, workerPool).run();
+        listeners.putAll(newListeners);
+        taskCount.decrementAndGet();
     }
 
-    private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners) {
+    private void rescanClassLoaderImpl(ClassLoader classLoader) throws InterruptedException, ExecutionException {
+        taskCount.incrementAndGet();
+        ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners = new ConcurrentTripleHashMap<>();
+
+        ScanResult result = new FastClasspathScanner()
+                .overrideClassLoaders(classLoader)
+                .ignoreParentClassLoaders()
+                .matchClassesWithAnnotation(ClassPathScanner.class, classWithAnnotation -> matchClassPathScanner(classWithAnnotation, newListeners, true))
+                .matchClassesWithAnnotation(ClassTransformer.class, transformer -> {
+                    if(transformer.isAnnotationPresent(Ignored.class))
+                        return;
+                    AgentClassTransformer.addTransformer(transformer, true);
+                })
+                .verbose(false)
+                .scanAsync(workerPool, PARALLELISM)
+                .get();
+
+        if(result.getMatchProcessorExceptions().size() > 0) {
+            System.err.println("Exceptions detected while processing classloader!");
+            for(Throwable throwable : result.getMatchProcessorExceptions())
+                throwable.printStackTrace();
+        }
+
+        new ClassLoaderRescanTask(listeners, Collections.singleton(classLoader), workerPool).run();
+        new ClassLoaderRescanTask(newListeners, classLoaders, workerPool).run();
+        listeners.putAll(newListeners);
+        taskCount.decrementAndGet();
+    }
+
+    public void addClassLoader(ClassLoader classLoader) {
+        classLoaderQueue.add(classLoader);
+        synchronized (scanLock) {
+            scanLock.notifyAll();
+        }
+    }
+
+    private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners, boolean replace) {
         if(clazz.isAnnotationPresent(Ignored.class))
             return;
-        if(listeners.containsKey(clazz))
-            return;
+        if(listeners.containsKey(clazz)) {
+            if(replace)
+                listeners.remove(clazz);
+            else
+                return;
+        }
 
         Stream.of(clazz.getDeclaredMethods())
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
@@ -156,6 +209,13 @@ final class ClassPathScannerThread extends Thread {
                 });
     }
 
+    public void rescanClassLoader(ClassLoader classLoader) {
+        rescanQueue.add(classLoader);
+        synchronized (scanLock) {
+            scanLock.notifyAll();
+        }
+    }
+
     @Override
     public void interrupt() {
         workerPool.shutdownNow();
@@ -184,7 +244,7 @@ final class ClassPathScannerThread extends Thread {
 
         @Override
         public void run() {
-            FastClasspathScanner scanner = new FastClasspathScanner();
+            FastClasspathScanner scanner = new FastClasspathScanner().ignoreParentClassLoaders();
             ClassPathScannerThread.taskCount.incrementAndGet();
             listeners.forEach((aClass, type, method) -> {
                 switch (type) {
@@ -233,6 +293,78 @@ final class ClassPathScannerThread extends Thread {
                         }
                     })
                     .thenRun(ClassPathScannerThread.taskCount::decrementAndGet);
+
+            ClassPathScannerThread.taskCount.decrementAndGet();
+        }
+    }
+
+    private static final class ClassLoaderRescanTask implements Runnable {
+        private final ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners;
+        private final Set<ClassLoader> classLoaders;
+        private final ForkJoinPool forkJoinPool;
+
+        public ClassLoaderRescanTask(ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners, Set<ClassLoader> classLoaders, ForkJoinPool forkJoinPool) {
+            this.listeners = listeners;
+            this.classLoaders = classLoaders;
+            this.forkJoinPool = forkJoinPool;
+        }
+
+        @Override
+        public void run() {
+            ClassHolder.pause();
+            FastClasspathScanner scanner = new FastClasspathScanner().ignoreParentClassLoaders();
+            ClassPathScannerThread.taskCount.incrementAndGet();
+            listeners.forEach((aClass, type, method) -> {
+                switch (type) {
+                    case ANNOTATION:
+                        scanner.matchClassesWithAnnotation(aClass, classWithAnnotation -> {
+                            if(classWithAnnotation.isAnnotationPresent(Ignored.class))
+                                return;
+                            ClassHolder.rescan(aClass);
+                            try {
+                                method.invokeExact(classWithAnnotation);
+                            } catch (Throwable e) {
+                                Logger.log(e);
+                            }
+                        });
+                        break;
+                    case CLASS:
+                        scanner.matchSubclassesOf(aClass, subclass -> {
+                            if(subclass.isAnnotationPresent(Ignored.class))
+                                return;
+                            ClassHolder.rescan(aClass);
+                            try {
+                                method.invokeExact(subclass);
+                            } catch (Throwable e) {
+                                Logger.log(e);
+                            }
+                        });
+                        break;
+                    case INTERFACE:
+                        scanner.matchClassesImplementing(aClass, implementingClass -> {
+                            if(implementingClass.isAnnotationPresent(Ignored.class))
+                                return;
+                            ClassHolder.rescan(aClass);
+                            try {
+                                method.invokeExact(implementingClass);
+                            } catch (Throwable e) {
+                                Logger.log(e);
+                            }
+                        });
+                }
+            });
+            scanner.overrideClassLoaders(classLoaders.toArray(new ClassLoader[classLoaders.size()]));
+            CompletableFuture.supplyAsync(ClassPathScannerThread.taskCount::incrementAndGet)
+                    .thenApply(integer -> {
+                        try {
+                            return scanner.scanAsync(forkJoinPool, PARALLELISM).get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .thenRun(ClassPathScannerThread.taskCount::decrementAndGet)
+                    .thenRun(ClassHolder::resume);
 
             ClassPathScannerThread.taskCount.decrementAndGet();
         }
