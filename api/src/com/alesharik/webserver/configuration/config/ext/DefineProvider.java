@@ -20,33 +20,27 @@ package com.alesharik.webserver.configuration.config.ext;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * This class represent access point to parser's definitions
+ * Define provider provide #define definitions for parser
  */
-public interface DefineEnvironment {
+@ThreadSafe
+public interface DefineProvider {
     /**
-     * Get definition value for name
+     * Return unique definition name
      *
-     * @param name the name
-     * @return definition or null if it isn't defined
+     * @return definition name
+     */
+    @Nonnull
+    String getName();
+
+    /**
+     * Return definition
+     *
+     * @param environment the environment
+     * @return environment-based(or not) definition or null if shouldn't be defined
      */
     @Nullable
-    String getDefinition(@Nonnull String name);
-
-    /**
-     * Check if definition with specified name is defined
-     *
-     * @param name definition name
-     * @return true if definition is defined, overwise false
-     */
-    boolean isDefined(@Nonnull String name);
-
-    /**
-     * Check if definition is provided by {@link DefineProvider}
-     *
-     * @param name definition name
-     * @return true if definition is provided from {@link DefineProvider}, false - defined by user
-     */
-    boolean isProvided(@Nonnull String name);
+    String getDefinition(@Nonnull DefineEnvironment environment);
 }
