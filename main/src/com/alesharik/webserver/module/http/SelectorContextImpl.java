@@ -347,7 +347,7 @@ final class SelectorContextImpl implements SelectorContext {
                 this.state.set(State.HEADERS);
                 str = str.substring(firstLine);
 
-                data.clear(vector);
+                data.free(vector);
                 this.vector = data.fromByteArray(str.getBytes(CHARSET));
 
                 builder.withInfo(((InetSocketAddress) socketChannel.socket().getRemoteSocketAddress()), socketChannel.socket().getLocalAddress(), socketManager.isSecure(socketChannel));
@@ -360,7 +360,7 @@ final class SelectorContextImpl implements SelectorContext {
                 builder.withHeaders(str.substring(0, headerEnd));
                 str = str.substring(headerEnd);
                 this.state.set(State.ALL);
-                data.clear(vector);
+                data.free(vector);
                 this.vector = data.fromByteArray(str.getBytes(CHARSET));
             }
 
@@ -394,7 +394,7 @@ final class SelectorContextImpl implements SelectorContext {
 //                            builder.withBody(str.substring(0, index).getBytes());
                         str = str.substring(index + 4);
                     }
-                    data.clear(vector);
+                    data.free(vector);
                     this.vector = data.fromByteArray(str.getBytes(CHARSET));
                     publish();
                     return true;
