@@ -27,7 +27,8 @@ public interface ClassHoldingContext {
     /**
      * Called when context is created
      */
-    void create();
+    default void create() {
+    }
 
     /**
      * Called before ClassPathScanner method
@@ -48,5 +49,6 @@ public interface ClassHoldingContext {
     /**
      * Called when context is destroyed
      */
-    void destroy();
+    default void destroy() {
+    }
 }
