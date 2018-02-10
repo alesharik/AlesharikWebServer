@@ -13,7 +13,7 @@ Where `Parser-Instructions` are parser and linker instructions and `Code` is con
 ### `#include <file>`
 This instruction make linker link `file` as a plugin. All parser instructions from `file` will be parsed as well
 ### `#define REGEX REPL`
-This instructions create replace rule. `REGEX` is replace regex and `REPL` is replacement. Groups ca be accessed via `$index` syntax.
+This instructions create replace rule. `REGEX` is replace regex and `REPL` is replacement. Groups can be accessed via `$index` syntax.
 This instruction is useful to create constants.
 `REGEX` is also function unique ID. Two or move `#define` instructions with same ID will produce an parser error
 ### `#ifdef ID`
@@ -51,20 +51,20 @@ public class HelloWorldDefineProvider implements DefineProvider {
 }
 ```
 This code creates `hello-world` define rule with `hi` definition
-### `Code`
+
 ## Module configuration
 ```
 include 'modules/m.module' //Include another module. Path is relative to current module
 include 'modules/parent.module' //Include another module. Path is relative to current module
 use 'modules/helper.js' language 'javascript' context 'module' //Include functions file. Path is relative to current module
-
+//New line required!
 module test {//Define new module
     name:type { //Define new module configuration
         test: {//Object
             a: 1, //Primitive
             b: 'test', //String
             c: "test", //String
-            d: <javascript> console.log("test") </javascript>, //Code element. Tag should contain language name
+            d: &lt;javascript&gt; console.log("test") &lt;/javascript&gt;, //Code element. Tag should contain language name
             e: [1, 2, 3], //Array
             qwe: { a: 1, b: 2 } //Object
         },
@@ -80,13 +80,13 @@ module test {//Define new module
 ```
 include 'modules/a.module'
 use 'modules/helper.js' language 'javascript' context 'global'
-
+//New line required!
 endpoint end { //Endpoint definition
     api { //The api config
         //Blablabla
     }
     daemons {//Create daemons
-        use a.daemon as daemon1 { //Create real dameon with name daemon1 from a.daemon config
+        use a.daemon as daemon1 { //Create real daemon with name daemon1 from a.daemon config
             name: "a",//Override properties
             hooks { //Setup hooks
                 use a.hook1
@@ -120,3 +120,6 @@ endpoint end { //Endpoint definition
     }
 }
 ```
+
+# The flow
+![Flow](./AWS-Config-Flow.png)
