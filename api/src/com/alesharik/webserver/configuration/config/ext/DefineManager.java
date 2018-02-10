@@ -60,8 +60,8 @@ public class DefineManager {
         return provider == null ? null : provider.getDefinition(environment);
     }
 
-    @Level("DefineManager")
-    static final class ContextImpl implements ClassHoldingContext {
+    @Level("DefineManager")//FIXME - not supported!
+    static final class ContextImpl implements ClassHoldingContext {//FIXME WRONG! replace only by classloader
         private final Map<String, DefineProvider> providers = new ConcurrentHashMap<>();
         private final ReentrantLock accessLock = new ReentrantLock();
         private volatile boolean inReloadState = false;

@@ -16,7 +16,24 @@
  *
  */
 
-package com.alesharik.webserver.configuration.config;
+package com.alesharik.webserver.configuration.config.lang;
 
-public interface ConfigItem {
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
+
+import java.util.List;
+
+public interface CustomEndpointSection {
+    List<UseDirective> getUseDirectives();
+
+    interface UseDirective {
+        String getName();
+
+        ConfigurationObject getConfiguration();
+
+        List<CustomProperty> getCustomProperties();
+    }
+
+    interface CustomProperty {
+        List<String> getUseCommands();
+    }
 }

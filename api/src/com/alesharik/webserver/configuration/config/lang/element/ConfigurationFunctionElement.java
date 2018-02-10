@@ -16,8 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.configuration.config;
+package com.alesharik.webserver.configuration.config.lang.element;
 
-public interface ConfigTypedObject extends ConfigItem {
-    ConfigItem getType();
+public interface ConfigurationFunctionElement extends ConfigurationRunnableElement {
+    String getName();
+
+    String getCodeInstruction();
 }

@@ -16,10 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.configuration.config.advanced;
+package com.alesharik.webserver.configuration.config.lang;
 
-import com.alesharik.webserver.configuration.config.ConfigTypedObject;
-
-public interface ModuleConfig extends ConfigTypedObject {
-
+public enum ExecutionContext {
+    GLOBAL,
+    MODULE,
+    CALL
 }
