@@ -31,6 +31,7 @@ import lombok.experimental.UtilityClass;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -58,6 +59,14 @@ public class DefineManager {
     public static String getDefinition(@Nonnull String name, @Nonnull DefineEnvironment environment) {
         DefineProvider provider = providers.get(name);
         return provider == null ? null : provider.getDefinition(environment);
+    }
+
+    public static boolean isDefined(@Nonnull String name, @Nonnull DefineEnvironment environment) {
+        return providers.contains(name, environment);
+    }
+
+    public static Map<String, String> getAllDefines(@Nonnull DefineEnvironment environment) {
+        return providers.getAllDefines(environment);
     }
 
     @Level("DefineManager")//FIXME - not supported!
@@ -101,6 +110,15 @@ public class DefineManager {
             }
         }
 
+        boolean contains(String name, DefineEnvironment env) {
+            try {
+                accessLock.lockInterruptibly();
+                return providers.containsKey(name) && providers.get(name).getDefinition(env) != null;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         void put(Class<?> c) {
             try {
                 accessLock.lock();
@@ -123,6 +141,21 @@ public class DefineManager {
                 System.err.println("Can't instantiate class " + clazz.getCanonicalName());
                 e.printStackTrace();
             }
+        }
+
+        public Map<String, String> getAllDefines(DefineEnvironment environment) {
+            Map<String, String> ret = new HashMap<>();
+            try {
+                accessLock.lock();
+                providers.forEach((s, defineProvider) -> {
+                    String r = defineProvider.getDefinition(environment);
+                    if(r != null)
+                        ret.put(s, r);
+                });
+            } finally {
+                accessLock.unlock();
+            }
+            return ret;
         }
     }
 }

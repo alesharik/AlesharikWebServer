@@ -5,14 +5,16 @@ Module configuration can't be executed without endpoint configuration. It can on
 ## Specification
 All configuration types have this format:
 ```
-Parser-Instructions \n
+Parser-Instructions
+//New line required!
 Code 
 ```
 Where `Parser-Instructions` are parser and linker instructions and `Code` is configuration/module definition
 ## `Parser-Instructions`
+All instructions have global scope
 ### `#include <file>`
 This instruction make linker link `file` as a plugin. All parser instructions from `file` will be parsed as well
-### `#define REGEX REPL`
+### `#define 'REGEX' 'REPL'`
 This instructions create replace rule. `REGEX` is replace regex and `REPL` is replacement. Groups can be accessed via `$index` syntax.
 This instruction is useful to create constants.
 `REGEX` is also function unique ID. Two or move `#define` instructions with same ID will produce an parser error

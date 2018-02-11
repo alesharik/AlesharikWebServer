@@ -16,18 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.control.dashboard.control;
+package com.alesharik.webserver.configuration.config.lang.parser;
 
-import org.glassfish.grizzly.http.server.HttpHandler;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Response;
+public abstract class ParserException extends RuntimeException {
+    private static final long serialVersionUID = 6042407164941516803L;
 
-public class DashboardHttpHandler extends HttpHandler {
-    @Override
-    public void service(Request request, Response response) throws Exception {
-        String path = request.getContextPath();
-        if("/login".equals(path)) {
-
-        }
+    public ParserException(String message) {
+        super(message);
     }
 }

@@ -16,27 +16,15 @@
  *
  */
 
-package com.alesharik.webserver.configuration;
+package com.alesharik.webserver.configuration.config.lang.parser;
 
-import javax.annotation.concurrent.ThreadSafe;
-import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
 
-@ThreadSafe
-public abstract class PluginManager extends Thread implements PluginManagerMXBean {
-    protected final File workingFolder;
-    protected final boolean hotReloadEnabled;
-
-    public PluginManager(File workingFolder, boolean hotReloadEnabled) {
-        this.workingFolder = workingFolder;
-        this.hotReloadEnabled = hotReloadEnabled;
-    }
-
+public interface FileReader {
     /**
-     * Return true if manager finish all jobs
+     * @param path relative path
+     * @return
      */
-    public abstract boolean isFree();
-
-    public interface Factory {
-        PluginManager newInstance(File pluginsFolder, boolean hotReload);
-    }
+    List<String> readFile(Path path);
 }
