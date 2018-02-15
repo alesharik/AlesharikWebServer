@@ -276,4 +276,28 @@ public class ByteOffHeapVectorTest {
             assertEquals((byte) i, data[i]);
         }
     }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testCutNegativeSize() {
+        array.clear(address);
+        array.cut(address, 10000);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testWriteWithNegativeSize() {
+        array.clear(address);
+        array.write(address, new byte[1000], 0, -1);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testWriteWithNegativeOffset() {
+        array.clear(address);
+        array.write(address, new byte[1000], -1, 10);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testWriteWithIllegalSize() {
+        array.clear(address);
+        array.write(address, new byte[1000], 0, 2000);
+    }
 }
