@@ -66,7 +66,7 @@ module test {//Define new module
             a: 1, //Primitive
             b: 'test', //String
             c: "test", //String
-            d: &lt;javascript&gt; console.log("test") &lt;/javascript&gt;, //Code element. Tag should contain language name
+            d: <javascript> console.log("test") </javascript>, //Code element. Tag should contain language name
             e: [1, 2, 3], //Array
             qwe: { a: 1, b: 2 } //Object
         },
