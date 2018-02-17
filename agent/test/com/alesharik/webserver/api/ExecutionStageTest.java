@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.api;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -26,8 +26,8 @@ import static org.junit.Assert.fail;
 
 @ExecutionStage.AuthorizedImpl
 public class ExecutionStageTest {
-    @BeforeClass
-    public static void setup() {
+    @Before
+    public void setup() {
         ExecutionStage.setState(ExecutionStage.NOT_STARTED);
     }
 
