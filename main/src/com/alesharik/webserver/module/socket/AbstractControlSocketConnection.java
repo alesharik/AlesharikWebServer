@@ -16,12 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.control.socket;
+package com.alesharik.webserver.module.socket;
 
 import com.alesharik.webserver.api.SerialRepository;
-import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnection;
-import com.alesharik.webserver.api.control.messaging.ControlSocketConnection;
-import com.alesharik.webserver.api.control.messaging.ControlSocketMessage;
+import com.alesharik.webserver.module.control.messaging.ControlSocketClientConnection;
+import com.alesharik.webserver.module.control.messaging.ControlSocketConnection;
+import com.alesharik.webserver.module.control.messaging.ControlSocketMessage;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import net.jcip.annotations.NotThreadSafe;

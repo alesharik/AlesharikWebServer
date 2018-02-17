@@ -16,14 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.control.socket;
-
 /**
- * This manager use for register and unregister {@link ControlSocketHandlerFactory}s and work with sockets
+ * This package contains ControlSocket realisation
  */
-@Deprecated
-public interface ControlSocketManager {
-    void registerNewControlSocketHandlerFactory(String name, ControlSocketHandlerFactory factory);
-
-    void unregisterControlSocketHandlerFactory(String name, ControlSocketHandlerFactory factory);
-}
+package com.alesharik.webserver.module.socket;

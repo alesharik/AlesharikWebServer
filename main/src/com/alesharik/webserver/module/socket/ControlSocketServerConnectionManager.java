@@ -16,12 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.control.socket;
+package com.alesharik.webserver.module.socket;
 
 import com.alesharik.webserver.api.ThreadFactories;
-import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnection;
-import com.alesharik.webserver.api.control.messaging.ControlSocketMessage;
-import com.alesharik.webserver.api.control.messaging.ControlSocketServerConnection;
+import com.alesharik.webserver.module.control.messaging.ControlSocketClientConnection;
+import com.alesharik.webserver.module.control.messaging.ControlSocketMessage;
+import com.alesharik.webserver.module.control.messaging.ControlSocketServerConnection;
 import lombok.AllArgsConstructor;
 
 import javax.net.ssl.SSLServerSocket;

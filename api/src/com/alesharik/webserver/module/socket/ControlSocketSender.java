@@ -16,14 +16,24 @@
  *
  */
 
-package com.alesharik.webserver.api.control;
+package com.alesharik.webserver.module.socket;
 
 /**
- * MXBean for {@link ControlSocketClientModule}
+ * Class, implementing this interface, used only for send message to control socket
  */
-public interface ControlSocketClientModuleMXBean {
+@Deprecated
+public interface ControlSocketSender {
     /**
-     * Return client alive connection count
+     * Send {@link String} message
+     *
+     * @param message the message
      */
-    int getConnectionCount();
+    void send(String message);
+
+    /**
+     * Send {@link Object} message
+     *
+     * @param message the message
+     */
+    void send(Object message);
 }

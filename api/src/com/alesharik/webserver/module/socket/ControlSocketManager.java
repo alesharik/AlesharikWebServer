@@ -16,20 +16,14 @@
  *
  */
 
-package com.alesharik.webserver.api.control;
+package com.alesharik.webserver.module.socket;
 
-import com.alesharik.webserver.configuration.Module;
+/**
+ * This manager use for register and unregister {@link ControlSocketHandlerFactory}s and work with sockets
+ */
+@Deprecated
+public interface ControlSocketManager {
+    void registerNewControlSocketHandlerFactory(String name, ControlSocketHandlerFactory factory);
 
-import javax.annotation.Nonnull;
-
-public interface ControlSocketServerModule extends Module, ControlSocketServerModuleMXBean {
-
-    /**
-     * Return "control-socket-server" - name of module
-     */
-    @Nonnull
-    @Override
-    default String getName() {
-        return "control-socket-server";
-    }
+    void unregisterControlSocketHandlerFactory(String name, ControlSocketHandlerFactory factory);
 }

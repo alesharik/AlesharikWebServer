@@ -16,13 +16,26 @@
  *
  */
 
-package com.alesharik.webserver.api.control.messaging;
+package com.alesharik.webserver.module.control;
 
-import java.io.Serializable;
+import java.util.Set;
 
 /**
- * This is base of ControlSocket messages. If you want to create new message for ControlSocket, you need to implement it
- * in message class
+ * MXBean for {@link ControlSocketServerModule}
  */
-public interface ControlSocketMessage extends Serializable {
+public interface ControlSocketServerModuleMXBean {
+    /**
+     * Return client alive connection count
+     */
+    int connectionCount();
+
+    /**
+     * Return server port
+     */
+    int getPort();
+
+    /**
+     * Return listen addresses
+     */
+    Set<String> getListenAddresses();
 }

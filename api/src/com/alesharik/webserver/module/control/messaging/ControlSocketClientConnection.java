@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.control.messaging;
+package com.alesharik.webserver.module.control.messaging;
 
 import net.jcip.annotations.NotThreadSafe;
 

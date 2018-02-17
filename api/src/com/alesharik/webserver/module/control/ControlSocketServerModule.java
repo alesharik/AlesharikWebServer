@@ -16,21 +16,20 @@
  *
  */
 
-package com.alesharik.webserver.control.socket;
+package com.alesharik.webserver.module.control;
 
-@Deprecated
-public abstract class AbstractControlSocketHandler {
-    protected final ControlSocketSender controlSocketSender;
+import com.alesharik.webserver.configuration.Module;
 
-    public AbstractControlSocketHandler(ControlSocketSender controlSocketSender) {
-        this.controlSocketSender = controlSocketSender;
+import javax.annotation.Nonnull;
+
+public interface ControlSocketServerModule extends Module, ControlSocketServerModuleMXBean {
+
+    /**
+     * Return "control-socket-server" - name of module
+     */
+    @Nonnull
+    @Override
+    default String getName() {
+        return "control-socket-server";
     }
-
-    public abstract void onMessage(String message);
-
-    public abstract void onMessage(Object message);
-
-    public abstract void onOpen();
-
-    public abstract void onClose();
 }

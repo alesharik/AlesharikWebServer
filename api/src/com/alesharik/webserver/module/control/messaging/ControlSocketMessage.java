@@ -16,32 +16,13 @@
  *
  */
 
-package com.alesharik.webserver.api.control.messaging;
+package com.alesharik.webserver.module.control.messaging;
 
-import net.jcip.annotations.NotThreadSafe;
-
-import java.io.IOException;
+import java.io.Serializable;
 
 /**
- * This class is base ControlSocket connection
+ * This is base of ControlSocket messages. If you want to create new message for ControlSocket, you need to implement it
+ * in message class
  */
-@NotThreadSafe
-public interface ControlSocketConnection {
-    /**
-     * Return remote host
-     */
-    String getRemoteHost();
-
-    /**
-     * Return remote port
-     */
-    int getRemotePort();
-
-    /**
-     * Send message to opponent
-     *
-     * @param message the message
-     * @throws IOException if anything happens
-     */
-    void sendMessage(ControlSocketMessage message) throws IOException;
+public interface ControlSocketMessage extends Serializable {
 }

@@ -16,18 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.control.socket;
+package com.alesharik.webserver.module.control.messaging;
 
 /**
- * Class, implementing this interface, used for create new specific {@link AbstractControlSocketHandler}
+ * Server side connection
  */
-@Deprecated
-public interface ControlSocketHandlerFactory {
-    /**
-     * Create new instance of your class extending {@link AbstractControlSocketHandler}
-     *
-     * @param socketSender the sender
-     * @param info         the socket information
-     */
-    AbstractControlSocketHandler newInstance(ControlSocketSender socketSender, ControlSocketInfo info);
+public interface ControlSocketServerConnection extends ControlSocketConnection {
 }

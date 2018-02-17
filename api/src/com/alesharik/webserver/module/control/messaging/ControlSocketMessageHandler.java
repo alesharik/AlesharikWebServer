@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.control.messaging;
+package com.alesharik.webserver.module.control.messaging;
 
 /**
  * Server side interface. Handle client messages. Auto registered in server

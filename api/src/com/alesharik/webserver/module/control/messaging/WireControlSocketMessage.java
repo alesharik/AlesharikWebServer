@@ -16,10 +16,21 @@
  *
  */
 
-package com.alesharik.webserver.api.control.messaging;
+package com.alesharik.webserver.module.control.messaging;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Server side connection
+ * Use with {@link ControlSocketMessageHandler}. Wire handler and message
  */
-public interface ControlSocketServerConnection extends ControlSocketConnection {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface WireControlSocketMessage {
+    /**
+     * Message class
+     */
+    Class<?> value();
 }

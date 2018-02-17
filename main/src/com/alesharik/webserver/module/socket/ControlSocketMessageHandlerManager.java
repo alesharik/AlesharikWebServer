@@ -16,12 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.control.socket;
+package com.alesharik.webserver.module.socket;
 
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
-import com.alesharik.webserver.api.control.messaging.ControlSocketMessageHandler;
-import com.alesharik.webserver.api.control.messaging.WireControlSocketMessage;
+import com.alesharik.webserver.module.control.messaging.ControlSocketMessageHandler;
+import com.alesharik.webserver.module.control.messaging.WireControlSocketMessage;
 import lombok.experimental.UtilityClass;
 
 import java.lang.reflect.Constructor;

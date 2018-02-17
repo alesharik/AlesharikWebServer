@@ -16,9 +16,9 @@
  *
  */
 
-package com.alesharik.webserver.api.control;
+package com.alesharik.webserver.module.control;
 
-import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnection;
+import com.alesharik.webserver.module.control.messaging.ControlSocketClientConnection;
 import com.alesharik.webserver.configuration.Module;
 
 import javax.annotation.Nonnull;
@@ -39,7 +39,7 @@ public interface ControlSocketClientModule extends Module, ControlSocketClientMo
      *
      * @param host          server host
      * @param port          server port
-     * @param authenticator {@link com.alesharik.webserver.api.control.messaging.ControlSocketClientConnection.Authenticator}
+     * @param authenticator {@link com.alesharik.webserver.module.control.messaging.ControlSocketClientConnection.Authenticator}
      * @return requested connection with server
      * @throws IOException if anything happens
      */

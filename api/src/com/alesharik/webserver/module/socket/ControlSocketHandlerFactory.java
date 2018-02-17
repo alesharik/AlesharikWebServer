@@ -16,26 +16,18 @@
  *
  */
 
-package com.alesharik.webserver.api.control;
-
-import java.util.Set;
+package com.alesharik.webserver.module.socket;
 
 /**
- * MXBean for {@link ControlSocketServerModule}
+ * Class, implementing this interface, used for create new specific {@link AbstractControlSocketHandler}
  */
-public interface ControlSocketServerModuleMXBean {
+@Deprecated
+public interface ControlSocketHandlerFactory {
     /**
-     * Return client alive connection count
+     * Create new instance of your class extending {@link AbstractControlSocketHandler}
+     *
+     * @param socketSender the sender
+     * @param info         the socket information
      */
-    int connectionCount();
-
-    /**
-     * Return server port
-     */
-    int getPort();
-
-    /**
-     * Return listen addresses
-     */
-    Set<String> getListenAddresses();
+    AbstractControlSocketHandler newInstance(ControlSocketSender socketSender, ControlSocketInfo info);
 }

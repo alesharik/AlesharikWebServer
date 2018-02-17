@@ -16,11 +16,11 @@
  *
  */
 
-package com.alesharik.webserver.control.socket;
+package com.alesharik.webserver.module.socket;
 
 import com.alesharik.webserver.api.ThreadFactories;
-import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnection;
-import com.alesharik.webserver.api.control.messaging.ControlSocketMessage;
+import com.alesharik.webserver.module.control.messaging.ControlSocketClientConnection;
+import com.alesharik.webserver.module.control.messaging.ControlSocketMessage;
 import net.jcip.annotations.NotThreadSafe;
 
 import javax.net.ssl.SSLSocket;

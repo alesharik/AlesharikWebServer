@@ -16,11 +16,11 @@
  *
  */
 
-package com.alesharik.webserver.control.socket;
+package com.alesharik.webserver.module.socket;
 
-import com.alesharik.webserver.api.control.ControlSocketClientModule;
-import com.alesharik.webserver.api.control.ControlSocketClientModuleMXBean;
-import com.alesharik.webserver.api.control.messaging.ControlSocketClientConnection;
+import com.alesharik.webserver.module.control.ControlSocketClientModule;
+import com.alesharik.webserver.module.control.ControlSocketClientModuleMXBean;
+import com.alesharik.webserver.module.control.messaging.ControlSocketClientConnection;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.XmlHelper;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
