@@ -18,12 +18,12 @@
 
 package com.alesharik.webserver.configuration;
 
-import com.alesharik.webserver.api.control.ControlSocketClientModule;
-import com.alesharik.webserver.api.control.ControlSocketServerModule;
 import com.alesharik.webserver.api.server.wrapper.server.HttpServer;
 import com.alesharik.webserver.control.AdminDataStorage;
 import com.alesharik.webserver.control.dashboard.DashboardDataHolder;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
+import com.alesharik.webserver.module.control.ControlSocketClientModule;
+import com.alesharik.webserver.module.control.ControlSocketServerModule;
 import com.alesharik.webserver.module.security.SecuredStoreModule;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.experimental.UtilityClass;
