@@ -19,12 +19,19 @@
 package com.alesharik.webserver.configuration.config.lang.parser;
 
 import com.alesharik.webserver.api.reflection.FieldAccessor;
+import com.alesharik.webserver.configuration.config.ext.DefineEnvironment;
+import com.alesharik.webserver.configuration.config.ext.DefineManager;
+import com.alesharik.webserver.configuration.config.ext.DefineProvider;
 import lombok.val;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -38,11 +45,15 @@ public class ConfigParserInstructionsHeaderTest {
     private FileReader fileReader;
 
     @BeforeClass
-    public static void setup() throws NoSuchFieldException {
+    public static void setup() throws NoSuchFieldException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         Field verbose = Constants.class.getDeclaredField("VERBOSE");
         verbose.setAccessible(true);
         FieldAccessor.setField(null, true, verbose);
         Constants.PRINT_CONFIG = true;
+
+        Method m = DefineManager.class.getDeclaredMethod("listen", Class.class);
+        m.setAccessible(true);
+        m.invoke(null, TestDefine.class);
     }
 
     @Before
@@ -222,6 +233,101 @@ public class ConfigParserInstructionsHeaderTest {
     }
 
     @Test
+    public void globalIfdef() {
+        val result = parse("#ifdef cpih-test",
+                "#define 'a' 'ok'",
+                "#endif");
+        assertEquals("ok", result.get("a"));
+    }
+
+    @Test
+    public void globalIfndef() {
+        val result = parse("#ifndef cpih-test1",
+                "#define 'a' 'ok'",
+                "#endif");
+        assertEquals("ok", result.get("a"));
+    }
+
+    @Test
+    public void getAllDefines() {
+        val result = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'a' 'b'"), null, fileReader).getAllDefines();
+        assertTrue(result.containsKey("cpih-test"));
+        assertEquals("b", result.get("a"));
+    }
+
+    @Test
+    public void getDefinition() {
+        val result = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
+        assertEquals("b", result.getDefinition("test"));
+        assertEquals("test-b", result.getDefinition("cpih-test"));
+        assertNull(result.getDefinition("sadasd"));
+        assertNull(result.getDefinition(""));
+    }
+
+    @Test
+    public void isDefined() {
+        val result = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
+        assertTrue(result.isDefined("test"));
+        assertTrue(result.isDefined("cpih-test"));
+        assertFalse(result.isDefined("asdasdas"));
+        assertFalse(result.isDefined(""));
+    }
+
+    @Test
+    public void isProvided() {
+        val result = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
+        assertTrue(result.isDefined("test"));
+        assertFalse(result.isProvided("test"));
+        assertTrue(result.isDefined("cpih-test"));
+        assertTrue(result.isProvided("cpih-test"));
+        assertFalse(result.isDefined("asdasdas"));
+        assertFalse(result.isProvided("asdasdas"));
+        assertFalse(result.isDefined(""));
+        assertFalse(result.isProvided(""));
+    }
+
+    @Test
+    public void sharedEnvGetDefinition() {
+        val a = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
+        val b = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'qwe' 'c'"), null, fileReader);
+        val env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
+        assertEquals("test-b", env.getDefinition("cpih-test"));
+        assertEquals("b", env.getDefinition("test"));
+        assertEquals("c", env.getDefinition("qwe"));
+        assertNull(env.getDefinition("asd"));
+        assertNull(env.getDefinition(""));
+    }
+
+    @Test
+    public void sharedEnvIsDefined() {
+        val a = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
+        val b = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'qwe' 'c'"), null, fileReader);
+        val env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
+        assertTrue(env.isDefined("cpih-test"));
+        assertTrue(env.isDefined("test"));
+        assertTrue(env.isDefined("qwe"));
+        assertFalse(env.isDefined("asd"));
+        assertFalse(env.isDefined(""));
+    }
+
+    @Test
+    public void sharedEnvIsProvided() {
+        val a = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
+        val b = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'qwe' 'c'"), null, fileReader);
+        val env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
+        assertTrue(env.isDefined("cpih-test"));
+        assertTrue(env.isProvided("cpih-test"));
+        assertTrue(env.isDefined("test"));
+        assertTrue(env.isDefined("qwe"));
+        assertFalse(env.isProvided("test"));
+        assertFalse(env.isProvided("qwe"));
+        assertFalse(env.isDefined("asd"));
+        assertFalse(env.isDefined(""));
+        assertFalse(env.isProvided("asd"));
+        assertFalse(env.isProvided(""));
+    }
+
+    @Test
     public void appendTest() {
         val a = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'a' 'b'"), null, fileReader);
         val b = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'c' 'd'"), null, fileReader);
@@ -238,5 +344,20 @@ public class ConfigParserInstructionsHeaderTest {
 
     private Map<String, String> parse(ConfigParserInstructionsHeader resolver, String... list) {
         return ConfigParserInstructionsHeader.parse(Arrays.asList(list), resolver, fileReader).getDefines();
+    }
+
+    private static final class TestDefine implements DefineProvider {
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return "cpih-test";
+        }
+
+        @Nullable
+        @Override
+        public String getDefinition(@Nonnull DefineEnvironment environment) {
+            return "test-" + environment.getDefinition("test");
+        }
     }
 }
