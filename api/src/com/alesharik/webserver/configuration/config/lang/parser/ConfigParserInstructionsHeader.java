@@ -165,7 +165,7 @@ final class ConfigParserInstructionsHeader implements DefineEnvironment {//FIXME
     }
 
     @RequiredArgsConstructor
-    private static final class SharedEnv implements DefineEnvironment {
+    static final class SharedEnv implements DefineEnvironment {
         private final ConfigParserInstructionsHeader a;
         private final ConfigParserInstructionsHeader b;
 
