@@ -290,7 +290,7 @@ public class ConfigParserInstructionsHeaderTest {
     public void sharedEnvGetDefinition() {
         val a = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
         val b = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'qwe' 'c'"), null, fileReader);
-        val env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
+        ConfigParserInstructionsHeader.SharedEnv env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
         assertEquals("test-b", env.getDefinition("cpih-test"));
         assertEquals("b", env.getDefinition("test"));
         assertEquals("c", env.getDefinition("qwe"));
@@ -302,7 +302,7 @@ public class ConfigParserInstructionsHeaderTest {
     public void sharedEnvIsDefined() {
         val a = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
         val b = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'qwe' 'c'"), null, fileReader);
-        val env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
+        ConfigParserInstructionsHeader.SharedEnv env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
         assertTrue(env.isDefined("cpih-test"));
         assertTrue(env.isDefined("test"));
         assertTrue(env.isDefined("qwe"));
@@ -314,7 +314,7 @@ public class ConfigParserInstructionsHeaderTest {
     public void sharedEnvIsProvided() {
         val a = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'test' 'b'"), null, fileReader);
         val b = ConfigParserInstructionsHeader.parse(Collections.singletonList("#define 'qwe' 'c'"), null, fileReader);
-        val env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
+        ConfigParserInstructionsHeader.SharedEnv env = new ConfigParserInstructionsHeader.SharedEnv(a, b);
         assertTrue(env.isDefined("cpih-test"));
         assertTrue(env.isProvided("cpih-test"));
         assertTrue(env.isDefined("test"));
