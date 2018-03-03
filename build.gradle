@@ -47,7 +47,7 @@ task cleanDeployFolder(type: Delete) {
 }
 
 clean.dependsOn cleanDeployFolder
-clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean", "alesharikwebserver-agent:clean", "alesharikwebserver-jcstress:cleat", "alesharikwebserver-utils:clean", "alesharikwebserver-logging:clean", "alesharikwebserver-base:clean"
+clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean", "alesharikwebserver-agent:clean", "alesharikwebserver-jcstress:cleat", "alesharikwebserver-utils:clean", "alesharikwebserver-logging:clean", "alesharikwebserver-base:clean", "alesharikwebserver-serverless:clean"
 
 //====================Config====================\\
 
@@ -146,7 +146,8 @@ task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload',
                          ':alesharikwebserver-agent:bintrayUpload',
                          ':alesharikwebserver-utils:bintrayUpload',
                          ':alesharikwebserver-logging:bintrayUpload',
-                         ':alesharikwebserver-base:bintrayUpload']) {
+                         ':alesharikwebserver-base:bintrayUpload',
+                         ':alesharikwebserver-serverless:bintrayUpload']) {
     description = "Publish artifacts to bintray"
     group = 'distribution'
 }
@@ -158,7 +159,8 @@ task publishArtifacts(dependsOn: [':alesharikwebserver-api:publishMavenJavaPubli
                                   ':alesharikwebserver-agent:publishMavenJavaPublicationToMavenLocal',
                                   ':alesharikwebserver-utils:publishMavenJavaPublicationToMavenLocal',
                                   ':alesharikwebserver-logging:publishMavenJavaPublicationToMavenLocal',
-                                  ':alesharikwebserver-base:publishMavenJavaPublicationToMavenLocal']) {
+                                  ':alesharikwebserver-base:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-serverless:publishMavenJavaPublicationToMavenLocal']) {
     description = "Publish artifacts to maven local"
     group = 'distribution'
 }
