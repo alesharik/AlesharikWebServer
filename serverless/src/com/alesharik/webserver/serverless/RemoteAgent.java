@@ -19,6 +19,7 @@
 package com.alesharik.webserver.serverless;
 
 import com.alesharik.webserver.serverless.exception.AgentException;
+import com.alesharik.webserver.serverless.rating.RemoteRatingService;
 
 import javax.annotation.Nonnull;
 import java.net.InetAddress;
@@ -71,4 +72,7 @@ public interface RemoteAgent {
      */
     @Nonnull
     InetAddress getAddress();
+
+    @Nonnull
+    RemoteRatingService getRatingService();
 }

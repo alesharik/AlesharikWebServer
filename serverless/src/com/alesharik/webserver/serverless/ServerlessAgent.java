@@ -23,6 +23,9 @@ import com.alesharik.webserver.serverless.exception.AgentException;
 import com.alesharik.webserver.serverless.heartbeat.HeartbeatService;
 import com.alesharik.webserver.serverless.message.MessageManager;
 import com.alesharik.webserver.serverless.notify.NotifyManager;
+import com.alesharik.webserver.serverless.quorum.Quorum;
+import com.alesharik.webserver.serverless.quorum.member.QuorumMemberInterface;
+import com.alesharik.webserver.serverless.rating.RatingService;
 import com.alesharik.webserver.serverless.transport.Transport;
 import com.alesharik.webserver.serverless.utils.Utility;
 
@@ -128,4 +131,15 @@ public interface ServerlessAgent {
      */
     @Nonnull
     ExceptionHandler getExceptionHandler();
+
+    @Nonnull
+    RatingService getRatingService();
+
+    @Nullable
+    Quorum getQuorum();
+
+    boolean isQuorumMember();
+
+    @Nullable
+    QuorumMemberInterface getQuorumMemberInterface();
 }
