@@ -21,14 +21,9 @@ package com.alesharik.webserver.api.server.wrapper.http.header;
 import com.alesharik.webserver.api.server.wrapper.http.Header;
 import com.alesharik.webserver.api.server.wrapper.http.data.ETag;
 
-import java.util.regex.Pattern;
-
 public final class IfETagHeader extends Header<ETag[]> {
-    private final Pattern pattern;
-
     public IfETagHeader(String name) {
         super(name);
-        pattern = Pattern.compile(name + ": ");
     }
 
     @Override

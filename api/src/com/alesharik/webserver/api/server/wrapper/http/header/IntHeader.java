@@ -20,17 +20,13 @@ package com.alesharik.webserver.api.server.wrapper.http.header;
 
 import com.alesharik.webserver.api.server.wrapper.http.Header;
 
-import java.util.regex.Pattern;
-
 /**
  * This http header represents header with int value
  */
 public class IntHeader extends Header<Integer> {
-    private final Pattern pattern;
 
     public IntHeader(String name) {
         super(name);
-        this.pattern = Pattern.compile(name + ": ");
     }
 
     @Override

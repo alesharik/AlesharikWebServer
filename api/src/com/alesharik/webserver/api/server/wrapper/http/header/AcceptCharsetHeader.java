@@ -26,14 +26,11 @@ import sun.misc.FloatingDecimal;
 import javax.annotation.Nonnull;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.regex.Pattern;
 
 public final class AcceptCharsetHeader extends Header<WeightCharset[]> {
-    private final Pattern pattern;
 
     public AcceptCharsetHeader() {
         super("Accept-Charset");
-        pattern = Pattern.compile(name + ": ");
     }
 
     /**

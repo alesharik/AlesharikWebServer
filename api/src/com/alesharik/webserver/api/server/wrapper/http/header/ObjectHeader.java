@@ -20,16 +20,12 @@ package com.alesharik.webserver.api.server.wrapper.http.header;
 
 import com.alesharik.webserver.api.server.wrapper.http.Header;
 
-import java.util.regex.Pattern;
-
 public class ObjectHeader<T> extends Header<T> {
     private final Factory<T> factory;
-    private final Pattern pattern;
 
     public ObjectHeader(String name, Factory<T> factory) {
         super(name);
         this.factory = factory;
-        this.pattern = Pattern.compile(name + ": ");
     }
 
     @Override

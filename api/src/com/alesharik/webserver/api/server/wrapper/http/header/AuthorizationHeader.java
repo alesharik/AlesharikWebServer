@@ -23,14 +23,10 @@ import com.alesharik.webserver.api.server.wrapper.http.Header;
 import com.alesharik.webserver.api.server.wrapper.http.data.Authentication;
 import com.alesharik.webserver.api.server.wrapper.http.data.Authorization;
 
-import java.util.regex.Pattern;
-
 public class AuthorizationHeader extends Header<Authorization> {
-    private final Pattern pattern;
 
     public AuthorizationHeader(String name) {
         super(name);
-        pattern = Pattern.compile(name + ": ");
     }
 
     @Override

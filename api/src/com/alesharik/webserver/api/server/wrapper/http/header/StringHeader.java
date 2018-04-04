@@ -20,14 +20,10 @@ package com.alesharik.webserver.api.server.wrapper.http.header;
 
 import com.alesharik.webserver.api.server.wrapper.http.Header;
 
-import java.util.regex.Pattern;
-
 public class StringHeader extends Header<String> {
-    private final Pattern pattern;
 
     public StringHeader(String name) {
         super(name);
-        pattern = Pattern.compile(name + ": ");
     }
 
     @Override

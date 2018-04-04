@@ -22,14 +22,11 @@ import com.alesharik.webserver.api.server.wrapper.http.Header;
 import com.alesharik.webserver.api.server.wrapper.http.data.WeightMimeType;
 
 import java.util.Arrays;
-import java.util.regex.Pattern;
 
 public final class AcceptHeader extends Header<WeightMimeType[]> {
-    private final Pattern pattern;
 
     public AcceptHeader() {
         super("Accept");
-        pattern = Pattern.compile(name + ": ");
     }
 
     /**

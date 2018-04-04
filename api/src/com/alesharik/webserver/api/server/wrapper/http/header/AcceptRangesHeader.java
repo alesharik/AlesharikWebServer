@@ -22,14 +22,10 @@ import com.alesharik.webserver.api.server.wrapper.http.Header;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.util.regex.Pattern;
-
 public final class AcceptRangesHeader extends Header<AcceptRangesHeader.RangeType> {
-    private final Pattern pattern;
 
     public AcceptRangesHeader() {
         super("Accept-Ranges");
-        pattern = Pattern.compile(name + ": ");
     }
 
     /**

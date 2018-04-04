@@ -21,14 +21,10 @@ package com.alesharik.webserver.api.server.wrapper.http.header;
 import com.alesharik.webserver.api.server.wrapper.http.Header;
 import com.alesharik.webserver.api.server.wrapper.http.data.WeightLocale;
 
-import java.util.regex.Pattern;
-
 public final class AcceptLanguageHeader extends Header<WeightLocale[]> {
-    private final Pattern pattern;
 
     public AcceptLanguageHeader() {
         super("Accept-Language");
-        pattern = Pattern.compile(name + ": ");
     }
 
     @Override

@@ -379,11 +379,13 @@ final class SelectorContextImpl implements SelectorContext {
                         byte[] bytes = data.toByteArray(vector);
                         if(length > Integer.MAX_VALUE)
                             System.err.println("Skipping bytes from " + socketChannel.socket().getRemoteSocketAddress().toString());
-                        byte[] bodyBytes = new byte[(int) length];
-                        System.arraycopy(bytes, 0, bodyBytes, 0, (int) length);
-                        builder.withBody(bodyBytes);
-                        data.clear(vector);
-                        data.write(vector, bytes, (int) length, (int) last);
+                        if(length > 0) {
+                            byte[] bodyBytes = new byte[(int) length];
+                            System.arraycopy(bytes, (int) last, bodyBytes, 0, (int) length);
+                            builder.withBody(bodyBytes);
+                            data.clear(vector);
+                            data.write(vector, bytes, (int) last, (int) length);
+                        }
                         publish();
                         return true;
                     }

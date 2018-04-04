@@ -20,6 +20,8 @@ package com.alesharik.webserver.api.server.wrapper.http;
 
 import lombok.Getter;
 
+import java.util.regex.Pattern;
+
 /**
  * All headers are preferred to be Singleton
  *
@@ -28,9 +30,11 @@ import lombok.Getter;
 public abstract class Header<T> {
     @Getter
     protected final String name;
+    protected final Pattern pattern;
 
     protected Header(String name) {
         this.name = name;
+        this.pattern = Pattern.compile("(?i:" + name + ": )");
     }
 
     /**

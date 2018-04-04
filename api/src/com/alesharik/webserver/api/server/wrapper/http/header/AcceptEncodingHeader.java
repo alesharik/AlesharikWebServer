@@ -21,14 +21,10 @@ package com.alesharik.webserver.api.server.wrapper.http.header;
 import com.alesharik.webserver.api.server.wrapper.http.Header;
 import com.alesharik.webserver.api.server.wrapper.http.data.WeightEncoding;
 
-import java.util.regex.Pattern;
-
 public final class AcceptEncodingHeader extends Header<WeightEncoding[]> {
-    private final Pattern pattern;
 
     public AcceptEncodingHeader() {
         super("Accept-Encoding");
-        pattern = Pattern.compile(name + ": ");
     }
 
     /**
