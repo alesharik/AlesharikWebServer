@@ -79,7 +79,7 @@ public class Request implements Recyclable, Cloneable {
 
     public boolean containsHeader(@Nonnull String header) {
         for(String s : headers) {
-            if(s.startsWith(header))
+            if(s.toLowerCase().startsWith(header.toLowerCase()))
                 return true;
         }
         return false;
@@ -166,7 +166,7 @@ public class Request implements Recyclable, Cloneable {
                 return null;
             for(String s : headers) {
                 List<T> ret = new ArrayList<>();
-                if(s.startsWith(header.name)) {
+                if(s.toLowerCase().startsWith(header.name.toLowerCase())) {
                     T t = header.getValue(s);
                     ret.add(t);
                 }
@@ -192,7 +192,7 @@ public class Request implements Recyclable, Cloneable {
                 return Collections.emptyList();
             for(String s : headers) {
                 List<T> ret = new ArrayList<>();
-                if(s.startsWith(header.name)) {
+                if(s.toLowerCase().startsWith(header.name.toLowerCase())) {
                     T t = header.getValue(s);
                     ret.add(t);
                 }

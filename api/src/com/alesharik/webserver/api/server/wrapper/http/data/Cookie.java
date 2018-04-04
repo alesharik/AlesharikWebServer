@@ -88,6 +88,25 @@ public class Cookie implements Cloneable {
     }
 
     /**
+     * Parse cookies from Cookie header
+     *
+     * @param header Cookie header line
+     * @return all cookies with key-value initialized only
+     */
+    public static Cookie[] parseCookies(String header) {
+        String[] cookies = header
+                .replaceAll("[C|c]ookie:", "")
+                .replace(" ", "")
+                .split(";");
+        Cookie[] ret = new Cookie[cookies.length];
+        for(int i = 0; i < cookies.length; i++) {
+            String[] str = cookies[i].split("=");
+            ret[i] = new Cookie(str[0], str[1]);
+        }
+        return ret;
+    }
+
+    /**
      * Positive value indicates that cookie will expire after maxAge seconds. Negative value means that cookie must be deleted
      * at Web browser exits. Zero value causes cookie to be deleted
      *
@@ -158,24 +177,6 @@ public class Cookie implements Cloneable {
         }
         //Sum = ~127
         return stringBuilder.toString();
-    }
-
-    /**
-     * Parse cookies from Cookie header
-     *
-     * @param header Cookie header line
-     * @return all cookies with key-value initialized only
-     */
-    public static Cookie[] parseCookies(String header) {
-        String[] cookies = header
-                .replace("Cookie:", "")
-                .replace(" ", "").split(";");
-        Cookie[] ret = new Cookie[cookies.length];
-        for(int i = 0; i < cookies.length; i++) {
-            String[] str = cookies[i].split("=");
-            ret[i] = new Cookie(str[0], str[1]);
-        }
-        return ret;
     }
 
     @Override
