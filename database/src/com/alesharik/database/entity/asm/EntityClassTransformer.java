@@ -129,6 +129,14 @@ public class EntityClassTransformer {
             this.fields = new HashMap<>();
         }
 
+        private static boolean contains(Type[] types, Type type) {
+            for(Type type1 : types) {
+                if(type1.equals(type))
+                    return true;
+            }
+            return false;
+        }
+
         @Override
         public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
             if(((access & ACC_TRANSIENT) == ACC_TRANSIENT) || ((access & ACC_STATIC) == ACC_STATIC))
@@ -140,7 +148,7 @@ public class EntityClassTransformer {
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
             if(Modifier.isStatic(access) && contains(Type.getArgumentTypes(desc), Type.getType(EntityManager.class)) && Type.getReturnType(desc).equals(Type.getObjectType(entityDescription.className))) //Most likely factory method
-                return new FactoryMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, desc);
+                return new FactoryMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, desc); //Auth check for @Creator annotation inside
             else if(!Modifier.isStatic(access)) { //Can be getter/setter
                 if(name.startsWith("set")) {//Is setter
                     String n = name.substring("set".length());
@@ -148,33 +156,34 @@ public class EntityClassTransformer {
                     if(!fields.containsKey(fieldName))
                         return super.visitMethod(access, name, desc, signature, exceptions);
                     return new SetterReplacer(super.visitMethod(access, name, desc, signature, exceptions), fieldName, fields.get(fieldName), entityDescription.className);
-                } else if((entityDescription.lazy || entityDescription.bridge) && isGetMethod(name, Type.getReturnType(desc))) { //Getters will be replaced only if entity is lazy or bridge, overwise all values will be fetched form database
+                } else if(isGetMethod(name, Type.getReturnType(desc))) { //Getters will be replaced only if entity is lazy or bridge, overwise all values will be fetched form database
                     String fieldName = extractFieldNameFromGetter(name, Type.getReturnType(desc));
-                    if(!fields.containsKey(fieldName))
+                    if(fieldName.isEmpty() || !fields.containsKey(fieldName)) //Skip getter - field doesn't exists
                         return super.visitMethod(access, name, desc, signature, exceptions);
-                    if(entityDescription.lazy) {
-                        if(fieldName.isEmpty())
-                            return super.visitMethod(access, name, desc, signature, exceptions);
 
-                        return new GetterLazyReplacer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, Type.getReturnType(desc), fieldName);
-                    } else
+                    PreloadEntityColumn column = getColumn(fieldName);
+                    if(entityDescription.bridge || (column != null && column.isBridge()))
                         return new GetterBridgeReplacer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, Type.getReturnType(desc), fieldName);
+                    else if(entityDescription.lazy || (column != null && column.isLazy()))
+                        return new GetterLazyReplacer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className, Type.getReturnType(desc), fieldName);
+                    else
+                        return super.visitMethod(access, name, desc, signature, exceptions);
                 } else
-                    return new DestroyerMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className);
+                    return new DestroyerMethodTransformer(super.visitMethod(access, name, desc, signature, exceptions), entityDescription.className); //Auto check for @Destroyer annotation inside
             }
             return super.visitMethod(access, name, desc, signature, exceptions);
         }
 
-        private static boolean contains(Type[] types, Type type) {
-            for(Type type1 : types) {
-                if(type1.equals(type))
-                    return true;
+        private PreloadEntityColumn getColumn(String name) {
+            for(PreloadEntityColumn column : entityDescription.columns) {
+                if(column.getFieldName().equals(name))
+                    return column;
             }
-            return false;
+            return null;
         }
 
         private String extractFieldNameFromGetter(String name, Type desc) {
-            String s = "";
+            String s;
             if(name.startsWith("get"))
                 s = name.substring("get".length());
             else if(isBoolean(desc) && name.startsWith("is"))
@@ -210,6 +219,8 @@ public class EntityClassTransformer {
             private static final String NULLABLE_ANNOTATION_DESCRIPTOR = Type.getDescriptor(Nullable.class);
             private static final String CONSTRAINT_ANNOTATION_DESCRIPTOR = Type.getDescriptor(Constraint.class);
             private static final String OVERRIDE_DOMAIN_ANNOTATION_DESCRIPTOR = Type.getDescriptor(OverrideDomain.class);
+            private static final String BRIDGE_DESCRIPTOR = Type.getDescriptor(Bridge.class);
+            private static final String LAZY_DESCRIPTOR = Type.getDescriptor(Lazy.class);
 
             private final PreloadEntityDescription description;
             private final PreloadEntityColumn.PreloadEntityColumnBuilder column;
@@ -234,6 +245,10 @@ public class EntityClassTransformer {
                     column.nullable(false);
                 else if(NULLABLE_ANNOTATION_DESCRIPTOR.equals(desc))
                     column.nullable(true);
+                else if(LAZY_DESCRIPTOR.equals(desc))
+                    column.lazy(true);
+                else if(BRIDGE_DESCRIPTOR.equals(desc))
+                    column.bridge(true);
                 else
                     return new AnnotationValueExtractor(super.visitAnnotation(desc, visible), column, desc);
                 return super.visitAnnotation(desc, visible);

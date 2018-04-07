@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 /**
  * This means what entity can't hold any values and they will be fetched from database on every get
  */
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Bridge {
 }

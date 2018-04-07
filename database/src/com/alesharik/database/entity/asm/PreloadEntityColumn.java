@@ -40,6 +40,8 @@ final class PreloadEntityColumn {
     private final String constraint;
     private final String constraintName;
     private final String overrideDomain;
+    private final boolean bridge;
+    private final boolean lazy;
     /**
      * Field is final
      */
@@ -60,7 +62,7 @@ final class PreloadEntityColumn {
                 throw new IllegalArgumentException(clazz.toString());
             }
         }
-        return new EntityColumn(f, columnName, foreign, foreignTable, foreignColumn, indexed, primary, unique, nullable, constraint, constraintName, overrideDomain);
+        return new EntityColumn(f, columnName, foreign, foreignTable, foreignColumn, indexed, primary, unique, nullable, constraint, constraintName, overrideDomain, bridge, lazy);
     }
 
     /**
@@ -82,6 +84,8 @@ final class PreloadEntityColumn {
         private String constraint = "";
         private String constraintName = "";
         private String overrideDomain = "";
+        private boolean bridge = false;
+        private boolean lazy = false;
 
         PreloadEntityColumnBuilder() {
         }
@@ -151,12 +155,22 @@ final class PreloadEntityColumn {
             return this;
         }
 
+        public PreloadEntityColumnBuilder lazy(boolean lazy) {
+            this.lazy = lazy;
+            return this;
+        }
+
+        public PreloadEntityColumnBuilder bridge(boolean bridge) {
+            this.bridge = bridge;
+            return this;
+        }
+
         public PreloadEntityColumn build() {
             if(primary)
                 nullable = false;
             if(foreign && foreignTable.isEmpty())
                 foreign = false;
-            return new PreloadEntityColumn(fieldName, columnName, foreign, foreignTable, foreignColumn, indexed, primary, unique, nullable, constraint, constraintName, overrideDomain, fin);
+            return new PreloadEntityColumn(fieldName, columnName, foreign, foreignTable, foreignColumn, indexed, primary, unique, nullable, constraint, constraintName, overrideDomain, bridge, lazy, false);
         }
     }
 }

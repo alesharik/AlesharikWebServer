@@ -42,8 +42,10 @@ public final class EntityColumn {
     private final String constraint;
     private final String constraintName;
     private final String overrideDomain;
+    private final boolean bridge;
+    private final boolean lazy;
 
-    EntityColumn(Field fieldName, String columnName, boolean foreign, String foreignTable, String foreignColumn, boolean indexed, boolean primary, boolean unique, boolean nullable, String constraint, String constraintName, String overrideDomain) {
+    EntityColumn(Field fieldName, String columnName, boolean foreign, String foreignTable, String foreignColumn, boolean indexed, boolean primary, boolean unique, boolean nullable, String constraint, String constraintName, String overrideDomain, boolean bridge, boolean lazy) {
         this.field = fieldName;
         this.constraint = constraint;
         this.constraintName = constraintName;
@@ -56,6 +58,9 @@ public final class EntityColumn {
         this.primary = primary;
         this.unique = unique;
         this.nullable = nullable;
+
+        this.bridge = bridge;
+        this.lazy = lazy;
 
         this.field.setAccessible(true);
 

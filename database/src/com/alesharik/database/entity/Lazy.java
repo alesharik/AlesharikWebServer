@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 /**
  * This annotation means what entity values will be selected when get called first, not when entity fetched from database
  */
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Lazy {
 }
