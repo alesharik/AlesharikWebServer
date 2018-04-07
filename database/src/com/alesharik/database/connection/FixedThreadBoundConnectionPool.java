@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.Setter;
 import sun.misc.Cleaner;
 
+import java.lang.ref.WeakReference;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -114,7 +115,18 @@ public final class FixedThreadBoundConnectionPool implements ConnectionProvider 
             //noinspection MagicConstant
             connection.setTransactionIsolation(transactionLevel);
 
-            Cleaner.create(connection, () -> ForkJoinPool.commonPool().execute(this::reallocConnection));
+            WeakReference weakReference = new WeakReference<>(connection);
+            Cleaner.create(connection, () -> ForkJoinPool.commonPool().execute(() -> {
+                Connection ref = (Connection) weakReference.get();
+                if(ref != null) {
+                    try {
+                        ref.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                reallocConnection();
+            }));
 
             return connection;
         } catch (SQLException e) {
