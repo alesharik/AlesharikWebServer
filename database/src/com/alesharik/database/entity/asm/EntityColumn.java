@@ -67,6 +67,8 @@ public final class EntityColumn {
     }
 
     public boolean isArray() {
+        if(field.getType() == byte[].class)
+            return false;
         return field.getType().isArray() || field.getType().isAssignableFrom(Collection.class);
     }
 

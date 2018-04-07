@@ -193,6 +193,13 @@ final class PostgresTypeTranslator {
         }
 
         for(EntityColumn column : description.getColumns()) {
+            if(column.isLazy() || column.isBridge()) {
+                if(column.isArray())
+                    column.setValue(instance, (description.isBridge())
+                            ? new PostgresTable.ArrayTable.BridgeCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description)
+                            : new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description));
+                continue;
+            }
             if(column.isArray())
                 column.setValue(instance, new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description));
             else
