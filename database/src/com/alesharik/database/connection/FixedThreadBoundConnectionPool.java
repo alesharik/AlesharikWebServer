@@ -24,12 +24,14 @@ import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.database.exception.DatabaseOpenException;
 import lombok.Getter;
 import lombok.Setter;
+import sun.misc.Cleaner;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * Fixed free connections, thread-bound connections, non-blocking
@@ -81,19 +83,10 @@ public final class FixedThreadBoundConnectionPool implements ConnectionProvider 
         state = 1;
     }
 
-    private void freeConnection(Connection connection) {
+    private void reallocConnection() {
         if(state == 2)
             return;
-        try {
-            if(!connection.isClosed() && connection.isValid(1000)) {
-                if(transactional)
-                    connection.commit();
-                freeConnections.add(connection);
-                checkConnections();
-            }
-        } catch (SQLException e) {
-            //ok :(
-        }
+        freeConnections.add(newConnection());
     }
 
     private void checkConnections() {
@@ -121,7 +114,7 @@ public final class FixedThreadBoundConnectionPool implements ConnectionProvider 
             //noinspection MagicConstant
             connection.setTransactionIsolation(transactionLevel);
 
-            RefThread.add(connection, this::freeConnection);
+            Cleaner.create(connection, () -> ForkJoinPool.commonPool().execute(this::reallocConnection));
 
             return connection;
         } catch (SQLException e) {
