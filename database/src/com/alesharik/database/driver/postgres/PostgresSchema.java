@@ -18,6 +18,7 @@
 
 package com.alesharik.database.driver.postgres;
 
+import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.data.Table;
 import com.alesharik.database.entity.asm.EntityClassManager;
@@ -30,7 +31,6 @@ import lombok.Getter;
 import lombok.ToString;
 
 import javax.annotation.Nullable;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,14 +40,14 @@ import java.util.concurrent.ConcurrentHashMap;
 @ToString
 @EqualsAndHashCode
 final class PostgresSchema implements Schema {
-    private final Connection connection;
+    private final ConnectionProvider connection;
     @Getter
     private final String name;
     @Getter
     private final String owner;
     private final Map<String, PostgresTable<?>> tables;
 
-    public PostgresSchema(Connection connection, String name, String owner) {
+    public PostgresSchema(ConnectionProvider connection, String name, String owner) {
         this.connection = connection;
         this.name = name;
         this.owner = owner;
@@ -79,7 +79,7 @@ final class PostgresSchema implements Schema {
         ResultSet resultSet = null;
         try {
             try {
-                statement = connection.prepareStatement("SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = ? AND table_name = ?)");
+                statement = connection.getConnection().prepareStatement("SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = ? AND table_name = ?)");
                 statement.setString(1, this.name);
                 statement.setString(2, name);
                 resultSet = statement.executeQuery();

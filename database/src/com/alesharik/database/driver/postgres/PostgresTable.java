@@ -18,6 +18,7 @@
 
 package com.alesharik.database.driver.postgres;
 
+import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.data.EntityPreparedStatement;
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.data.Table;
@@ -32,7 +33,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.sql.Array;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 final class PostgresTable<E> implements Table<E> {
-    private final Connection connection;
+    private final ConnectionProvider connection;
     @Getter
     private final String name;
     @Getter
@@ -59,7 +59,7 @@ final class PostgresTable<E> implements Table<E> {
     private final EntityDescription entityDescription;
     private final Map<EntityColumn, ArrayTable> arrays;
 
-    public PostgresTable(Connection connection, String name, Schema schema, EntityDescription entityDescription) {
+    public PostgresTable(ConnectionProvider connection, String name, Schema schema, EntityDescription entityDescription) {
         this.connection = connection;
         this.name = name;
         this.schema = schema;
@@ -71,7 +71,7 @@ final class PostgresTable<E> implements Table<E> {
                 this.arrays.put(entityColumn, new ArrayTable(connection, getArrayTableName(name, schema, entityColumn), getRealName(), entityColumn));
     }
 
-    private PostgresTable(Connection connection, String name, Schema schema, EntityDescription entityDescription, Map<EntityColumn, ArrayTable> arrays) {
+    private PostgresTable(ConnectionProvider connection, String name, Schema schema, EntityDescription entityDescription, Map<EntityColumn, ArrayTable> arrays) {
         this.connection = connection;
         this.name = name;
         this.schema = schema;
@@ -79,7 +79,7 @@ final class PostgresTable<E> implements Table<E> {
         this.arrays = arrays;
     }
 
-    public static <E> PostgresTable<E> create(Connection connection, String name, Schema schema, EntityDescription entityDescription) {
+    public static <E> PostgresTable<E> create(ConnectionProvider connection, String name, Schema schema, EntityDescription entityDescription) {
         PreparedStatement statement = null;
         try {
             try {
@@ -142,7 +142,7 @@ final class PostgresTable<E> implements Table<E> {
                 }
 
                 request.append(");");
-                statement = connection.prepareStatement(request.toString());
+                statement = connection.getConnection().prepareStatement(request.toString());
                 statement.executeUpdate();
                 for(EntityColumn entityColumn : entityDescription.getColumns()) {
                     if(entityColumn.isArray()) {
@@ -169,13 +169,13 @@ final class PostgresTable<E> implements Table<E> {
         return schema.getName() + '.' + name + "_array_" + entityColumn.getColumnName();
     }
 
-    private static void createIndex(Connection connection, EntityColumn column, String tableName) {
+    private static void createIndex(ConnectionProvider connection, EntityColumn column, String tableName) {
         if(!column.isIndexed())
             return;
         PreparedStatement statement = null;
         try {
             try {
-                statement = connection.prepareStatement("CREATE UNIQUE INDEX " + tableName.replaceAll("\\.", "_") + '_' + column.getColumnName() + "_idx ON " + tableName + '(' + column.getColumnName() + ')');
+                statement = connection.getConnection().prepareStatement("CREATE UNIQUE INDEX " + tableName.replaceAll("\\.", "_") + '_' + column.getColumnName() + "_idx ON " + tableName + '(' + column.getColumnName() + ')');
                 statement.executeUpdate();
             } catch (SQLException e) {
                 throw new DatabaseReadSQLException(e);
@@ -194,7 +194,7 @@ final class PostgresTable<E> implements Table<E> {
         ResultSet resultSet = null;
         try {
             try {
-                preparedStatement = connection.prepareStatement("SELECT * FROM " + getRealName() + " WHERE " + entityDescription.getWhereString());
+                preparedStatement = connection.getConnection().prepareStatement("SELECT * FROM " + getRealName() + " WHERE " + entityDescription.getWhereString());
                 int i = 1;
                 for(EntityColumn entityColumn : entityDescription.getPrimaryKey()) {
                     PostgresTypeTranslator.setObject(preparedStatement, i, entityColumn.getValue(select));
@@ -203,7 +203,7 @@ final class PostgresTable<E> implements Table<E> {
                 resultSet = preparedStatement.executeQuery();
                 if(!resultSet.next())
                     return null;
-                return PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this, arrays);
+                return PostgresTypeTranslator.parseEntity(connection, resultSet, entityDescription, this, arrays);
             } catch (SQLException e) {
                 e.printStackTrace();
                 return null;
@@ -224,11 +224,11 @@ final class PostgresTable<E> implements Table<E> {
         ResultSet resultSet = null;
         try {
             try {
-                preparedStatement = connection.prepareStatement(request);
+                preparedStatement = connection.getConnection().prepareStatement(request);
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this, arrays));
+                    ret.add(PostgresTypeTranslator.parseEntity(connection, resultSet, entityDescription, this, arrays));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -250,13 +250,13 @@ final class PostgresTable<E> implements Table<E> {
         ResultSet resultSet = null;
         try {
             try {
-                preparedStatement = connection.prepareStatement("SELECT * FROM " + getRealName() + (limit > 0 ? " LIMIT ?" : ""));
+                preparedStatement = connection.getConnection().prepareStatement("SELECT * FROM " + getRealName() + (limit > 0 ? " LIMIT ?" : ""));
                 if(limit > 0)
                     preparedStatement.setInt(1, limit);
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this, arrays));
+                    ret.add(PostgresTypeTranslator.parseEntity(connection, resultSet, entityDescription, this, arrays));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -278,13 +278,13 @@ final class PostgresTable<E> implements Table<E> {
         ResultSet resultSet = null;
         try {
             try {
-                preparedStatement = connection.prepareStatement("SELECT * FROM " + getRealName() + (limit > 0 ? " LIMIT ?" : "") + " ORDER BY " + sortBy + (desc ? " DESC " : " ASC "));
+                preparedStatement = connection.getConnection().prepareStatement("SELECT * FROM " + getRealName() + (limit > 0 ? " LIMIT ?" : "") + " ORDER BY " + sortBy + (desc ? " DESC " : " ASC "));
                 if(limit > 0)
                     preparedStatement.setInt(1, limit);
                 resultSet = preparedStatement.executeQuery();
                 ArrayList<E> ret = new ArrayList<>();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, this, arrays));
+                    ret.add(PostgresTypeTranslator.parseEntity(connection, resultSet, entityDescription, this, arrays));
                 return ret;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -303,7 +303,7 @@ final class PostgresTable<E> implements Table<E> {
     @Override
     public EntityPreparedStatement<E> prepareStatement(String statement) {
         try {
-            return new PostgresEntityPreparedStatement<>(connection.prepareStatement(statement), entityDescription, this, arrays);
+            return new PostgresEntityPreparedStatement<>(connection, connection.getConnection().prepareStatement(statement), entityDescription, this, arrays);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -316,7 +316,7 @@ final class PostgresTable<E> implements Table<E> {
             PreparedStatement statement = null;
             try {
                 try {
-                    statement = connection.prepareStatement("DROP TABLE " + name);
+                    statement = connection.getConnection().prepareStatement("DROP TABLE " + name);
                     statement.executeUpdate();
                 } catch (SQLException e) {
                     throw new DatabaseReadSQLException(e);
@@ -335,7 +335,7 @@ final class PostgresTable<E> implements Table<E> {
         PreparedStatement statement = null;
         try {
             try {
-                statement = connection.prepareStatement("INSERT INTO " + getRealName() + "(" + description.getColumnList() + ") VALUES (" + QuestionMarkGenerator.getQuestionMarks(description.getColumns().size()) + ")");
+                statement = connection.getConnection().prepareStatement("INSERT INTO " + getRealName() + "(" + description.getColumnList() + ") VALUES (" + QuestionMarkGenerator.getQuestionMarks(description.getColumns().size()) + ")");
                 int i = 1;
                 for(EntityColumn entityColumn : description.getColumns()) {
                     if(entityColumn.isArray())
@@ -362,7 +362,7 @@ final class PostgresTable<E> implements Table<E> {
         PreparedStatement statement = null;
         try {
             try {
-                statement = connection.prepareStatement("DELETE FROM " + getRealName() + " WHERE " + description.getWhereString());
+                statement = connection.getConnection().prepareStatement("DELETE FROM " + getRealName() + " WHERE " + description.getWhereString());
                 int i = 1;
                 for(EntityColumn entityColumn : description.getPrimaryKey()) {
                     PostgresTypeTranslator.setObject(statement, i, entityColumn.getValue(entity));
@@ -392,7 +392,7 @@ final class PostgresTable<E> implements Table<E> {
             PreparedStatement statement = null;
             try {
                 try {
-                    statement = connection.prepareStatement("UPDATE " + getRealName() + " SET " + column.getColumnName() + " = ? WHERE " + description.getWhereString());
+                    statement = connection.getConnection().prepareStatement("UPDATE " + getRealName() + " SET " + column.getColumnName() + " = ? WHERE " + description.getWhereString());
                     PostgresTypeTranslator.setObject(statement, 1, fieldObj);
                     int i = 2;
                     for(EntityColumn entityColumn : description.getPrimaryKey()) {
@@ -425,7 +425,7 @@ final class PostgresTable<E> implements Table<E> {
             ResultSet resultSet = null;
             try {
                 try {
-                    statement = connection.prepareStatement("SELECT " + column.getColumnName() + " FROM " + getRealName() + " WHERE " + description.getWhereString());
+                    statement = connection.getConnection().prepareStatement("SELECT " + column.getColumnName() + " FROM " + getRealName() + " WHERE " + description.getWhereString());
                     int i = 1;
                     for(EntityColumn entityColumn : description.getPrimaryKey()) {
                         PostgresTypeTranslator.setObject(statement, i, entityColumn.getValue(entity));
@@ -454,13 +454,13 @@ final class PostgresTable<E> implements Table<E> {
     }
 
     static final class ArrayTable {
-        private final Connection connection;
+        private final ConnectionProvider connection;
         private final String name;
         private final String parentTable;
         private final EntityColumn column;
         private final ArrayType arrayType;
 
-        public ArrayTable(Connection connection, String name, String parentTable, EntityColumn column) {
+        public ArrayTable(ConnectionProvider connection, String name, String parentTable, EntityColumn column) {
             this.connection = connection;
             this.name = name;
             this.parentTable = parentTable;
@@ -473,7 +473,7 @@ final class PostgresTable<E> implements Table<E> {
                 arrayType = ArrayType.NOT_DEFINED;
         }
 
-        public static ArrayTable create(Connection connection, String name, EntityColumn column, String parentTable) {
+        public static ArrayTable create(ConnectionProvider connection, String name, EntityColumn column, String parentTable) {
             PreparedStatement statement = null;
             try {
                 try {
@@ -503,7 +503,7 @@ final class PostgresTable<E> implements Table<E> {
                     {
                         valueColumnAdding.append(column.isNullable() ? " NULL " : " NOT NULL ");
                     }
-                    statement = connection.prepareStatement("CREATE TABLE " + name + "(" +
+                    statement = connection.getConnection().prepareStatement("CREATE TABLE " + name + "(" +
                             "key uuid REFERENCES " + parentTable + "(" + column.getColumnName() + ")," +
                             "value " + PostgresTypeTranslator.getColumnType(column) + ' ' + valueColumnAdding + ", " +
                             "PRIMARY KEY (key, value)" +
@@ -540,7 +540,7 @@ final class PostgresTable<E> implements Table<E> {
             ResultSet resultSet = null;
             try {
                 try {
-                    statement = connection.prepareStatement("SELECT * FROM " + name + " INNER JOIN " + parentTable + " ON " + name + ".key = " + parentTable + '.' + column.getColumnName() + " WHERE " + entityDescription.getWhereString());
+                    statement = connection.getConnection().prepareStatement("SELECT * FROM " + name + " INNER JOIN " + parentTable + " ON " + name + ".key = " + parentTable + '.' + column.getColumnName() + " WHERE " + entityDescription.getWhereString());
                     int i = 1;
                     for(EntityColumn entityColumn : entityDescription.getPrimaryKey()) {
                         PostgresTypeTranslator.setObject(statement, i, entityColumn.getValue(entity));
@@ -589,7 +589,7 @@ final class PostgresTable<E> implements Table<E> {
                         }
                         int updateCount = Math.min(oldCopy.size(), copy.size());
                         if(updateCount > 0) {//Can update smth
-                            PreparedStatement statement = connection.prepareStatement("UPDATE " + name + " SET value = ? WHERE key = ? AND value = ?");
+                            PreparedStatement statement = connection.getConnection().prepareStatement("UPDATE " + name + " SET value = ? WHERE key = ? AND value = ?");
                             try {
                                 for(int i = 0; i < updateCount; i++) {
                                     V next = iter.next();
@@ -612,7 +612,7 @@ final class PostgresTable<E> implements Table<E> {
                         if(oldCopy.size() > copy.size()) {//Delete required
                             PreparedStatement statement = null;
                             try {
-                                statement = connection.prepareStatement("DELETE FROM " + name + " WHERE key = ? AND value = ?");
+                                statement = connection.getConnection().prepareStatement("DELETE FROM " + name + " WHERE key = ? AND value = ?");
                                 while(oldIter.hasNext()) {
                                     V next = oldIter.next();
                                     PostgresTypeTranslator.setObject(statement, 1, id);
@@ -630,7 +630,7 @@ final class PostgresTable<E> implements Table<E> {
                         if(copy.size() > oldCopy.size()) {//Insert required
                             PreparedStatement statement = null;
                             try {
-                                statement = connection.prepareStatement("INSERT INTO " + name + "(key, value) VALUES (?, ?)");
+                                statement = connection.getConnection().prepareStatement("INSERT INTO " + name + "(key, value) VALUES (?, ?)");
                                 while(iter.hasNext()) {
                                     V next = iter.next();
                                     PostgresTypeTranslator.setObject(statement, 1, id);
@@ -666,7 +666,7 @@ final class PostgresTable<E> implements Table<E> {
             ResultSet resultSet = null;
             try {
                 try {
-                    statement = connection.prepareStatement("SELECT " + column.getColumnName() + " FROM " + parentTable + " WHERE " + entityDescription.getWhereString());
+                    statement = connection.getConnection().prepareStatement("SELECT " + column.getColumnName() + " FROM " + parentTable + " WHERE " + entityDescription.getWhereString());
                     int i = 1;
                     for(EntityColumn entityColumn : entityDescription.getPrimaryKey()) {
                         PostgresTypeTranslator.setObject(statement, i, entityColumn.getValue(entity));
@@ -701,11 +701,11 @@ final class PostgresTable<E> implements Table<E> {
             protected final Collection<E> wrap;
             protected final ArrayTable table;
             protected final Object entity;
-            protected final Connection connection;
+            protected final ConnectionProvider connection;
             protected final EntityDescription entityDescription;
             protected final UUID id;
 
-            public BridgeCollectionWrapper(Collection<E> wrap, ArrayTable table, Object entity, Connection connection, EntityDescription entityDescription) {
+            public BridgeCollectionWrapper(Collection<E> wrap, ArrayTable table, Object entity, ConnectionProvider connection, EntityDescription entityDescription) {
                 this.connection = connection;
                 this.entityDescription = entityDescription;
                 if(wrap == null)
@@ -722,7 +722,7 @@ final class PostgresTable<E> implements Table<E> {
                 ResultSet resultSet = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("SELECT " + table.column.getColumnName() + " FROM " + table.parentTable + " WHERE " + entityDescription.getWhereString());
+                        statement = connection.getConnection().prepareStatement("SELECT " + table.column.getColumnName() + " FROM " + table.parentTable + " WHERE " + entityDescription.getWhereString());
                         int i = 1;
                         for(EntityColumn entityColumn : entityDescription.getPrimaryKey()) {
                             PostgresTypeTranslator.setObject(statement, i, entityColumn.getValue(entity));
@@ -753,7 +753,7 @@ final class PostgresTable<E> implements Table<E> {
                 ResultSet resultSet = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("SELECT count(*) FROM " + table.name + " WHERE key = ?");
+                        statement = connection.getConnection().prepareStatement("SELECT count(*) FROM " + table.name + " WHERE key = ?");
                         statement.setObject(1, id);
                         resultSet = statement.executeQuery();
 
@@ -780,7 +780,7 @@ final class PostgresTable<E> implements Table<E> {
                 ResultSet resultSet = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("SELECT exists(SELECT * FROM " + table.name + " WHERE key = ? LIMIT 1)");
+                        statement = connection.getConnection().prepareStatement("SELECT exists(SELECT * FROM " + table.name + " WHERE key = ? LIMIT 1)");
                         statement.setObject(1, id);
                         resultSet = statement.executeQuery();
 
@@ -807,7 +807,7 @@ final class PostgresTable<E> implements Table<E> {
                 ResultSet resultSet = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("SELECT exists(SELECT * FROM " + table.name + " WHERE key = ? AND value = ? LIMIT 1)");
+                        statement = connection.getConnection().prepareStatement("SELECT exists(SELECT * FROM " + table.name + " WHERE key = ? AND value = ? LIMIT 1)");
                         statement.setObject(1, id);
                         PostgresTypeTranslator.setObject(statement, 2, o);
                         resultSet = statement.executeQuery();
@@ -841,7 +841,7 @@ final class PostgresTable<E> implements Table<E> {
                 ResultSet resultSet = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("SELECT * FROM " + table.name + " WHERE key = ?");
+                        statement = connection.getConnection().prepareStatement("SELECT * FROM " + table.name + " WHERE key = ?");
                         statement.setObject(1, id);
                         resultSet = statement.executeQuery();
 
@@ -870,7 +870,7 @@ final class PostgresTable<E> implements Table<E> {
                 ResultSet resultSet = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("SELECT * FROM " + table.name + " WHERE key = ?");
+                        statement = connection.getConnection().prepareStatement("SELECT * FROM " + table.name + " WHERE key = ?");
                         statement.setObject(1, id);
                         resultSet = statement.executeQuery();
 
@@ -897,7 +897,7 @@ final class PostgresTable<E> implements Table<E> {
                 PreparedStatement statement = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("INSERT INTO " + table.name + "(key, value) VALUES (?, ?)");
+                        statement = connection.getConnection().prepareStatement("INSERT INTO " + table.name + "(key, value) VALUES (?, ?)");
                         statement.setObject(1, id);
                         PostgresTypeTranslator.setObject(statement, 2, object);
                         statement.executeUpdate();
@@ -919,7 +919,7 @@ final class PostgresTable<E> implements Table<E> {
                 PreparedStatement statement = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("DELETE FROM " + table.name + " WHERE key = ? AND value = ?");
+                        statement = connection.getConnection().prepareStatement("DELETE FROM " + table.name + " WHERE key = ? AND value = ?");
                         statement.setObject(1, id);
                         PostgresTypeTranslator.setObject(statement, 2, o);
                         statement.executeUpdate();
@@ -949,7 +949,7 @@ final class PostgresTable<E> implements Table<E> {
                 PreparedStatement statement = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("INSERT INTO " + table.name + "(key, value) VALUES (?, ?)");
+                        statement = connection.getConnection().prepareStatement("INSERT INTO " + table.name + "(key, value) VALUES (?, ?)");
                         for(E e : c) {
                             statement.setObject(1, id);
                             PostgresTypeTranslator.setObject(statement, 2, e);
@@ -974,7 +974,7 @@ final class PostgresTable<E> implements Table<E> {
                 PreparedStatement statement = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("DELETE FROM " + table.name + " WHERE key = ? AND value = ?");
+                        statement = connection.getConnection().prepareStatement("DELETE FROM " + table.name + " WHERE key = ? AND value = ?");
                         for(Object obj : c) {
                             statement.setObject(1, id);
                             PostgresTypeTranslator.setObject(statement, 2, obj);
@@ -1009,7 +1009,7 @@ final class PostgresTable<E> implements Table<E> {
                 PreparedStatement statement = null;
                 try {
                     try {
-                        statement = connection.prepareStatement("DELETE FROM " + table.name + " WHERE key = ?");
+                        statement = connection.getConnection().prepareStatement("DELETE FROM " + table.name + " WHERE key = ?");
                         statement.setObject(1, id);
 
                         statement.executeUpdate();
@@ -1054,7 +1054,7 @@ final class PostgresTable<E> implements Table<E> {
             private final AtomicInteger countCache = new AtomicInteger(-1);
             private final AtomicBoolean syncCaches = new AtomicBoolean(false);
 
-            public LazyCollectionWrapper(Collection<E> wrap, ArrayTable table, Object entity, Connection connection, EntityDescription entityDescription) {
+            public LazyCollectionWrapper(Collection<E> wrap, ArrayTable table, Object entity, ConnectionProvider connection, EntityDescription entityDescription) {
                 super(wrap, table, entity, connection, entityDescription);
             }
 

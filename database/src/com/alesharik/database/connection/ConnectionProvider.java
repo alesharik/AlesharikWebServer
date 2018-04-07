@@ -16,30 +16,26 @@
  *
  */
 
-package com.alesharik.database.driver;
+package com.alesharik.database.connection;
 
-import com.alesharik.database.data.Schema;
-import com.alesharik.database.transaction.TransactionManager;
-import com.alesharik.database.user.UserManager;
+import java.sql.Connection;
 
-/**
- * Driver can use caches for schemas
- */
-public interface DatabaseDriver {
-    void init(ConnectionProvider connection);
+public interface ConnectionProvider {
+    Connection getConnection();
 
-    /**
-     * Work with cache only allowed
-     */
-    Schema getSchema(String name, boolean createIfNotExists);
+    boolean isTransactional();
 
-    Schema[] getSchemas();
+    void setTransactional(boolean transactional);
 
-    void update();
+    void shutdown();
 
-    TransactionManager getTransactionManager();
+    void requestNewConnection();
 
-    void updateTransactional(boolean is);
+    void requestNewDedicatedConnection();
 
-    UserManager<?, ?, ?> getUserManager();
+    int getTransactionLevel();
+
+    void setTransactionLevel(int level);
+
+    void init();
 }

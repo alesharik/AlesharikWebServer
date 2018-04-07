@@ -18,6 +18,7 @@
 
 package com.alesharik.database.driver.postgres;
 
+import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.entity.EntityManager;
 import com.alesharik.database.entity.asm.EntityClassTransformer;
 import com.alesharik.database.entity.asm.EntityColumn;
@@ -177,15 +178,15 @@ final class PostgresTypeTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    public static <E> E parseEntity(ResultSet resultSet, EntityDescription description, EntityManager<E> entityManager, Map<EntityColumn, PostgresTable.ArrayTable> arrays) throws SQLException {
+    public static <E> E parseEntity(ConnectionProvider connectionProvider, ResultSet resultSet, EntityDescription description, EntityManager<E> entityManager, Map<EntityColumn, PostgresTable.ArrayTable> arrays) throws SQLException {
         E instance = (E) ClassInstantiator.instantiate(description.getClazz());
         FieldAccessor.setField(instance, entityManager, EntityClassTransformer.ENTITY_MANAGER_FIELD_NAME);
         if(description.isLazy() || description.isBridge()) {//Load only primary key
             for(EntityColumn column : description.getPrimaryKey()) {
                 if(column.isArray())
                     column.setValue(instance, (description.isBridge())
-                            ? new PostgresTable.ArrayTable.BridgeCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description)
-                            : new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description));
+                            ? new PostgresTable.ArrayTable.BridgeCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, connectionProvider, description)
+                            : new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, connectionProvider, description));
                 else
                     column.setValue(instance, readObject(resultSet, column));
             }
@@ -196,12 +197,12 @@ final class PostgresTypeTranslator {
             if(column.isLazy() || column.isBridge()) {
                 if(column.isArray())
                     column.setValue(instance, (description.isBridge())
-                            ? new PostgresTable.ArrayTable.BridgeCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description)
-                            : new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description));
+                            ? new PostgresTable.ArrayTable.BridgeCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, connectionProvider, description)
+                            : new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, connectionProvider, description));
                 continue;
             }
             if(column.isArray())
-                column.setValue(instance, new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, resultSet.getStatement().getConnection(), description));
+                column.setValue(instance, new PostgresTable.ArrayTable.LazyCollectionWrapper<>(new ArrayList<>(), arrays.get(column), instance, connectionProvider, description));
             else
                 column.setValue(instance, readObject(resultSet, column));
         }

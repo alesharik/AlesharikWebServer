@@ -18,6 +18,7 @@
 
 package com.alesharik.database.driver.postgres;
 
+import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.exception.DatabaseTransactionException;
 import com.alesharik.database.transaction.Transaction;
 import com.alesharik.database.transaction.TransactionManager;
@@ -25,20 +26,22 @@ import com.alesharik.database.transaction.TransactionManager;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 final class PostgresTransactionManager implements TransactionManager {
-    private final Connection connection;
+    private final ConnectionProvider connection;
 
-    public PostgresTransactionManager(Connection connection) {
+    public PostgresTransactionManager(ConnectionProvider connection) {
         this.connection = connection;
     }
 
     @Override
     public void executeTransaction(Runnable runnable) {
+        Connection connection = this.connection.getConnection();
         Savepoint savepoint;
         try {
-            savepoint = connection.setSavepoint();
+            savepoint = connection.setSavepoint(UUID.randomUUID().toString());
         } catch (SQLException e) {
             throw new DatabaseTransactionException(e);
         }
@@ -63,10 +66,11 @@ final class PostgresTransactionManager implements TransactionManager {
 
     @Override
     public <C> C executeTransaction(Callable<C> cCallable) {
+        Connection connection = this.connection.getConnection();
         Savepoint savepoint;
         C ret = null;
         try {
-            savepoint = connection.setSavepoint();
+            savepoint = connection.setSavepoint(UUID.randomUUID().toString());
         } catch (SQLException e) {
             throw new DatabaseTransactionException(e);
         }
@@ -92,6 +96,7 @@ final class PostgresTransactionManager implements TransactionManager {
 
     @Override
     public Transaction newTransaction() {
+        Connection connection = this.connection.getConnection();
         return new PostgresTransaction(connection);
     }
 }

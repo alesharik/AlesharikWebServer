@@ -29,7 +29,6 @@ import com.alesharik.database.user.UserManager;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import lombok.Getter;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,7 +46,7 @@ public final class PostgresDriver implements DatabaseDriver {
     }
 
     private final List<Schema> schemas;
-    private volatile Connection connection;
+    private volatile ConnectionProvider connection;
     private volatile String currentUser;
     @Getter
     private volatile TransactionManager transactionManager;
@@ -57,15 +56,11 @@ public final class PostgresDriver implements DatabaseDriver {
     }
 
     @Override
-    public void init(Connection connection) {
+    public void init(ConnectionProvider connection) {
         this.connection = connection;
         updateSchemas();
         updateCurrentUser();
-        try {
-            updateTransactional(!connection.getAutoCommit());
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("Get auto commit failed", e);
-        }
+        updateTransactional(connection.isTransactional());
     }
 
     @Override
@@ -111,7 +106,7 @@ public final class PostgresDriver implements DatabaseDriver {
         PreparedStatement statement = null;
         try {
             try {
-                statement = connection.prepareStatement("CREATE SCHEMA " + schema.getName() + " AUTHORIZATION " + schema.getOwner());
+                statement = connection.getConnection().prepareStatement("CREATE SCHEMA " + schema.getName() + " AUTHORIZATION " + schema.getOwner());
                 statement.executeUpdate();
             } catch (SQLException e) {
                 throw new DatabaseStoreSQLException(e);
@@ -129,7 +124,7 @@ public final class PostgresDriver implements DatabaseDriver {
         ResultSet resultSet = null;
         try {
             try {
-                statement = connection.prepareStatement("SELECT current_user");
+                statement = connection.getConnection().prepareStatement("SELECT current_user");
                 resultSet = statement.executeQuery();
                 if(!resultSet.next())
                     throw new DatabaseInternalException("`SELECT current_user` database request return 0 lines");
@@ -152,7 +147,7 @@ public final class PostgresDriver implements DatabaseDriver {
         ResultSet resultSet = null;
         try {
             try {
-                statement = connection.prepareStatement("SELECT schema_name, schema_owner FROM information_schema.schemata");
+                statement = connection.getConnection().prepareStatement("SELECT schema_name, schema_owner FROM information_schema.schemata");
                 resultSet = statement.executeQuery();
                 List<Schema> ret = new ArrayList<>();
                 while(resultSet.next()) {

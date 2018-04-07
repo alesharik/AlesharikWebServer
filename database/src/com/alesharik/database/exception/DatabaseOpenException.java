@@ -16,30 +16,20 @@
  *
  */
 
-package com.alesharik.database.driver;
+package com.alesharik.database.exception;
 
-import com.alesharik.database.data.Schema;
-import com.alesharik.database.transaction.TransactionManager;
-import com.alesharik.database.user.UserManager;
+public class DatabaseOpenException extends DatabaseException {
+    private static final long serialVersionUID = -226254553085912292L;
 
-/**
- * Driver can use caches for schemas
- */
-public interface DatabaseDriver {
-    void init(ConnectionProvider connection);
+    public DatabaseOpenException(String message) {
+        super(message);
+    }
 
-    /**
-     * Work with cache only allowed
-     */
-    Schema getSchema(String name, boolean createIfNotExists);
+    public DatabaseOpenException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    Schema[] getSchemas();
-
-    void update();
-
-    TransactionManager getTransactionManager();
-
-    void updateTransactional(boolean is);
-
-    UserManager<?, ?, ?> getUserManager();
+    public DatabaseOpenException(Throwable cause) {
+        super(cause);
+    }
 }

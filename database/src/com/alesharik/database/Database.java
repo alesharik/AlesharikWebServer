@@ -20,16 +20,11 @@ package com.alesharik.database;
 
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.driver.DatabaseDriver;
-import com.alesharik.database.exception.DatabaseCloseSQLException;
-import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.database.transaction.TransactionManager;
 import com.alesharik.database.user.User;
 import com.alesharik.database.user.UserManager;
 import lombok.Getter;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -37,43 +32,33 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *///TODO add cache update system
 public class Database {
     @Getter
-    protected final Connection connection;
+    protected final ConnectionProvider connection;
     protected final DatabaseDriver databaseDriver;
     protected final AtomicBoolean transactional;
 
-    protected Database(Connection connection, DatabaseDriver databaseDriver, boolean transactional) {
+    protected Database(ConnectionProvider connection, DatabaseDriver databaseDriver, boolean transactional) {
         this.connection = connection;
         this.databaseDriver = databaseDriver;
         this.transactional = new AtomicBoolean(transactional);
         setTransactional(transactional);
+    }
+
+    public static Database newDatabase(ConnectionProvider connection, DatabaseDriver databaseDriver, boolean transactional) {
+        return new Database(connection, databaseDriver, transactional);
+    }
+
+    public static Database newDatabase(ConnectionProvider connection, DatabaseDriver databaseDriver) {
+        return new Database(connection, databaseDriver, connection.isTransactional());
+    }
+
+    public void init() {
+        this.connection.init();
         this.databaseDriver.init(connection);
-    }
-
-    public static Database newDatabase(Connection connection, DatabaseDriver databaseDriver, boolean transactional) {
-        return new Database(connection, databaseDriver, transactional);
-    }
-
-    public static Database newDatabase(Connection connection, DatabaseDriver databaseDriver) throws SQLException {
-        return new Database(connection, databaseDriver, !connection.getAutoCommit());
-    }
-
-    public static Database newDatabase(String url, DatabaseDriver databaseDriver, boolean transactional) throws SQLException {
-        Connection connection = DriverManager.getConnection(url);
-        return new Database(connection, databaseDriver, transactional);
-    }
-
-    public static Database newDatabase(String url, String login, String password, DatabaseDriver databaseDriver, boolean transactional) throws SQLException {
-        Connection connection = DriverManager.getConnection(url, login, password);
-        return new Database(connection, databaseDriver, transactional);
     }
 
     public void setTransactional(boolean is) {
         transactional.set(is);
-        try {
-            connection.setAutoCommit(!is);
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("Can't update connection commit option", e);
-        }
+        connection.setTransactional(is);
     }
 
     public boolean isTransactional() {
@@ -100,11 +85,7 @@ public class Database {
      * Close database connection
      */
     public void close() {
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            throw new DatabaseCloseSQLException(e);
-        }
+        connection.shutdown();
     }
 
     public void update() {

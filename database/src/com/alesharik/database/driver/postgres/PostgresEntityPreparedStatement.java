@@ -18,6 +18,7 @@
 
 package com.alesharik.database.driver.postgres;
 
+import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.data.EntityPreparedStatement;
 import com.alesharik.database.entity.EntityManager;
 import com.alesharik.database.entity.asm.EntityColumn;
@@ -57,9 +58,11 @@ final class PostgresEntityPreparedStatement<E> implements EntityPreparedStatemen
     private final EntityDescription entityDescription;
     private final EntityManager<E> entityManager;
     private final Map<EntityColumn, PostgresTable.ArrayTable> arrayTableMap;
+    private final ConnectionProvider connectionProvider;
 
-    public PostgresEntityPreparedStatement(PreparedStatement wrapper, EntityDescription entityDescription, EntityManager<E> entityManager, Map<EntityColumn, PostgresTable.ArrayTable> arrayTableMap) {
+    public PostgresEntityPreparedStatement(ConnectionProvider connectionProvider, PreparedStatement wrapper, EntityDescription entityDescription, EntityManager<E> entityManager, Map<EntityColumn, PostgresTable.ArrayTable> arrayTableMap) {
         this.wrapper = wrapper;
+        this.connectionProvider = connectionProvider;
         this.entityDescription = entityDescription;
         this.entityManager = entityManager;
         this.arrayTableMap = arrayTableMap;
@@ -75,7 +78,7 @@ final class PostgresEntityPreparedStatement<E> implements EntityPreparedStatemen
                 List<E> ret = new ArrayList<>();
                 resultSet = executeQuery();
                 while(resultSet.next())
-                    ret.add(PostgresTypeTranslator.parseEntity(resultSet, entityDescription, entityManager, arrayTableMap));
+                    ret.add(PostgresTypeTranslator.parseEntity(connectionProvider, resultSet, entityDescription, entityManager, arrayTableMap));
                 return ret;
             } catch (SQLException e) {
                 throw new DatabaseReadSQLException(e);
