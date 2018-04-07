@@ -18,6 +18,7 @@
 
 package com.alesharik.database.driver.postgres;
 
+import com.alesharik.database.exception.DatabaseTransactionException;
 import com.alesharik.database.transaction.Transaction;
 import com.alesharik.database.transaction.TransactionManager;
 
@@ -35,13 +36,22 @@ final class PostgresTransactionManager implements TransactionManager {
 
     @Override
     public void executeTransaction(Runnable runnable) {
-        Savepoint savepoint = null;
+        Savepoint savepoint;
         try {
             savepoint = connection.setSavepoint();
+        } catch (SQLException e) {
+            throw new DatabaseTransactionException(e);
+        }
+        try {
             runnable.run();
-            connection.releaseSavepoint(savepoint);
+
+            Savepoint s = savepoint;
+            savepoint = null;
+            connection.releaseSavepoint(s);
+
             connection.commit();
         } catch (Exception e) {
+            e.printStackTrace(System.out);
             if(savepoint != null)
                 try {
                     connection.rollback(savepoint);
@@ -53,14 +63,23 @@ final class PostgresTransactionManager implements TransactionManager {
 
     @Override
     public <C> C executeTransaction(Callable<C> cCallable) {
-        Savepoint savepoint = null;
+        Savepoint savepoint;
         C ret = null;
         try {
             savepoint = connection.setSavepoint();
+        } catch (SQLException e) {
+            throw new DatabaseTransactionException(e);
+        }
+        try {
             ret = cCallable.call();
-            connection.releaseSavepoint(savepoint);
+
+            Savepoint s = savepoint;
+            savepoint = null;
+            connection.releaseSavepoint(s);
+
             connection.commit();
         } catch (Exception e) {
+            e.printStackTrace(System.out);
             if(savepoint != null)
                 try {
                     connection.rollback(savepoint);
