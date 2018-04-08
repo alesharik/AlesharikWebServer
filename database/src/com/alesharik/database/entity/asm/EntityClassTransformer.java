@@ -524,9 +524,60 @@ public class EntityClassTransformer {
                     visitFieldInsn(GETSTATIC, internalName, ENTITY_DESCRIPTION_FIELD_NAME, Type.getDescriptor(EntityDescription.class));//Stack: entity manager, this, field name, entity description
                     visitVarInsn(ALOAD, 0);
                     visitFieldInsn(GETFIELD, internalName, fieldName, fieldType.getDescriptor());//Stack: entity manager, this, field name, entity description, field current value
+                    if(fieldType.getSort() != Type.OBJECT && fieldType.getSort() != Type.ARRAY) {
+                        Type boxed = getBoxedType(fieldType);
+                        mv.visitMethodInsn(INVOKESTATIC, boxed.getInternalName(), "valueOf", "(" + getTypeSignature(fieldType.getSort()) + ")L" + boxed.getInternalName() + ";", false);
+                    }
+
                     visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(EntityManager.class), "updateEntity", Type.getMethodDescriptor(EntityManager.class.getDeclaredMethod("updateEntity", Object.class, String.class, EntityDescription.class, Object.class)), true);
                 }
                 super.visitInsn(opcode);
+            }
+
+            private char getTypeSignature(int type) {
+                switch (type) {
+                    case Type.BYTE:
+                        return 'B';
+                    case Type.BOOLEAN:
+                        return 'Z';
+                    case Type.CHAR:
+                        return 'C';
+                    case Type.SHORT:
+                        return 'S';
+                    case Type.INT:
+                        return 'I';
+                    case Type.LONG:
+                        return 'J';
+                    case Type.FLOAT:
+                        return 'F';
+                    case Type.DOUBLE:
+                        return 'D';
+                    default:
+                        return 'L';
+                }
+            }
+
+            private static Type getBoxedType(final Type type) {
+                switch (type.getSort()) {
+                    case Type.BYTE:
+                        return Type.getType(Byte.class);
+                    case Type.BOOLEAN:
+                        return Type.getType(Boolean.class);
+                    case Type.SHORT:
+                        return Type.getType(Short.class);
+                    case Type.CHAR:
+                        return Type.getType(Character.class);
+                    case Type.INT:
+                        return Type.getType(Integer.class);
+                    case Type.LONG:
+                        return Type.getType(Long.class);
+                    case Type.FLOAT:
+                        return Type.getType(Float.class);
+                    case Type.DOUBLE:
+                        return Type.getType(Double.class);
+                    default:
+                        return type;
+                }
             }
         }
     }
