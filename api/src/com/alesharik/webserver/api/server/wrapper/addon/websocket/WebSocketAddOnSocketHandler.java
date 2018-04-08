@@ -145,7 +145,7 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {//TODO ex
             byte[] read = byteVector.cut(buffer, canRead);
             for(int i = 0; i < read.length; i++)
                 read[i] = (byte) (read[i] ^ mask[i % 4]);
-            byteVector.write(messageBuffer, read);
+            this.messageBuffer = byteVector.write(messageBuffer, read);
             dataCursor += canRead;
             if(dataCursor == length) {
                 handlingMessageBuffer.set(true);
