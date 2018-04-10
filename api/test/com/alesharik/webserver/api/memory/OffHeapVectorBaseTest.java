@@ -43,30 +43,30 @@ public class OffHeapVectorBaseTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         array.free(address);
     }
 
     @Test
-    public void allocateAndFree() throws Exception {
+    public void allocateAndFree() {
         long address = array.allocate();
         assertNotSame(address, 0);
         array.free(address);
     }
 
     @Test
-    public void getSize() throws Exception {
+    public void getSize() {
         assertEquals(array.size(address), 4);
     }
 
     @Test
-    public void addAndGet() throws Exception {
+    public void addAndGet() {
         array.add(address, (byte) 0x14);
-        assertEquals((byte) array.get(address, 4), (byte) 0x14);
+        assertEquals(array.get(address, 4), (byte) 0x14);
     }
 
     @Test
-    public void addAndGetWithResize() throws Exception {
+    public void addAndGetWithResize() {
         long arrAddress = array.allocate();
 
         for(int i = 0; i < 128; i++) {
@@ -81,13 +81,13 @@ public class OffHeapVectorBaseTest {
     }
 
     @Test
-    public void contains() throws Exception {
+    public void contains() {
         assertTrue(array.contains(address, (byte) 0x11));
         assertFalse(array.contains(address, (byte) 0x03));
     }
 
     @Test
-    public void iteratorNext() throws Exception {
+    public void iteratorNext() {
         Iterator<Byte> iterator = array.iterator(address);
         int size = 0;
         while(iterator.next() != null) {
@@ -97,7 +97,7 @@ public class OffHeapVectorBaseTest {
     }
 
     @Test
-    public void iteratorHasNext() throws Exception {
+    public void iteratorHasNext() {
         Iterator<Byte> iterator = array.iterator(address);
         int size = 0;
         while(iterator.hasNext()) {
@@ -108,69 +108,81 @@ public class OffHeapVectorBaseTest {
     }
 
     @Test
-    public void forEach() throws Exception {
+    public void forEach() {
         AtomicInteger size = new AtomicInteger();
         array.forEach(address, aByte -> size.incrementAndGet());
         assertEquals(size.get(), array.size(address));
     }
 
     @Test
-    public void indexOf() throws Exception {
+    public void indexOf() {
         assertEquals(array.indexOf(address, (byte) 0x11), 0);
     }
 
     @Test
-    public void lastIndexOf() throws Exception {
+    public void lastIndexOf() {
         assertEquals(array.lastIndexOf(address, (byte) 0x11), 3);
     }
 
     @Test
-    public void set() throws Exception {
+    public void set() {
         array.set(address, 1, (byte) 0x01);
-        assertEquals((byte) array.get(address, 1), (byte) 0x01);
+        assertEquals(array.get(address, 1), (byte) 0x01);
     }
 
     @Test
-    public void remove() throws Exception {
+    public void remove() {
         array.remove(address, (byte) 0x10);
         assertFalse(array.contains(address, (byte) 0x10));
     }
 
     @Test
-    public void isEmpty() throws Exception {
+    public void isEmpty() {
         assertFalse(array.isEmpty(address));
+
+        long addr = array.allocate();
+        assertTrue(array.isEmpty(addr));
+        array.free(addr);
     }
 
     @Test
-    public void shrinkTest() throws Exception {
+    public void shrinkTest() {
         address = array.shrink(address);
         assertEquals(array.size(address), array.getMax(address));
+
+        long arr = array.allocate();
+        for(int i = 0; i < 16; i++) {
+            array.add(arr, (byte) i);
+        }
+        array.shrink(arr);
+        assertEquals(array.size(arr), array.getMax(arr));
+        array.free(arr);
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void checkBoundsTestIMinus() throws Exception {
+    public void checkBoundsTestIMinus() {
         array.checkIndexBounds(address, -1);
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void checkIndexBoundsIMoreThanSize() throws Exception {
+    public void checkIndexBoundsIMoreThanSize() {
         array.checkIndexBounds(address, Integer.MAX_VALUE);
     }
 
 
     @Test
-    public void removeExists() throws Exception {
+    public void removeExists() {
         assertTrue(array.remove(address, 0));
     }
 
     @Test
-    public void removeNotExists() throws Exception {
+    public void removeNotExists() {
         assertFalse(array.remove(address, Integer.MAX_VALUE));
         assertFalse(array.remove(address, -1));
     }
 
     @Test
-    public void reserveUnreserveMemoryTest() throws Exception {
+    public void reserveUnreserveMemoryTest() {
         long first = SharedSecrets.getJavaNioAccess().getDirectBufferPool().getMemoryUsed();
 
         long addr = array.allocate();
