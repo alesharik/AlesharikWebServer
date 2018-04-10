@@ -116,6 +116,7 @@ public class DoubleOffHeapVectorTest {
         assertTrue(array.contains(address, FIRST_VALUE));
         assertTrue(array.contains(address, SECOND_VALUE));
         assertTrue(array.contains(address, THIRD_VALUE));
+        assertFalse(array.contains(address, NOT_EXISTS));
     }
 
     @Test(expected = UnsupportedOperationException.class)
