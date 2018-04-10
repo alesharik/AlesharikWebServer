@@ -49,12 +49,12 @@ public class CharOffHeapVectorTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         array.free(address);
     }
 
     @Test
-    public void instanceTest() throws Exception {
+    public void instanceTest() {
         CharOffHeapVector v = CharOffHeapVector.instance();
         long address = v.allocate();
         v.add(address, FIRST_VALUE);
@@ -63,7 +63,7 @@ public class CharOffHeapVectorTest {
     }
 
     @Test
-    public void formCharArray() throws Exception {
+    public void formCharArray() {
         char[] arr = {FIRST_VALUE, SECOND_VALUE, THIRD_VALUE, FOURTH_VALUE};
         long addr = 0;
         try {
@@ -78,7 +78,7 @@ public class CharOffHeapVectorTest {
     }
 
     @Test
-    public void toCharArray() throws Exception {
+    public void toCharArray() {
         char[] arr = array.toCharArray(address);
         assertEquals(arr[0], FIRST_VALUE);
         assertEquals(arr[1], SECOND_VALUE);
@@ -87,17 +87,17 @@ public class CharOffHeapVectorTest {
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void getILessThanZero() throws Exception {
+    public void getILessThanZero() {
         array.get(address, -1);
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void getIMoreThanCount() throws Exception {
+    public void getIMoreThanCount() {
         array.get(address, 300);
     }
 
     @Test
-    public void getNormal() throws Exception {
+    public void getNormal() {
         assertSame(array.get(address, 0), FIRST_VALUE);
         assertSame(array.get(address, 1), SECOND_VALUE);
         assertSame(array.get(address, 2), THIRD_VALUE);
@@ -105,14 +105,14 @@ public class CharOffHeapVectorTest {
     }
 
     @Test
-    public void addTest() throws Exception {
+    public void addTest() {
         for(int i = 0; i < 200; i++) {
             address = array.add(address, DUDE);
         }
     }
 
     @Test
-    public void containsTest() throws Exception {
+    public void containsTest() {
         assertTrue(array.contains(address, FIRST_VALUE));
         assertTrue(array.contains(address, SECOND_VALUE));
         assertTrue(array.contains(address, THIRD_VALUE));
@@ -120,7 +120,7 @@ public class CharOffHeapVectorTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void iteratorTest() throws Exception {
+    public void iteratorTest() {
         Iterator<Character> iter = array.iterator(address);
         assertTrue(iter.hasNext());
         assertSame(iter.next(), FIRST_VALUE);
@@ -143,14 +143,14 @@ public class CharOffHeapVectorTest {
     }
 
     @Test
-    public void forEachTest() throws Exception {
+    public void forEachTest() {
         AtomicInteger counter = new AtomicInteger(0);
         array.forEach(address, aByte -> counter.getAndIncrement());
         assertTrue(counter.get() > 3);
     }
 
     @Test
-    public void indexOfExists() throws Exception {
+    public void indexOfExists() {
         assertEquals(array.indexOf(address, FIRST_VALUE), 0);
         assertEquals(array.indexOf(address, SECOND_VALUE), 1);
         assertEquals(array.indexOf(address, THIRD_VALUE), 2);
@@ -158,50 +158,50 @@ public class CharOffHeapVectorTest {
     }
 
     @Test
-    public void indexOfNotExists() throws Exception {
+    public void indexOfNotExists() {
         assertEquals(array.indexOf(address, NOT_EXISTS), -1);
     }
 
     @Test
-    public void lastIndexOfExists() throws Exception {
+    public void lastIndexOfExists() {
         assertEquals(array.lastIndexOf(address, FOURTH_VALUE), 3);
         assertEquals(array.lastIndexOf(address, SECOND_VALUE), 1);
         assertEquals(array.lastIndexOf(address, THIRD_VALUE), 2);
     }
 
     @Test
-    public void lastIndexOfNotExists() throws Exception {
+    public void lastIndexOfNotExists() {
         assertEquals(array.lastIndexOf(address, NOT_EXISTS), -1);
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void setLessThanZero() throws Exception {
+    public void setLessThanZero() {
         array.set(address, -1, DUDE);
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void setMoreThanCount() throws Exception {
+    public void setMoreThanCount() {
         array.set(address, 1000, DUDE);
     }
 
     @Test
-    public void setNormal() throws Exception {
+    public void setNormal() {
         array.set(address, 4, SECOND_VALUE);
         assertEquals(SECOND_VALUE, array.get(address, 4));
     }
 
     @Test
-    public void removeExists() throws Exception {
+    public void removeExists() {
         assertTrue(array.remove(address, DUDE));
     }
 
     @Test
-    public void removeNotExists() throws Exception {
+    public void removeNotExists() {
         assertFalse(array.remove(address, NOT_EXISTS));
     }
 
     @Test
-    public void getElementSizeTest() throws Exception {
+    public void getElementSizeTest() {
         assertEquals(array.getElementSize(), 2L);
     }
 }
