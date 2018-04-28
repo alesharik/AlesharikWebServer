@@ -59,8 +59,7 @@ This code creates `hello-world` define rule with `hi` definition
 include 'modules/m.module' //Include another module. Path is relative to current module
 include 'modules/parent.module' //Include another module. Path is relative to current module
 use 'modules/helper.js' language 'javascript' context 'module' //Include functions file. Path is relative to current module
-//New line required!
-module test {//Define new module
+module test {//Define new module, space REQUIRED!
     name:type { //Define new module configuration
         test: {//Object
             a: 1, //Primitive
@@ -77,13 +76,23 @@ module test {//Define new module
     }
 }
 ```
-`use` context set language global scope. 'global' - global scope(for all modules and configs), 'module' - for this module/endpoint only, 'call' - context will reset after every function call
+`use` context set language global scope. 'global' - global scope(for all modules and configs), 'module' - for this module/endpoint only, 'call' - context will reset after every function call - default.
+
+Primitives can have basic Java types by special writing styles.
+Writing formats like 0x1F, 0b11101 and others are supported
+
+| Writing | Definition |
+|---|---|
+| %num%B | Number will be interpreted as byte |
+| %num%S | Number will be interpreted as short |
+| %num%L | Number will be interpreted as long | 
+| %num%D | Number will be interpreted as double |
+| '%char%' | String will be interpreted as char if and only if it is one symbol long |
 ## Endpoint configuration
 ```
 include 'modules/a.module'
 use 'modules/helper.js' language 'javascript' context 'global'
-//New line required!
-endpoint end { //Endpoint definition
+endpoint end { //Endpoint definition, space REQUIRED
     api { //The api config
         //Blablabla
     }
