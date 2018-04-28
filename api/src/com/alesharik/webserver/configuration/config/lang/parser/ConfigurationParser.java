@@ -72,7 +72,7 @@ public class ConfigurationParser {
     }
 
     private static String buildDefines(String line, Map<Pattern, String> defines) {
-        line = COMMENT_PATTERN.matcher(line).replaceAll("");
+        line = COMMENT_PATTERN.matcher(line).replaceAll("").replaceAll("\\t", "    ");
         for(Map.Entry<Pattern, String> patternStringEntry : defines.entrySet()) {
             Matcher matcher = patternStringEntry.getKey().matcher(line);
             line = matcher.replaceAll(patternStringEntry.getValue());
@@ -90,10 +90,24 @@ public class ConfigurationParser {
         List<String> endpoint = fileReader.readFile(this.endpoint.toPath());
         List<String> endpointClone = new ArrayList<>(endpoint);
 
-        List<String> headerLines = cutHeader(endpoint.iterator(), StringUtils::isWhitespace, true);
+        if(endpoint.isEmpty())
+            throw new CodeParsingException("Endpoint file is empty!", 0, endpoint);
+
+        List<String> headerLines;
+        if(!endpoint.get(0).replaceAll("^\\s*", "").startsWith("#"))
+            headerLines = new ArrayList<>();
+        else
+            headerLines = cutHeader(endpoint.iterator(), StringUtils::isWhitespace, true);
+        ConfigParserInstructionsHeader header = ConfigParserInstructionsHeader.parse(headerLines, null, fileReader);
+
         List<String> includeLines = cutHeader(endpoint.iterator(), s -> s.startsWith("endpoint"), false);
         List<ExternalLanguageHelper> helpers = extractHelpers(includeLines.iterator(), folder, endpointClone, headerLines.size());
         List<File> moduleFiles = extractModules(includeLines.iterator(), folder, endpointClone, headerLines.size());
+
+        List<ConfigurationModuleImpl> modules = moduleFiles.stream()
+                .map(file -> parseModule(file, fileReader, header))
+                .collect(Collectors.toList());
+
 
         return null;
     }
@@ -183,7 +197,7 @@ public class ConfigurationParser {
         return helpers;
     }
 
-    protected ConfigurationModuleImpl parseModule(File file, FileReader fileReader) {
+    protected ConfigurationModuleImpl parseModule(File file, FileReader fileReader, @Nonnull ConfigParserInstructionsHeader endpointHeader) {
         Path folder = file.getParentFile().toPath();
         List<String> lines = fileReader.readFile(file.toPath());
         List<String> linesCopy = new ArrayList<>(lines);
@@ -193,7 +207,7 @@ public class ConfigurationParser {
         List<ExternalLanguageHelper> helpers = extractHelpers(includeLines.iterator(), folder, linesCopy, headerLines.size());
         List<File> moduleFiles = extractModules(includeLines.iterator(), folder, linesCopy, headerLines.size());
         Map<String, ConfigurationModuleImpl> modules = moduleFiles.stream()
-                .map(file1 -> parseModule(file1, fileReader))
+                .map(file1 -> parseModule(file1, fileReader, endpointHeader))
                 .collect(Collectors.toMap(ConfigurationModuleImpl::getName, o -> o));
         ConfigParserInstructionsHeader header = modules.values().stream()
                 .map(configurationModule -> configurationModule.defines)
@@ -202,6 +216,8 @@ public class ConfigurationParser {
                     return header1;
                 })
                 .orElse(null);
+        if(header != null)
+            header.append(endpointHeader);
         ConfigParserInstructionsHeader myHeader = ConfigParserInstructionsHeader.parse(headerLines, header, fileReader);
         Map<String, String> map = myHeader.getAllDefines();
         Map<Pattern, String> preparedDefines = new HashMap<>();
