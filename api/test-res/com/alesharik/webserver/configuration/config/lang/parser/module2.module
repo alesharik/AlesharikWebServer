@@ -1,0 +1,11 @@
+#define 'a' 'e'
+
+use 'test.js' language 'javascript' context 'module'
+ use 'test1.js' language 'javascript' context 'module'
+    use 'test2.js' language 'javascript' context 'module'
+    use 'test3.js' language 'javascript'
+    use 'test3.js' context 'call' language 'javascript'
+  use 'test3.js' context 'global' language 'javascript'
+
+module test {
+}

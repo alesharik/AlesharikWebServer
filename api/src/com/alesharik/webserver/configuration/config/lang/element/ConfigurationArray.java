@@ -18,5 +18,5 @@
 
 package com.alesharik.webserver.configuration.config.lang.element;
 
-public interface ConfigurationArray extends ConfigurationElement {
+public interface ConfigurationArray extends ConfigurationElement, Appendable {
 }

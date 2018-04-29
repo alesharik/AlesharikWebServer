@@ -1,0 +1,12 @@
+module m {
+a:a {
+    a: 1,
+    b: 'test123',
+    c: "asd,123",
+    d: <test>asdasd
+qwe</test>,
+    e: [ 1, 2, 3 ], //Array
+    qwe: { a: 1, b: 2 }, //Object
+    asd: calc()
+    }
+}

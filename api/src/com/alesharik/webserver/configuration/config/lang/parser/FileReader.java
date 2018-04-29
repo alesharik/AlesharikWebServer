@@ -18,13 +18,33 @@
 
 package com.alesharik.webserver.configuration.config.lang.parser;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * File reader wraps all interaction with file system
+ */
 public interface FileReader {
     /**
      * @param path relative path
      * @return
      */
     List<String> readFile(Path path);
+
+    default boolean isFile(File file) {
+        return file.isFile();
+    }
+
+    default boolean exists(File file) {
+        return file.exists();
+    }
+
+    default boolean canRead(File file) {
+        return file.canRead();
+    }
+
+    default boolean canExecute(File file) {
+        return file.canExecute();
+    }
 }

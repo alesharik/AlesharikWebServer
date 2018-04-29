@@ -1,0 +1,8 @@
+include 'parent.module'
+
+module sub {
+    a:a extends parent.a {
+        b: 1,
+        c: 2
+    }
+}

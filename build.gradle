@@ -27,7 +27,7 @@ allprojects {
     ext.DEPLOY_GROUP = 'deploy'
     ext.NATIVE_GROUP = "native"
 
-    version = "0.2.0"
+    version = "0.2.16"
 }
 
 //====================Some vars====================\\

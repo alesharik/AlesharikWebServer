@@ -1,0 +1,4 @@
+use language 'js'
+
+module m {
+}

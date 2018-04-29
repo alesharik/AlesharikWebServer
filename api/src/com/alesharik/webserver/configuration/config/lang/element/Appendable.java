@@ -18,11 +18,6 @@
 
 package com.alesharik.webserver.configuration.config.lang.element;
 
-public interface ConfigurationFunctionElement extends ConfigurationRunnableElement {
-    String getName();
-
-    /**
-     * Return actual code
-     */
-    String getCodeInstruction();
+public interface Appendable extends ConfigurationElement {
+    void append(ConfigurationElement element);
 }

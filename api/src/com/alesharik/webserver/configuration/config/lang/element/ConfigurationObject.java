@@ -18,19 +18,27 @@
 
 package com.alesharik.webserver.configuration.config.lang.element;
 
-import java.util.List;
+import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.Set;
 
-public interface ConfigurationObject extends ConfigurationElement {
+public interface ConfigurationObject extends ConfigurationElement, Appendable {
+    @Nullable
     ConfigurationElement getElement(String name);
 
+    @Nullable
     <V extends ConfigurationElement> V getElement(String name, Class<V> clazz);
 
-    List<String> getNames();
+    Set<String> getNames();
 
     Map<String, ConfigurationElement> getEntries();
 
     int getSize();
 
     boolean hasKey(String name);
+
+    @Override
+    default void append(ConfigurationElement element) {
+        getEntries().put(element.getName(), element);
+    }
 }

@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -65,7 +66,7 @@ public class ConfigurationParser {
 
     public ConfigurationParser(@Nonnull File endpoint, @Nonnull FileReader fileReader) {
         this.fileReader = fileReader;
-        if(!endpoint.isFile())
+        if(!fileReader.isFile(endpoint))
             throw new IllegalArgumentException("Endpoint must be a file!");
         this.endpoint = endpoint;
         this.folder = endpoint.getParentFile().toPath();
@@ -105,7 +106,7 @@ public class ConfigurationParser {
         List<File> moduleFiles = extractModules(includeLines.iterator(), folder, endpointClone, headerLines.size());
 
         List<ConfigurationModuleImpl> modules = moduleFiles.stream()
-                .map(file -> parseModule(file, fileReader, header))
+                .map(file -> parseModule(file, header))
                 .collect(Collectors.toList());
 
 
@@ -130,24 +131,26 @@ public class ConfigurationParser {
 
     protected List<File> extractModules(@Nonnull Iterator<String> linesIterator, @Nonnull Path relative, @Nonnull List<String> file, int lineOff) {
         List<File> modules = new ArrayList<>();
-        int lineNum = 0;
+        int lineNum = 1;
         while(linesIterator.hasNext()) {
-            String line = linesIterator.next();
+            String line = linesIterator.next().replaceAll("^\\s*", "");
             line = COMMENT_PATTERN.matcher(line).replaceAll("");
             if(line.startsWith("include")) {
                 Matcher matcher = INCLUDE_REGEX.matcher(line);
+                if(!matcher.find())
+                    throw new CodeParsingException("include statement error: doesn't match the RegExp", lineNum + lineOff, file);
                 String fileName = matcher.group("inc");
                 if(fileName == null)
                     throw new CodeParsingException("include statement error: this statement doesn't have file definition!", lineNum + lineOff, file);
 
                 File theFile = relative.resolve(fileName).toFile();
-                if(!theFile.exists())
+                if(!fileReader.exists(theFile))
                     throw new CodeParsingException("include statement error: file " + theFile + " not found!", lineNum + lineOff, file);
-                if(!theFile.isFile())
+                if(!fileReader.isFile(theFile))
                     throw new CodeParsingException("include statement error: file " + theFile + " is a directory!", lineNum + lineOff, file);
-                if(!theFile.canRead())
+                if(!fileReader.canRead(theFile))
                     throw new CodeParsingException("include statement error: file " + theFile + " is not readable!", lineNum + lineOff, file);
-                if(!theFile.canExecute())
+                if(!fileReader.canExecute(theFile))
                     throw new CodeParsingException("include statement error: file " + theFile + " is not executable!", lineNum + lineOff, file);
                 modules.add(theFile);
             }
@@ -159,30 +162,36 @@ public class ConfigurationParser {
     @Nonnull
     protected List<ExternalLanguageHelper> extractHelpers(@Nonnull Iterator<String> linesIterator, @Nonnull Path relative, @Nonnull List<String> file, int lineOff) {
         List<ExternalLanguageHelper> helpers = new ArrayList<>();
-        int lineNum = 0;
+        int lineNum = 1;
         while(linesIterator.hasNext()) {
-            String line = linesIterator.next();
+            String line = linesIterator.next().replaceAll("^\\s*", "");
             line = COMMENT_PATTERN.matcher(line).replaceAll("");
             if(line.startsWith("use")) {
                 Matcher matcher = USE_REGEX.matcher(line);
-                if(matcher.groupCount() < 2)
-                    throw new CodeParsingException("use statement error: this statement is not applicable to `use 'file' language 'lang'`!", lineNum + lineOff, file);
-                String fileName = matcher.group("use");
-                if(fileName == null)
-                    throw new CodeParsingException("use statement error: this statement doesn't have file definition!", lineNum + lineOff, file);
-                String languageName = matcher.group("lang");
+                String fileName = null;
+                String languageName = null;
+                String contextName = null;
+                while(matcher.find()) {
+                    if(matcher.group("use") != null)
+                        fileName = matcher.group("use");
+                    else if(matcher.group("lang") != null)
+                        languageName = matcher.group("lang");
+                    else if(matcher.group("ctx") != null)
+                        contextName = matcher.group("ctx");
+                }
                 if(languageName == null)
                     throw new CodeParsingException("use statement error: this statement doesn't have language definition!", lineNum + lineOff, file);
-                String contextName = matcher.group("ctx");
+                if(fileName == null)
+                    throw new CodeParsingException("use statement error: this statement doesn't have file definition!", lineNum + lineOff, file);
 
                 File theFile = relative.resolve(fileName).toFile();
-                if(!theFile.exists())
+                if(!fileReader.exists(theFile))
                     throw new CodeParsingException("use statement error: file " + theFile + " not found!", lineNum + lineOff, file);
-                if(!theFile.isFile())
+                if(!fileReader.isFile(theFile))
                     throw new CodeParsingException("use statement error: file " + theFile + " is a directory!", lineNum + lineOff, file);
-                if(!theFile.canRead())
+                if(!fileReader.canRead(theFile))
                     throw new CodeParsingException("use statement error: file " + theFile + " is not readable!", lineNum + lineOff, file);
-                if(!theFile.canExecute())
+                if(!fileReader.canExecute(theFile))
                     throw new CodeParsingException("use statement error: file " + theFile + " is not executable!", lineNum + lineOff, file);
 
                 ExecutionContext ctx = ExecutionContext.parse(contextName);
@@ -197,17 +206,23 @@ public class ConfigurationParser {
         return helpers;
     }
 
-    protected ConfigurationModuleImpl parseModule(File file, FileReader fileReader, @Nonnull ConfigParserInstructionsHeader endpointHeader) {
+    protected ConfigurationModuleImpl parseModule(File file, @Nonnull ConfigParserInstructionsHeader endpointHeader) {
         Path folder = file.getParentFile().toPath();
         List<String> lines = fileReader.readFile(file.toPath());
         List<String> linesCopy = new ArrayList<>(lines);
 
-        List<String> headerLines = cutHeader(lines.iterator(), StringUtils::isWhitespace, true);
+        if(lines.isEmpty())
+            throw new CodeParsingException("Module doesn't have any line to parse!", 0, lines);
+        List<String> headerLines;
+        if(lines.get(0).replaceAll("^\\s*", "").startsWith("#"))
+            headerLines = cutHeader(lines.iterator(), StringUtils::isWhitespace, true);
+        else
+            headerLines = Collections.emptyList();
         List<String> includeLines = cutHeader(lines.iterator(), s -> s.startsWith("module"), false);
         List<ExternalLanguageHelper> helpers = extractHelpers(includeLines.iterator(), folder, linesCopy, headerLines.size());
         List<File> moduleFiles = extractModules(includeLines.iterator(), folder, linesCopy, headerLines.size());
         Map<String, ConfigurationModuleImpl> modules = moduleFiles.stream()
-                .map(file1 -> parseModule(file1, fileReader, endpointHeader))
+                .map(file1 -> parseModule(file1, endpointHeader))
                 .collect(Collectors.toMap(ConfigurationModuleImpl::getName, o -> o));
         ConfigParserInstructionsHeader header = modules.values().stream()
                 .map(configurationModule -> configurationModule.defines)
@@ -261,15 +276,15 @@ public class ConfigurationParser {
                     String[] parts = line.split(" extends ", 2);
                     if(parts.length < 2)
                         throw new CodeParsingException("extends syntax error", lineNumber.get(), linesCopy);
-                    desc = parts[0].replace(" ", "");
-                    String[] extendType = parts[1].replace(" ", "").split("\\.", 2);
+                    desc = parts[0].replaceAll("^\\s*", "");
+                    String[] extendType = parts[1].replaceAll("^\\s*", "").split("\\.", 2);
                     if(extendType.length < 2)
                         throw new CodeParsingException("extend supertype not found: incorrect declaration", lineNumber.get(), linesCopy);
                     String targetModule = extendType[0];
                     String supertype = extendType[1]; //Supertype name and {
                     if(!supertype.endsWith("{"))
                         throw new CodeParsingException("type definition error: { expected", lineNumber.get(), linesCopy);
-                    supertype = supertype.substring(0, supertype.length() - 1);
+                    supertype = supertype.substring(0, supertype.length() - 1).replace(" ", "");
                     if(targetModule.isEmpty() || supertype.isEmpty())
                         throw new CodeParsingException("extend syntax error: supertype definition is invalid", lineNumber.get(), linesCopy);
                     if(!modules.containsKey(targetModule))
@@ -287,7 +302,11 @@ public class ConfigurationParser {
                         throw new CodeParsingException("type definition error: { expected", lineNumber.get(), linesCopy);
                     desc = l.substring(0, l.length() - 1);
                 }
-                TypedObjectImpl object = TypedObjectImpl.parse(desc);
+                TypedObjectImpl object;
+                if(extend == null)
+                    object = TypedObjectImpl.parse(desc);
+                else
+                    object = TypedObjectImpl.parse(desc, extend);
                 if(object == null)
                     throw new CodeParsingException("type definition error: bad description(expected name:type)", lineNumber.get(), linesCopy);
 
@@ -344,6 +363,7 @@ public class ConfigurationParser {
                         stringBuilder.append(c);
                 }
                 if(!stop) {
+                    stringBuilder.append('\n');
                     l = buildDefines(lines.next(), preparedDefinitions).toCharArray();
                     lineCounter.incrementAndGet();
                     lines.remove();
@@ -357,7 +377,7 @@ public class ConfigurationParser {
         } else if(def.startsWith("<")) {//Code fragment
             String langName = def.substring(1, def.indexOf('>'));
             String closeTag = "</" + langName + '>';
-            String codeFragment = def.substring(def.indexOf('>'));
+            String codeFragment = def.substring(def.indexOf('>') + 1);
             if(codeFragment.contains(closeTag)) {
                 String code = codeFragment.substring(0, codeFragment.indexOf(closeTag));
                 return new ConfigElement(new CodeImpl(langName, code, name), parts[0] + ':' + defSpaces + '<' + langName + '>' + code + closeTag);
@@ -366,12 +386,17 @@ public class ConfigurationParser {
                 code.append(codeFragment);
                 String l;
                 while(!(l = lines.next()).contains(closeTag)) {
+                    code.append('\n');
                     code.append(l);
                     lineCounter.incrementAndGet();
+                    lines.remove();
                 }
                 String closeLine = l.substring(0, l.indexOf(closeTag));
-                if(!StringUtils.isWhitespace(closeLine))
+                lines.remove();//Remove code line
+                if(!StringUtils.isWhitespace(closeLine)) {
+                    code.append('\n');
                     code.append(closeLine);
+                }
                 return new ConfigElement(new CodeImpl(langName, code.toString(), name), parts[0] + ':' + defSpaces + '<' + langName + '>' + code + closeTag);
             }
         } else if(def.endsWith("()")) {
@@ -450,7 +475,7 @@ public class ConfigurationParser {
                 while(!last.isEmpty()) {
                     ConfigElement element = parseElement(last, lines, lineCopy, lineCounter, preparedDefinitions, Integer.toString(array.size()));
                     array.append(element.element);
-                    last = last.substring(element.text.length());//Remove last element
+                    last = last.substring(element.text.length() - 1);//Remove last element
                     String l1;
                     if(!last.isEmpty())
                         l1 = last.substring(1).replaceFirst("^\\s*", ""); //Remove spaces
@@ -459,6 +484,8 @@ public class ConfigurationParser {
                     text.append(element.text);
                     text.append(last, 0, last.length() - l1.length());
                     last = l1;
+                    if(StringUtils.isWhitespace(last) || last.matches("\\s*,\\s*"))
+                        break;//Nothing interesting in the string
 
                     if(last.startsWith("]")) { //Close arr
                         text.append("]");

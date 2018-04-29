@@ -1,0 +1,10 @@
+module parent {
+    a:a {
+        a: 1,
+        c: 1
+    },
+    b:b {
+        a: 1,
+        b: 1
+    }
+}

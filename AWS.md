@@ -66,7 +66,7 @@ module test {//Define new module, space REQUIRED!
             b: 'test', //String
             c: "test", //String
             d: <javascript> console.log("test") </javascript>, //Code element. Tag should contain language name
-            e: [1, 2, 3], //Array
+            e: [ 1, 2, 3 ], //Array, elements must be split with brackets at least by 1 space
             qwe: { a: 1, b: 2 } //Object
         },
         asd: calc() //use function from helper.js
