@@ -26,6 +26,7 @@ import com.alesharik.webserver.configuration.config.lang.ExecutionContext;
 import com.alesharik.webserver.configuration.config.lang.ExternalLanguageHelper;
 import com.alesharik.webserver.configuration.config.lang.ScriptEndpointSection;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
 import com.alesharik.webserver.configuration.config.lang.parser.elements.ArrayImpl;
 import com.alesharik.webserver.configuration.config.lang.parser.elements.CodeImpl;
@@ -40,15 +41,17 @@ import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -59,6 +62,7 @@ public class ConfigurationParser {
     protected static final Pattern COMMENT_PATTERN = Pattern.compile("//.*");
     protected static final Pattern USE_REGEX = Pattern.compile("use '(?<use>.*?)'| language '(?<lang>.*?)'| context '(?<ctx>.*?)'");
     protected static final Pattern INCLUDE_REGEX = Pattern.compile("include '(?<inc>.*?)'");
+    protected static final Pattern ENDPOINT_USE_REGEX = Pattern.compile("use\\s+(?<parent>.*?)\\s+as\\s+(?<name>.+)");
     protected static final Predicate<String> CLOSE_BRACKET_REGEX_PREDICATE = Pattern.compile("\\s*}\\s*").asPredicate();
     protected final Path folder;
     protected final File endpoint;
@@ -87,7 +91,7 @@ public class ConfigurationParser {
         return ret;
     }
 
-    public ConfigurationEndpoint parse() throws IOException {
+    public ConfigurationEndpoint parse() {
         List<String> endpoint = fileReader.readFile(this.endpoint.toPath());
         List<String> endpointClone = new ArrayList<>(endpoint);
 
@@ -95,7 +99,7 @@ public class ConfigurationParser {
             throw new CodeParsingException("Endpoint file is empty!", 0, endpoint);
 
         List<String> headerLines;
-        if(!endpoint.get(0).replaceAll("^\\s*", "").startsWith("#"))
+        if(!endpoint.get(0).replaceFirst("^\\s*", "").startsWith("#"))
             headerLines = new ArrayList<>();
         else
             headerLines = cutHeader(endpoint.iterator(), StringUtils::isWhitespace, true);
@@ -105,11 +109,368 @@ public class ConfigurationParser {
         List<ExternalLanguageHelper> helpers = extractHelpers(includeLines.iterator(), folder, endpointClone, headerLines.size());
         List<File> moduleFiles = extractModules(includeLines.iterator(), folder, endpointClone, headerLines.size());
 
-        List<ConfigurationModuleImpl> modules = moduleFiles.stream()
+        Map<String, ConfigurationModuleImpl> modules = moduleFiles.stream()
                 .map(file -> parseModule(file, header))
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(ConfigurationModule::getName, o -> o));
 
+        modules.values()
+                .stream()
+                .map(configurationModule -> configurationModule.defines)
+                .reduce((header1, header2) -> {
+                    header1.append(header2);
+                    return header1;
+                })
+                .ifPresent(header::append);
 
+        Map<Pattern, String> preparedDefines = new HashMap<>();
+        header.getAllDefines().forEach((s, s2) -> preparedDefines.put(Pattern.compile(s), s2));
+
+        String firstLine = buildDefines(cutLine(endpoint.iterator()), preparedDefines);
+        int actualCodeStartLine = headerLines.size() + includeLines.size();
+        String endpointName;
+        {
+
+            int off = firstLine.indexOf("endpoint ") + "endpoint ".length();
+            int cutOff = firstLine.lastIndexOf(" {");
+
+            if(off == -1)
+                throw new CodeParsingException("Unexpected symbol: endpoint expected", actualCodeStartLine + 1, endpointClone);
+            if(cutOff == -1)
+                throw new CodeParsingException("Unexpected symbol: { expected", actualCodeStartLine, endpointClone);
+            endpointName = firstLine.substring(off, cutOff).replace(" ", "");
+        }
+
+        AtomicInteger lineNumber = new AtomicInteger(actualCodeStartLine + 1);
+
+        ApiEndpointSection apiEndpointSection = null;
+        ScriptEndpointSection scriptEndpointSection = null;
+        Map<String, CustomEndpointSection> sections = new HashMap<>();
+
+        boolean in = true;
+        while(!endpoint.isEmpty() && in) {
+            String line = buildDefines(cutLine(endpoint.iterator()), preparedDefines);
+            lineNumber.incrementAndGet();
+            if(StringUtils.isWhitespace(line))
+                continue;
+            line = line.replaceFirst("^\\s*", "");
+            if(line.startsWith("}")) {
+                if(!StringUtils.isWhitespace(line.substring(1)))
+                    throw new CodeParsingException("endpoint parse error: symbols after }", lineNumber.get(), endpointClone);
+            } else if(line.startsWith("api "))
+                apiEndpointSection = parseApiSection(line.replaceFirst("api ", ""), endpoint.iterator(), lineNumber, endpointClone, preparedDefines);
+            else if(line.startsWith("script"))
+                scriptEndpointSection = parseScript(line.replaceFirst("script ", ""), endpoint.iterator(), lineNumber, endpointClone, preparedDefines);
+            else {
+                String[] parts = line.split(" ", 2);
+                String name = parts[0];
+                sections.put(name, parseCustomSection(parts.length == 1 ? "" : parts[1], endpoint.iterator(), lineNumber, endpointClone, preparedDefines, modules));
+            }
+        }
+
+        if(apiEndpointSection == null)
+            throw new CodeParsingException("API configuration not found!", lineNumber.get(), endpointClone);
+        if(scriptEndpointSection == null)
+            throw new CodeParsingException("Script configuration not found!", lineNumber.get(), endpointClone);
+
+        if(!endpoint.isEmpty()) {
+            for(String line : endpoint) {
+                if(!StringUtils.isWhitespace(line))
+                    throw new CodeParsingException("Can't recognize symbols outside of the endpoint!", lineNumber.get(), endpointClone);
+            }
+        }
+
+        return new ConfigurationEndpointImpl(endpointName, apiEndpointSection, scriptEndpointSection, helpers, new ArrayList<>(modules.values()), sections);
+    }
+
+    private ApiEndpointSection parseApiSection(String startLine, Iterator<String> lines, AtomicInteger lineNumber, List<String> linesCopy, Map<Pattern, String> preparedDefines) {
+        ConfigElement element = parseElement(startLine, lines, linesCopy, lineNumber, preparedDefines, "api");
+        ConfigurationElement elem = element.element;
+        if(!(elem instanceof ConfigurationObject))
+            throw new CodeParsingException("Api section must be an object!", lineNumber.get(), linesCopy);
+        return new ApiEndpointSectionImpl((ConfigurationObject) elem);
+    }
+
+    private ScriptEndpointSection parseScript(String startLine, Iterator<String> lines, AtomicInteger lineNumber, List<String> linesCopy, Map<Pattern, String> preparedDefines) {
+        Map<String, ScriptEndpointSection.ScriptSection> sections = new HashMap<>();
+
+        //Find start
+        if(!startLine.replaceFirst("^\\s*", "").startsWith("{"))
+            throw new CodeParsingException("endpoint parsing error: { expected!", lineNumber.get(), linesCopy);
+        if(!StringUtils.isWhitespace(startLine.replaceFirst("^\\s*", "").substring(1)))
+            throw new CodeParsingException("endpoint parsing error: unexpected symbols after { !", lineNumber.get(), linesCopy);
+
+        ScriptSectionImpl currentSection = null;
+        String currentSectionName = "";
+        int level = 1;//0 - end, 1 - in scripts, 2 - in section
+        while(level > 0) {
+            if(!lines.hasNext())
+                throw new CodeParsingException("script section parsing error: } not found!", lineNumber.get(), linesCopy);
+            String current = buildDefines(cutLine(lines), preparedDefines);
+            lineNumber.incrementAndGet();
+
+            if(level > 2)
+                throw new CodeParsingException("script section parsing error: too many enclosures - " + level, lineNumber.get(), linesCopy);
+            if(StringUtils.isWhitespace(current))
+                continue;
+
+            current = current.replaceFirst("^\\s*", "");
+            if(current.startsWith("}")) {
+                level--;
+                if(level == 1) {//Section closed
+                    sections.put(currentSectionName, currentSection);
+                    currentSection = null;
+                    currentSectionName = "";
+                } else if(level == 0) //Script section ended
+                    break;
+            } else {
+                if(level == 2) {//Is in section
+                    String[] parts = current.split(" ", 2);
+                    String name = parts[0];
+                    ConfigElement element = parts.length == 1 ? null : parseElement(parts[1], lines, linesCopy, lineNumber, preparedDefines, "script", true);
+                    currentSection.commands.add(new CommandImpl(name, element == null ? null : element.element));
+                } else if(level == 1) {//Section start
+                    String[] parts = current.split(" ", 2);
+                    String name = parts[0];
+                    if(parts.length > 1) {
+                        String def = parts[1].replaceFirst("^\\s*", "");
+                        if(def.matches("\\{\\s*}")) {//Open and close brackets found
+                            sections.put(name, new ScriptSectionImpl());
+                        } else if(def.startsWith("{")) {//Open bracket found
+                            if(!StringUtils.isWhitespace(def.substring(1)))
+                                throw new CodeParsingException("script section parsing error: unexpected symbols after { in script section!", lineNumber.get(), linesCopy);
+
+                            currentSection = new ScriptSectionImpl();
+                            currentSectionName = name;
+                            level++;
+                        } else {
+                            while(true) {
+                                String line = buildDefines(cutLine(lines), preparedDefines);
+                                lineNumber.incrementAndGet();
+                                if(line.replaceFirst("^\\s*", "").startsWith("{")) {
+                                    currentSection = new ScriptSectionImpl();
+                                    currentSectionName = name;
+                                    level++;
+                                    break;//Bracket found!
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return new ScriptEndpointSectionImpl(sections);
+    }
+
+    private CustomEndpointSection parseCustomSection(String line, Iterator<String> lines, AtomicInteger lineNumber, List<String> linesCopy, Map<Pattern, String> preparedDefines, Map<String, ConfigurationModuleImpl> modules) {
+        CustomEndpointSectionImpl section = new CustomEndpointSectionImpl();
+
+        line = line.replaceFirst("^\\s*", "");
+        if(line.startsWith("{")) {
+            if(!StringUtils.isWhitespace(line.substring(1)))
+                throw new CodeParsingException("custom section parse error: unexpected symbols after {", lineNumber.get(), linesCopy);
+        } else {
+            String l;
+            do {
+                l = buildDefines(cutLine(lines), preparedDefines).replaceFirst("^\\s*", "");
+                lineNumber.incrementAndGet();
+            } while(!l.startsWith("{"));
+            if(!StringUtils.isWhitespace(l.substring(1)))
+                throw new CodeParsingException("custom section parse error: unexpected symbols after {", lineNumber.get(), linesCopy);
+        }
+
+        boolean in = true;
+        while(in) {
+            String l = buildDefines(cutLine(lines), preparedDefines).replaceFirst("^\\s*", "");
+            lineNumber.incrementAndGet();
+            if(StringUtils.isWhitespace(l))
+                continue;
+            if(l.startsWith("}")) {
+                in = false;
+                if(!StringUtils.isWhitespace(l.substring(1)))
+                    throw new CodeParsingException("custom section parse error: unexpected symbols after }", lineNumber.get(), linesCopy);
+            } else if(l.startsWith("use")) {
+                Matcher matcher = ENDPOINT_USE_REGEX.matcher(l);
+
+                String parent = "";
+                String name = "";
+
+                boolean hasConfig = false;
+                while(matcher.find()) {
+                    if(matcher.group("parent") != null)
+                        parent = matcher.group("parent");
+                    if(matcher.group("name") != null) {
+                        String[] parts = matcher.group("name").split(" ", 2);
+                        if(parts.length == 1 && StringUtils.isWhitespace(parts[0]))
+                            throw new CodeParsingException("custom section parse error: use syntax error (empty name)", lineNumber.get(), linesCopy);
+                        else if(parts.length > 1) {
+                            String s = parts[1].replaceFirst("^\\s*", "");
+                            if(s.startsWith("{")) {
+                                hasConfig = true;
+                                if(!StringUtils.isWhitespace(s.substring(1)))
+                                    throw new CodeParsingException("custom section parse error: unexpected symbols after {", lineNumber.get(), linesCopy);
+                            } else
+                                throw new CodeParsingException("custom section parse error: unexpected symbols after use directive", lineNumber.get(), linesCopy);
+                            name = parts[0];
+                        } else //parts.length == 1 && parts[0] is a real name
+                            name = parts[0];
+                    }
+                }
+
+                if(parent.isEmpty() || name.isEmpty())
+                    throw new CodeParsingException("custom section parse error: use syntax error (empty name or parent)", lineNumber.get(), linesCopy);
+
+                ConfigurationObject parentObj = null;
+                if(!"null".equals(parent)) {
+                    String[] parts = parent.split("\\.", 2);
+                    if(parts.length < 2 || StringUtils.isWhitespace(parts[0]) || StringUtils.isWhitespace(parts[1]))
+                        throw new CodeParsingException("use directive parse error: parent must follow pattern 'module_name:object_name' or be 'null'", lineNumber.get(), linesCopy);
+                    String moduleName = parts[0];
+                    String objectName = parts[1];
+                    ConfigurationModule module = findModule(moduleName, modules.values());
+                    if(module == null)
+                        throw new CodeParsingException("linker error: module " + moduleName + " not found", lineNumber.get(), linesCopy);
+                    ConfigurationTypedObject object = null;
+                    for(ConfigurationTypedObject configurationTypedObject : module.getModuleConfigurations()) {
+                        if(objectName.equals(configurationTypedObject.getName()))
+                            object = configurationTypedObject;
+                    }
+                    if(object == null)
+                        throw new CodeParsingException("linker error: module object " + objectName + " not found", lineNumber.get(), linesCopy);
+                    parentObj = object;
+                }
+
+                if(hasConfig) {
+                    CustomEndpointSection.UseDirective directive = parseUseDirectiveConfigured(name, parentObj, "{", lines, lineNumber, linesCopy, preparedDefines);
+                    section.useDirectives.add(directive);
+                } else {
+                    section.useDirectives.add(new UseDirectiveImpl(name, parentObj));
+                }
+            } else
+                throw new CodeParsingException("custom section parse error: unknown code phrase", lineNumber.get(), linesCopy);
+        }
+
+        return section;
+    }
+
+    private CustomEndpointSection.UseDirective parseUseDirectiveConfigured(String name, ConfigurationObject parent, String line, Iterator<String> lines, AtomicInteger lineCounter, List<String> linesCopy, Map<Pattern, String> preparedDefinitions) {
+        List<CustomEndpointSection.CustomProperty> customProperties = new ArrayList<>();
+
+        ObjectImpl object = new ObjectImpl(name);
+        if(parent != null)
+            object.getEntries().putAll(parent.getEntries());
+
+        boolean finish = false;
+        while(!finish) {
+            String l = buildDefines(lines.next(), preparedDefinitions);
+            lineCounter.incrementAndGet();
+            lines.remove();
+
+            if(l.replaceAll("\\s", "").startsWith("}")) {//Close object
+                finish = true;
+                break;
+            }
+
+            while(!l.isEmpty()) {
+                if(l.contains(":")) {
+                    ConfigElement element = parseElement(l, lines, linesCopy, lineCounter, preparedDefinitions, "");
+                    object.append(element.element);
+                    l = l.substring(element.text.length());//Remove last element
+                } else {
+                    CustomPropertyImpl prop = parseCustomProperty(l, lines, linesCopy, lineCounter, preparedDefinitions);
+                    customProperties.add(prop);
+                    l = "";
+                }
+                String l1;
+                if(!l.isEmpty())
+                    l1 = l.substring(1).replaceFirst("^\\s*", ""); //Remove spaces
+                else
+                    l1 = "";
+                l = l1;
+
+                if(l.startsWith("}")) {//Close object
+                    finish = true;
+                    break;
+                }
+            }
+        }
+        if(!finish)
+            throw new CodeParsingException("use directive parse error: object doesn't have the end!", lineCounter.get(), linesCopy);
+
+        UseDirectiveImpl useDirective = new UseDirectiveImpl(name, object);
+        useDirective.customProperties.addAll(customProperties);
+        return useDirective;
+    }
+
+    private CustomPropertyImpl parseCustomProperty(String l, Iterator<String> lines, List<String> linesCopy, AtomicInteger lineCounter, Map<Pattern, String> preparedDefines) {
+        String name;
+        {
+            String[] parts = l.replaceFirst("^\\s*", "").split(" ", 2);
+            if(parts.length != 2)
+                throw new CodeParsingException("custom property parse error: invalid declaration", lineCounter.get(), linesCopy);
+            name = parts[0];
+            if(StringUtils.isWhitespace(name))
+                throw new CodeParsingException("custom property parse error: name is empty", lineCounter.get(), linesCopy);
+            String semicolon = parts[1].replaceFirst("^\\s*", "");
+            if(!semicolon.startsWith("{"))
+                throw new CodeParsingException("custom property parse error: { expected", lineCounter.get(), linesCopy);
+            else if(semicolon.startsWith("{}"))
+                return new CustomPropertyImpl(name);
+            else if(!StringUtils.isWhitespace(semicolon.substring(1)))
+                throw new CodeParsingException("custom property error: unexpected symbols after {", lineCounter.get(), linesCopy);
+        }
+
+        CustomPropertyImpl customProperty = new CustomPropertyImpl(name);
+        boolean in = true;
+        while(in) {
+            String line = buildDefines(cutLine(lines), preparedDefines).replaceFirst("^\\s*", "");
+            lineCounter.incrementAndGet();
+            if(StringUtils.isWhitespace(line))
+                continue;
+
+            if(line.startsWith("}")) {
+                if(!StringUtils.isWhitespace(line.substring(1)))
+                    throw new CodeParsingException("custom property parse error: symbols after }", lineCounter.get(), linesCopy);
+                in = false;
+                break;
+            }
+
+            String[] parts = line.split(" ", 3);
+            if(!parts[0].equals("use"))
+                throw new CodeParsingException("use command parse error: unexpected symbols", lineCounter.get(), linesCopy);
+            if(parts.length < 2)
+                throw new CodeParsingException("use command parse error: invalid declaration (must be 'use name')", lineCounter.get(), linesCopy);
+            if(parts[1].isEmpty())
+                throw new CodeParsingException("use command parse error: referent is empty", lineCounter.get(), linesCopy);
+            customProperty.useCommands.add(new UseCommandImpl(parts[1], parts.length < 3 ? "" : parts[2]));
+        }
+
+        return customProperty;
+    }
+
+    private ConfigurationModule findModule(@Nonnull String name, @Nonnull Collection<ConfigurationModuleImpl> modules) {
+        for(ConfigurationModule module : modules) {
+            if(name.equals(module.getName()))
+                return module;
+        }
+        for(ConfigurationModule module : modules) {
+            ConfigurationModule module1 = findModuleInternal(name, module);
+            if(module1 != null)
+                return module1;
+        }
+        return null;
+    }
+
+    private ConfigurationModule findModuleInternal(String name, ConfigurationModule configurationModule) {
+        for(ConfigurationModule module : configurationModule.getModules()) {
+            if(name.equals(module.getName()))
+                return module;
+        }
+        for(ConfigurationModule module : configurationModule.getModules()) {
+            ConfigurationModule f = findModuleInternal(name, module);
+            if(f != null)
+                return f;
+        }
         return null;
     }
 
@@ -214,7 +575,7 @@ public class ConfigurationParser {
         if(lines.isEmpty())
             throw new CodeParsingException("Module doesn't have any line to parse!", 0, lines);
         List<String> headerLines;
-        if(lines.get(0).replaceAll("^\\s*", "").startsWith("#"))
+        if(lines.get(0).replaceFirst("^\\s*", "").startsWith("#"))
             headerLines = cutHeader(lines.iterator(), StringUtils::isWhitespace, true);
         else
             headerLines = Collections.emptyList();
@@ -289,13 +650,15 @@ public class ConfigurationParser {
                         throw new CodeParsingException("extend syntax error: supertype definition is invalid", lineNumber.get(), linesCopy);
                     if(!modules.containsKey(targetModule))
                         throw new CodeParsingException("module " + targetModule + " not found", lineNumber.get(), linesCopy);
-                    ConfigurationModule module = modules.get(targetModule);
+                    ConfigurationModule module = findModule(targetModule, modules.values());
+                    if(module == null)
+                        throw new CodeParsingException("linker error: extend supermodule " + targetModule + " not found", lineNumber.get(), linesCopy);
                     for(ConfigurationTypedObject object : module.getModuleConfigurations()) {
                         if(object.getName().equals(supertype))
                             extend = object;
                     }
                     if(extend == null)
-                        throw new CodeParsingException("extend error: supertype not found", lineNumber.get(), linesCopy);
+                        throw new CodeParsingException("linker error: extend supertype object" + supertype + " not found", lineNumber.get(), linesCopy);
                 } else {
                     String l = line.replace(" ", "");
                     if(!l.endsWith("{"))
@@ -329,6 +692,10 @@ public class ConfigurationParser {
     }
 
     private ConfigElement parseElement(String currentLine, Iterator<String> lines, List<String> lineCopy, AtomicInteger lineCounter, Map<Pattern, String> preparedDefinitions, String nameOverride) {
+        return parseElement(currentLine, lines, lineCopy, lineCounter, preparedDefinitions, nameOverride, false);
+    }
+
+    private ConfigElement parseElement(String currentLine, Iterator<String> lines, List<String> lineCopy, AtomicInteger lineCounter, Map<Pattern, String> preparedDefinitions, String nameOverride, boolean unknownTypeIsString) {
         String[] parts;
         String name;
         if(nameOverride.isEmpty()) {
@@ -384,15 +751,15 @@ public class ConfigurationParser {
             } else {
                 StringBuilder code = new StringBuilder();
                 code.append(codeFragment);
-                String l;
-                while(!(l = lines.next()).contains(closeTag)) {
+                String l = buildDefines(cutLine(lines), preparedDefinitions);
+                lineCounter.incrementAndGet();
+                while(!l.contains(closeTag)) {
                     code.append('\n');
                     code.append(l);
+                    l = buildDefines(cutLine(lines), preparedDefinitions);
                     lineCounter.incrementAndGet();
-                    lines.remove();
                 }
                 String closeLine = l.substring(0, l.indexOf(closeTag));
-                lines.remove();//Remove code line
                 if(!StringUtils.isWhitespace(closeLine)) {
                     code.append('\n');
                     code.append(closeLine);
@@ -532,8 +899,11 @@ public class ConfigurationParser {
         } else {
             String real = def.split("[,|\\s]", 2)[0];
             ConfigurationElement element = PrimitiveImpl.parseNotString(name, real);
-            if(element == null)
+            if(element == null) {
+                if(unknownTypeIsString)
+                    return new ConfigElement(PrimitiveImpl.wrap(name, real), parts[0] + ':' + defSpaces + real);
                 throw new CodeParsingException("Can't parse definition!", lineCounter.get(), lineCopy);
+            }
             return new ConfigElement(element, parts[0] + ':' + defSpaces + real);
         }
     }
@@ -551,23 +921,116 @@ public class ConfigurationParser {
     @RequiredArgsConstructor
     private static final class ConfigurationEndpointImpl implements ConfigurationEndpoint {
         private final String name;
-        private final List<ExternalLanguageHelper> helpers = new ArrayList<>();
-        private final List<ConfigurationModule> modules = new ArrayList<>();
+        @Nonnull
+        private final ApiEndpointSection apiEndpointSection;
+        @Nonnull
+        private final ScriptEndpointSection scriptEndpointSection;
+        private final List<ExternalLanguageHelper> helpers;
+        private final List<ConfigurationModule> modules;
+        private final Map<String, CustomEndpointSection> sections;
 
         @Override
         public CustomEndpointSection getCustomSection(String name) {
-            return null;
+            return sections.get(name);
         }
 
         @Override
         public ApiEndpointSection getApiSection() {
-            return null;
+            return apiEndpointSection;
         }
 
         @Override
         public ScriptEndpointSection getScriptSection() {
-            return null;
+            return scriptEndpointSection;
         }
+    }
+
+    @RequiredArgsConstructor
+    private static final class ScriptEndpointSectionImpl implements ScriptEndpointSection {
+        private final Map<String, ScriptSection> sections;
+
+        @Override
+        public ScriptSection getSection(String name) {
+            return sections.get(name);
+        }
+    }
+
+    @Getter
+    private static final class ScriptSectionImpl implements ScriptEndpointSection.ScriptSection {
+        private final List<ScriptEndpointSection.Command> commands = new ArrayList<>();
+    }
+
+    @RequiredArgsConstructor
+    @Getter
+    private static final class CommandImpl implements ScriptEndpointSection.Command {
+        private final String name;
+        private final ConfigurationElement arg;
+    }
+
+    @RequiredArgsConstructor
+    private static final class ApiEndpointSectionImpl implements ApiEndpointSection {
+        private final ConfigurationObject object;
+
+        @Nullable
+        @Override
+        public ConfigurationElement getElement(String name) {
+            return object.getElement(name);
+        }
+
+        @Nullable
+        @Override
+        public <V extends ConfigurationElement> V getElement(String name, Class<V> clazz) {
+            return object.getElement(name, clazz);
+        }
+
+        @Override
+        public Set<String> getNames() {
+            return object.getNames();
+        }
+
+        @Override
+        public Map<String, ConfigurationElement> getEntries() {
+            return object.getEntries();
+        }
+
+        @Override
+        public int getSize() {
+            return object.getSize();
+        }
+
+        @Override
+        public boolean hasKey(String name) {
+            return object.hasKey(name);
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode
+    private static final class CustomEndpointSectionImpl implements CustomEndpointSection {
+        private final List<UseDirective> useDirectives = new ArrayList<>();
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    private static final class UseDirectiveImpl implements CustomEndpointSection.UseDirective {
+        private final String name;
+        private final ConfigurationObject configuration;
+        private final List<CustomEndpointSection.CustomProperty> customProperties = new ArrayList<>();
+    }
+
+    @RequiredArgsConstructor
+    @Getter
+    private static final class CustomPropertyImpl implements CustomEndpointSection.CustomProperty {
+        private final String name;
+        private final List<CustomEndpointSection.UseCommand> useCommands = new ArrayList<>();
+    }
+
+    @RequiredArgsConstructor
+    @Getter
+    private static final class UseCommandImpl implements CustomEndpointSection.UseCommand {
+        private final String referent;
+        @Nullable
+        private final String arg;
     }
 
     @Getter

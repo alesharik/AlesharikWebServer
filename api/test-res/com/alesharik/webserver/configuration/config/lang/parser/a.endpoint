@@ -1,0 +1,20 @@
+include 'a.module'
+
+endpoint a {
+    script {
+        start {
+            start a
+        }
+    }
+    api {
+        a: "b"
+    }
+    test {
+        use a.test as a {
+            b: 2,
+            test {
+                use qwerty with 123456
+            }
+        }
+    }
+}

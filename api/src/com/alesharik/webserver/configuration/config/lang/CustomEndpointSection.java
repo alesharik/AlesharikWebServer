@@ -20,6 +20,7 @@ package com.alesharik.webserver.configuration.config.lang;
 
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public interface CustomEndpointSection {
@@ -34,6 +35,20 @@ public interface CustomEndpointSection {
     }
 
     interface CustomProperty {
-        List<String> getUseCommands();
+        String getName();
+
+        List<UseCommand> getUseCommands();
+    }
+
+    /**
+     * Example: <code>
+     * In string 'use a to c' the referent is 'a', the arg is 'to c'
+     * </code>
+     */
+    interface UseCommand {
+        String getReferent();
+
+        @Nullable
+        String getArg();
     }
 }

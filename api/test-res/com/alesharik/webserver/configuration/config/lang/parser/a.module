@@ -1,0 +1,5 @@
+module a {
+    test:test {
+        a: 1
+    }
+}

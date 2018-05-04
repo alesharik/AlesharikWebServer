@@ -27,7 +27,7 @@ public final class CodeParsingException extends ParserException {
 
     public CodeParsingException(String message, int line, List<String> file) {
         super(message);
-        this.line = line;
+        this.line = line - 1;
         this.file = file;
     }
 

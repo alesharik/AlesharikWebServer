@@ -18,9 +18,12 @@
 
 package com.alesharik.webserver.configuration.config.lang.parser;
 
+import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
 import com.alesharik.webserver.configuration.config.lang.ConfigurationModule;
+import com.alesharik.webserver.configuration.config.lang.CustomEndpointSection;
 import com.alesharik.webserver.configuration.config.lang.ExecutionContext;
 import com.alesharik.webserver.configuration.config.lang.ExternalLanguageHelper;
+import com.alesharik.webserver.configuration.config.lang.ScriptEndpointSection;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationCodeElement;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationFunctionElement;
@@ -398,6 +401,48 @@ public class ConfigurationParserTest {
         assertPrimitiveEquals(object.getElement("a"), "a", 1);
         assertPrimitiveEquals(object.getElement("b"), "b", 1);
         assertPrimitiveEquals(object.getElement("c"), "c", 2);
+    }
+
+    @Test(expected = CodeParsingException.class)
+    public void parseIllegalTest1() {
+        module("com/alesharik/webserver/configuration/config/lang/parser/test1.module");
+        fail();
+    }
+
+    @Test(expected = CodeParsingException.class)
+    public void parseIllegalTest2() {
+        module("com/alesharik/webserver/configuration/config/lang/parser/test2.module");
+        fail();
+    }
+
+    @Test
+    public void parseEndpoint() {
+        ConfigurationEndpoint endpoint = endpoint("com/alesharik/webserver/configuration/config/lang/parser/a.endpoint");
+
+        CustomEndpointSection section = endpoint.getCustomSection("test");
+        assertNotNull(section);
+        CustomEndpointSection.UseDirective directive = section.getUseDirectives().get(0);
+        assertEquals("a", directive.getName());
+        assertPrimitiveEquals(directive.getConfiguration().getElement("a"), "a", 1);
+        assertPrimitiveEquals(directive.getConfiguration().getElement("b"), "b", 2);
+
+        CustomEndpointSection.CustomProperty customProperty = directive.getCustomProperties().get(0);
+        assertEquals("test", customProperty.getName());
+        CustomEndpointSection.UseCommand command = customProperty.getUseCommands().get(0);
+        assertEquals("qwerty", command.getReferent());
+        assertEquals("with 123456", command.getArg());
+
+        assertPrimitiveEquals(endpoint.getApiSection().getElement("a"), "a", "b");
+
+        ScriptEndpointSection.ScriptSection scriptSection = endpoint.getScriptSection().getSection("start");
+        ScriptEndpointSection.Command command1 = scriptSection.getCommands().get(0);
+        assertEquals("start", command1.getName());
+        assertPrimitiveEquals(command1.getArg(), "script", "a");
+    }
+
+    private ConfigurationEndpoint endpoint(String file) {
+        ConfigurationParser parser = new ConfigurationParser(new File(file), fileReaderTabulated());
+        return parser.parse();
     }
 
     private ConfigurationModule module(String file) {

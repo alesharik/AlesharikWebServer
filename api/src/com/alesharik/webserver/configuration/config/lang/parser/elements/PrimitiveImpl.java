@@ -36,23 +36,27 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
      */
     @Nullable
     public static ConfigurationPrimitive parseNotString(java.lang.String name, java.lang.String line) {
-        java.lang.String preParse = line.replace(" ", "");
-        if("true".equals(preParse))
-            return new BooleanImpl(name, true);
-        else if("false".equals(preParse))
-            return new BooleanImpl(name, false);
-        else if(preParse.endsWith("B"))
-            return new ByteImpl(name, java.lang.Byte.decode(preParse.substring(0, preParse.length() - 1)));
-        else if(preParse.endsWith("S"))
-            return new ShortImpl(name, java.lang.Short.decode(preParse.substring(0, preParse.length() - 1)));
-        else if(preParse.endsWith("L"))
-            return new LongImpl(name, java.lang.Long.decode(preParse.substring(0, preParse.length() - 1)));
-        else if(preParse.endsWith("D"))
-            return new DoubleImpl(name, java.lang.Double.parseDouble(preParse.substring(0, preParse.length() - 1)));
-        else if(preParse.contains(".") || preParse.contains(","))
-            return new FloatImpl(name, java.lang.Float.parseFloat(preParse));
-        else
-            return new IntImpl(name, Integer.decode(preParse));
+        try {
+            java.lang.String preParse = line.replace(" ", "");
+            if("true".equals(preParse))
+                return new BooleanImpl(name, true);
+            else if("false".equals(preParse))
+                return new BooleanImpl(name, false);
+            else if(preParse.endsWith("B"))
+                return new ByteImpl(name, java.lang.Byte.decode(preParse.substring(0, preParse.length() - 1)));
+            else if(preParse.endsWith("S"))
+                return new ShortImpl(name, java.lang.Short.decode(preParse.substring(0, preParse.length() - 1)));
+            else if(preParse.endsWith("L"))
+                return new LongImpl(name, java.lang.Long.decode(preParse.substring(0, preParse.length() - 1)));
+            else if(preParse.endsWith("D"))
+                return new DoubleImpl(name, java.lang.Double.parseDouble(preParse.substring(0, preParse.length() - 1)));
+            else if(preParse.contains(".") || preParse.contains(","))
+                return new FloatImpl(name, java.lang.Float.parseFloat(preParse));
+            else
+                return new IntImpl(name, Integer.decode(preParse));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public static ConfigurationPrimitive wrap(java.lang.String name, java.lang.String line) {

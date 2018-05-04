@@ -93,23 +93,27 @@ Writing formats like 0x1F, 0b11101 and others are supported
 include 'modules/a.module'
 use 'modules/helper.js' language 'javascript' context 'global'
 endpoint end { //Endpoint definition, space REQUIRED
-    api { //The api config
+    api { //The api config(just object)
         //Blablabla
     }
     daemons {//Create daemons
-        use a.daemon as daemon1 { //Create real daemon with name daemon1 from a.daemon config
+        use a.daemon as daemon1 { //Create real daemon with name daemon1 from a.daemon config, new line REQUIRED, props separated by new line
             name: "a",//Override properties
-            hooks { //Setup hooks
-                use a.hook1
+            hooks { //Setup smth(hooks for example), only one use per line, no more or less(but you can use whitespace lines). NO semicolon here
+                use hook on start //Can use only use-defined objects
+                use hook on end //'hook' is the referent, 'on end' is the argument
             }
         }
         use a.test-daemon as daemon2 
+        use null as daemon3 { //Create daemon with no parent config 
+            name: "q"
+        }
     }
     hooks { //Create some hooks
         use a.hook2 as hook
     }
-    script { //Main script
-        pre-init { 
+    script { //Main script, new line REQUIRED
+        pre-init { //Define script section, all inner elements must be not in the same line as the '{'
             fire hook //Fire the hook
             start module1 //Start the module
             execute <javascript> console.log("a"); </javascript> //Execute some code
@@ -120,7 +124,7 @@ endpoint end { //Endpoint definition, space REQUIRED
             start module3 //Start the module
         }
         post-init {
-            send-message module3 { test: "test" } //Send the object message to module
+            send-message {to: "module3", test: "test" } //Send the object message to module
         }
         
         pre-destroy {}
@@ -131,6 +135,8 @@ endpoint end { //Endpoint definition, space REQUIRED
     }
 }
 ```
+All types in script like `fire hook` will be parsed as Command('fire' in this case) with string argument.
+Element names are always '"script"'.
 
 # The flow
 ![Flow](./AWS-Config-Flow.png)

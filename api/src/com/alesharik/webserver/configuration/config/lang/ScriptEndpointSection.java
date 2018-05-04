@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver.configuration.config.lang;
 
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
+
 import java.util.List;
 
 public interface ScriptEndpointSection {
@@ -30,6 +32,6 @@ public interface ScriptEndpointSection {
     interface Command {
         String getName();
 
-        String getArgs();
+        ConfigurationElement getArg();
     }
 }

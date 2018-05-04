@@ -1,0 +1,7 @@
+include 'parent.module'
+
+module m
+extends
+parent {
+    a: { a: 1 : b: 2 }
+}
