@@ -18,8 +18,26 @@
 
 package com.alesharik.webserver.configuration.config.lang;
 
+import org.jetbrains.annotations.Contract;
+
+import javax.annotation.Nullable;
+
 public enum ExecutionContext {
     GLOBAL,
     MODULE,
-    CALL
+    CALL;
+
+    @Contract("null -> !null; !null -> _")
+    public static ExecutionContext parse(@Nullable String name) {
+        if(name == null)
+            return CALL;
+        else if("global".equalsIgnoreCase(name))
+            return GLOBAL;
+        else if("module".equalsIgnoreCase(name))
+            return MODULE;
+        else if("call".equalsIgnoreCase(name))
+            return CALL;
+        else
+            return null;
+    }
 }
