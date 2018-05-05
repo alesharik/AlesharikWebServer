@@ -18,6 +18,8 @@
 
 package com.alesharik.database.driver.postgres;
 
+import com.alesharik.database.cache.DatabaseCache;
+import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.driver.DatabaseDriver;
 import com.alesharik.database.exception.DatabaseCloseSQLException;
@@ -100,6 +102,11 @@ public final class PostgresDriver implements DatabaseDriver {
     @Override
     public UserManager<?, ?, ?> getUserManager() {
         return null;//FIXME
+    }
+
+    @Override
+    public DatabaseCache<?> getCache() {
+        return null;
     }
 
     private void createSchema(Schema schema) {
