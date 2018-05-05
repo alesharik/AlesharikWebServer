@@ -50,16 +50,14 @@ public class PrimitiveImplTest {
         assertEquals(0x2F, i2.value());
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void parseIllegalIntNegativeOverflow() {
-        PrimitiveImpl.parseNotString("name", Long.toString(Integer.MIN_VALUE - 1L));
-        fail();
+        assertNull(PrimitiveImpl.parseNotString("name", Long.toString(Integer.MIN_VALUE - 1L)));
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void parseIllegalIntPositiveOverflow() {
-        PrimitiveImpl.parseNotString("name", Long.toString(Integer.MAX_VALUE + 1L));
-        fail();
+        assertNull(PrimitiveImpl.parseNotString("name", Long.toString(Integer.MAX_VALUE + 1L)));
     }
 
     @Test
@@ -80,16 +78,14 @@ public class PrimitiveImplTest {
 //        assertEquals(0b11, b3.value()); it doesn't support by java
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void parseByteNegativeOverflow() {
-        PrimitiveImpl.parseNotString("t", Integer.toString(Byte.MAX_VALUE + 1) + "B");
-        fail();
+        assertNull(PrimitiveImpl.parseNotString("t", Integer.toString(Byte.MAX_VALUE + 1) + "B"));
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void parseBytePositiveOverflow() {
-        PrimitiveImpl.parseNotString("t", Integer.toString(Byte.MIN_VALUE - 1) + "B");
-        fail();
+        assertNull(PrimitiveImpl.parseNotString("t", Integer.toString(Byte.MIN_VALUE - 1) + "B"));
     }
 
     @Test
@@ -102,16 +98,14 @@ public class PrimitiveImplTest {
 //        assertEquals(0b111111, s3.value()); it doesn't support by java
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void parseShortNegativeOverflow() {
-        PrimitiveImpl.parseNotString("t", Integer.toString(Short.MIN_VALUE - 1) + "S");
-        fail();
+        assertNull(PrimitiveImpl.parseNotString("t", Integer.toString(Short.MIN_VALUE - 1) + "S"));
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void parseShortPositiveOverflow() {
-        PrimitiveImpl.parseNotString("t", Integer.toString(Short.MAX_VALUE + 1) + "S");
-        fail();
+        assertNull(PrimitiveImpl.parseNotString("t", Integer.toString(Short.MAX_VALUE + 1) + "S"));
     }
 
     @Test
@@ -124,16 +118,14 @@ public class PrimitiveImplTest {
 //        assertEquals(0b1111111111L, l3.value()); it doesn't support by java
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void parseLongPositiveOverflow() {
-        PrimitiveImpl.parseNotString("t", Long.toString(Long.MAX_VALUE) + "1L");
-        fail();
+        assertNull(PrimitiveImpl.parseNotString("t", Long.toString(Long.MAX_VALUE) + "1L"));
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void parseLongNegativeOverflow() {
-        PrimitiveImpl.parseNotString("t", Long.toString(Long.MIN_VALUE) + "1L");
-        fail();
+        assertNull(PrimitiveImpl.parseNotString("t", Long.toString(Long.MIN_VALUE) + "1L"));
     }
 
     @Test
