@@ -18,6 +18,8 @@
 
 package com.alesharik.database.driver;
 
+import com.alesharik.database.cache.DatabaseCache;
+import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.transaction.TransactionManager;
 import com.alesharik.database.user.UserManager;
@@ -42,4 +44,6 @@ public interface DatabaseDriver {
     void updateTransactional(boolean is);
 
     UserManager<?, ?, ?> getUserManager();
+
+    DatabaseCache<?> getCache();
 }

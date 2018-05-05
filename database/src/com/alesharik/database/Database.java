@@ -18,6 +18,8 @@
 
 package com.alesharik.database;
 
+import com.alesharik.database.cache.DatabaseCache;
+import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.driver.DatabaseDriver;
 import com.alesharik.database.transaction.TransactionManager;
@@ -97,5 +99,25 @@ public class Database {
             throw new IllegalStateException("Database must be transactional!");
         else
             return databaseDriver.getTransactionManager();
+    }
+
+    public DatabaseCache<?> getCache() {
+        return databaseDriver.getCache();
+    }
+
+    public void requestNewConnection() {
+        connection.requestNewConnection();
+    }
+
+    public void requestDedicatedConnection() {
+        connection.requestNewDedicatedConnection();
+    }
+
+    public void setTransactionIsolation(int isolation) {
+        connection.setTransactionLevel(isolation);
+    }
+
+    public int getTransactionIsolation() {
+        return connection.getTransactionLevel();
     }
 }
