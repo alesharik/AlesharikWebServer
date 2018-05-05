@@ -22,6 +22,7 @@ import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
 import com.alesharik.webserver.api.agent.classPath.ListenClass;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
+import com.alesharik.webserver.api.agent.classPath.SuppressClassLoaderUnloadWarning;
 import com.alesharik.webserver.api.agent.classPath.reload.ListenReloadEnd;
 import com.alesharik.webserver.api.agent.classPath.reload.ListenReloadStart;
 import com.alesharik.webserver.api.agent.classPath.reload.UnloadClassLoaderHandler;
@@ -50,6 +51,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -183,6 +185,7 @@ final class ClassPathScannerThread extends Thread {
                 return;
         }
 
+        AtomicBoolean classLoaderMemoryLeakSuspected = new AtomicBoolean(!clazz.isAnnotationPresent(SuppressClassLoaderUnloadWarning.class));
         Stream.of(clazz.getDeclaredMethods())
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
                 .filter(method -> method.isAnnotationPresent(ListenAnnotation.class) || method.isAnnotationPresent(ListenClass.class) || method.isAnnotationPresent(ListenInterface.class)
@@ -237,6 +240,7 @@ final class ClassPathScannerThread extends Thread {
                             e.printStackTrace();
                         }
                     } else if(method.isAnnotationPresent(UnloadClassLoaderHandler.class)) {
+                        classLoaderMemoryLeakSuspected.set(false);
                         try {
                             method.setAccessible(true);
                             MethodHandle unreflect = LOOKUP.unreflect(method);
@@ -247,6 +251,8 @@ final class ClassPathScannerThread extends Thread {
                         }
                     }
                 });
+        if(classLoaderMemoryLeakSuspected.get())
+            System.err.println("Class " + clazz.getCanonicalName() + " is suspected in classloader memory leak. Every ClassPathScanner MUST clear all classes of removed classloader. See @UnloadClassLoaderHandler");
     }
 
     public void removeClassLoader(ClassLoader classLoader) {
