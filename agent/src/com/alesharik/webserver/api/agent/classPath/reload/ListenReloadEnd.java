@@ -16,7 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.classPath;
+package com.alesharik.webserver.api.agent.classPath.reload;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -25,13 +25,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Class, annotated by this annotation, can have {@link ListenAnnotation}, {@link ListenClass}, {@link ListenInterface},
- * {@link com.alesharik.webserver.api.agent.classPath.reload.ListenReloadEnd}, {@link com.alesharik.webserver.api.agent.classPath.reload.ListenReloadStart},
- * {@link com.alesharik.webserver.api.agent.classPath.reload.UnloadClassLoaderHandler}
- * annotated methods.
+ * Annotated method will be called on classloader reload end
  */
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface ClassPathScanner {
+public @interface ListenReloadEnd {
 }

@@ -16,22 +16,20 @@
  *
  */
 
-package com.alesharik.webserver.api.agent.classPath;
+package com.alesharik.database.cache;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import javax.annotation.Nullable;
 
 /**
- * Class, annotated by this annotation, can have {@link ListenAnnotation}, {@link ListenClass}, {@link ListenInterface},
- * {@link com.alesharik.webserver.api.agent.classPath.reload.ListenReloadEnd}, {@link com.alesharik.webserver.api.agent.classPath.reload.ListenReloadStart},
- * {@link com.alesharik.webserver.api.agent.classPath.reload.UnloadClassLoaderHandler}
- * annotated methods.
+ * This is the manager for all DB caches
+ *
+ * @param <UserCache>
  */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface ClassPathScanner {
+public interface DatabaseCache<UserCache extends DatabaseUserCache> {
+    /**
+     * Return user cache
+     * @return user cache, <code>null</code> - users are not supported by current db
+     */
+    @Nullable
+    UserCache getUserCache();
 }

@@ -90,8 +90,9 @@ public final class Agent {
         ClassPathScannerTransformer.tryScanClassLoader(classLoader);
     }
 
-    public static void reloadClassLoader(@Nonnull ClassLoader classLoader) {
-        ClassPathScannerTransformer.reloadClassLoader(classLoader);
+    public static void unloadClassLoader(@Nonnull ClassLoader classLoader) {
+        AgentClassTransformer.removeClassLoader(classLoader);
+        ClassPathScannerTransformer.removeClassLoader(classLoader);
     }
 
     /**
@@ -101,6 +102,9 @@ public final class Agent {
         return !ClassPathScannerTransformer.isFree();
     }
 
+    /**
+     * Shutdown agent's threads
+     */
     public static void shutdown() {
         ClassPathScannerTransformer.shutdown();
     }
@@ -113,6 +117,9 @@ public final class Agent {
         return instrumentation.isRetransformClassesSupported();
     }
 
+    /**
+     * Check agent installation. If agent is not installed, it install in on the current VM
+     */
     public static void checkInstall() {
         if(instrumentation == null) {
             AgentInstaller.install();

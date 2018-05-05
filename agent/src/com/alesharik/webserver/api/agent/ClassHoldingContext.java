@@ -23,6 +23,7 @@ import javax.annotation.Nonnull;
 /**
  * This context must control all classes from ClassPathScanner
  */
+@Deprecated
 public interface ClassHoldingContext {
     /**
      * Called when context is created

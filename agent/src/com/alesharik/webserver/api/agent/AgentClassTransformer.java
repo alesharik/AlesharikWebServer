@@ -141,6 +141,12 @@ final class AgentClassTransformer implements ClassFileTransformer {
         }
     }
 
+    static void removeClassLoader(ClassLoader classLoader) {
+        for(CopyOnWriteArrayList<MethodHolder> methodHolders : transformers.values())
+            methodHolders.removeIf(next -> next.getClassLoader() == classLoader);
+        allTransformers.removeIf(next -> next.getClassLoader() == classLoader);
+    }
+
     private static final class MethodHolder {
         private final Method methodHandle;
         private final Param.Type[] args;
@@ -178,6 +184,10 @@ final class AgentClassTransformer implements ClassFileTransformer {
                 }
             }
             return (byte[]) methodHandle.invoke(null, invokeArgs.toArray());
+        }
+
+        public ClassLoader getClassLoader() {
+            return methodHandle.getDeclaringClass().getClassLoader();
         }
     }
 }

@@ -70,11 +70,9 @@ final class ClassPathScannerTransformer implements ClassFileTransformer {
         }
     }
 
-    public static void reloadClassLoader(ClassLoader classLoader) {
-        if(!classLoaders.contains(classLoader))
-            tryScanClassLoader(classLoader);
-        else
-            thread.rescanClassLoader(classLoader);
+    public static void removeClassLoader(ClassLoader classLoader) {
+        if(classLoaders.contains(classLoader))
+            thread.removeClassLoader(classLoader);
     }
 
     public static boolean isFree() {

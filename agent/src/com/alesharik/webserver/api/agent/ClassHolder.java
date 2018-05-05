@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Use this to correctly hold classes from ClassPathScanner
  */
+@Deprecated
 @UtilityClass
 public class ClassHolder {
     private static final List<ClassHoldingContext> contexts = new ArrayList<>();

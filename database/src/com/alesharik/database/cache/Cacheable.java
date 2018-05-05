@@ -16,12 +16,30 @@
  *
  */
 
-package com.alesharik.webserver.configuration.config.ext;
+package com.alesharik.database.cache;
 
-import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
+import com.alesharik.database.cache.strategy.CachingStrategy;
 
-public interface ConfigurationEndpointCustomPropertiesHandler {
-    String getName();
+import javax.annotation.Nonnull;
 
-    void handleUse(String args, ConfigurationEndpoint endpoint);
+/**
+ * Cacheable classes hold and manage cached values. For example cacheable table will hold cached rows, cacheable scheme - tables, etc
+ */
+public interface Cacheable {
+    /**
+     * Reset all cached values to <code>null</code>
+     */
+    void timeout();
+
+    /**
+     * Update cached values
+     */
+    void update();
+
+    /**
+     * Set caching strategy
+     *
+     * @param cachingStrategy the strategy. <code>null</code> - disable
+     */
+    void setStrategy(@Nonnull CachingStrategy cachingStrategy);
 }

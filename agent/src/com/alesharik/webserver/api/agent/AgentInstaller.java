@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 
+/**
+ * Install AlesharikWebServer Agent on the VM
+ */
 final class AgentInstaller {
     public static void install() {
         try {

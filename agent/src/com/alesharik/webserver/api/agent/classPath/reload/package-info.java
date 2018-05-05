@@ -16,12 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.configuration.config.ext;
-
-import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
-
-public interface ConfigurationEndpointScriptCommandHandler {
-    String getName();
-
-    void handle(String args, ConfigurationEndpoint endpoint);
-}
+/**
+ * This package contains API for classloader reloading
+ */
+package com.alesharik.webserver.api.agent.classPath.reload;
