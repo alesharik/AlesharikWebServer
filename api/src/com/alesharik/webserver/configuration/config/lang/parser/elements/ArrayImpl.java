@@ -21,7 +21,6 @@ package com.alesharik.webserver.configuration.config.lang.parser.elements;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObjectArray;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -29,12 +28,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@RequiredArgsConstructor
 public final class ArrayImpl implements ConfigurationObjectArray {
     @Getter
     @Nonnull
     private final String name;
     private final List<ConfigurationElement> elements = new ArrayList<>();
+
+    public ArrayImpl(@Nonnull String name) {
+        this.name = name;
+    }
 
     @Override
     public int size() {

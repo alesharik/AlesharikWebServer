@@ -21,19 +21,20 @@ package com.alesharik.webserver.configuration.config.lang.parser.elements;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@RequiredArgsConstructor
 public final class ObjectImpl implements ConfigurationObject {
     @Getter
-    @Nonnull
     private final String name;
     private final Map<String, ConfigurationElement> elements = new HashMap<>();
+
+    public ObjectImpl(@Nonnull String name) {
+        this.name = name;
+    }
 
     @Override
     public ConfigurationElement getElement(String name) {
