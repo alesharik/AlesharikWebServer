@@ -51,7 +51,7 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
             else if(preParse.endsWith("D"))
                 return new DoubleImpl(name, java.lang.Double.parseDouble(preParse.substring(0, preParse.length() - 1)));
             else if(preParse.contains(".") || preParse.contains(","))
-                return new FloatImpl(name, java.lang.Float.parseFloat(preParse));
+                return new FloatImpl(name, java.lang.Float.parseFloat(preParse.replace(',', '.')));
             else
                 return new IntImpl(name, Integer.decode(preParse));
         } catch (NumberFormatException e) {

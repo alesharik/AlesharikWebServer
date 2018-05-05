@@ -134,6 +134,13 @@ public class PrimitiveImplTest {
         assertEquals(1.0, f.value(), 0.1);
     }
 
+
+    @Test
+    public void parseFloatWithComma() {
+        ConfigurationPrimitive.Float f = (ConfigurationPrimitive.Float) PrimitiveImpl.parseNotString("t", "1,0");
+        assertEquals(1.0, f.value(), 0.1);
+    }
+
     @Test
     public void parseDouble() {
         ConfigurationPrimitive.Double d = (ConfigurationPrimitive.Double) PrimitiveImpl.parseNotString("t", "0.12121212121212121D");
