@@ -35,6 +35,8 @@ public final class ArrayImpl implements ConfigurationObjectArray {
     private final List<ConfigurationElement> elements = new ArrayList<>();
 
     public ArrayImpl(@Nonnull String name) {
+        if(name == null)
+            throw new IllegalArgumentException("name can't be null");
         this.name = name;
     }
 

@@ -33,6 +33,8 @@ public final class ObjectImpl implements ConfigurationObject {
     private final Map<String, ConfigurationElement> elements = new HashMap<>();
 
     public ObjectImpl(@Nonnull String name) {
+        if(name == null)
+            throw new IllegalArgumentException("name can't be null");
         this.name = name;
     }
 
