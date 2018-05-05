@@ -18,16 +18,16 @@
 
 package com.alesharik.webserver.configuration.config.ext;
 
-import com.alesharik.webserver.api.agent.ClassHoldingContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -35,13 +35,17 @@ public class DefineManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        DefineManager.providers.create();
+        DefineManager.providers.clear();
         DefineManager.listen(DefineTest.class);
+        DefineManager.listen(A.class);
+        DefineManager.listen(B.class);
+        DefineManager.listen(C.class);
+        DefineManager.listen(Q.class);
     }
 
     @After
     public void tearDown() throws Exception {
-        DefineManager.providers.destroy();
+        DefineManager.providers.clear();
     }
 
     @Test
@@ -76,14 +80,98 @@ public class DefineManagerTest {
     }
 
     @Test
-    public void checkClassReloading() {
-        ClassHoldingContext context = DefineManager.providers;
-        context.pause();
-        DefineManager.listen(DefineTest.class);
-        context.reload(DefineTest.class);
-        DefineManager.listen(DefineTest.class);
-        context.resume();
-        getDefinition();
+    public void testUtility() {
+        assertUtilityClass(DefineManager.class);
+    }
+
+    @Test
+    public void testUnloadClassLoader() throws ClassNotFoundException {
+        assertEquals("a", DefineManager.getDefinition("a", mock(DefineEnvironment.class)));
+        assertEquals("q", DefineManager.getDefinition("q", mock(DefineEnvironment.class)));
+
+        DefineManager.clearClassLoader(this.getClass().getClassLoader());
+
+        assertNull(DefineManager.getDefinition("a", mock(DefineEnvironment.class)));
+        assertNull(DefineManager.getDefinition("q", mock(DefineEnvironment.class)));
+    }
+
+    @Test
+    public void testIsDefined() {
+        assertTrue(DefineManager.isDefined("a", mock(DefineEnvironment.class)));
+        assertTrue(DefineManager.isDefined("b", mock(DefineEnvironment.class)));
+
+        assertFalse(DefineManager.isDefined("c", mock(DefineEnvironment.class)));
+        assertFalse(DefineManager.isDefined("d", mock(DefineEnvironment.class)));
+    }
+
+    @Test
+    public void getAllDefines() {
+        Map<String, String> defines = DefineManager.getAllDefines(mock(DefineEnvironment.class));
+
+        assertEquals("a", defines.get("a"));
+        assertEquals("b", defines.get("b"));
+        assertNull(defines.get("c"));
+        assertNull(defines.get("d"));
+    }
+
+    private static final class A implements DefineProvider {
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return "a";
+        }
+
+        @Nullable
+        @Override
+        public String getDefinition(@Nonnull DefineEnvironment environment) {
+            return "a";
+        }
+    }
+
+    private static final class B implements DefineProvider {
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return "b";
+        }
+
+        @Nullable
+        @Override
+        public String getDefinition(@Nonnull DefineEnvironment environment) {
+            return "b";
+        }
+    }
+
+    private static final class C implements DefineProvider {
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return "c";
+        }
+
+        @Nullable
+        @Override
+        public String getDefinition(@Nonnull DefineEnvironment environment) {
+            return null;
+        }
+    }
+
+    private static final class Q implements DefineProvider {
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return "q";
+        }
+
+        @Nullable
+        @Override
+        public String getDefinition(@Nonnull DefineEnvironment environment) {
+            return "q";
+        }
     }
 
     private static final class DefineTest implements DefineProvider {

@@ -20,6 +20,7 @@ package com.alesharik.webserver.configuration.config.ext;
 
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
+import com.alesharik.webserver.api.agent.classPath.reload.UnloadClassLoaderHandler;
 import com.alesharik.webserver.internals.instance.ClassInstantiationException;
 import com.alesharik.webserver.internals.instance.ClassInstantiator;
 import com.alesharik.webserver.logger.Logger;
@@ -32,14 +33,13 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Level("define-manager")
 @UtilityClass
 @ClassPathScanner
-@ThreadSafe//FIXME
+@ThreadSafe
 public class DefineManager {
-    static final ContextImpl providers = new ContextImpl();
+    static final Map<String, DefineProvider> providers = new ConcurrentHashMap<>();
 
     static {
         Logger.getLoggingLevelManager().createLoggingLevel("define-manager");
@@ -47,9 +47,26 @@ public class DefineManager {
 
     @ListenInterface(DefineProvider.class)
     static void listen(Class<?> clazz) {
-        if(providers.inReloadState)
-            return;
-        providers.put(clazz);
+        try {
+            System.out.println("Processing DefineProvider class " + clazz.getCanonicalName());
+            DefineProvider instance = (DefineProvider) ClassInstantiator.instantiate(clazz);
+            if(providers.containsKey(instance.getName())) {
+                System.err.println("DefineProvider " + instance.getName() + " already exists! Ignoring...");
+                return;
+            }
+            providers.put(instance.getName(), instance);
+        } catch (ClassInstantiationException e) {
+            System.err.println("Can't instantiate class " + clazz.getCanonicalName());
+            e.printStackTrace();
+        }
+    }
+
+    @UnloadClassLoaderHandler
+    static void clearClassLoader(ClassLoader classLoader) {
+        for(Map.Entry<String, DefineProvider> stringDefineProviderEntry : providers.entrySet()) {
+            if(stringDefineProviderEntry.getValue().getClass().getClassLoader() == classLoader)
+                providers.remove(stringDefineProviderEntry.getKey(), stringDefineProviderEntry.getValue());
+        }
     }
 
     @Nullable
@@ -59,74 +76,17 @@ public class DefineManager {
     }
 
     public static boolean isDefined(@Nonnull String name, @Nonnull DefineEnvironment environment) {
-        return providers.contains(name, environment);
+        return providers.containsKey(name) && providers.get(name).getDefinition(environment) != null;
     }
 
     public static Map<String, String> getAllDefines(@Nonnull DefineEnvironment environment) {
-        return providers.getAllDefines(environment);
+        Map<String, String> ret = new HashMap<>();
+        providers.forEach((s, defineProvider) -> {
+            String r = defineProvider.getDefinition(environment);
+            if(r != null)
+                ret.put(s, r);
+        });
+        return ret;
     }
 
-    @Level("DefineManager")//FIXME - not supported!
-    static final class ContextImpl {//FIXME WRONG! replace only by classloader
-        private final Map<String, DefineProvider> providers = new ConcurrentHashMap<>();
-        private final ReentrantLock accessLock = new ReentrantLock();
-        private volatile boolean inReloadState = false;
-
-        DefineProvider get(String name) {
-            try {
-                accessLock.lockInterruptibly();
-                return providers.get(name);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        boolean contains(String name, DefineEnvironment env) {
-            try {
-                accessLock.lockInterruptibly();
-                return providers.containsKey(name) && providers.get(name).getDefinition(env) != null;
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        void put(Class<?> c) {
-            try {
-                accessLock.lock();
-                processClass(c);
-            } finally {
-                accessLock.unlock();
-            }
-        }
-
-        private void processClass(Class<?> clazz) {
-            try {
-                System.out.println("Processing DefineProvider class " + clazz.getCanonicalName());
-                DefineProvider instance = (DefineProvider) ClassInstantiator.instantiate(clazz);
-                if(providers.containsKey(instance.getName())) {
-                    System.err.println("DefineProvider " + instance.getName() + " already exists! Ignoring...");
-                    return;
-                }
-                providers.put(instance.getName(), instance);
-            } catch (ClassInstantiationException e) {
-                System.err.println("Can't instantiate class " + clazz.getCanonicalName());
-                e.printStackTrace();
-            }
-        }
-
-        public Map<String, String> getAllDefines(DefineEnvironment environment) {
-            Map<String, String> ret = new HashMap<>();
-            try {
-                accessLock.lock();
-                providers.forEach((s, defineProvider) -> {
-                    String r = defineProvider.getDefinition(environment);
-                    if(r != null)
-                        ret.put(s, r);
-                });
-            } finally {
-                accessLock.unlock();
-            }
-            return ret;
-        }
-    }
 }
