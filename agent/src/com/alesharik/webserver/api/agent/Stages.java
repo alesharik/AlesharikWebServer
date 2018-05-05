@@ -18,38 +18,25 @@
 
 package com.alesharik.webserver.api.agent;
 
-import javax.annotation.Nonnull;
+import com.alesharik.webserver.api.ExecutionStage;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * This context must control all classes from ClassPathScanner
+ * Enable the classpath scanner/transformer/etc on requested stage. In other stages method won't be invoked
  */
-@Deprecated
-public interface ClassHoldingContext {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Documented
+public @interface Stages {
     /**
-     * Called when context is created
+     * Return requested stages
+     *
+     * @return requested stages
      */
-    default void create() {
-    }
-
-    /**
-     * Called before ClassPathScanner method
-     * @param clazz the class to reload
-     */
-    void reload(@Nonnull Class<?> clazz);
-
-    /**
-     * Called before class reloading
-     */
-    void pause();
-
-    /**
-     * Called after class reloading. MUST free all old classes and class loaders
-     */
-    void resume();
-
-    /**
-     * Called when context is destroyed
-     */
-    default void destroy() {
-    }
+    ExecutionStage[] value();
 }

@@ -18,8 +18,6 @@
 
 package com.alesharik.webserver.configuration.config.ext;
 
-import com.alesharik.webserver.api.agent.ClassHolder;
-import com.alesharik.webserver.api.agent.ClassHoldingContext;
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.internals.instance.ClassInstantiationException;
@@ -36,16 +34,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-@Level("DefineManager")
+@Level("define-manager")
 @UtilityClass
 @ClassPathScanner
-@ThreadSafe
+@ThreadSafe//FIXME
 public class DefineManager {
     static final ContextImpl providers = new ContextImpl();
 
     static {
-        Logger.getLoggingLevelManager().createLoggingLevel("DefineManager");
-        ClassHolder.register(providers);
+        Logger.getLoggingLevelManager().createLoggingLevel("define-manager");
     }
 
     @ListenInterface(DefineProvider.class)
@@ -70,36 +67,10 @@ public class DefineManager {
     }
 
     @Level("DefineManager")//FIXME - not supported!
-    static final class ContextImpl implements ClassHoldingContext {//FIXME WRONG! replace only by classloader
+    static final class ContextImpl {//FIXME WRONG! replace only by classloader
         private final Map<String, DefineProvider> providers = new ConcurrentHashMap<>();
         private final ReentrantLock accessLock = new ReentrantLock();
         private volatile boolean inReloadState = false;
-
-        @Override
-        public void reload(@Nonnull Class<?> clazz) {
-            System.out.println("Reloading class " + clazz.getCanonicalName());
-            put(clazz);
-        }
-
-        @Override
-        public void pause() {
-            accessLock.lock();
-            System.out.println("Define class context paused!");
-            inReloadState = true;
-            providers.clear();
-        }
-
-        @Override
-        public void resume() {
-            inReloadState = false;
-            accessLock.unlock();
-            System.out.println("Define class context resumed!");
-        }
-
-        @Override
-        public void destroy() {
-            providers.clear();
-        }
 
         DefineProvider get(String name) {
             try {
