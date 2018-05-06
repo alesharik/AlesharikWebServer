@@ -58,4 +58,12 @@ public interface Transaction {
      * @return <code>true</code> - transaction rolled back, <code>false</code> - transaction alive or commited
      */
     boolean isRolledBack();
+
+    /**
+     * Return transaction's savepoint ID
+     *
+     * @return savepoint ID
+     * @throws com.alesharik.database.exception.DatabaseTransactionException if something bad happened
+     */
+    int getId();
 }

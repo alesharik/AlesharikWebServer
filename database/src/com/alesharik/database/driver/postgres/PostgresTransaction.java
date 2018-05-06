@@ -105,4 +105,13 @@ final class PostgresTransaction implements Transaction {
     public boolean isRolledBack() {
         return state.get(2);
     }
+
+    @Override
+    public int getId() {
+        try {
+            return savepoint.getSavepointId();
+        } catch (SQLException e) {
+            throw new DatabaseTransactionException(e);
+        }
+    }
 }
