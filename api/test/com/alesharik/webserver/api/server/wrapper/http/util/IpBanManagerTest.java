@@ -61,12 +61,12 @@ public class IpBanManagerTest {
 
         Response response = newResponse();
 
-        assertTrue(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getLocalHost(), true), response));
+        assertTrue(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getByName("localhost"), true), response));
 
         ipBanManager.ban(socketAddress.getAddress());
 
         response = newResponse();
-        assertFalse(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getLocalHost(), true), response));
+        assertFalse(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getByName("localhost"), true), response));
         validate(response).respond(HttpStatus.TOO_MANY_REQUESTS_429);
     }
 
@@ -76,26 +76,27 @@ public class IpBanManagerTest {
 
         Response response = newResponse();
 
-        assertTrue(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getLocalHost(), true), response));
+        assertTrue(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getByName("localhost"), true), response));
 
         ipBanManager.ban(socketAddress.getAddress(), 10, TimeUnit.MILLISECONDS);
 
         response = newResponse();
-        assertFalse(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getLocalHost(), true), response));
+        assertFalse(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getByName("localhost"), true), response));
+
         validate(response).respond(HttpStatus.TOO_MANY_REQUESTS_429);
 
         Thread.sleep(20);
 
-        assertTrue(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getLocalHost(), true), response));
+        assertTrue(ipBanManager.accept(newTestRequest().withInfo(socketAddress, InetAddress.getByName("localhost"), true), response));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBanWithTimeMicroseconds() throws Exception {
-        ipBanManager.ban(Inet4Address.getLocalHost(), 1, TimeUnit.MICROSECONDS);
+        ipBanManager.ban(Inet4Address.getByName("localhost"), 1, TimeUnit.MICROSECONDS);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBanWithTimeNanoseconds() throws Exception {
-        ipBanManager.ban(Inet4Address.getLocalHost(), 1, TimeUnit.NANOSECONDS);
+        ipBanManager.ban(Inet4Address.getByName("localhost"), 1, TimeUnit.NANOSECONDS);
     }
 }
