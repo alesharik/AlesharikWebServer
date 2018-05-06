@@ -47,26 +47,29 @@ final class PostgresTransactionManager implements TransactionManager {
             throw new DatabaseTransactionException(e);
         }
 
+        boolean ok = false;
         try {
             runnable.run();
-
-            Savepoint s = savepoint;
-            savepoint = null;
-            connection.releaseSavepoint(s);
-
-            connection.commit();
-            return true;
+            ok = true;
         } catch (Exception e) {
             e.printStackTrace(System.out);
-            if(savepoint != null)
-                try {
-                    connection.rollback(savepoint);
-                } catch (SQLException e1) {
-                    throw new DatabaseTransactionException(e1);
-                }
+            try {
+                connection.rollback(savepoint);
+            } catch (SQLException e1) {
+                throw new DatabaseTransactionException(e1);
+            }
         }
 
-        return false;
+        if(ok) {
+            try {
+                connection.releaseSavepoint(savepoint);
+                connection.commit();
+            } catch (SQLException e) {
+                throw new DatabaseTransactionException(e);
+            }
+        }
+
+        return ok;
     }
 
     @Override
@@ -80,26 +83,28 @@ final class PostgresTransactionManager implements TransactionManager {
             throw new DatabaseTransactionException(e);
         }
 
+        C ok = null;
         try {
-            C ret = cCallable.call();
-
-            Savepoint s = savepoint;
-            savepoint = null;
-            connection.releaseSavepoint(s);
-
-            connection.commit();
-            return ret;
+            ok = cCallable.call();
         } catch (Exception e) {
             e.printStackTrace(System.out);
-            if(savepoint != null)
-                try {
-                    connection.rollback(savepoint);
-                } catch (SQLException e1) {
-                    e1.printStackTrace();
-                }
+            try {
+                connection.rollback(savepoint);
+            } catch (SQLException e1) {
+                throw new DatabaseTransactionException(e1);
+            }
         }
 
-        return null;
+        if(ok != null) {
+            try {
+                connection.releaseSavepoint(savepoint);
+                connection.commit();
+            } catch (SQLException e) {
+                throw new DatabaseTransactionException(e);
+            }
+        }
+
+        return ok;
     }
 
     @Override
