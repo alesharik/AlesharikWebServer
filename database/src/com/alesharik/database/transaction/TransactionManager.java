@@ -18,12 +18,40 @@
 
 package com.alesharik.database.transaction;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.concurrent.Callable;
 
+/**
+ * Transaction manager manages all trnasactions
+ */
 public interface TransactionManager {
-    void executeTransaction(Runnable runnable);
+    /**
+     * Execute runnable in transaction
+     *
+     * @param runnable the runnable
+     * @return <code>true</code> - transaction commited, <code>false</code> - transaction rolled back
+     * @throws com.alesharik.database.exception.DatabaseTransactionException if transaction cannot be opened or rolled back
+     */
+    boolean executeTransaction(@Nonnull Runnable runnable);
 
-    <C> C executeTransaction(Callable<C> cCallable);
+    /**
+     * Execute callable in transaction
+     *
+     * @param cCallable the callable
+     * @param <C>       the return type
+     * @return <code>null</code> - transaction rolled back, result - transaction commited
+     * @throws com.alesharik.database.exception.DatabaseTransactionException if transaction cannot be opened or rolled back
+     */
+    @Nullable
+    <C> C executeTransaction(@Nonnull Callable<C> cCallable);
 
+    /**
+     * Create new transaction object
+     *
+     * @return the transaction object
+     * @throws com.alesharik.database.exception.DatabaseTransactionException if transaction cannot be opened
+     */
+    @Nonnull
     Transaction newTransaction();
 }

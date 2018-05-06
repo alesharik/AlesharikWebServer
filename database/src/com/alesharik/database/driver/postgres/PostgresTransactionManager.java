@@ -37,14 +37,16 @@ final class PostgresTransactionManager implements TransactionManager {
     }
 
     @Override
-    public void executeTransaction(Runnable runnable) {
+    public boolean executeTransaction(Runnable runnable) {
         Connection connection = this.connection.getConnection();
+
         Savepoint savepoint;
         try {
             savepoint = connection.setSavepoint(UUID.randomUUID().toString());
         } catch (SQLException e) {
             throw new DatabaseTransactionException(e);
         }
+
         try {
             runnable.run();
 
@@ -53,35 +55,40 @@ final class PostgresTransactionManager implements TransactionManager {
             connection.releaseSavepoint(s);
 
             connection.commit();
+            return true;
         } catch (Exception e) {
             e.printStackTrace(System.out);
             if(savepoint != null)
                 try {
                     connection.rollback(savepoint);
                 } catch (SQLException e1) {
-                    e1.printStackTrace();
+                    throw new DatabaseTransactionException(e1);
                 }
         }
+
+        return false;
     }
 
     @Override
     public <C> C executeTransaction(Callable<C> cCallable) {
         Connection connection = this.connection.getConnection();
+
         Savepoint savepoint;
-        C ret = null;
         try {
             savepoint = connection.setSavepoint(UUID.randomUUID().toString());
         } catch (SQLException e) {
             throw new DatabaseTransactionException(e);
         }
+
         try {
-            ret = cCallable.call();
+            C ret = cCallable.call();
 
             Savepoint s = savepoint;
             savepoint = null;
             connection.releaseSavepoint(s);
 
             connection.commit();
+            return ret;
         } catch (Exception e) {
             e.printStackTrace(System.out);
             if(savepoint != null)
@@ -91,7 +98,8 @@ final class PostgresTransactionManager implements TransactionManager {
                     e1.printStackTrace();
                 }
         }
-        return ret;
+
+        return null;
     }
 
     @Override

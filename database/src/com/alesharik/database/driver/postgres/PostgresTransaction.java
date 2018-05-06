@@ -19,6 +19,7 @@
 package com.alesharik.database.driver.postgres;
 
 import com.alesharik.database.exception.DatabaseInternalException;
+import com.alesharik.database.exception.DatabaseTransactionException;
 import com.alesharik.database.transaction.Transaction;
 
 import java.sql.Connection;
@@ -43,7 +44,7 @@ final class PostgresTransaction implements Transaction {
         try {
             this.savepoint = connection.setSavepoint();
         } catch (SQLException e) {
-            throw new DatabaseInternalException("Can't create savepoint", e);
+            throw new DatabaseTransactionException("Can't create savepoint", e);
         }
         state.set(0, children);
     }
@@ -61,7 +62,7 @@ final class PostgresTransaction implements Transaction {
             if(child.isRolledBack()) {
                 rollback();
                 return false;
-            } else if(child.isCommitted())
+            } else if(child.isCommited())
                 continue;
             if(!child.commit()) {
                 rollback();
@@ -96,7 +97,7 @@ final class PostgresTransaction implements Transaction {
     }
 
     @Override
-    public boolean isCommitted() {
+    public boolean isCommited() {
         return state.get(1);
     }
 

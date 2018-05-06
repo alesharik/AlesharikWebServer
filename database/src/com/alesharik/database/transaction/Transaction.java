@@ -18,14 +18,44 @@
 
 package com.alesharik.database.transaction;
 
+import javax.annotation.Nonnull;
+
+/**
+ * Transaction object manages a transaction
+ */
 public interface Transaction {
+    /**
+     * Create new sub-transaction
+     *
+     * @return new sub-transaction
+     * @throws com.alesharik.database.exception.DatabaseTransactionException if transaction cannot be opened or rolled back
+     */
+    @Nonnull
     Transaction newTransaction();
 
+    /**
+     * Commit current transaction and all sub-transactions
+     * @return commit failed
+     * @throws com.alesharik.database.exception.DatabaseTransactionException if transaction cannot be commited
+     */
     boolean commit();
 
+    /**
+     * Rollback this transaction and all sub-transactions
+     * @throws com.alesharik.database.exception.DatabaseTransactionException if transaction cannot be rolled back
+     */
     void rollback();
 
-    boolean isCommitted();
+    /**
+     * Return <code>true</code> if transaction already commited
+     *
+     * @return <code>true</code> - transaction commited, <code>false</code> - transaction alive or rolled back
+     */
+    boolean isCommited();
 
+    /**
+     * Return <code>true</code> if transaction rolled back
+     * @return <code>true</code> - transaction rolled back, <code>false</code> - transaction alive or commited
+     */
     boolean isRolledBack();
 }
