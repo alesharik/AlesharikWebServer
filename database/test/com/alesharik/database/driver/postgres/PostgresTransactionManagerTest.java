@@ -305,4 +305,32 @@ public class PostgresTransactionManagerTest {
         verify(connection, times(1)).setSavepoint(anyString());
         verify(runnable, times(1)).call();
     }
+
+    @Test
+    public void getPostgresTransactionOK() throws SQLException {
+        Connection connection = mock(Connection.class);
+        when(connection.setSavepoint(anyString()))
+                .thenReturn(mock(Savepoint.class));
+        doAnswer(invocation -> {
+            assertTrue(mockingDetails(invocation.getArgument(0)).isMock());
+            return null;
+        }).when(connection).releaseSavepoint(any());
+
+        PostgresTransactionManager manager = new PostgresTransactionManager(provider(connection));
+
+        assertNotNull(manager.newTransaction());
+        assertTrue(manager.newTransaction() instanceof PostgresTransaction);
+    }
+
+    @Test(expected = DatabaseTransactionException.class)
+    public void getPostgresTransactionException() throws SQLException {
+        Connection connection = mock(Connection.class);
+        when(connection.setSavepoint())
+                .thenThrow(new SQLException());
+
+        PostgresTransactionManager manager = new PostgresTransactionManager(provider(connection));
+        manager.newTransaction();
+
+        fail();
+    }
 }
