@@ -18,7 +18,6 @@
 
 package com.alesharik.database.driver.postgres;
 
-import com.alesharik.database.exception.DatabaseInternalException;
 import com.alesharik.database.exception.DatabaseTransactionException;
 import com.alesharik.database.transaction.Transaction;
 
@@ -69,12 +68,18 @@ final class PostgresTransaction implements Transaction {
                 return false;
             }
         }
-        if(!state.get(0)) {
+
+        try {
+            connection.releaseSavepoint(savepoint);
+        } catch (SQLException e) {
+            throw new DatabaseTransactionException("Can't commit", e);
+        }
+
+        if(!state.get(0)) { //Doesn't have children
             try {
-                connection.releaseSavepoint(savepoint);
                 connection.commit();
             } catch (SQLException e) {
-                throw new DatabaseInternalException("Can't commit", e);
+                throw new DatabaseTransactionException("Can't commit", e);
             }
         }
         state.set(1, true);
@@ -90,8 +95,9 @@ final class PostgresTransaction implements Transaction {
         }
         try {
             connection.rollback(savepoint);
+            connection.releaseSavepoint(savepoint);
         } catch (SQLException e) {
-            throw new DatabaseInternalException("Rollback failed", e);
+            throw new DatabaseTransactionException("Rollback failed", e);
         }
         state.set(2, true);
     }
