@@ -320,7 +320,7 @@ public class ConfigurationParser {
                 if(parent.isEmpty() || name.isEmpty())
                     throw new CodeParsingException("custom section parse error: use syntax error (empty name or parent)", lineNumber.get(), linesCopy);
 
-                ConfigurationObject parentObj = null;
+                ConfigurationTypedObject parentObj = null;
                 if(!"null".equals(parent)) {
                     String[] parts = parent.split("\\.", 2);
                     if(parts.length < 2 || StringUtils.isWhitespace(parts[0]) || StringUtils.isWhitespace(parts[1]))
@@ -353,10 +353,10 @@ public class ConfigurationParser {
         return section;
     }
 
-    private CustomEndpointSection.UseDirective parseUseDirectiveConfigured(String name, ConfigurationObject parent, String line, Iterator<String> lines, AtomicInteger lineCounter, List<String> linesCopy, Map<Pattern, String> preparedDefinitions) {
+    private CustomEndpointSection.UseDirective parseUseDirectiveConfigured(String name, ConfigurationTypedObject parent, String line, Iterator<String> lines, AtomicInteger lineCounter, List<String> linesCopy, Map<Pattern, String> preparedDefinitions) {
         List<CustomEndpointSection.CustomProperty> customProperties = new ArrayList<>();
 
-        ObjectImpl object = new ObjectImpl(name);
+        TypedObjectImpl object = new TypedObjectImpl(name, parent == null ? "" : parent.getType());
         if(parent != null)
             object.getEntries().putAll(parent.getEntries());
 
@@ -1014,7 +1014,7 @@ public class ConfigurationParser {
     @RequiredArgsConstructor
     private static final class UseDirectiveImpl implements CustomEndpointSection.UseDirective {
         private final String name;
-        private final ConfigurationObject configuration;
+        private final ConfigurationTypedObject configuration;
         private final List<CustomEndpointSection.CustomProperty> customProperties = new ArrayList<>();
     }
 

@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.configuration.config.lang;
 
-import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -29,7 +29,7 @@ public interface CustomEndpointSection {
     interface UseDirective {
         String getName();
 
-        ConfigurationObject getConfiguration();
+        ConfigurationTypedObject getConfiguration();
 
         List<CustomProperty> getCustomProperties();
     }
