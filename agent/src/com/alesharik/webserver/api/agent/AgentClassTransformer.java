@@ -56,13 +56,12 @@ final class AgentClassTransformer implements ClassFileTransformer {
     static void addTransformer(Class<?> transformer, boolean replace) {
         if(transformerClasses.contains(transformer)) {
             if(replace) {
-                transformerClasses.remove(transformer);
-                transformerClasses.add(transformer);
+                transformers.forEach((s, methodHolders) -> methodHolders.removeIf(next -> next.methodHandle.getDeclaringClass() == transformer));
+                allTransformers.removeIf(next -> next.methodHandle.getDeclaringClass() == transformer);
             } else
                 return;
-        } else {
+        } else
             transformerClasses.add(transformer);
-        }
         Stream.of(transformer.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Transform.class) || method.isAnnotationPresent(TransformAll.class))
                 .filter(method -> method.getReturnType().isAssignableFrom(byte[].class))
