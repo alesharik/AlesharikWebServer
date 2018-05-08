@@ -28,13 +28,24 @@ import java.lang.annotation.Target;
 /**
  * This annotation indicates that this class is a module.
  * Modules are non-singleton {@link com.alesharik.webserver.base.bean.Bean}s with autowire. Every module ans it's parts
- * will be run in it's own bean context
+ * will be run in it's own bean context.<br>
+ * Module can reloaded in 2 ways: <ul>
+ *     <li>Soft way - call {@link Reload} method if it exists - happens only when new config is received or on user request</li>
+ *     <li>Hard update (default reload strategy) - {@link Shutdown}, {@link Configure} and {@link Start} again - happens when module shot down with error
+ *      and auto-restart option is enabled</li>
+ * </ul>.
+ * All exceptions in {@link Configure} method will be threated as configuration exceptions(as well as missing required config fields)
+ * and will throw configuration error to stop the server. All exceptions in {@link Start}, {@link Shutdown}, {@link ShutdownNow} or {@link Reload}
+ * method will be threated as module errors, the server will try to restart the module or ignore it(depends on auto-restart option); but
+ * {@link ConfigurationError} error will be processed as configuration error
  *
  * @see Configuration
  * @see Configure
  * @see Shutdown
  * @see Start
  * @see ShutdownNow
+ * @see Reload
+ * @see ConfigurationError
  * @see com.alesharik.webserver.configuration.module.layer.Layer
  * @see com.alesharik.webserver.configuration.module.layer.Layered
  */
@@ -55,5 +66,5 @@ public @interface Module {
      *
      * @return is auto-invoke option enabled
      */
-    boolean autoInvoke() default false;
+    boolean autoInvoke() default true;
 }

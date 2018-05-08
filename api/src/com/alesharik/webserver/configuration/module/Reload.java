@@ -16,19 +16,18 @@
  *
  */
 
-package com.alesharik.webserver.configuration.module.layer.meta;
+package com.alesharik.webserver.configuration.module;
 
-import javax.annotation.Nonnull;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * This processor allows to process all submodules
+ * Annotated method will be invoked when module will be reloaded. It happens when module receives new configuration or
+ * by user signal. Default action is restarting the module, but annotated method overrides it
  */
-public interface SubModuleProcessor {
-    /**
-     * Process the submodule
-     *
-     * @param adapter   the submodule adapter
-     * @param subModule the submodule
-     */
-    void processSubModule(@Nonnull SubModuleAdapter adapter, @Nonnull Object subModule);
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Reload {
 }

@@ -23,18 +23,46 @@ import com.alesharik.webserver.configuration.module.meta.MetaInvokeException;
 
 import javax.annotation.Nonnull;
 
+/**
+ * This class warps all fancy annotated methods with basic API
+ */
 public interface SubModuleAdapter {
+    /**
+     * Invoke all start methods. This method has call protection(it does nothing if module is already started)
+     *
+     * @throws MetaInvokeException if one of the start methods throws an exception
+     */
     void start() throws MetaInvokeException;
 
+    /**
+     * Invoke all shutdown methods. This method has call protection(it does nothing if module is already shot down)
+     * @throws MetaInvokeException if one of the shutdown methods throws an exception
+     */
     void shutdown() throws MetaInvokeException;
 
+    /**
+     * Invoke all shutdownNow methods. This method has call protection(it does nothing if module is already shot down)
+     * @throws MetaInvokeException if one of the shutdownNow methods throws an exception
+     */
     void shutdownNow() throws MetaInvokeException;
 
+    /**
+     * Return submodule's name
+     * @return the submodule's name
+     */
     @Nonnull
     String getName();
 
+    /**
+     * Return custom data object
+     * @return custom data object
+     */
     @Nonnull
     CustomData getCustomData();
 
+    /**
+     * Return <code>true</code> if module is running, overwise <code>false</code>
+     * @return <code>true</code> - running, <code>false</code> - not
+     */
     boolean isRunning();
 }

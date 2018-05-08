@@ -27,7 +27,8 @@ import java.lang.annotation.Target;
 /**
  * Submodule is part of module's layer. Submodules are non-singleton {@link com.alesharik.webserver.base.bean.Bean}s with autowire.
  * Supported lifecycle methods: {@link com.alesharik.webserver.configuration.module.Start}, {@link com.alesharik.webserver.configuration.module.Shutdown},
- * {@link com.alesharik.webserver.configuration.module.ShutdownNow}
+ * {@link com.alesharik.webserver.configuration.module.ShutdownNow}.<br>
+ * SubModule can't shutdown itself, it must continue working while parent module is running, shut it down or request what to do from it
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})

@@ -39,6 +39,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 
+import javax.annotation.Nonnull;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
@@ -47,6 +48,12 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * This class builds {@link SubModuleAdapter}s from SubModule objects
+ *
+ * @see SubModuleAdapter
+ * @see SubModuleProcessor
+ */
 @UtilityClass
 @ClassPathScanner
 @Prefixes({"[Module]", "[Meta]", "[SubModuleMetaFactory]"})
@@ -61,7 +68,14 @@ public class SubModuleMetaFactory {
         Logger.getLoggingLevelManager().createLoggingLevel("sub-module-meta-factory");
     }
 
-    public static SubModuleAdapter create(Object o) {
+    /**
+     * Wrap SubModule object into {@link SubModuleAdapter}
+     *
+     * @param o the object
+     * @return the adapter
+     * @throws IllegalArgumentException if object doesn't have {@link SubModule} annotation
+     */
+    public static SubModuleAdapter create(@Nonnull Object o) {
         Class<?> clazz = o.getClass();
         SubModule annotation = clazz.getAnnotation(SubModule.class);
         if(annotation == null)

@@ -16,19 +16,26 @@
  *
  */
 
-package com.alesharik.webserver.configuration.module.layer.meta;
-
-import javax.annotation.Nonnull;
+package com.alesharik.webserver.configuration.module;
 
 /**
- * This processor allows to process all submodules
+ * This error must be processed as configuration error and must shut down the server
  */
-public interface SubModuleProcessor {
-    /**
-     * Process the submodule
-     *
-     * @param adapter   the submodule adapter
-     * @param subModule the submodule
-     */
-    void processSubModule(@Nonnull SubModuleAdapter adapter, @Nonnull Object subModule);
+public final class ConfigurationError extends Error {
+    private static final long serialVersionUID = -6348536137880873664L;
+
+    public ConfigurationError() {
+    }
+
+    public ConfigurationError(String message) {
+        super(message);
+    }
+
+    public ConfigurationError(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ConfigurationError(Throwable cause) {
+        super(cause);
+    }
 }
