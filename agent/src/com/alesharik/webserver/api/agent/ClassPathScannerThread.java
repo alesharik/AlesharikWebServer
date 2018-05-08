@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.agent;
 
+import com.alesharik.webserver.api.ExecutionStage;
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
 import com.alesharik.webserver.api.agent.classPath.ListenClass;
@@ -33,12 +34,14 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.jctools.queues.atomic.MpscLinkedAtomicQueue;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Collections;
@@ -76,7 +79,7 @@ final class ClassPathScannerThread extends Thread {
     private final ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners;
     private final MultiValuedMap<Type, MethodHandle> commonListeners = new ArrayListValuedHashMap<>();
 
-    private final Map<MethodHandle, Class<?>> relations = new ConcurrentHashMap<>();
+    private final Map<MethodHandle, Method> relations = new ConcurrentHashMap<>();
 
     public ClassPathScannerThread() {
         setName("ClassPath scanner thread");
@@ -119,7 +122,7 @@ final class ClassPathScannerThread extends Thread {
     private void scanClassLoader(ClassLoader classLoader) throws InterruptedException, ExecutionException {
         taskCount.incrementAndGet();
         ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners = new ConcurrentTripleHashMap<>();
-        Map<MethodHandle, Class<?>> rel = new HashMap<>();
+        Map<MethodHandle, Method> rel = new HashMap<>();
 
         ScanResult result = new FastClasspathScanner()
                 .ignoreParentClassLoaders()
@@ -140,31 +143,31 @@ final class ClassPathScannerThread extends Thread {
                 throwable.printStackTrace();
         }
 
-        new ClassLoaderScanTask(listeners, Collections.singleton(classLoader), workerPool).run();
+        new ClassLoaderScanTask(listeners, Collections.singleton(classLoader), workerPool, rel).run();
         classLoaders.add(classLoader);
-        new ClassLoaderScanTask(newListeners, classLoaders, workerPool).run();
+        new ClassLoaderScanTask(newListeners, classLoaders, workerPool, rel).run();
         relations.putAll(rel);
         listeners.putAll(newListeners);
     }
 
-    private void removeClassLoaderImpl(ClassLoader classLoader) throws InterruptedException, ExecutionException {
+    private void removeClassLoaderImpl(ClassLoader classLoader) {
         taskCount.incrementAndGet();
         classLoaders.remove(classLoader);
         for(Triple<Class<?>, Type, MethodHandle> classTypeMethodHandleTriple : listeners.entrySet()) {
-            if(relations.get(classTypeMethodHandleTriple.getC()).getClassLoader() == classLoader) {
+            if(relations.get(classTypeMethodHandleTriple.getC()).getDeclaringClass().getClassLoader() == classLoader) {
                 listeners.remove(classTypeMethodHandleTriple.getA());
                 relations.remove(classTypeMethodHandleTriple.getC());
             }
         }
         for(Map.Entry<Type, Collection<MethodHandle>> typeCollectionEntry : commonListeners.asMap().entrySet()) {
             for(MethodHandle methodHandle : typeCollectionEntry.getValue()) {
-                if(relations.get(methodHandle).getClassLoader() == classLoader) {
+                if(relations.get(methodHandle).getDeclaringClass().getClassLoader() == classLoader) {
                     commonListeners.removeMapping(typeCollectionEntry.getKey(), methodHandle);
                     relations.remove(methodHandle);
                 }
             }
         }
-        new ClassLoaderRemoveTask(commonListeners, classLoader).run();
+        new ClassLoaderRemoveTask(commonListeners, classLoader, relations).run();
     }
 
     public void addClassLoader(ClassLoader classLoader) {
@@ -174,7 +177,7 @@ final class ClassPathScannerThread extends Thread {
         }
     }
 
-    private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners, boolean replace, Map<MethodHandle, Class<?>> rel) {
+    private void matchClassPathScanner(Class<?> clazz, ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners, boolean replace, Map<MethodHandle, Method> rel) {
         if(clazz.isAnnotationPresent(Ignored.class))
             return;
         if(listeners.containsKey(clazz)) {
@@ -197,7 +200,7 @@ final class ClassPathScannerThread extends Thread {
                             method.setAccessible(true);
                             MethodHandle unreflect = LOOKUP.unreflect(method);
                             newListeners.put(annotation.value(), Type.ANNOTATION, unreflect);
-                            rel.put(unreflect, method.getDeclaringClass());
+                            rel.put(unreflect, method);
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                         }
@@ -207,7 +210,7 @@ final class ClassPathScannerThread extends Thread {
                             method.setAccessible(true);
                             MethodHandle unreflect = LOOKUP.unreflect(method);
                             newListeners.put(annotation.value(), Type.CLASS, unreflect);
-                            rel.put(unreflect, method.getDeclaringClass());
+                            rel.put(unreflect, method);
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                         }
@@ -217,7 +220,7 @@ final class ClassPathScannerThread extends Thread {
                             method.setAccessible(true);
                             MethodHandle unreflect = LOOKUP.unreflect(method);
                             newListeners.put(annotation.value(), Type.INTERFACE, unreflect);
-                            rel.put(unreflect, method.getDeclaringClass());
+                            rel.put(unreflect, method);
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                         }
@@ -226,7 +229,7 @@ final class ClassPathScannerThread extends Thread {
                             method.setAccessible(true);
                             MethodHandle unreflect = LOOKUP.unreflect(method);
                             commonListeners.put(Type.RELOAD_START, unreflect);
-                            relations.put(unreflect, method.getDeclaringClass());
+                            relations.put(unreflect, method);
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                         }
@@ -235,7 +238,7 @@ final class ClassPathScannerThread extends Thread {
                             method.setAccessible(true);
                             MethodHandle unreflect = LOOKUP.unreflect(method);
                             commonListeners.put(Type.RELOAD_END, unreflect);
-                            relations.put(unreflect, method.getDeclaringClass());
+                            relations.put(unreflect, method);
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                         }
@@ -245,7 +248,7 @@ final class ClassPathScannerThread extends Thread {
                             method.setAccessible(true);
                             MethodHandle unreflect = LOOKUP.unreflect(method);
                             commonListeners.put(Type.UNLOAD_CLASS_LOADER, unreflect);
-                            relations.put(unreflect, method.getDeclaringClass());
+                            relations.put(unreflect, method);
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                         }
@@ -280,16 +283,12 @@ final class ClassPathScannerThread extends Thread {
         UNLOAD_CLASS_LOADER
     }
 
+    @RequiredArgsConstructor
     private static final class ClassLoaderScanTask implements Runnable {
         private final ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners;
         private final Set<ClassLoader> classLoaders;
         private final ForkJoinPool forkJoinPool;
-
-        public ClassLoaderScanTask(ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners, Set<ClassLoader> classLoaders, ForkJoinPool forkJoinPool) {
-            this.listeners = listeners;
-            this.classLoaders = classLoaders;
-            this.forkJoinPool = forkJoinPool;
-        }
+        private final Map<MethodHandle, Method> rel;
 
         @Override
         public void run() {
@@ -301,6 +300,10 @@ final class ClassPathScannerThread extends Thread {
                         scanner.matchClassesWithAnnotation(aClass, classWithAnnotation -> {
                             if(classWithAnnotation.isAnnotationPresent(Ignored.class))
                                 return;
+                            Stages stages = rel.get(method).getAnnotation(Stages.class);
+                            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
+                                return;
+
                             try {
                                 method.invokeExact(classWithAnnotation);
                             } catch (Throwable e) {
@@ -312,6 +315,9 @@ final class ClassPathScannerThread extends Thread {
                         scanner.matchSubclassesOf(aClass, subclass -> {
                             if(subclass.isAnnotationPresent(Ignored.class))
                                 return;
+                            Stages stages = rel.get(method).getAnnotation(Stages.class);
+                            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
+                                return;
                             try {
                                 method.invokeExact(subclass);
                             } catch (Throwable e) {
@@ -322,6 +328,9 @@ final class ClassPathScannerThread extends Thread {
                     case INTERFACE:
                         scanner.matchClassesImplementing(aClass, implementingClass -> {
                             if(implementingClass.isAnnotationPresent(Ignored.class))
+                                return;
+                            Stages stages = rel.get(method).getAnnotation(Stages.class);
+                            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
                                 return;
                             try {
                                 method.invokeExact(implementingClass);
@@ -347,18 +356,18 @@ final class ClassPathScannerThread extends Thread {
         }
     }
 
+    @RequiredArgsConstructor
     private static final class ClassLoaderRemoveTask implements Runnable {
         private final MultiValuedMap<Type, MethodHandle> listeners;
         private final ClassLoader classLoader;
-
-        public ClassLoaderRemoveTask(MultiValuedMap<Type, MethodHandle> listeners, ClassLoader classLoader) {
-            this.listeners = listeners;
-            this.classLoader = classLoader;
-        }
+        private final Map<MethodHandle, Method> rel;
 
         @Override
         public void run() {
             for(MethodHandle methodHandle : listeners.get(Type.RELOAD_START)) {
+                Stages stages = rel.get(methodHandle).getAnnotation(Stages.class);
+                if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
+                    return;
                 try {
                     methodHandle.invoke();
                 } catch (Error error) {
@@ -369,6 +378,9 @@ final class ClassPathScannerThread extends Thread {
             }
 
             for(MethodHandle methodHandle : listeners.get(Type.UNLOAD_CLASS_LOADER)) {
+                Stages stages = rel.get(methodHandle).getAnnotation(Stages.class);
+                if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
+                    return;
                 try {
                     methodHandle.invoke(classLoader);
                 } catch (Error error) {
@@ -379,6 +391,9 @@ final class ClassPathScannerThread extends Thread {
             }
 
             for(MethodHandle methodHandle : listeners.get(Type.RELOAD_END)) {
+                Stages stages = rel.get(methodHandle).getAnnotation(Stages.class);
+                if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
+                    return;
                 try {
                     methodHandle.invoke();
                 } catch (Error error) {

@@ -80,10 +80,19 @@ public enum ExecutionStage {
     EXECUTE;
 
     private static volatile ExecutionStage state = NOT_STARTED;
+    private static volatile boolean enabled = false;
 
     @Nonnull
     public static ExecutionStage getCurrentStage() {
         return state;
+    }
+
+    public static void enable() {
+        enabled = true;
+    }
+
+    public static boolean isEnabled() {
+        return enabled;
     }
 
     public static void setState(@Nonnull ExecutionStage state) {
@@ -91,6 +100,14 @@ public enum ExecutionStage {
         if(!caller.isAnnotationPresent(AuthorizedImpl.class) || !caller.getCanonicalName().startsWith("com.alesharik.webserver"))
             throw new SecurityException("Class " + caller + " doesn't have any rights to change the state!");
         ExecutionStage.state = state;
+    }
+
+    public static boolean valid(ExecutionStage[] stages) {
+        for(ExecutionStage stage : stages) {
+            if(stage == ExecutionStage.state)
+                return true;
+        }
+        return false;
     }
 
     static final class CallerClass extends SecurityManager {

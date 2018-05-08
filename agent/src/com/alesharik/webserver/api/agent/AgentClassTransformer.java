@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.agent;
 
+import com.alesharik.webserver.api.ExecutionStage;
 import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.Transform;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
@@ -157,6 +158,10 @@ final class AgentClassTransformer implements ClassFileTransformer {
         }
 
         public byte[] invoke(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer, ClassNode classNode) throws Throwable {
+            Stages stages = methodHandle.getAnnotation(Stages.class);
+            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
+                return null;
+
             ArrayList<Object> invokeArgs = new ArrayList<>(args.length);
             for(Param.Type type : args) {
                 switch (type) {

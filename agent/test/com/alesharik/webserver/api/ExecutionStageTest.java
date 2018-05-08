@@ -21,8 +21,7 @@ package com.alesharik.webserver.api;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 @ExecutionStage.AuthorizedImpl
 public class ExecutionStageTest {
@@ -46,6 +45,22 @@ public class ExecutionStageTest {
     public void setStageWrongClass() {
         C.set();
         fail();
+    }
+
+    @Test
+    public void enabled() {
+        assertFalse(ExecutionStage.isEnabled());
+        ExecutionStage.enable();
+        assertTrue(ExecutionStage.isEnabled());
+        ExecutionStage.enable();
+        assertTrue(ExecutionStage.isEnabled());
+    }
+
+    @Test
+    public void valid() {
+        ExecutionStage.setState(ExecutionStage.CONFIG);
+        assertTrue(ExecutionStage.valid(new ExecutionStage[]{ExecutionStage.AGENT, ExecutionStage.CONFIG, ExecutionStage.CORE_MODULES}));
+        assertFalse(ExecutionStage.valid(new ExecutionStage[]{ExecutionStage.CORE_MODULES, ExecutionStage.SHARED_LIBS}));
     }
 
     @Test
