@@ -64,7 +64,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @see Wire
  * @see javax.annotation.PreDestroy
  * @see javax.annotation.PostConstruct
- */
+ *///FIXME delete(!) and customize
 @UtilityClass//TODO tests
 public class Beans {//TODO recursion detection
     private static final List<WeakReference<Ctx>> contexts = new CopyOnWriteArrayList<>();
