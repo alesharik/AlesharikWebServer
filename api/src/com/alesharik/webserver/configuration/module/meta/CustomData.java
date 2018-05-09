@@ -49,6 +49,9 @@ public final class CustomData {
      * @param dataObject the object
      */
     public void setData(@Nonnull String type, @Nullable DataObject dataObject) {
-        data.put(type, dataObject);
+        if(dataObject == null)
+            data.remove(type);
+        else
+            data.put(type, dataObject);
     }
 }
