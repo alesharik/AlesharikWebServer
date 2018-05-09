@@ -27,7 +27,8 @@ import java.lang.annotation.Target;
 /**
  * Layers allow modules to be divided in submodules. They can have lifecycle methods({@link com.alesharik.webserver.configuration.module.Start},
  * {@link com.alesharik.webserver.configuration.module.Shutdown} {@link com.alesharik.webserver.configuration.module.ShutdownNow}). If ASM transformation is enabled, lifecycle functions will
- * automatically invoke lifecycle functions in submodules/sublayers. Layers are non-singleton {@link com.alesharik.webserver.base.bean.Bean}s with autowire
+ * automatically invoke lifecycle functions in submodules/sublayers. Layers are non-singleton {@link com.alesharik.webserver.base.bean.Bean}s with autowire.
+ * All <code>transient</code> fields will be ignored
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -41,16 +42,9 @@ public @interface Layer {
     String value();
 
     /**
-     * Enable ASM transformations
-     *
-     * @return is ASM transformations are enabled
-     */
-    boolean auto() default true;
-
-    /**
-     * Enable auto-invoke option. All children's lifecycle events will be invoked automatically. DO NOT USE WITH {@link #auto()} ENABLED
+     * Enable auto-invoke option. All children's lifecycle events will be invoked automatically
      *
      * @return is auto-invoke option enabled
      */
-    boolean autoInvoke() default false;
+    boolean autoInvoke() default true;
 }

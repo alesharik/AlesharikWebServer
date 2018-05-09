@@ -18,20 +18,27 @@
 
 package com.alesharik.webserver.base.exception;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Use it when a dev does something really wrong
  */
-@RequiredArgsConstructor
 public final class DevError extends Error {
     private static final long serialVersionUID = 4741623557743824142L;
     private final String message;
     private final String description;
-    private final Class<?> clazz;
+    private final String clazz;
+
+    public DevError(String message, String description, Class<?> clazz) {
+        this(message, description, clazz.getCanonicalName());
+    }
+
+    public DevError(String message, String description, String clazz) {
+        this.message = message;
+        this.description = description;
+        this.clazz = clazz;
+    }
 
     List<String> renderMessage() {
         List<String> list = new ArrayList<>();
@@ -43,7 +50,7 @@ public final class DevError extends Error {
         list.add("====================DESCRIPTION====================");
         list.add(description);
         list.add("====================CLASS====================");
-        list.add(clazz.getCanonicalName());
+        list.add(clazz);
         list.add("====================ERROR END====================");
 
         return list;

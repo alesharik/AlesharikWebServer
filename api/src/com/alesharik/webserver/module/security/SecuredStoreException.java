@@ -16,10 +16,23 @@
  *
  */
 
-package com.alesharik.webserver.configuration.module.asm;
+package com.alesharik.webserver.module.security;
 
-import com.alesharik.webserver.api.agent.transformer.ClassTransformer;
+public final class SecuredStoreException extends RuntimeException {
+    private static final long serialVersionUID = -7682785921667069294L;
 
-@ClassTransformer
-public final class ModuleTransformer {
+    public SecuredStoreException() {
+    }
+
+    public SecuredStoreException(String message) {
+        super(message);
+    }
+
+    public SecuredStoreException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public SecuredStoreException(Throwable cause) {
+        super(cause);
+    }
 }

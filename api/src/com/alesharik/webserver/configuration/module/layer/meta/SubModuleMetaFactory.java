@@ -31,6 +31,7 @@ import com.alesharik.webserver.configuration.module.Start;
 import com.alesharik.webserver.configuration.module.layer.SubModule;
 import com.alesharik.webserver.configuration.module.meta.CustomData;
 import com.alesharik.webserver.configuration.module.meta.MetaInvokeException;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.internals.instance.ClassInstantiator;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
@@ -75,6 +76,7 @@ public class SubModuleMetaFactory {
      * @return the adapter
      * @throws IllegalArgumentException if object doesn't have {@link SubModule} annotation
      */
+    @Nonnull
     public static SubModuleAdapter create(@Nonnull Object o) {
         Class<?> clazz = o.getClass();
         SubModule annotation = clazz.getAnnotation(SubModule.class);
@@ -92,8 +94,7 @@ public class SubModuleMetaFactory {
                 if(method.isAnnotationPresent(ShutdownNow.class))
                     adapter.shutdownNow.add(LOOKUP.unreflect(method).bindTo(o));
             } catch (IllegalAccessException e) {
-                System.err.println("WAT");
-                e.printStackTrace();
+                throw new UnexpectedBehaviorError(e);
             }
         }
 
@@ -112,6 +113,8 @@ public class SubModuleMetaFactory {
     @ListenInterface(SubModuleProcessor.class)
     @Stages(ExecutionStage.CORE_MODULES)
     static void listenClass(Class<?> clazz) {
+        System.out.println("Processing " + clazz.getCanonicalName());
+
         SubModuleProcessor processor = (SubModuleProcessor) Beans.getBean(clazz);
         if(processor == null)
             processor = (SubModuleProcessor) ClassInstantiator.instantiate(clazz);
