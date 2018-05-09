@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.util.function.BiConsumer;
 
+import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -137,6 +138,11 @@ public class SubModuleMetaFactoryTest {
         doThrow(new NullPointerException()).when(adapter).start();
 
         SubModuleMetaFactory.create(new SubModuleImpl(adapter)).start();
+    }
+
+    @Test
+    public void testUtility() {
+        assertUtilityClass(SubModuleMetaFactory.class);
     }
 
     private static final class SubModuleProcessorImpl implements SubModuleProcessor {
