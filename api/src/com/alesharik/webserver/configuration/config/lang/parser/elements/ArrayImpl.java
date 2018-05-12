@@ -20,7 +20,9 @@ package com.alesharik.webserver.configuration.config.lang.parser.elements;
 
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObjectArray;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -28,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+@EqualsAndHashCode
+@ToString
 public final class ArrayImpl implements ConfigurationObjectArray {
     @Getter
     @Nonnull

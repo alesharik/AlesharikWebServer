@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +42,7 @@ public final class TypedObjectImpl implements ConfigurationTypedObject {
 
     private final Map<String, ConfigurationElement> elements = new HashMap<>();
 
-    public TypedObjectImpl(String name, String type, ConfigurationTypedObject extend) {
+    public TypedObjectImpl(@Nonnull String name, @Nonnull String type, @Nonnull ConfigurationTypedObject extend) {
         this.name = name;
         this.type = type;
         elements.putAll(extend.getEntries());
@@ -51,7 +52,7 @@ public final class TypedObjectImpl implements ConfigurationTypedObject {
      * @return null - format error
      */
     @Nullable
-    public static TypedObjectImpl parse(String description) {
+    public static TypedObjectImpl parse(@Nonnull String description) {
         String[] parts = description.split(":", 2);
         if(parts.length < 2 || parts[0].isEmpty() || parts[1].isEmpty())
             return null;
@@ -62,7 +63,7 @@ public final class TypedObjectImpl implements ConfigurationTypedObject {
      * @return null - format error
      */
     @Nullable
-    public static TypedObjectImpl parse(String description, ConfigurationTypedObject extend) {
+    public static TypedObjectImpl parse(@Nonnull String description, @Nonnull ConfigurationTypedObject extend) {
         String[] parts = description.split(":", 2);
         if(parts.length < 2 || parts[0].isEmpty() || parts[1].isEmpty())
             return null;

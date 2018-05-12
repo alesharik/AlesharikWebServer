@@ -20,15 +20,20 @@ package com.alesharik.webserver.configuration.config.lang.parser.elements;
 
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@EqualsAndHashCode
+@ToString
 public final class ObjectImpl implements ConfigurationObject {
     @Getter
+    @Nonnull
     private final String name;
     private final Map<String, ConfigurationElement> elements = new HashMap<>();
 

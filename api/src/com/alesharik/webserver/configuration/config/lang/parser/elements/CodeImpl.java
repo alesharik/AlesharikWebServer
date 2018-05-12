@@ -19,13 +19,22 @@
 package com.alesharik.webserver.configuration.config.lang.parser.elements;
 
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationCodeElement;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+
+import javax.annotation.Nonnull;
 
 @RequiredArgsConstructor
 @Getter
+@EqualsAndHashCode
+@ToString
 public final class CodeImpl implements ConfigurationCodeElement {
+    @Nonnull
     private final String languageName;
+    @Nonnull
     private final String code;
+    @Nonnull
     private final String name;
 }

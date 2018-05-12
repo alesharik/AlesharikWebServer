@@ -60,4 +60,41 @@ public class ObjectImplTest {
         when(element.getName()).thenReturn(name);
         return element;
     }
+
+    @Test
+    public void equality() {
+        ConfigurationElement element = createConfigElement("a");
+        ObjectImpl object = new ObjectImpl("a");
+        object.append(element);
+        ObjectImpl object1 = new ObjectImpl("a");
+        object1.append(element);
+
+        assertEquals(object, object1);
+        assertEquals(object.hashCode(), object1.hashCode());
+
+        ObjectImpl object2 = new ObjectImpl("a");
+        assertNotEquals(object, object2);
+        assertNotEquals(object1, object2);
+        assertNotEquals(object.hashCode(), object2.hashCode());
+        assertNotEquals(object1.hashCode(), object2.hashCode());
+
+        ObjectImpl object3 = new ObjectImpl("b");
+        assertNotEquals(object, object3);
+        assertNotEquals(object1, object3);
+        assertNotEquals(object.hashCode(), object3.hashCode());
+        assertNotEquals(object1.hashCode(), object3.hashCode());
+    }
+
+    @Test
+    public void stringify() {
+        ObjectImpl object = new ObjectImpl("");
+
+        assertNotNull(object.toString());
+
+        ObjectImpl object1 = new ObjectImpl("a");
+        object1.append(createConfigElement("a"));
+        object1.append(createConfigElement("b"));
+
+        assertNotNull(object.toString());
+    }
 }

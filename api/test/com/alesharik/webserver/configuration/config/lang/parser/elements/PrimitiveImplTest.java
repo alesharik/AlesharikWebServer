@@ -146,4 +146,83 @@ public class PrimitiveImplTest {
         ConfigurationPrimitive.Double d = (ConfigurationPrimitive.Double) PrimitiveImpl.parseNotString("t", "0.12121212121212121D");
         assertEquals(0.12121212121212121, d.value(), 0.000000000000000001);
     }
+
+    @Test
+    public void equality() {
+        assertEquals(PrimitiveImpl.parseNotString("a", "true"), PrimitiveImpl.parseNotString("a", "true"));
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "true"), PrimitiveImpl.parseNotString("a", "false"));
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "111"), PrimitiveImpl.parseNotString("a", "111"));
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "111"), PrimitiveImpl.parseNotString("a", "1111"));
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "1B"), PrimitiveImpl.parseNotString("a", "0x01B"));
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "1B"), PrimitiveImpl.parseNotString("a", "0x11B"));
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "12S"), PrimitiveImpl.parseNotString("a", "12S"));
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "12S"), PrimitiveImpl.parseNotString("a", "13S"));
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "1221212121L"), PrimitiveImpl.parseNotString("a", "1221212121L"));
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "12L"), PrimitiveImpl.parseNotString("a", "122L"));
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "1.0"), PrimitiveImpl.parseNotString("a", "1,0"));
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "11.0"), PrimitiveImpl.parseNotString("a", "1,0"));
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "12.2D"), PrimitiveImpl.parseNotString("a", "12.2D"));
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "12.22D"), PrimitiveImpl.parseNotString("a", "12.2D"));
+
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "true"), PrimitiveImpl.parseNotString("a", "1111"));
+
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "true"), PrimitiveImpl.parseNotString("b", "true"));
+
+        assertEquals(PrimitiveImpl.wrap("a", 'c'), PrimitiveImpl.wrap("a", 'c'));
+        assertNotEquals(PrimitiveImpl.wrap("a", 'c'), PrimitiveImpl.wrap("a", 'b'));
+
+        assertEquals(PrimitiveImpl.wrap("a", "aa"), PrimitiveImpl.wrap("a", "aa"));
+        assertNotEquals(PrimitiveImpl.wrap("a", "cc"), PrimitiveImpl.wrap("a", "b"));
+
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "true").hashCode(), PrimitiveImpl.parseNotString("a", "true").hashCode());
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "true").hashCode(), PrimitiveImpl.parseNotString("a", "false").hashCode());
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "111").hashCode(), PrimitiveImpl.parseNotString("a", "111").hashCode());
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "111").hashCode(), PrimitiveImpl.parseNotString("a", "1111").hashCode());
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "1B").hashCode(), PrimitiveImpl.parseNotString("a", "0x01B").hashCode());
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "1B").hashCode(), PrimitiveImpl.parseNotString("a", "0x11B").hashCode());
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "12S").hashCode(), PrimitiveImpl.parseNotString("a", "12S").hashCode());
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "12S").hashCode(), PrimitiveImpl.parseNotString("a", "13S").hashCode());
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "1221212121L").hashCode(), PrimitiveImpl.parseNotString("a", "1221212121L").hashCode());
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "12L").hashCode(), PrimitiveImpl.parseNotString("a", "122L").hashCode());
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "1.0").hashCode(), PrimitiveImpl.parseNotString("a", "1,0").hashCode());
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "11.0").hashCode(), PrimitiveImpl.parseNotString("a", "1,0").hashCode());
+
+        assertEquals(PrimitiveImpl.parseNotString("a", "12.2D").hashCode(), PrimitiveImpl.parseNotString("a", "12.2D").hashCode());
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "12.22D").hashCode(), PrimitiveImpl.parseNotString("a", "12.2D").hashCode());
+
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "true").hashCode(), PrimitiveImpl.parseNotString("a", "1111").hashCode());
+
+        assertNotEquals(PrimitiveImpl.parseNotString("a", "true").hashCode(), PrimitiveImpl.parseNotString("b", "true").hashCode());
+
+        assertEquals(PrimitiveImpl.wrap("a", 'c').hashCode(), PrimitiveImpl.wrap("a", 'c').hashCode());
+        assertNotEquals(PrimitiveImpl.wrap("a", 'c').hashCode(), PrimitiveImpl.wrap("a", 'b').hashCode());
+
+        assertEquals(PrimitiveImpl.wrap("a", "aa").hashCode(), PrimitiveImpl.wrap("a", "aa").hashCode());
+        assertNotEquals(PrimitiveImpl.wrap("a", "cc").hashCode(), PrimitiveImpl.wrap("a", "b").hashCode());
+    }
+
+    @Test
+    public void stringify() {
+        assertTrue(PrimitiveImpl.parseNotString("a", "true").toString().toLowerCase().contains("boolean"));
+        assertTrue(PrimitiveImpl.parseNotString("a", "1212").toString().toLowerCase().contains("int"));
+        assertTrue(PrimitiveImpl.parseNotString("a", "12S").toString().toLowerCase().contains("short"));
+        assertTrue(PrimitiveImpl.parseNotString("a", "12B").toString().toLowerCase().contains("byte"));
+        assertTrue(PrimitiveImpl.parseNotString("a", "12L").toString().toLowerCase().contains("long"));
+        assertTrue(PrimitiveImpl.parseNotString("a", "12.0").toString().toLowerCase().contains("float"));
+        assertTrue(PrimitiveImpl.parseNotString("a", "12.0D").toString().toLowerCase().contains("double"));
+        assertTrue(PrimitiveImpl.wrap("a", 'c').toString().toLowerCase().contains("char"));
+        assertTrue(PrimitiveImpl.wrap("a", "as").toString().toLowerCase().contains("string"));
+    }
 }

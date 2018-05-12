@@ -19,13 +19,17 @@
 package com.alesharik.webserver.configuration.config.lang.parser.elements;
 
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationPrimitive;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import javax.annotation.Nullable;
 
 @Getter
 @RequiredArgsConstructor
+@EqualsAndHashCode
+@ToString
 public abstract class PrimitiveImpl implements ConfigurationPrimitive {
     private final java.lang.String name;
 
@@ -67,6 +71,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         return new CharImpl(name, c);
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class IntImpl extends PrimitiveImpl implements ConfigurationPrimitive.Int {
         private final int value;
 
@@ -81,6 +87,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class ShortImpl extends PrimitiveImpl implements ConfigurationPrimitive.Short {
         private final short value;
 
@@ -95,6 +103,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class ByteImpl extends PrimitiveImpl implements ConfigurationPrimitive.Byte {
         private final byte value;
 
@@ -109,6 +119,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class FloatImpl extends PrimitiveImpl implements ConfigurationPrimitive.Float {
         private final float value;
 
@@ -123,6 +135,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class DoubleImpl extends PrimitiveImpl implements ConfigurationPrimitive.Double {
         private final double value;
 
@@ -137,6 +151,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class LongImpl extends PrimitiveImpl implements ConfigurationPrimitive.Long {
         private final long value;
 
@@ -151,6 +167,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class BooleanImpl extends PrimitiveImpl implements ConfigurationPrimitive.Boolean {
         private final boolean value;
 
@@ -165,6 +183,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class CharImpl extends PrimitiveImpl implements ConfigurationPrimitive.Char {
         private final char c;
 
@@ -179,6 +199,8 @@ public abstract class PrimitiveImpl implements ConfigurationPrimitive {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
     private static final class StringImpl extends PrimitiveImpl implements ConfigurationPrimitive.String {
         private final java.lang.String value;
 

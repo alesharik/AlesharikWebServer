@@ -28,6 +28,8 @@ import static org.mockito.Mockito.mock;
 
 public class ArrayImplTest {
 
+    public static final ConfigurationElement MOCK = mock(ConfigurationElement.class);
+
     @Test(expected = IllegalArgumentException.class)
     public void getName() {
         ArrayImpl array = new ArrayImpl("test");
@@ -41,9 +43,9 @@ public class ArrayImplTest {
     public void size() {
         ArrayImpl array = new ArrayImpl("test");
         assertEquals(0, array.size());
-        array.append(mock(ConfigurationElement.class));
-        array.append(mock(ConfigurationElement.class));
-        array.append(mock(ConfigurationElement.class));
+        array.append(mockConfigElement());
+        array.append(mockConfigElement());
+        array.append(mockConfigElement());
         assertEquals(3, array.size());
     }
 
@@ -53,9 +55,9 @@ public class ArrayImplTest {
         assertEquals(0, array.size());
         assertNull(array.get(0));
 
-        ConfigurationElement a = mock(ConfigurationElement.class);
-        ConfigurationElement b = mock(ConfigurationElement.class);
-        ConfigurationElement c = mock(ConfigurationElement.class);
+        ConfigurationElement a = mockConfigElement();
+        ConfigurationElement b = mockConfigElement();
+        ConfigurationElement c = mockConfigElement();
         array.append(a);
         array.append(b);
         array.append(c);
@@ -73,9 +75,9 @@ public class ArrayImplTest {
         assertEquals(0, array.getElements().length);
 
 
-        ConfigurationElement a = mock(ConfigurationElement.class);
-        ConfigurationElement b = mock(ConfigurationElement.class);
-        ConfigurationElement c = mock(ConfigurationElement.class);
+        ConfigurationElement a = mockConfigElement();
+        ConfigurationElement b = mockConfigElement();
+        ConfigurationElement c = mockConfigElement();
         array.append(a);
         array.append(b);
         array.append(c);
@@ -91,9 +93,9 @@ public class ArrayImplTest {
         ArrayImpl array = new ArrayImpl("test");
         assertFalse(array.iterator().hasNext());
 
-        ConfigurationElement a = mock(ConfigurationElement.class);
-        ConfigurationElement b = mock(ConfigurationElement.class);
-        ConfigurationElement c = mock(ConfigurationElement.class);
+        ConfigurationElement a = mockConfigElement();
+        ConfigurationElement b = mockConfigElement();
+        ConfigurationElement c = mockConfigElement();
         array.append(a);
         array.append(b);
         array.append(c);
@@ -113,4 +115,51 @@ public class ArrayImplTest {
             i++;
         }
     }
+
+    @Test
+    public void equality() {
+        ArrayImpl array = new ArrayImpl("test");
+        assertEquals(0, array.size());
+        array.append(mockConfigElement());
+        array.append(mockConfigElement());
+        array.append(mockConfigElement());
+
+        ArrayImpl array1 = new ArrayImpl("test");
+        assertEquals(0, array1.size());
+        array1.append(mockConfigElement());
+        array1.append(mockConfigElement());
+        array1.append(mockConfigElement());
+
+        ArrayImpl array2 = new ArrayImpl("test");
+        assertEquals(0, array2.size());
+        array2.append(mockConfigElement());
+        array2.append(mockConfigElement());
+
+        assertEquals(array, array1);
+        assertNotEquals(array, array2);
+        assertNotEquals(array1, array2);
+
+        assertEquals(array.hashCode(), array1.hashCode());
+        assertNotEquals(array.hashCode(), array2.hashCode());
+        assertNotEquals(array1.hashCode(), array2.hashCode());
+    }
+
+    @Test
+    public void stringify() {
+        ArrayImpl array = new ArrayImpl("test");
+        assertEquals(0, array.size());
+
+        assertNotNull(array.toString());
+
+        array.append(mockConfigElement());
+        array.append(mockConfigElement());
+        array.append(mockConfigElement());
+
+        assertNotNull(array.toString());
+    }
+
+    private ConfigurationElement mockConfigElement() {
+        return MOCK;
+    }
+
 }

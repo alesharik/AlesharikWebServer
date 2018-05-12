@@ -19,12 +19,20 @@
 package com.alesharik.webserver.configuration.config.lang.parser.elements;
 
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationFunctionElement;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+
+import javax.annotation.Nonnull;
 
 @Getter
 @RequiredArgsConstructor
+@EqualsAndHashCode
+@ToString
 public final class FunctionImpl implements ConfigurationFunctionElement {
+    @Nonnull
     private final String name;
+    @Nonnull
     private final String codeInstruction;
 }

@@ -114,4 +114,27 @@ public class TypedObjectImplTest {
         object.getEntries().putAll(map);
         return object;
     }
+
+    @Test
+    public void equality() {
+        TypedObjectImpl typedObject = TypedObjectImpl.parse("test:asd:1", mockMap(testMap()));
+        TypedObjectImpl typedObject1 = TypedObjectImpl.parse("test:asd:1", mockMap(testMap()));
+
+        assertEquals(typedObject, typedObject1);
+        assertEquals(typedObject.hashCode(), typedObject1.hashCode());
+
+        TypedObjectImpl typedObject2 = TypedObjectImpl.parse("test:asd:1", mockMap(testMap()));
+        typedObject2.getEntries().remove(typedObject2.getEntries().keySet().iterator().next());
+
+        assertNotEquals(typedObject, typedObject2);
+        assertNotEquals(typedObject1, typedObject2);
+        assertNotEquals(typedObject.hashCode(), typedObject2.hashCode());
+        assertNotEquals(typedObject1.hashCode(), typedObject2.hashCode());
+    }
+
+    @Test
+    public void stringify() {
+        TypedObjectImpl typedObject = TypedObjectImpl.parse("test:asd:1", mockMap(testMap()));
+        assertNotNull(typedObject);
+    }
 }
