@@ -23,7 +23,8 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * Define provider provide #define definitions for parser
+ * Define provider provide #define definitions for parser.
+ * Loaded from core modules ONLY!
  */
 @ThreadSafe
 public interface DefineProvider {

@@ -111,7 +111,7 @@ public class SubModuleMetaFactory {
     }
 
     @ListenInterface(SubModuleProcessor.class)
-    @Stages(ExecutionStage.CORE_MODULES)
+    @Stages({ExecutionStage.AGENT, ExecutionStage.PRE_LOAD, ExecutionStage.CORE_MODULES})
     static void listenClass(Class<?> clazz) {
         System.out.println("Processing " + clazz.getCanonicalName());
 

@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver.configuration.module.layer.meta;
 
+import com.alesharik.webserver.api.ExecutionStage;
+import com.alesharik.webserver.api.agent.Stages;
 import com.alesharik.webserver.api.agent.bean.Beans;
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
@@ -121,6 +123,7 @@ public class LayerMetaFactory {
     }
 
     @ListenInterface(LayerAdapter.class)
+    @Stages({ExecutionStage.AGENT, ExecutionStage.PRE_LOAD, ExecutionStage.CORE_MODULES})
     static void listenClass(Class<?> clazz) {
         System.out.println("Processing " + clazz.getCanonicalName());
 

@@ -40,6 +40,7 @@ This `#define` IDs will be defined by the parser if it's condition will be true
 | USER_HOME | Defines current user home |
 | USER_NAME | Defines current user name |
 ### DefineExtension API
+All DefineProviders are loaded from core modules ONLY!
 This API allows you to create your own `#define` rule: 
 ```java
 public class HelloWorldDefineProvider implements DefineProvider {

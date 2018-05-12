@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver.configuration.config.ext;
 
+import com.alesharik.webserver.api.ExecutionStage;
+import com.alesharik.webserver.api.agent.Stages;
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.api.agent.classPath.reload.UnloadClassLoaderHandler;
@@ -46,6 +48,7 @@ public class DefineManager {
     }
 
     @ListenInterface(DefineProvider.class)
+    @Stages({ExecutionStage.AGENT, ExecutionStage.PRE_LOAD, ExecutionStage.CORE_MODULES})
     static void listen(Class<?> clazz) {
         try {
             System.out.println("Processing DefineProvider class " + clazz.getCanonicalName());
