@@ -27,6 +27,7 @@ import java.util.List;
 /**
  * Hook manager manages all custom hooks for module
  */
+@Deprecated
 public interface HookManager {
     /**
      * Load hooks from configuration. All last-loaded hooks must be removed

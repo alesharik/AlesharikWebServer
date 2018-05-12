@@ -22,6 +22,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
 
 @ThreadSafe
+@Deprecated
 public abstract class PluginManager extends Thread implements PluginManagerMXBean {
     protected final File workingFolder;
     protected final boolean hotReloadEnabled;

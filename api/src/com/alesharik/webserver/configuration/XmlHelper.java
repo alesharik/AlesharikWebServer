@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 @UtilityClass
+@Deprecated
 public class XmlHelper {
     private static Configuration configuration = null;
 

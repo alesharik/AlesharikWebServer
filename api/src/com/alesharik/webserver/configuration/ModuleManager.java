@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * This class holds all modules
  */
 @ClassPathScanner
+@Deprecated
 public final class ModuleManager {
     private static final ConcurrentHashMap<String, Module> modules = new ConcurrentHashMap<>();
 

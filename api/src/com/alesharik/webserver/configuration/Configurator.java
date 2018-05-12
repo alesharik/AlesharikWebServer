@@ -49,6 +49,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Prefixes("[Configurator]")
+@Deprecated
 public class Configurator {
     /**
      * Default value of <code>logger.listenerQueueCapacity</code>

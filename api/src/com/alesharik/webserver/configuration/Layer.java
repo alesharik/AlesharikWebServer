@@ -31,6 +31,7 @@ import java.util.stream.Stream;
  * @implNote Class must be thread-safe!
  */
 @ThreadSafe
+@Deprecated
 public interface Layer {
     /**
      * Return all Layer submodules

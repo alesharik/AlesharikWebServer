@@ -21,6 +21,7 @@ package com.alesharik.webserver.configuration;
 import java.io.File;
 import java.util.Map;
 
+@Deprecated
 public interface PluginManagerMXBean {
 
     /**

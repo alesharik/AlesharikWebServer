@@ -27,6 +27,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * @implNote Implementation must be thread-safe
  */
 @ThreadSafe
+@Deprecated
 public interface SubModule {
     /**
      * Return submodule unique name

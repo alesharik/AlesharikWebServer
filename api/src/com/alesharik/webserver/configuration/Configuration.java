@@ -25,6 +25,7 @@ import org.w3c.dom.Element;
  * You can see AlesharikWebServer XML configuration documentation <a href="https://github.com/alesharik/AlesharikWebServer/wiki/XML-configuration">here</a>.
  * This class works only with <code>modules</code> and <code>main</code> parts of xml.
  */
+@Deprecated
 public interface Configuration {
     void parseModules(Element modules);
 
