@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.configuration.config.ext;
 
+import com.alesharik.webserver.api.utils.classloader.GeneratedClassLoader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +45,7 @@ public class DefineManagerTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         DefineManager.providers.clear();
     }
 
@@ -80,12 +81,12 @@ public class DefineManagerTest {
     }
 
     @Test
-    public void testUtility() {
+    public void utility() {
         assertUtilityClass(DefineManager.class);
     }
 
     @Test
-    public void testUnloadClassLoader() throws ClassNotFoundException {
+    public void unloadClassLoader() {
         assertEquals("a", DefineManager.getDefinition("a", mock(DefineEnvironment.class)));
         assertEquals("q", DefineManager.getDefinition("q", mock(DefineEnvironment.class)));
 
@@ -96,7 +97,18 @@ public class DefineManagerTest {
     }
 
     @Test
-    public void testIsDefined() {
+    public void unloadAnotherClassLoader() {
+        assertEquals("a", DefineManager.getDefinition("a", mock(DefineEnvironment.class)));
+        assertEquals("q", DefineManager.getDefinition("q", mock(DefineEnvironment.class)));
+
+        DefineManager.clearClassLoader(new GeneratedClassLoader());
+
+        assertEquals("a", DefineManager.getDefinition("a", mock(DefineEnvironment.class)));
+        assertEquals("q", DefineManager.getDefinition("q", mock(DefineEnvironment.class)));
+    }
+
+    @Test
+    public void isDefined() {
         assertTrue(DefineManager.isDefined("a", mock(DefineEnvironment.class)));
         assertTrue(DefineManager.isDefined("b", mock(DefineEnvironment.class)));
 
