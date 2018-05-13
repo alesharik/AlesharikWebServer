@@ -103,6 +103,14 @@ public class TypedObjectImplTest {
         return map;
     }
 
+    private static Map<String, ConfigurationElement> testMapWithoutMock() {
+        Map<String, ConfigurationElement> map = new HashMap<>();
+        map.put("a", () -> "a");
+        map.put("b", () -> "b");
+        map.put("c", () -> "c");
+        return map;
+    }
+
     private static ConfigurationElement createConfigElement(String name) {
         ConfigurationElement element = mock(ConfigurationElement.class);
         when(element.getName()).thenReturn(name);
@@ -117,13 +125,13 @@ public class TypedObjectImplTest {
 
     @Test
     public void equality() {
-        TypedObjectImpl typedObject = TypedObjectImpl.parse("test:asd:1", mockMap(testMap()));
-        TypedObjectImpl typedObject1 = TypedObjectImpl.parse("test:asd:1", mockMap(testMap()));
+        TypedObjectImpl typedObject = TypedObjectImpl.parse("test:asd:1", mockMap(testMapWithoutMock()));
+        TypedObjectImpl typedObject1 = TypedObjectImpl.parse("test:asd:1", mockMap(testMapWithoutMock()));
 
         assertEquals(typedObject, typedObject1);
         assertEquals(typedObject.hashCode(), typedObject1.hashCode());
 
-        TypedObjectImpl typedObject2 = TypedObjectImpl.parse("test:asd:1", mockMap(testMap()));
+        TypedObjectImpl typedObject2 = TypedObjectImpl.parse("test:asd:1", mockMap(testMapWithoutMock()));
         typedObject2.getEntries().remove(typedObject2.getEntries().keySet().iterator().next());
 
         assertNotEquals(typedObject, typedObject2);

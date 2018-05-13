@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.configuration.config.lang.parser;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -32,6 +33,15 @@ import static org.mockito.Mockito.when;
 
 public class FileReaderTest {
     private static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @BeforeClass
+    public static void before() {
+        try {
+            temporaryFolder.create();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Test
     public void testExists() throws IOException {
