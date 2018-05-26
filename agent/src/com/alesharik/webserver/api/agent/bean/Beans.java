@@ -22,7 +22,6 @@ import com.alesharik.webserver.base.bean.Bean;
 import com.alesharik.webserver.base.bean.Wire;
 import lombok.experimental.UtilityClass;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -33,12 +32,12 @@ import javax.annotation.Nullable;
  */
 @UtilityClass
 public class Beans {
-    @Nonnull
+    @Nullable
     public static <T> T getBean(Class<T> clazz) {
         return getBean(clazz, null);
     }
 
-    @Nonnull
+    @Nullable
     public static <T> T getBean(Class<T> clazz, @Nullable Bean beanOverride) {
         return Contexts.getDefaultBeanContext().getBean(clazz, beanOverride);
     }

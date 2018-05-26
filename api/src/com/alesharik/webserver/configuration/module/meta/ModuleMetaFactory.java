@@ -40,6 +40,7 @@ import com.alesharik.webserver.configuration.module.layer.meta.LayerAdapter;
 import com.alesharik.webserver.configuration.module.layer.meta.LayerMetaFactory;
 import com.alesharik.webserver.configuration.module.layer.meta.SubModuleAdapter;
 import com.alesharik.webserver.configuration.module.layer.meta.SubModuleMetaFactory;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.internals.instance.ClassInstantiator;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
@@ -116,7 +117,7 @@ public class ModuleMetaFactory {
                     adapter.shutdownNow.add(LOOKUP.unreflect(method).bindTo(module));
                 }
             } catch (IllegalAccessException e) {
-                throw new IllegalStateException(e);
+                throw new UnexpectedBehaviorError(e);
             }
         }
         for(Field field : ReflectUtils.getAllDeclaredFields(module.getClass())) {
@@ -137,7 +138,7 @@ public class ModuleMetaFactory {
                     adapter.subModules.add(SubModuleMetaFactory.create(subModule));
                 }
             } catch (IllegalAccessException e) {
-                throw new IllegalStateException(e);
+                throw new UnexpectedBehaviorError(e);
             }
         }
         return adapter;

@@ -19,6 +19,7 @@
 package com.alesharik.webserver.configuration.module.layer.meta;
 
 import com.alesharik.webserver.base.bean.Bean;
+import com.alesharik.webserver.base.exception.DevError;
 import com.alesharik.webserver.configuration.module.Shutdown;
 import com.alesharik.webserver.configuration.module.ShutdownNow;
 import com.alesharik.webserver.configuration.module.Start;
@@ -68,16 +69,8 @@ public class SubModuleMetaFactoryTest {
         verify(mock, times(2)).start();
         assertTrue(adapter.isRunning());
 
-        adapter.start();
-        verify(mock, times(2)).start();//Nothing happens
-        assertTrue(adapter.isRunning());
-
         adapter.shutdown();
         verify(mock, times(1)).shutdown();
-        assertFalse(adapter.isRunning());
-
-        adapter.shutdown();
-        verify(mock, times(1)).shutdown();//Nothing happens
         assertFalse(adapter.isRunning());
 
         adapter.start();
@@ -86,10 +79,62 @@ public class SubModuleMetaFactoryTest {
         adapter.shutdownNow();
         verify(mock, times(1)).shutdownNow();
         assertFalse(adapter.isRunning());
+    }
 
-        adapter.shutdownNow();
-        verify(mock, times(1)).shutdownNow();//Nothing happens
+    @Test(expected = IllegalStateException.class)
+    public void repeatStart() {
+        val mock = mock(SubModuleAdapter.class);
+
+        SubModuleImpl o = new SubModuleImpl(mock);
+        SubModuleAdapter adapter = SubModuleMetaFactory.create(o);
+
+        assertEquals("test", adapter.getName());
+        assertNotNull(adapter.getCustomData());
+
+        verify(processor).accept(adapter, o);
+
         assertFalse(adapter.isRunning());
+
+        adapter.start();
+        adapter.start();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void repeatShutdown() {
+        val mock = mock(SubModuleAdapter.class);
+
+        SubModuleImpl o = new SubModuleImpl(mock);
+        SubModuleAdapter adapter = SubModuleMetaFactory.create(o);
+
+        assertEquals("test", adapter.getName());
+        assertNotNull(adapter.getCustomData());
+
+        verify(processor).accept(adapter, o);
+
+        assertFalse(adapter.isRunning());
+
+        adapter.start();
+        adapter.shutdown();
+        adapter.shutdown();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void repeatShutdownNow() {
+        val mock = mock(SubModuleAdapter.class);
+
+        SubModuleImpl o = new SubModuleImpl(mock);
+        SubModuleAdapter adapter = SubModuleMetaFactory.create(o);
+
+        assertEquals("test", adapter.getName());
+        assertNotNull(adapter.getCustomData());
+
+        verify(processor).accept(adapter, o);
+
+        assertFalse(adapter.isRunning());
+
+        adapter.start();
+        adapter.shutdownNow();
+        adapter.shutdownNow();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -140,6 +185,24 @@ public class SubModuleMetaFactoryTest {
         SubModuleMetaFactory.create(new SubModuleImpl(adapter)).start();
     }
 
+    @Test(expected = DevError.class)
+    public void brokenStart() {
+        SubModuleMetaFactory.create(new BrokenStart());
+        fail();
+    }
+
+    @Test(expected = DevError.class)
+    public void brokenShutdown() {
+        SubModuleMetaFactory.create(new BrokenShutdown());
+        fail();
+    }
+
+    @Test(expected = DevError.class)
+    public void brokenShutdownNow() {
+        SubModuleMetaFactory.create(new BrokenShutdownNow());
+        fail();
+    }
+
     @Test
     public void testUtility() {
         assertUtilityClass(SubModuleMetaFactory.class);
@@ -185,6 +248,27 @@ public class SubModuleMetaFactoryTest {
         @ShutdownNow
         private void shutdownNow() {
             mock.shutdownNow();
+        }
+    }
+
+    @SubModule("br-s")
+    private static final class BrokenStart {
+        @Start
+        public void broken(Object o) {
+        }
+    }
+
+    @SubModule("br-s")
+    private static final class BrokenShutdown {
+        @Shutdown
+        public void broken(Object o) {
+        }
+    }
+
+    @SubModule("br-s")
+    private static final class BrokenShutdownNow {
+        @ShutdownNow
+        public void broken(Object o) {
         }
     }
 }

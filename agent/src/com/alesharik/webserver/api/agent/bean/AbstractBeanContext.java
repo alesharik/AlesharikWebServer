@@ -75,6 +75,8 @@ public abstract class AbstractBeanContext implements BeanContext {
     }
 
     protected static Helper getHelper(Class<?> clazz, Bean beanOverride) {
+        if(!clazz.isAnnotationPresent(Bean.class) && beanOverride == null)
+            return null;
         return helpers.computeIfAbsent(clazz, claz -> new Helper(claz, beanOverride));
     }
 
@@ -123,6 +125,8 @@ public abstract class AbstractBeanContext implements BeanContext {
             return (T) singletons.get(singleton).getObject();
 
         Helper helper = getHelper(singleton, beanOverride);
+        if(helper == null)
+            return null;
         Object o = helper.create(this, contextManager);
         helper.wire(o, contextManager, this);
         helper.postConstruct(o, invocationContext);
@@ -144,6 +148,8 @@ public abstract class AbstractBeanContext implements BeanContext {
         }
 
         Helper helper = getHelper(bean, beanOverride);
+        if(helper == null)
+            return null;
         Object o = helper.create(this, contextManager);
         helper.wire(o, contextManager, this);
         helper.postConstruct(o, new InvocationContextImpl(this, contextManager));
@@ -160,6 +166,8 @@ public abstract class AbstractBeanContext implements BeanContext {
     @Override
     public <T> T getBean(Class<?> clazz, @Nullable Bean beanOverride) {
         Helper helper = getHelper(clazz, beanOverride);
+        if(helper == null)
+            return null;
         if(helper.getBeanInfo().singleton())
             return getSingleton(clazz, beanOverride);
         else

@@ -93,22 +93,28 @@ public interface BeanContext {
     @Nonnull
     Map<Class<?>, BeanSingleton> singletons();
 
+    @Nullable
     default <T> T getSingleton(Class<?> singleton) {
         return getSingleton(singleton, null);
     }
 
+    @Nullable
     <T> T getSingleton(Class<?> singleton, @Nullable Bean beanOverride);
 
+    @Nullable
     default <T> T createObject(Class<?> bean) {
         return createObject(bean, null);
     }
 
+    @Nullable
     <T> T createObject(Class<?> bean, @Nullable Bean beanOverride);
 
+    @Nullable
     default <T> T getBean(Class<?> clazz) {
         return getBean(clazz, null);
     }
 
+    @Nullable
     <T> T getBean(Class<?> clazz, @Nullable Bean beanOverride);
 
     /**
