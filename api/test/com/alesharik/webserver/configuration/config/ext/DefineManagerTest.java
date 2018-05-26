@@ -27,7 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Map;
 
-import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
+import static com.alesharik.webserver.test.TestUtils.assertUtilityClass;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

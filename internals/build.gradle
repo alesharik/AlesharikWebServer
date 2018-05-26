@@ -50,6 +50,10 @@ publishing {
     }
 }
 
+dependencies {
+    testCompile project(':alesharikwebserver-test')
+}
+
 //====================Cleaning====================\\
 
 clean.doFirst {

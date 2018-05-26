@@ -18,11 +18,18 @@
 
 package com.alesharik.webserver.base.bean.context;
 
+import com.alesharik.webserver.base.bean.Bean;
+import com.alesharik.webserver.base.bean.meta.BeanObject;
+import com.alesharik.webserver.base.bean.meta.BeanSingleton;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Map;
 
 /**
- * BeanContext will be cleaned when all beans with this context will be cleaned
+ * BeanContext will be cleaned when all beans with this context will be cleaned.
+ * Bean contexts are used to isolate objects and singletons from other contexts
  */
 public interface BeanContext {
     /**
@@ -69,4 +76,57 @@ public interface BeanContext {
      * @param key the key
      */
     void removeProperty(@Nonnull String key);
+
+    /**
+     * Provides modifiable list of stored object refs
+     *
+     * @return the list
+     */
+    @Nonnull
+    List<BeanObject> storedObjects();
+
+    /**
+     * Provide modifiable list with all containing singletons
+     *
+     * @return the list
+     */
+    @Nonnull
+    Map<Class<?>, BeanSingleton> singletons();
+
+    default <T> T getSingleton(Class<?> singleton) {
+        return getSingleton(singleton, null);
+    }
+
+    <T> T getSingleton(Class<?> singleton, @Nullable Bean beanOverride);
+
+    default <T> T createObject(Class<?> bean) {
+        return createObject(bean, null);
+    }
+
+    <T> T createObject(Class<?> bean, @Nullable Bean beanOverride);
+
+    default <T> T getBean(Class<?> clazz) {
+        return getBean(clazz, null);
+    }
+
+    <T> T getBean(Class<?> clazz, @Nullable Bean beanOverride);
+
+    /**
+     * Return bean context statistics
+     *
+     * @return the statistics
+     */
+    @Nonnull
+    BeanContextMXBean getStats();
+
+    /**
+     * Checks if one of the loaded classes or bean context itself depends on classloader
+     *
+     * @param classLoader the classloader
+     * @return <code>true</code> -  one of the loaded classes or bean context itself depends on classloader, otherwise <code>false</code>
+     */
+    boolean isLoadedBy(@Nonnull ClassLoader classLoader);
+
+    default void preDestroy() {
+    }
 }

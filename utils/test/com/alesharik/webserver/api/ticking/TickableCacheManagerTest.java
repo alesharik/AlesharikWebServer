@@ -24,9 +24,9 @@ import org.junit.Test;
 
 import java.lang.ref.WeakReference;
 
-import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
 import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.TickableCache;
 import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.TickableCacheManager;
+import static com.alesharik.webserver.test.TestUtils.assertUtilityClass;
 import static org.junit.Assert.*;
 
 public class TickableCacheManagerTest {

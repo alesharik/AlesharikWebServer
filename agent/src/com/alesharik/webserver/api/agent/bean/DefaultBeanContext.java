@@ -16,52 +16,33 @@
  *
  */
 
-package com.alesharik.webserver.base.bean.context.impl;
+package com.alesharik.webserver.api.agent.bean;
 
+import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.base.bean.context.BeanContext;
+import com.alesharik.webserver.base.bean.context.BeanContextMXBean;
 import com.alesharik.webserver.base.bean.context.BeanContextManager;
 import com.alesharik.webserver.base.bean.context.Manager;
-import com.alesharik.webserver.base.bean.context.SuppressMemoryLeakSafety;
 
 import javax.annotation.Nonnull;
 
-/**
- * This class represents default bean context
- */
 @Manager(DefaultBeanContext.Manager.class)
-@SuppressMemoryLeakSafety(warning = false)
-public final class DefaultBeanContext implements BeanContext {
-    DefaultBeanContext() {
+public final class DefaultBeanContext extends AbstractBeanContext {
+    private DefaultBeanContext() {
+        super("default");
     }
 
-    @Override
-    public String getName() {
-        return "default";
-    }
+    static final class Manager implements BeanContextManager {
+        private static final DefaultBeanContext CTX = new DefaultBeanContext();
 
-    @Override
-    public void setProperty(String key, Object value) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Object getProperty(String key) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void removeProperty(String name) {
-        throw new UnsupportedOperationException();
-    }
-
-    public static final class Manager implements BeanContextManager {
-        Manager() {
+        static {
+            MXBeanManager.registerMXBean(CTX.getStats(), BeanContextMXBean.class, "com.alesharik.webserver.api.agent.bean.DefaultContext:contextName=default");
         }
 
         @Nonnull
         @Override
         public BeanContext createContext() {
-            return new DefaultBeanContext();
+            return CTX;
         }
     }
 }

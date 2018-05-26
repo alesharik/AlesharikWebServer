@@ -58,4 +58,5 @@ dependencies {
     compile project(':alesharikwebserver-logging')
 
     compile files("${System.properties['java.home']}/../lib/tools.jar")
+    testCompile project(':alesharikwebserver-test')
 }

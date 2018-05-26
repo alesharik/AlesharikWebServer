@@ -16,26 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.base.bean;
+package com.alesharik.webserver.base.bean.meta;
 
 import com.alesharik.webserver.base.bean.context.BeanContext;
-import com.alesharik.webserver.base.bean.context.BeanContextManager;
 
-import javax.annotation.Nonnull;
+public interface BeanSingleton {
+    Object getObject();
 
-/**
- * InvocationContext represents current context for {@link javax.annotation.PostConstruct} and {@link javax.annotation.PreDestroy} methods
- */
-public interface InvocationContext {
-    /**
-     * Return current bean context
-     */
-    @Nonnull
     BeanContext getContext();
-
-    /**
-     * Return current bean context manager
-     */
-    @Nonnull
-    BeanContextManager getManager();
 }

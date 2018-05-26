@@ -16,24 +16,19 @@
  *
  */
 
-package com.alesharik.webserver.base.bean.context;
+package com.alesharik.webserver.test;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.alesharik.webserver.base.bean.Bean;
+import com.alesharik.webserver.base.bean.DefaultConstructor;
 
-/**
- * Memory leak protection deny singletons to get their contexts.
- * This annotation disables memory leak protection by allowing singletons to use the context. Use it on {@link BeanContext}
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@Documented
-public @interface SuppressMemoryLeakSafety {
-    /**
-     * Write warning in the console on every possible memory leak problem
-     */
-    boolean warning() default true;
+@Bean
+public class BeanC {
+    public final BeanA a;
+    public final BeanB b;
+
+    @DefaultConstructor
+    public BeanC(BeanA a, BeanB b) {
+        this.a = a;
+        this.b = b;
+    }
 }

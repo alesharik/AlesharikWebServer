@@ -30,7 +30,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 
-import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
+import static com.alesharik.webserver.test.TestUtils.assertUtilityClass;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;

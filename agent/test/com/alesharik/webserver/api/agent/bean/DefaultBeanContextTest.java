@@ -16,15 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.base.bean;
+package com.alesharik.webserver.api.agent.bean;
 
-import org.junit.Test;
+import com.alesharik.webserver.test.AbstractContextTest;
 
-import static org.junit.Assert.assertEquals;
-
-public class MemoryLeakSafetyExceptionTest {
-    @Test
-    public void message() {
-        assertEquals("Singletons can't use bean context!", new MemoryLeakSafetyException().getMessage());
+public class DefaultBeanContextTest extends AbstractContextTest {
+    public DefaultBeanContextTest() {
+        super(DefaultBeanContext.class);
     }
 }

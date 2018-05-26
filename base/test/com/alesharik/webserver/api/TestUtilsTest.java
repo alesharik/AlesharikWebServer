@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api;
 
+import com.alesharik.webserver.test.TestUtils;
 import org.junit.Test;
 
 public class TestUtilsTest {

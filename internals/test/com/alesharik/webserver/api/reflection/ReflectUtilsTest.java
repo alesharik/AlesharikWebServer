@@ -36,7 +36,7 @@
 
 package com.alesharik.webserver.api.reflection;
 
-import com.alesharik.webserver.api.TestUtils;
+import com.alesharik.webserver.test.TestUtils;
 import org.junit.Test;
 
 import java.lang.reflect.Field;

@@ -52,6 +52,7 @@ publishing {
 dependencies {
     compile project(':alesharikwebserver-base')
     compile project(':alesharikwebserver-internals')
+    testCompile project(':alesharikwebserver-test')
     testCompile group: 'junit', name: 'junit', version: '4.10'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.7.21'
 

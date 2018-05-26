@@ -29,9 +29,7 @@ import java.lang.annotation.Target;
 
 /**
  * Bean's context allows bean to use k/v store, divide beans into groups and send to them information.
- * All classes without this annotation will use default context. It doesn't support k/v store, but it has disabled memory leak protection
- *
- * @see com.alesharik.webserver.base.bean.context.SuppressMemoryLeakSafety
+ * All classes without this annotation will use default context
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

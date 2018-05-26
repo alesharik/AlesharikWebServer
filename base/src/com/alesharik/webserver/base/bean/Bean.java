@@ -41,6 +41,7 @@ public @interface Bean {
      * Return <code>true</code> if class must be instantiated after registration. <code>false</code> means that class
      * will be instantiated after first request
      */
+    @Deprecated
     boolean instantlyInstantiated() default true;
 
     /**

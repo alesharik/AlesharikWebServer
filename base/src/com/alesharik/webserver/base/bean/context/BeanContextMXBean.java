@@ -16,26 +16,19 @@
  *
  */
 
-package com.alesharik.webserver.base.bean;
+package com.alesharik.webserver.base.bean.context;
 
-import com.alesharik.webserver.base.bean.context.BeanContext;
-import com.alesharik.webserver.base.bean.context.BeanContextManager;
+public interface BeanContextMXBean {
+    int getSingletons();
 
-import javax.annotation.Nonnull;
+    int getStoredObjects();
 
-/**
- * InvocationContext represents current context for {@link javax.annotation.PostConstruct} and {@link javax.annotation.PreDestroy} methods
- */
-public interface InvocationContext {
-    /**
-     * Return current bean context
-     */
-    @Nonnull
-    BeanContext getContext();
+    void clearStoredObjects();
 
     /**
-     * Return current bean context manager
+     * Return count of all created objects and singletons
+     *
+     * @return count of all created objects and singletons
      */
-    @Nonnull
-    BeanContextManager getManager();
+    long getCreatedObjects();
 }

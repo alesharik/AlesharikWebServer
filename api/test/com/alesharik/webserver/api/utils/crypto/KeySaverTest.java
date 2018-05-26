@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.api.utils.crypto;
 
-import com.alesharik.webserver.api.TestUtils;
+import com.alesharik.webserver.test.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 

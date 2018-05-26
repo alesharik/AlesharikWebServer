@@ -90,6 +90,7 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: '4.10'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.7.21'
+    testCompile project(':alesharikwebserver-test')
     compile group: 'org.openjdk.jcstress', name: 'jcstress-core', version: '0.3'
 
     compile files('one-nio/one-nio.jar')

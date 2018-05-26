@@ -24,7 +24,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * ContextManager manages all {@link BeanContext} and do overrides
+ * ContextManager manages all {@link BeanContext} and do overrides. In will be instantiated through class instantiation, not bean
+ * instantiation
  */
 public interface BeanContextManager {
     /**

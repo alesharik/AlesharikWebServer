@@ -19,6 +19,7 @@
 package com.alesharik.webserver.api;
 
 import com.alesharik.webserver.exceptions.MIMETypeAlreadyExistsException;
+import com.alesharik.webserver.test.TestUtils;
 import org.junit.Test;
 
 import java.util.HashSet;

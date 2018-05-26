@@ -19,6 +19,7 @@
 package com.alesharik.webserver.api;
 
 import com.alesharik.webserver.logger.LoggerUncaughtExceptionHandler;
+import com.alesharik.webserver.test.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 

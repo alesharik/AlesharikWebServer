@@ -21,7 +21,7 @@ package com.alesharik.webserver.api;
 import com.google.gson.Gson;
 import org.junit.Test;
 
-import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
+import static com.alesharik.webserver.test.TestUtils.assertUtilityClass;
 import static org.junit.Assert.*;
 
 public class GsonUtilsTest {

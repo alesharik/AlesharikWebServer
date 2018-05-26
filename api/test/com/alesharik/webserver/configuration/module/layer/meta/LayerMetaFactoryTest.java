@@ -33,7 +33,7 @@ import org.junit.Test;
 import javax.annotation.Nonnull;
 import java.util.function.BiConsumer;
 
-import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
+import static com.alesharik.webserver.test.TestUtils.assertUtilityClass;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 

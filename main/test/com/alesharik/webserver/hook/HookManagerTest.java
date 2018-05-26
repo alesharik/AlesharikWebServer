@@ -26,7 +26,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import static com.alesharik.webserver.api.TestUtils.assertUtilityClass;
+import static com.alesharik.webserver.test.TestUtils.assertUtilityClass;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 

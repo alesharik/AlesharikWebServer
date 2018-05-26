@@ -18,8 +18,8 @@
 
 package com.alesharik.webserver.api.utils.lambda;
 
-import com.alesharik.webserver.api.TestUtils;
 import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.test.TestUtils;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
