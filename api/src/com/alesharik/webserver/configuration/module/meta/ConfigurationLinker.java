@@ -16,18 +16,15 @@
  *
  */
 
-package com.alesharik.webserver.configuration.module;
+package com.alesharik.webserver.configuration.module.meta;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
+
+import javax.annotation.Nonnull;
 
 /**
- * Annotated method will be invoked when module will be reloaded. It happens when module receives new configuration or
- * by user signal. Default action is restarting the module, but annotated method overrides it. All methods must have 1 parameter - {@link com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject}
+ * This class will be instantiated as a singleton in default context
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Reload {
+public interface ConfigurationLinker {
+    void link(@Nonnull ConfigurationTypedObject object, @Nonnull Object module, @Nonnull ModuleProvider provider);
 }

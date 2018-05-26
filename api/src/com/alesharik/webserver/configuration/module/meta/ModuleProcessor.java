@@ -16,25 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.configuration.module.layer;
+package com.alesharik.webserver.configuration.module.meta;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import javax.annotation.Nonnull;
 
-/**
- * This annotation indicates that the module has layers
- *
- * @see Layer
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Layered {
-    /**
-     * Enable ASM transformations
-     *
-     * @return are ASM transformations enabled
-     */
-    boolean auto() default true;
+public interface ModuleProcessor {
+    void processModule(@Nonnull ModuleAdapter moduleAdapter, @Nonnull Object module);
 }

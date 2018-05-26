@@ -24,12 +24,10 @@ import com.alesharik.webserver.configuration.module.Module;
 import com.alesharik.webserver.configuration.module.Shutdown;
 import com.alesharik.webserver.configuration.module.Start;
 import com.alesharik.webserver.configuration.module.layer.Layer;
-import com.alesharik.webserver.configuration.module.layer.Layered;
 import com.alesharik.webserver.configuration.module.layer.SubModule;
 
 @Module("test")
 @Configuration
-@Layered
 public class TestModule {
     @ConfigurationValue("a")
     private String test;

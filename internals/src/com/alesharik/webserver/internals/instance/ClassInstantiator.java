@@ -83,12 +83,32 @@ public class ClassInstantiator {
 
     /**
      * Instantiate class by most preferable for object way. This means what it tries to create object by calling it's declared empty constructor.
-     * If class doesn't have declared empty constructor, it will be instantiated by {@link #instantiateUnsafe(Class)}
+     * If class doesn't have declared empty constructor, it will be instantiated by {@link #instantiateNullConstructor(Class)}
      * @throws ClassInstantiationException on {@link InstantiationException} and {@link InvocationTargetException}
      */
     @SneakyThrows(IllegalAccessException.class)
     @Nonnull
     public static Object instantiate(@Nonnull Class<?> clazz) {
+        try {
+            Constructor<?> constructor = clazz.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+        } catch (NoSuchMethodException e) {
+            return instantiateNullConstructor(clazz);
+        } catch (InstantiationException | InvocationTargetException e) {
+            throw new ClassInstantiationException(e);
+        }
+    }
+
+    /**
+     * Instantiate class by most preferable for object way. This means what it tries to create object by calling it's declared empty constructor.
+     * If class doesn't have declared empty constructor, it will be instantiated by {@link #instantiateUnsafe(Class)}
+     *
+     * @throws ClassInstantiationException on {@link InstantiationException} and {@link InvocationTargetException}
+     */
+    @SneakyThrows(IllegalAccessException.class)
+    @Nonnull
+    public static Object instantiateU(@Nonnull Class<?> clazz) {
         try {
             Constructor<?> constructor = clazz.getDeclaredConstructor();
             constructor.setAccessible(true);

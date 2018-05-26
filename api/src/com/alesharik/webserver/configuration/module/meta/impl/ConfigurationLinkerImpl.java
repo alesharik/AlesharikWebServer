@@ -16,18 +16,19 @@
  *
  */
 
-package com.alesharik.webserver.configuration.module;
+package com.alesharik.webserver.configuration.module.meta.impl;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.alesharik.webserver.base.bean.Bean;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
+import com.alesharik.webserver.configuration.module.meta.ConfigurationLinker;
+import com.alesharik.webserver.configuration.module.meta.ModuleProvider;
 
-/**
- * Annotated method will be invoked when module will be reloaded. It happens when module receives new configuration or
- * by user signal. Default action is restarting the module, but annotated method overrides it. All methods must have 1 parameter - {@link com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject}
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Reload {
+import javax.annotation.Nonnull;
+
+@Bean(singleton = true)
+public final class ConfigurationLinkerImpl implements ConfigurationLinker {
+    @Override
+    public void link(@Nonnull ConfigurationTypedObject object, @Nonnull Object module, @Nonnull ModuleProvider provider) {
+
+    }
 }

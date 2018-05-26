@@ -16,18 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.configuration.module;
+package com.alesharik.webserver.configuration.module.meta;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-/**
- * Annotated method will be invoked when module will be reloaded. It happens when module receives new configuration or
- * by user signal. Default action is restarting the module, but annotated method overrides it. All methods must have 1 parameter - {@link com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject}
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Reload {
+public interface ModuleProvider {
+    @Nullable
+    Object provideModule(@Nonnull String name, @Nonnull Class<?> clazz);
 }

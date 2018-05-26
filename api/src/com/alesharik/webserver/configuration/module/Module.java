@@ -18,6 +18,9 @@
 
 package com.alesharik.webserver.configuration.module;
 
+import com.alesharik.webserver.configuration.module.meta.ConfigurationLinker;
+import com.alesharik.webserver.configuration.module.meta.impl.ConfigurationLinkerImpl;
+
 import javax.annotation.Nonnull;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -47,7 +50,6 @@ import java.lang.annotation.Target;
  * @see Reload
  * @see ConfigurationError
  * @see com.alesharik.webserver.configuration.module.layer.Layer
- * @see com.alesharik.webserver.configuration.module.layer.Layered
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -62,9 +64,11 @@ public @interface Module {
     String value();
 
     /**
-     * Enable auto-invoke option. All children's lifecycle events will be invoked automatically
+     * Enable auto-invoke option. All children's lifecycle events will be invoked automatically before module's event
      *
      * @return is auto-invoke option enabled
      */
     boolean autoInvoke() default true;
+
+    Class<? extends ConfigurationLinker> linker() default ConfigurationLinkerImpl.class;
 }

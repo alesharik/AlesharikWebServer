@@ -25,6 +25,7 @@ import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.api.agent.classPath.SuppressClassLoaderUnloadWarning;
 import com.alesharik.webserver.api.reflection.ReflectUtils;
+import com.alesharik.webserver.base.exception.DevError;
 import com.alesharik.webserver.configuration.module.Shutdown;
 import com.alesharik.webserver.configuration.module.ShutdownNow;
 import com.alesharik.webserver.configuration.module.Start;
@@ -55,7 +56,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @UtilityClass
 @ClassPathScanner
 @Prefixes({"[Module]", "[Meta]", "[LayerMetaFactory]"})
-@Level("layer-meta-factory")
+@Level("meta-factory")
 @SuppressClassLoaderUnloadWarning
 public class LayerMetaFactory {
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
@@ -63,7 +64,7 @@ public class LayerMetaFactory {
     private static final Lock writeLock = new ReentrantLock();
 
     static {
-        Logger.getLoggingLevelManager().createLoggingLevel("layer-meta-factory");
+        Logger.getLoggingLevelManager().createLoggingLevel("meta-factory");
     }
 
     /**
@@ -82,29 +83,48 @@ public class LayerMetaFactory {
         LayerAdapterImpl layerAdapter = new LayerAdapterImpl(annotation.value(), annotation.autoInvoke());
 
         for(Field field : ReflectUtils.getAllDeclaredFields(layer.getClass())) {
-            if(Modifier.isTransient(field.getModifiers()))
+            if(Modifier.isTransient(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
                 continue;
 
             field.setAccessible(true);
             try {
-                if(field.getType().isAnnotationPresent(SubModule.class))
-                    layerAdapter.subModules.add(SubModuleMetaFactory.create(field.get(layer)));
-                if(field.getType().isAnnotationPresent(Layer.class))
-                    layerAdapter.subLayers.add(LayerMetaFactory.create(field.get(layer)));
+                if(field.getType().isAnnotationPresent(SubModule.class)) {
+                    Object o = field.get(layer);
+                    if(o == null)
+                        throw new DevError("Unexpected field value in field " + field.getName(), "@SubModule field in layer cannot be null. Field: " + field.getName(), layer.getClass());
+                    layerAdapter.subModules.add(SubModuleMetaFactory.create(o));
+                }
+                if(field.getType().isAnnotationPresent(Layer.class)) {
+                    Object o = field.get(layer);
+                    if(o == null)
+                        throw new DevError("Unexpected field value in field " + field.getName(), "@Layer field in layer cannot be null. Field: " + field.getName(), layer.getClass());
+                    layerAdapter.subLayers.add(LayerMetaFactory.create(o));
+                }
             } catch (IllegalAccessException e) {
                 throw new UnexpectedBehaviorError(e);
             }
         }
 
         for(Method method : ReflectUtils.getAllDeclaredMethods(layer.getClass())) {
+            if(Modifier.isStatic(method.getModifiers()))
+                continue;
             method.setAccessible(true);
             try {
-                if(method.isAnnotationPresent(Start.class))
+                if(method.isAnnotationPresent(Start.class)) {
+                    if(method.getParameterCount() != 0)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Start method in layer MUST contains only 0 parameters. Method: " + method.getName(), layer.getClass());
                     layerAdapter.startHandle.add(LOOKUP.unreflect(method).bindTo(layer));
-                if(method.isAnnotationPresent(Shutdown.class))
+                }
+                if(method.isAnnotationPresent(Shutdown.class)) {
+                    if(method.getParameterCount() != 0)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Shutdown method in layer MUST contains only 0 parameters. Method: " + method.getName(), layer.getClass());
                     layerAdapter.shutdownHandle.add(LOOKUP.unreflect(method).bindTo(layer));
-                if(method.isAnnotationPresent(ShutdownNow.class))
+                }
+                if(method.isAnnotationPresent(ShutdownNow.class)) {
+                    if(method.getParameterCount() != 0)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@ShutdownNow method in layer MUST contains only 0 parameters. Method: " + method.getName(), layer.getClass());
                     layerAdapter.shutdownNowHandle.add(LOOKUP.unreflect(method).bindTo(layer));
+                }
             } catch (IllegalAccessException e) {
                 throw new UnexpectedBehaviorError(e);
             }
@@ -177,40 +197,47 @@ public class LayerMetaFactory {
         @Override
         public void start() throws MetaInvokeException {
             if(isRunning())
+                throw new IllegalStateException("Already running!");
+            if(!autoInvoke) {
+                invoke(startHandle);
                 return;
-            invoke(startHandle);
-            if(!autoInvoke)
-                return;
+            }
+
             for(SubModuleAdapter subModule : subModules)
                 subModule.start();
             for(LayerAdapter subLayer : subLayers)
                 subLayer.start();
+            invoke(startHandle);
         }
 
         @Override
         public void shutdown() throws MetaInvokeException {
             if(!isRunning())
+                throw new IllegalStateException("Not running yet!");
+            if(!autoInvoke) {
+                invoke(shutdownHandle);
                 return;
-            invoke(shutdownHandle);
-            if(!autoInvoke)
-                return;
+            }
             for(SubModuleAdapter subModule : subModules)
                 subModule.shutdown();
             for(LayerAdapter subLayer : subLayers)
                 subLayer.shutdown();
+            invoke(shutdownHandle);
         }
 
         @Override
         public void shutdownNow() throws MetaInvokeException {
             if(!isRunning())
+                throw new IllegalStateException("Not running yet!");
+            if(!autoInvoke) {
+                invoke(shutdownNowHandle);
                 return;
-            invoke(shutdownNowHandle);
-            if(!autoInvoke)
-                return;
+            }
             for(SubModuleAdapter subModule : subModules)
                 subModule.shutdownNow();
             for(LayerAdapter subLayer : subLayers)
                 subLayer.shutdownNow();
+            invoke(shutdownNowHandle);
         }
 
         @Override

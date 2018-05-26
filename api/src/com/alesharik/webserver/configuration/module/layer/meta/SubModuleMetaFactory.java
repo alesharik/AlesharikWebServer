@@ -25,6 +25,7 @@ import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.api.agent.classPath.SuppressClassLoaderUnloadWarning;
 import com.alesharik.webserver.api.reflection.ReflectUtils;
+import com.alesharik.webserver.base.exception.DevError;
 import com.alesharik.webserver.configuration.module.Shutdown;
 import com.alesharik.webserver.configuration.module.ShutdownNow;
 import com.alesharik.webserver.configuration.module.Start;
@@ -44,6 +45,7 @@ import javax.annotation.Nonnull;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -58,15 +60,15 @@ import java.util.concurrent.locks.ReentrantLock;
 @UtilityClass
 @ClassPathScanner
 @Prefixes({"[Module]", "[Meta]", "[SubModuleMetaFactory]"})
-@Level("sub-module-meta-factory")
+@Level("module-meta-factory")
 @SuppressClassLoaderUnloadWarning //can't reload SubModuleProcessors because they are loaded at CORE_MODULES stage
 public class SubModuleMetaFactory {
+    static final List<SubModuleProcessor> processors = new ArrayList<>();
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     private static final Lock writeLock = new ReentrantLock();
-    static final List<SubModuleProcessor> processors = new ArrayList<>();
 
     static {
-        Logger.getLoggingLevelManager().createLoggingLevel("sub-module-meta-factory");
+        Logger.getLoggingLevelManager().createLoggingLevel("module-meta-factory");
     }
 
     /**
@@ -85,14 +87,26 @@ public class SubModuleMetaFactory {
 
         SubModuleAdapterImpl adapter = new SubModuleAdapterImpl(annotation.value());
         for(Method method : ReflectUtils.getAllDeclaredMethods(o.getClass())) {
+            if(Modifier.isStatic(method.getModifiers()))
+                continue;
             try {
                 method.setAccessible(true);
-                if(method.isAnnotationPresent(Start.class))
+                if(method.isAnnotationPresent(Start.class)) {
+                    if(method.getParameterCount() != 0)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Start method in submodule MUST contains only 0 parameters. Method: " + method.getName(), o.getClass());
+
                     adapter.start.add(LOOKUP.unreflect(method).bindTo(o));
-                if(method.isAnnotationPresent(Shutdown.class))
+                }
+                if(method.isAnnotationPresent(Shutdown.class)) {
+                    if(method.getParameterCount() != 0)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Shutdown method in submodule MUST contains only 0 parameters. Method: " + method.getName(), o.getClass());
                     adapter.shutdown.add(LOOKUP.unreflect(method).bindTo(o));
-                if(method.isAnnotationPresent(ShutdownNow.class))
+                }
+                if(method.isAnnotationPresent(ShutdownNow.class)) {
+                    if(method.getParameterCount() != 0)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@ShutdownNow method in submodule MUST contains only 0 parameters. Method: " + method.getName(), o.getClass());
                     adapter.shutdownNow.add(LOOKUP.unreflect(method).bindTo(o));
+                }
             } catch (IllegalAccessException e) {
                 throw new UnexpectedBehaviorError(e);
             }
@@ -143,7 +157,8 @@ public class SubModuleMetaFactory {
         private final List<MethodHandle> shutdown = new ArrayList<>();
         private final List<MethodHandle> shutdownNow = new ArrayList<>();
 
-        private volatile boolean isRunning;
+        @Getter
+        private volatile boolean running;
 
         private static void invoke(List<MethodHandle> handles) {
             for(MethodHandle methodHandle : handles) {
@@ -159,31 +174,26 @@ public class SubModuleMetaFactory {
 
         @Override
         public void start() throws MetaInvokeException {
-            if(isRunning)
-                return;
+            if(running)
+                throw new IllegalStateException("SubModule is already running!");
             invoke(start);
-            isRunning = true;
+            running = true;
         }
 
         @Override
         public void shutdown() throws MetaInvokeException {
-            if(!isRunning)
-                return;
+            if(!running)
+                throw new IllegalStateException("SubModule is not running!");
             invoke(shutdown);
-            isRunning = false;
+            running = false;
         }
 
         @Override
         public void shutdownNow() throws MetaInvokeException {
-            if(!isRunning)
-                return;
+            if(!running)
+                throw new IllegalStateException("SubModule is not running!");
             invoke(shutdownNow);
-            isRunning = false;
-        }
-
-        @Override
-        public boolean isRunning() {
-            return isRunning;
+            running = false;
         }
     }
 }
