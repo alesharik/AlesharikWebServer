@@ -141,6 +141,16 @@ public class ModuleMetaFactory {
                 throw new UnexpectedBehaviorError(e);
             }
         }
+
+        for(ModuleProcessor processor : processors) {
+            try {
+                processor.processModule(adapter, module);
+            } catch (Exception e) {
+                System.err.println("Exception in processor");
+                e.printStackTrace(System.err);
+            }
+        }
+
         return adapter;
     }
 

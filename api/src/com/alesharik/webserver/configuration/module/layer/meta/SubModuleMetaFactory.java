@@ -117,7 +117,7 @@ public class SubModuleMetaFactory {
                 processor.processSubModule(adapter, o);
             } catch (RuntimeException e) {
                 System.err.println("Exception in SubModuleProcessor!");
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
 

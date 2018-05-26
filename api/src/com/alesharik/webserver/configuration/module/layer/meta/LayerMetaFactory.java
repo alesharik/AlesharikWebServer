@@ -135,7 +135,7 @@ public class LayerMetaFactory {
                 processor.processLayer(layerAdapter, layer);
             } catch (Exception e) {
                 System.err.println("Exception in LayerProcessor!");
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
 
