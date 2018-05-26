@@ -18,6 +18,11 @@
 
 package com.alesharik.webserver.base.bean;
 
+import lombok.RequiredArgsConstructor;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.lang.annotation.Annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -61,4 +66,97 @@ public @interface Bean {
      * WARNING! Can create memory leaks!
      */
     boolean canBeGarbage() default true;
+
+    final class Builder {
+        private boolean singleton = false;
+        private Class<?> factory = BeanFactory.class;
+        private boolean autowire = true;
+        private boolean canBeGarbage = true;
+
+        @Nonnull
+        public Builder singleton() {
+            singleton = true;
+            return this;
+        }
+
+        @Nonnull
+        public Builder singleton(boolean singleton) {
+            this.singleton = singleton;
+            return this;
+        }
+
+        @Nonnull
+        public Builder factory(@Nullable Class<?> factory) {
+            this.factory = factory;
+            return this;
+        }
+
+        @Nonnull
+        public Builder autowire() {
+            autowire = true;
+            return this;
+        }
+
+        @Nonnull
+        public Builder autowire(boolean autowire) {
+            this.autowire = autowire;
+            return this;
+        }
+
+        @Nonnull
+        public Builder canBeGarbage() {
+            canBeGarbage = true;
+            return this;
+        }
+
+        @Nonnull
+        public Builder canBeGarbage(boolean canBeGarbage) {
+            this.canBeGarbage = canBeGarbage;
+            return this;
+        }
+
+        @Nonnull
+        public Bean build() {
+            return new BeanImpl(singleton, factory, autowire, canBeGarbage);
+        }
+
+        @SuppressWarnings("ClassExplicitlyAnnotation")
+        @RequiredArgsConstructor
+        private static final class BeanImpl implements Bean {
+            private final boolean singleton;
+            private final Class<?> factory;
+            private final boolean autowire;
+            private final boolean canBeGarbage;
+
+            @Override
+            public boolean singleton() {
+                return singleton;
+            }
+
+            @Override
+            public boolean instantlyInstantiated() {
+                return false;
+            }
+
+            @Override
+            public Class<? extends BeanFactory> factory() {
+                return (Class<? extends BeanFactory>) factory;
+            }
+
+            @Override
+            public boolean autowire() {
+                return autowire;
+            }
+
+            @Override
+            public boolean canBeGarbage() {
+                return canBeGarbage;
+            }
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Bean.class;
+            }
+        }
+    }
 }
