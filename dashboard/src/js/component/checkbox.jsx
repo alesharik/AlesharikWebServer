@@ -15,19 +15,28 @@
  *     along with AlesharikWebServer.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package com.alesharik.webserver.base.bean;
+import React from 'react';
 
-import com.alesharik.webserver.base.bean.context.SuppressMemoryLeakSafety;
+export default Checkbox;
 
-/**
- * This annotation will be thrown if singleton tries to use bean context
- *
- * @see SuppressMemoryLeakSafety
- */
-public final class MemoryLeakSafetyException extends RuntimeException {
-    private static final long serialVersionUID = -6285379664645241086L;
-
-    public MemoryLeakSafetyException() {
-        super("Singletons can't use bean context!");
+export class Checkbox extends React.Component {
+    render() {
+        return <div className="checkbox-container">
+            <p>{this.props.label}</p>
+            <div className="checkbox">
+                <input id={this.props.id} type="checkbox" onChange={this.props.onChange}
+                       defaultChecked={this.props.defaultChecked} data-name={this.props.name}/>
+                <label htmlFor={this.props.id}/>
+            </div>
+        </div>
     }
 }
+
+Checkbox.defaultProps = {
+    label: "",
+    onChange: () => {
+    },
+    defaultChecked: () => {
+    },
+    name: ""
+};
