@@ -26,8 +26,10 @@ import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
 import com.alesharik.webserver.api.agent.classPath.SuppressClassLoaderUnloadWarning;
 import com.alesharik.webserver.api.reflection.ReflectUtils;
 import com.alesharik.webserver.base.bean.Bean;
+import com.alesharik.webserver.base.bean.context.BeanContext;
 import com.alesharik.webserver.base.exception.DevError;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
+import com.alesharik.webserver.configuration.module.ConfigurationError;
 import com.alesharik.webserver.configuration.module.Configure;
 import com.alesharik.webserver.configuration.module.Module;
 import com.alesharik.webserver.configuration.module.Reload;
@@ -75,7 +77,7 @@ public class ModuleMetaFactory {
     }
 
     @Nonnull
-    public static ModuleAdapter create(@Nonnull Object module, @Nonnull ModuleProvider moduleProvider) {
+    public static ModuleAdapter create(@Nonnull Object module, @Nonnull ModuleProvider moduleProvider, @Nonnull BeanContext context) {
         Module meta = module.getClass().getAnnotation(Module.class);
         if(meta == null)
             throw new IllegalArgumentException("Class " + module.getClass().getCanonicalName() + " is not a module!");
@@ -85,7 +87,7 @@ public class ModuleMetaFactory {
                 .singleton()
                 .build());
 
-        ModuleAdapterImpl adapter = new ModuleAdapterImpl(meta.autoInvoke(), linker, moduleProvider, module, meta.value());
+        ModuleAdapterImpl adapter = new ModuleAdapterImpl(meta.autoInvoke(), linker, moduleProvider, module, context, meta.value());
         for(Method method : ReflectUtils.getAllDeclaredMethods(module.getClass())) {
             if(Modifier.isStatic(method.getModifiers()))
                 continue;
@@ -183,6 +185,7 @@ public class ModuleMetaFactory {
         private final ConfigurationLinker linker;
         private final ModuleProvider moduleProvider;
         private final Object module;
+        private final BeanContext context;
 
         @Getter
         private final String name;
@@ -291,7 +294,11 @@ public class ModuleMetaFactory {
                 throw new IllegalStateException("Module is running!");
             if(configured)
                 throw new IllegalStateException("Module already configured!");
-            linker.link(object, module, moduleProvider);
+            try {
+                linker.link(object, module, moduleProvider, context);
+            } catch (ConfigurationError e) {
+                throw new ConfigurationError(e.getMessage() + " module name: " + name, e.getCause());
+            }
             invoke(configure, object);
             configured = true;
         }

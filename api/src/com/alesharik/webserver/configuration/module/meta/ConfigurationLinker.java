@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.configuration.module.meta;
 
+import com.alesharik.webserver.base.bean.context.BeanContext;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
 
 import javax.annotation.Nonnull;
@@ -26,5 +27,12 @@ import javax.annotation.Nonnull;
  * This class will be instantiated as a singleton in default context
  */
 public interface ConfigurationLinker {
-    void link(@Nonnull ConfigurationTypedObject object, @Nonnull Object module, @Nonnull ModuleProvider provider);
+    /**
+     * @param object
+     * @param module
+     * @param provider
+     * @param context
+     * @throws com.alesharik.webserver.configuration.module.ConfigurationError if config error happens
+     */
+    void link(@Nonnull ConfigurationTypedObject object, @Nonnull Object module, @Nonnull ModuleProvider provider, @Nonnull BeanContext context);
 }
