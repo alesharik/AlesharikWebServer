@@ -215,7 +215,6 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
             throw new DevError("Primitive config type for array " + type.getCanonicalName() + " is not supported!", "Config type for array " + type.getCanonicalName() + " is not supported!", o.getClass());
     }
 
-    @SneakyThrows(IllegalAccessException.class)
     private Object handleCollection(ConfigurationElement element, Field field, Object o, BeanContext context, ModuleProvider provider, Class<?> typ) {
         if(!(element instanceof ConfigurationObjectArray))
             throw new ConfigurationError("Element " + element.getName() + " is not an array! Class: " + o.getClass().getCanonicalName() + ", field: " + field.getName());
