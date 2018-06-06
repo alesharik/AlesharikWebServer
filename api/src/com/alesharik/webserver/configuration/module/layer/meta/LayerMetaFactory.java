@@ -142,7 +142,7 @@ public class LayerMetaFactory {
         return layerAdapter;
     }
 
-    @ListenInterface(LayerAdapter.class)
+    @ListenInterface(LayerProcessor.class)
     @Stages({ExecutionStage.AGENT, ExecutionStage.PRE_LOAD, ExecutionStage.CORE_MODULES})
     static void listenClass(Class<?> clazz) {
         System.out.println("Processing " + clazz.getCanonicalName());
