@@ -22,7 +22,7 @@ import com.alesharik.webserver.api.ExecutionStage;
 import com.alesharik.webserver.api.agent.Stages;
 import com.alesharik.webserver.api.agent.bean.Beans;
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
-import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
+import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.api.agent.classPath.SuppressClassLoaderUnloadWarning;
 import com.alesharik.webserver.api.reflection.ReflectUtils;
 import com.alesharik.webserver.base.bean.Bean;
@@ -156,7 +156,7 @@ public class ModuleMetaFactory {
         return adapter;
     }
 
-    @ListenAnnotation(ModuleProcessor.class)
+    @ListenInterface(ModuleProcessor.class)
     @Stages({ExecutionStage.AGENT, ExecutionStage.PRE_LOAD, ExecutionStage.CORE_MODULES})
     static void listenClass(Class<?> clazz) {
         System.out.println("Processing " + clazz.getCanonicalName());
