@@ -46,6 +46,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -100,6 +102,8 @@ public final class Logger {
     private static MpscLinkedQueue<Message> messageQueue;
     private static final LoggerThread loggerThread = new LoggerThread();
     private static volatile boolean shutdown = false;
+
+    private static File tempLog;
 
     @Getter
     private static final LoggingLevelManager loggingLevelManager = new LoggingLevelManagerImpl();
@@ -370,9 +374,6 @@ public final class Logger {
     public static void setupLogger(File log, int listenerQueueCapacity) {
         if(!isConfigured.get()) {
             try {
-                if(log.exists()) {
-                    log = new File(log.getPath() + 1);
-                }
                 logFile = log;
 
                 LoggerFormatter formatter = new LoggerFormatter();
@@ -421,6 +422,75 @@ public final class Logger {
         } else {
             Logger.log("Oops! Someone try to reconfigure logger! ");
         }
+    }
+
+    /**
+     * Finalize setup after {@link #setupTemporary()}
+     *
+     * @param mainFile the logger file
+     */
+    public static void finalizeSetup(File mainFile, int listenerQueueCapacity) {
+        if(isConfigured.get() && tempLog != null) {
+            logFile = mainFile;
+
+            loggerHandlers.clear();
+            LoggerFormatter formatter = new LoggerFormatter();
+            PrintStreamErrorManager errorManager = new PrintStreamErrorManager(SYSTEM_ERR);
+
+            FileLoggerHandler fileHandler = new FileLoggerHandler(mainFile);
+            fileHandler.setFormatter(formatter);
+            fileHandler.setErrorManager(errorManager);
+            loggerHandlers.add(fileHandler);
+
+            PrintStreamLoggerHandler infoHandler = new PrintStreamLoggerHandler();
+            infoHandler.setOutputStream(SYSTEM_OUT);
+            infoHandler.setEncoding("UTF-8");
+            infoHandler.setLevel(Level.INFO);
+            infoHandler.setErrorManager(errorManager);
+            infoHandler.setFormatter(formatter);
+            loggerHandlers.add(infoHandler);
+
+            PrintStreamLoggerHandler warningHandler = new PrintStreamLoggerHandler();
+            warningHandler.setOutputStream(SYSTEM_ERR);
+            warningHandler.setEncoding("UTF-8");
+            warningHandler.setLevel(Level.WARNING);
+            warningHandler.setErrorManager(errorManager);
+            warningHandler.setFormatter(formatter);
+            loggerHandlers.add(warningHandler);
+
+            try {
+                FileInputStream stream1 = new FileInputStream(tempLog);
+                byte[] data = new byte[1024];
+                int nRead;
+                FileOutputStream stream = fileHandler.getOutputStream();
+                while((nRead = stream1.read(data)) == 1024)
+                    stream.write(data);
+                stream.write(data, 0, nRead);
+                stream.flush();
+            } catch (IOException e) {
+                System.err.println("Can't merge temporary log!");
+                e.printStackTrace();
+            }
+            System.out.println("Temporary log fetched successfully");
+
+            listenerThread.shutdown();
+            listenerThread = new LoggerListenerThread(listenerQueueCapacity);
+            listenerThread.start();
+
+            System.out.println("Logger switched to normal mode");
+
+            tempLog = null;
+        } else
+            throw new IllegalStateException("Logger is not set up or is running in normal mode");
+    }
+
+    public static void setupTemporary() throws IOException {
+        if(isConfigured.get())
+            throw new IllegalStateException("Logger is already started!");
+        File log = File.createTempFile("alesharikwebserver", "log");
+        setupLogger(log, 1024);
+        tempLog = log;
+        System.out.println("LOGGER IS CURRENTLY WRITING TO TEMPORARY FILE");
     }
 
     public static NamedLogger createNewNamedLogger(String name, File file) {
@@ -815,6 +885,11 @@ public final class Logger {
         @Override
         public boolean isEnabled() {
             return enabled.get();
+        }
+
+        public void shutdown() {
+            shutdown = true;
+            interrupt();
         }
     }
 

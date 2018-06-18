@@ -20,8 +20,10 @@ package com.alesharik.webserver.api.agent.bean;
 
 import com.alesharik.webserver.base.bean.Bean;
 import com.alesharik.webserver.base.bean.Wire;
+import com.alesharik.webserver.internals.instance.ClassInstantiator;
 import lombok.experimental.UtilityClass;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -40,5 +42,13 @@ public class Beans {
     @Nullable
     public static <T> T getBean(Class<T> clazz, @Nullable Bean beanOverride) {
         return Contexts.getDefaultBeanContext().getBean(clazz, beanOverride);
+    }
+
+    @Nonnull
+    public static <T> T create(Class<T> clazz) {
+        T o = getBean(clazz);
+        if(o == null) //noinspection unchecked
+            return (T) ClassInstantiator.instantiate(clazz);
+        return o;
     }
 }

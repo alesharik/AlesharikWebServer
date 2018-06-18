@@ -34,5 +34,5 @@ public interface ConfigurationLinker {
      * @param context
      * @throws com.alesharik.webserver.configuration.module.ConfigurationError if config error happens
      */
-    void link(@Nonnull ConfigurationTypedObject object, @Nonnull Object module, @Nonnull ModuleProvider provider, @Nonnull BeanContext context);
+    void link(@Nonnull ConfigurationTypedObject object, @Nonnull Object module, @Nonnull ModuleProvider provider, @Nonnull BeanContext context, @Nonnull ScriptElementConverter scriptElementConverter);
 }

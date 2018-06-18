@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.configuration.config.lang.parser;
 
+import com.alesharik.webserver.configuration.config.lang.ApiEndpointSection;
 import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
 import com.alesharik.webserver.configuration.config.lang.ConfigurationModule;
 import com.alesharik.webserver.configuration.config.lang.CustomEndpointSection;
@@ -438,6 +439,15 @@ public class ConfigurationParserTest {
         ScriptEndpointSection.Command command1 = scriptSection.getCommands().get(0);
         assertEquals("start", command1.getName());
         assertPrimitiveEquals(command1.getArg(), "script", "a");
+    }
+
+    @Test
+    public void parseEndpointB() {
+        ConfigurationEndpoint endpoint = endpoint("com/alesharik/webserver/configuration/config/lang/parser/b.endpoint");
+
+        ApiEndpointSection api = endpoint.getApiSection();
+        ConfigurationObject logger = (ConfigurationObject) api.getElement("logger");
+        assertPrimitiveEquals(logger.getElement("file"), "file", "test.log");
     }
 
     private ConfigurationEndpoint endpoint(String file) {

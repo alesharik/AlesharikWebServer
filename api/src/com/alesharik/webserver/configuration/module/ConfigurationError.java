@@ -21,7 +21,7 @@ package com.alesharik.webserver.configuration.module;
 /**
  * This error must be processed as configuration error and must shut down the server
  */
-public final class ConfigurationError extends Error {
+public class ConfigurationError extends Error {
     private static final long serialVersionUID = -6348536137880873664L;
 
     public ConfigurationError() {

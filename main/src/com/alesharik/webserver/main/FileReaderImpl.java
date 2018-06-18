@@ -16,24 +16,30 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
+package com.alesharik.webserver.main;
 
-import lombok.Getter;
+import com.alesharik.webserver.configuration.config.lang.parser.FileReader;
 
-import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 
-/**
- * All Core Modules will be loaded by this classloader
- */
-public abstract class CoreModuleClassLoader extends URLClassLoader {
-    @Nonnull
-    @Getter
-    private final CoreModule module;
+final class FileReaderImpl implements FileReader {
+    @Override
+    public List<String> readFile(Path path) {
+        try {
+            return Files.readAllLines(path);
+        } catch (IOException e) {
+            throw new FileReaderException(e);
+        }
+    }
 
-    protected CoreModuleClassLoader(URL[] urls, ClassLoader parent, @Nonnull CoreModule module) {
-        super(urls, parent);
-        this.module = module;
+    public static final class FileReaderException extends RuntimeException {
+        private static final long serialVersionUID = 4044822939932847333L;
+
+        public FileReaderException(Throwable cause) {
+            super(cause);
+        }
     }
 }

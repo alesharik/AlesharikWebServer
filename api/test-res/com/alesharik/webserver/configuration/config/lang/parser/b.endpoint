@@ -1,0 +1,13 @@
+endpoint main {
+    api {
+        logger: {
+            file: "test.log"
+        }
+    }
+    modules {
+
+    }
+    script {
+
+    }
+}

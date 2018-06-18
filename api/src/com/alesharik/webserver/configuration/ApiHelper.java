@@ -46,7 +46,7 @@ public class ApiHelper {
                 throw new IOException("Can't read from file " + file.getAbsolutePath() + " !");
         }
 
-        Logger.setupLogger(file, listenerQueueCapacity);
+        Logger.finalizeSetup(file, listenerQueueCapacity);
         if(debug)
             Debug.enable();
     }
@@ -55,6 +55,8 @@ public class ApiHelper {
         LoggingLevel loggingLevel = Logger.getLoggingLevelManager().getLoggingLevel(name);
         if(loggingLevel != null)
             loggingLevel.enable();
+        else
+            Logger.getLoggingLevelManager().createLoggingLevel(name).enable();
     }
 
     public static void shutdownLogger() {

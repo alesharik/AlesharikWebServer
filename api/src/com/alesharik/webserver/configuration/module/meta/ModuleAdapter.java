@@ -27,9 +27,9 @@ public interface ModuleAdapter {
 
     void shutdownNow();
 
-    void reload(ConfigurationTypedObject object);
+    void reload(ConfigurationTypedObject object, ScriptElementConverter converter);
 
-    void configure(ConfigurationTypedObject object);
+    void configure(ConfigurationTypedObject object, ScriptElementConverter converter);
 
     String getName();
 

@@ -148,6 +148,7 @@ final class ClassPathScannerThread extends Thread {
         new ClassLoaderScanTask(newListeners, classLoaders, workerPool, rel).run();
         relations.putAll(rel);
         listeners.putAll(newListeners);
+        taskCount.decrementAndGet();
     }
 
     private void removeClassLoaderImpl(ClassLoader classLoader) {
@@ -168,6 +169,7 @@ final class ClassPathScannerThread extends Thread {
             }
         }
         new ClassLoaderRemoveTask(commonListeners, classLoader, relations).run();
+        taskCount.decrementAndGet();
     }
 
     public void addClassLoader(ClassLoader classLoader) {

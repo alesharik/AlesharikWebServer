@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.agent;
 
+import com.alesharik.webserver.api.ExecutionStage;
 import com.alesharik.webserver.logger.Prefixes;
 
 import javax.annotation.Nonnull;
@@ -33,6 +34,7 @@ import java.util.Set;
  * @implNote If you create custom server, you MUST use this agent
  */
 @Prefixes("[Agent]")
+@ExecutionStage.AuthorizedImpl
 public final class Agent {
     private static Instrumentation instrumentation;
 
@@ -44,6 +46,8 @@ public final class Agent {
         if(instrumentation != null)
             throw new IllegalStateException("WTF ARE YOU DOING?");
         instrumentation = inst;
+
+        ExecutionStage.setState(ExecutionStage.AGENT);
 
         inst.addTransformer(new ClassPathScannerTransformer(), false);
         inst.addTransformer(new AgentClassTransformer(), true);

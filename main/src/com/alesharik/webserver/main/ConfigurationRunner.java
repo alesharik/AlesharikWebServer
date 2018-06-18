@@ -16,24 +16,17 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
+package com.alesharik.webserver.main;
 
-import lombok.Getter;
+import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
+import lombok.RequiredArgsConstructor;
 
-import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
+@RequiredArgsConstructor
+public final class ConfigurationRunner extends Thread {
+    private final ConfigurationEndpoint configuration;
 
-/**
- * All Core Modules will be loaded by this classloader
- */
-public abstract class CoreModuleClassLoader extends URLClassLoader {
-    @Nonnull
-    @Getter
-    private final CoreModule module;
-
-    protected CoreModuleClassLoader(URL[] urls, ClassLoader parent, @Nonnull CoreModule module) {
-        super(urls, parent);
-        this.module = module;
+    @Override
+    public void run() {
+        super.run();
     }
 }

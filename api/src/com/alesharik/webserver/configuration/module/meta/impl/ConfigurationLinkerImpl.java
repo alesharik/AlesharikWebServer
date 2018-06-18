@@ -33,6 +33,7 @@ import com.alesharik.webserver.configuration.module.ConfigurationValue;
 import com.alesharik.webserver.configuration.module.LinkModule;
 import com.alesharik.webserver.configuration.module.meta.ConfigurationLinker;
 import com.alesharik.webserver.configuration.module.meta.ModuleProvider;
+import com.alesharik.webserver.configuration.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.internals.instance.ClassInstantiator;
 import lombok.SneakyThrows;
 
@@ -51,9 +52,9 @@ import java.util.Set;
 public final class ConfigurationLinkerImpl implements ConfigurationLinker {
     @Override
     @SneakyThrows(IllegalAccessException.class)
-    public void link(@Nonnull ConfigurationTypedObject object, @Nonnull Object module, @Nonnull ModuleProvider provider, @Nonnull BeanContext context) {
+    public void link(@Nonnull ConfigurationTypedObject object, @Nonnull Object module, @Nonnull ModuleProvider provider, @Nonnull BeanContext context, @Nonnull ScriptElementConverter elementConverter) {
         if(module.getClass().isAnnotationPresent(Configuration.class))
-            handleFields(object, module, provider, context);
+            handleFields(object, module, provider, context, elementConverter);
         for(Field field : ReflectUtils.getAllDeclaredFields(module.getClass())) {
             if(Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers()))
                 continue;
@@ -62,7 +63,7 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
                 Object o = context.createObject(field.getType());
                 if(o == null)
                     o = ClassInstantiator.instantiate(field.getType());
-                handleFields(object, o, provider, context);
+                handleFields(object, o, provider, context, elementConverter);
                 field.setAccessible(true);
                 try {
                     field.set(module, o);
@@ -73,7 +74,7 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
         }
     }
 
-    private void handleFields(ConfigurationObject object, Object config, ModuleProvider provider, BeanContext context) throws IllegalAccessException {
+    private void handleFields(ConfigurationObject object, Object config, ModuleProvider provider, BeanContext context, @Nonnull ScriptElementConverter converter) throws IllegalAccessException {
         for(Field field : ReflectUtils.getAllDeclaredFields(config.getClass())) {
             if(Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers()))
                 continue;
@@ -83,8 +84,8 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
                 handleLinkModuleField(object, config, provider, field);
             if(field.isAnnotationPresent(ConfigurationValue.class)) {
                 ConfigurationValue a = field.getAnnotation(ConfigurationValue.class);
+                ConfigurationElement element = getElement(object, a.value(), config.getClass(), a.optional());
                 if(ConfigurationElement.class.isAssignableFrom(field.getType())) {
-                    ConfigurationElement element = getElement(object, a.value(), config.getClass(), a.optional());
                     if(element == null) {
                         if(a.optional())
                             field.set(config, null);
@@ -92,8 +93,22 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
                             throw new ConfigurationError("Element " + a.value() + " not found! Class: " + config.getClass().getCanonicalName() + ", field: " + field.getName());
                     }
                     field.set(config, element);
+                } else if(converter.isExecutable(element)) {
+                    if(element == null) {
+                        if(a.optional())
+                            field.set(config, null);
+                        else
+                            throw new ConfigurationError("Element " + a.value() + " not found! Class: " + config.getClass().getCanonicalName() + ", field: " + field.getName());
+                    }
+                    Object o = converter.execute(element, field.getType());
+                    if(o == null) {
+                        if(a.optional())
+                            field.set(config, null);
+                        else
+                            throw new ConfigurationError("Executable element " + a.value() + " returns null value! Class: " + config.getClass().getCanonicalName() + ", field: " + field.getName());
+                    } else
+                        field.set(config, o);
                 } else if(isPrimitive(field.getType())) {
-                    ConfigurationElement element = getElement(object, a.value(), config.getClass(), a.optional());
                     if(element == null) {
                         if(a.optional())
                             field.set(config, null);
@@ -102,17 +117,15 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
                     }
                     field.set(config, handlePrimitive(element, field, config, null));
                 } else if(Collection.class.isAssignableFrom(field.getType())) {
-                    ConfigurationElement element = getElement(object, a.value(), config.getClass(), a.optional());
-                    field.set(config, handleCollection(element, field, config, context, provider, null));
+                    field.set(config, handleCollection(element, field, config, context, provider, null, converter));
                 } else {
-                    ConfigurationElement element = getElement(object, a.value(), config.getClass(), a.optional());
                     if(element == null) {
                         if(a.optional())
                             field.set(config, null);
                         else
                             throw new ConfigurationError("Element " + a.value() + " not found! Class: " + config.getClass().getCanonicalName() + ", field: " + field.getName());
                     }
-                    field.set(config, handleObject(element, field, config, context, provider, null));
+                    field.set(config, handleObject(element, field, config, context, provider, null, converter));
                 }
             }
         }
@@ -215,7 +228,7 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
             throw new DevError("Primitive config type for array " + type.getCanonicalName() + " is not supported!", "Config type for array " + type.getCanonicalName() + " is not supported!", o.getClass());
     }
 
-    private Object handleCollection(ConfigurationElement element, Field field, Object o, BeanContext context, ModuleProvider provider, Class<?> typ) {
+    private Object handleCollection(ConfigurationElement element, Field field, Object o, BeanContext context, ModuleProvider provider, Class<?> typ, ScriptElementConverter converter) {
         if(!(element instanceof ConfigurationObjectArray))
             throw new ConfigurationError("Element " + element.getName() + " is not an array! Class: " + o.getClass().getCanonicalName() + ", field: " + field.getName());
         ConfigurationObjectArray elemArr = (ConfigurationObjectArray) element;
@@ -229,9 +242,9 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
             else if(isPrimitive(arrType))
                 arr[i] = handlePrimitive(elemArr.get(i), field, o, arrType);
             else if(Collection.class.isAssignableFrom(arrType))
-                arr[i] = handleCollection(elemArr.get(i), field, o, context, provider, Object.class);
+                arr[i] = handleCollection(elemArr.get(i), field, o, context, provider, Object.class, converter);
             else
-                arr[i] = handleObject(elemArr.get(i), field, o, context, provider, arrType);
+                arr[i] = handleObject(elemArr.get(i), field, o, context, provider, arrType, converter);
         }
         if(Set.class.isAssignableFrom(arrr))
             return new HashSet<>(Arrays.asList(arr));
@@ -242,7 +255,7 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
     }
 
     @SneakyThrows(IllegalAccessException.class)
-    private Object handleObject(ConfigurationElement element, Field field, Object o, BeanContext context, ModuleProvider provider, Class<?> typ) {
+    private Object handleObject(ConfigurationElement element, Field field, Object o, BeanContext context, ModuleProvider provider, Class<?> typ, ScriptElementConverter converter) {
         if(!(element instanceof ConfigurationObject))
             throw new ConfigurationError("Element " + element.getName() + " is not an object! Class: " + o.getClass().getCanonicalName() + ", field: " + field.getName());
         Class<?> type = typ == null ? field.getType() : typ;
@@ -250,7 +263,7 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
         if(obj == null)
             obj = ClassInstantiator.instantiate(type);
 
-        handleFields((ConfigurationObject) element, obj, provider, context);
+        handleFields((ConfigurationObject) element, obj, provider, context, converter);
 
         return obj;
     }

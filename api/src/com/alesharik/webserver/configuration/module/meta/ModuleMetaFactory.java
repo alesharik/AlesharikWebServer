@@ -274,7 +274,7 @@ public class ModuleMetaFactory {
         }
 
         @Override
-        public void reload(ConfigurationTypedObject object) {
+        public void reload(ConfigurationTypedObject object, ScriptElementConverter converter) {
             if(!configured)
                 throw new IllegalStateException("Module is not configured!");
             if(!running)
@@ -282,20 +282,20 @@ public class ModuleMetaFactory {
             if(reload.isEmpty()) {
                 shutdown();
                 configured = false;
-                configure(object);
+                configure(object, converter);
                 start();
             } else
                 invoke(reload, object);
         }
 
         @Override
-        public void configure(ConfigurationTypedObject object) {
+        public void configure(ConfigurationTypedObject object, ScriptElementConverter converter) {
             if(running)
                 throw new IllegalStateException("Module is running!");
             if(configured)
                 throw new IllegalStateException("Module already configured!");
             try {
-                linker.link(object, module, moduleProvider, context);
+                linker.link(object, module, moduleProvider, context, converter);
             } catch (ConfigurationError e) {
                 throw new ConfigurationError(e.getMessage() + " module name: " + name, e.getCause());
             }

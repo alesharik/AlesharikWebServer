@@ -16,24 +16,18 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
+package com.alesharik.webserver.configuration.config.ext;
 
-import lombok.Getter;
-
-import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
+import javax.script.ScriptEngineFactory;
+import java.util.Set;
 
 /**
- * All Core Modules will be loaded by this classloader
+ * Can be used by modules to crete script engines. You can get it from module context
  */
-public abstract class CoreModuleClassLoader extends URLClassLoader {
-    @Nonnull
-    @Getter
-    private final CoreModule module;
+public interface ScriptManager {
+    ScriptEngineFactory getEngineFactory(String name);
 
-    protected CoreModuleClassLoader(URL[] urls, ClassLoader parent, @Nonnull CoreModule module) {
-        super(urls, parent);
-        this.module = module;
-    }
+    boolean hasLanguage(String name);
+
+    Set<String> getLanguages();
 }

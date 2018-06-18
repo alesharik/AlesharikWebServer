@@ -16,24 +16,16 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
+package com.alesharik.webserver.main;
 
-import lombok.Getter;
+public final class PropertyError extends Error {
+    private static final long serialVersionUID = -4247986783591904466L;
 
-import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
+    public PropertyError(String message) {
+        super(message);
+    }
 
-/**
- * All Core Modules will be loaded by this classloader
- */
-public abstract class CoreModuleClassLoader extends URLClassLoader {
-    @Nonnull
-    @Getter
-    private final CoreModule module;
-
-    protected CoreModuleClassLoader(URL[] urls, ClassLoader parent, @Nonnull CoreModule module) {
-        super(urls, parent);
-        this.module = module;
+    public PropertyError(Throwable cause) {
+        super(cause);
     }
 }

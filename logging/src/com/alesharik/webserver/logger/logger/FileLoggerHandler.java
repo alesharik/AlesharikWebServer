@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.logger.logger;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.File;
@@ -36,6 +37,7 @@ import java.util.logging.LogRecord;
  * This console handler log every record into file. Use {@link FileOutputStream} for write to file
  */
 public final class FileLoggerHandler extends LoggerHandler {
+    @Getter
     private FileOutputStream outputStream;
     private AtomicReference<Charset> charset = new AtomicReference<>(StandardCharsets.UTF_8);
 

@@ -66,7 +66,7 @@ module test {//Define new module, space REQUIRED!
             a: 1, //Primitive
             b: 'test', //String
             c: "test", //String
-            d: <javascript> console.log("test") </javascript>, //Code element. Tag should contain language name
+            d: <javascript> console.log("test") </javascript>, //Code element. Tag should contain language name. All code elements will be executed in global context
             e: [ 1, 2, 3 ], //Array, elements must be split with brackets at least by 1 space
             qwe: { a: 1, b: 2 } //Object
         },
