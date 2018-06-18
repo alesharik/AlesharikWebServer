@@ -20,8 +20,10 @@ package com.alesharik.webserver.configuration.config.lang.parser;
 
 import com.alesharik.webserver.configuration.config.ext.DefineEnvironment;
 import com.alesharik.webserver.configuration.config.ext.DefineManager;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,7 +35,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-final class ConfigParserInstructionsHeader implements DefineEnvironment {//FIXME DefineManager
+@EqualsAndHashCode
+@ToString
+final class ConfigParserInstructionsHeader implements DefineEnvironment {
     static final String WHITESPACE_REGEX = "^\\s*(?=\\S|$)";
     @Getter
     private final Map<String, String> defines = new HashMap<>();

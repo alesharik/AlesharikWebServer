@@ -774,7 +774,7 @@ public class ConfigurationParser {
             boolean finish = false;
             String content = def.replaceFirst("\\{\\s*", ""); //Remove start bracket
 
-            StringBuilder text = new StringBuilder(parts[0] + ':' + defSpaces + "{");
+            StringBuilder text = new StringBuilder(parts[0] + ':' + defSpaces);
             text.append(def, 0, def.length() - content.length());
 
             if(!content.isEmpty()) {
@@ -799,11 +799,11 @@ public class ConfigurationParser {
                 }
             }
             while(!finish) {
-                String l = buildDefines(lines.next(), preparedDefinitions);
+                String l = buildDefines(cutLine(lines), preparedDefinitions);
                 lineCounter.incrementAndGet();
-                lines.remove();
 
                 if(l.replaceAll("\\s", "").startsWith("}")) {//Close object
+                    text.append('\n');
                     text.append("}");
                     finish = true;
                     break;
@@ -812,13 +812,17 @@ public class ConfigurationParser {
                 while(!l.isEmpty()) {
                     ConfigElement element = parseElement(l, lines, lineCopy, lineCounter, preparedDefinitions, "");
                     object.append(element.element);
-                    l = l.substring(element.text.length());//Remove last element
+                    String[] textLines = element.text.split("\\n");
+                    if(textLines.length >= 1)
+                        l = l.substring(textLines[0].length());//Remove last element, all children element's lines already cut
+
                     String l1;
                     if(!l.isEmpty())
                         l1 = l.substring(1).replaceFirst("^\\s*", ""); //Remove spaces
                     else
                         l1 = "";
 
+                    text.append('\n');
                     text.append(element.text);
                     text.append(l, 0, l.length() - l1.length());
                     l = l1;
@@ -842,7 +846,9 @@ public class ConfigurationParser {
                 while(!last.isEmpty()) {
                     ConfigElement element = parseElement(last, lines, lineCopy, lineCounter, preparedDefinitions, Integer.toString(array.size()));
                     array.append(element.element);
-                    last = last.substring(element.text.length() - 1);//Remove last element
+                    String[] textLines = element.text.split("\\n");
+                    if(textLines.length >= 1)
+                        last = last.substring(textLines[0].length());//Remove last element, all children element's lines already cut
                     String l1;
                     if(!last.isEmpty())
                         l1 = last.substring(1).replaceFirst("^\\s*", ""); //Remove spaces
@@ -862,9 +868,8 @@ public class ConfigurationParser {
                 }
             }
             while(!finish) {
-                String l = buildDefines(lines.next(), preparedDefinitions);
+                String l = buildDefines(cutLine(lines), preparedDefinitions);
                 lineCounter.incrementAndGet();
-                lines.remove();
 
                 if(l.replaceAll("\\s", "").startsWith("]")) { //Close arr
                     text.append("]");
@@ -904,7 +909,7 @@ public class ConfigurationParser {
                     return new ConfigElement(PrimitiveImpl.wrap(name, real), parts[0] + ':' + defSpaces + real);
                 throw new CodeParsingException("Can't parse definition!", lineCounter.get(), lineCopy);
             }
-            return new ConfigElement(element, parts[0] + ':' + defSpaces + real);
+            return new ConfigElement(element, (nameOverride != null && !nameOverride.isEmpty()) ? defSpaces + real : parts[0] + ':' + defSpaces + real);
         }
     }
 
@@ -918,6 +923,8 @@ public class ConfigurationParser {
     }
 
     @Getter
+    @EqualsAndHashCode
+    @ToString
     @RequiredArgsConstructor
     private static final class ConfigurationEndpointImpl implements ConfigurationEndpoint {
         private final String name;
@@ -946,6 +953,8 @@ public class ConfigurationParser {
     }
 
     @RequiredArgsConstructor
+    @EqualsAndHashCode
+    @ToString
     private static final class ScriptEndpointSectionImpl implements ScriptEndpointSection {
         private final Map<String, ScriptSection> sections;
 
@@ -956,18 +965,23 @@ public class ConfigurationParser {
     }
 
     @Getter
+    @EqualsAndHashCode
+    @ToString
     private static final class ScriptSectionImpl implements ScriptEndpointSection.ScriptSection {
         private final List<ScriptEndpointSection.Command> commands = new ArrayList<>();
     }
 
     @RequiredArgsConstructor
     @Getter
+    @EqualsAndHashCode
+    @ToString
     private static final class CommandImpl implements ScriptEndpointSection.Command {
         private final String name;
         private final ConfigurationElement arg;
     }
 
     @RequiredArgsConstructor
+    @ToString
     private static final class ApiEndpointSectionImpl implements ApiEndpointSection {
         private final ConfigurationObject object;
 
@@ -1006,12 +1020,15 @@ public class ConfigurationParser {
 
     @Getter
     @EqualsAndHashCode
+    @ToString
     private static final class CustomEndpointSectionImpl implements CustomEndpointSection {
         private final List<UseDirective> useDirectives = new ArrayList<>();
     }
 
     @Getter
     @RequiredArgsConstructor
+    @EqualsAndHashCode
+    @ToString
     private static final class UseDirectiveImpl implements CustomEndpointSection.UseDirective {
         private final String name;
         private final ConfigurationTypedObject configuration;
@@ -1020,6 +1037,8 @@ public class ConfigurationParser {
 
     @RequiredArgsConstructor
     @Getter
+    @EqualsAndHashCode
+    @ToString
     private static final class CustomPropertyImpl implements CustomEndpointSection.CustomProperty {
         private final String name;
         private final List<CustomEndpointSection.UseCommand> useCommands = new ArrayList<>();
@@ -1027,6 +1046,8 @@ public class ConfigurationParser {
 
     @RequiredArgsConstructor
     @Getter
+    @EqualsAndHashCode
+    @ToString
     private static final class UseCommandImpl implements CustomEndpointSection.UseCommand {
         private final String referent;
         @Nullable
@@ -1035,6 +1056,8 @@ public class ConfigurationParser {
 
     @Getter
     @RequiredArgsConstructor
+    @EqualsAndHashCode
+    @ToString
     private static final class ConfigurationModuleImpl implements ConfigurationModule {
         private final String name;
         private final List<ConfigurationModule> modules;
@@ -1045,6 +1068,8 @@ public class ConfigurationParser {
 
     @RequiredArgsConstructor
     @Getter
+    @EqualsAndHashCode
+    @ToString
     private static final class ExternalLanguageHelperImpl implements ExternalLanguageHelper {
         private final File helperFile;
         private final String language;
