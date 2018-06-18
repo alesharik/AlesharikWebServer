@@ -552,8 +552,6 @@ public class ConfigurationParser {
                     throw new CodeParsingException("use statement error: file " + theFile + " is a directory!", lineNum + lineOff, file);
                 if(!fileReader.canRead(theFile))
                     throw new CodeParsingException("use statement error: file " + theFile + " is not readable!", lineNum + lineOff, file);
-                if(!fileReader.canExecute(theFile))
-                    throw new CodeParsingException("use statement error: file " + theFile + " is not executable!", lineNum + lineOff, file);
 
                 ExecutionContext ctx = ExecutionContext.parse(contextName);
                 if(ctx == null)
