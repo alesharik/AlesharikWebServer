@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
@@ -128,5 +129,23 @@ public class MessageBusTest {
         bus.waitForLoop();
         ForkJoinPool.commonPool().awaitQuiescence(10000, TimeUnit.MILLISECONDS);
         Thread.sleep(100);
+        ForkJoinPool.commonPool().invoke(new ForkJoinTask<Object>() {
+            private static final long serialVersionUID = 7182502388918002183L;
+
+            @Override
+            public Object getRawResult() {
+                return "";
+            }
+
+            @Override
+            protected void setRawResult(Object o) {
+
+            }
+
+            @Override
+            protected boolean exec() {
+                return true;
+            }
+        });
     }
 }
