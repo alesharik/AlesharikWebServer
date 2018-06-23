@@ -60,7 +60,7 @@ public class ExecutionStageTest {
     public void valid() {
         ExecutionStage.setState(ExecutionStage.CONFIG);
         assertTrue(ExecutionStage.valid(new ExecutionStage[]{ExecutionStage.AGENT, ExecutionStage.CONFIG, ExecutionStage.CORE_MODULES}));
-        assertFalse(ExecutionStage.valid(new ExecutionStage[]{ExecutionStage.CORE_MODULES, ExecutionStage.SHARED_LIBS}));
+        assertFalse(ExecutionStage.valid(new ExecutionStage[]{ExecutionStage.CORE_MODULES}));
     }
 
     @Test
