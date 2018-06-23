@@ -22,6 +22,7 @@ import com.alesharik.webserver.configuration.run.ExtensionManager;
 import com.alesharik.webserver.configuration.run.message.Message;
 import com.alesharik.webserver.configuration.run.message.MessageManager;
 import com.alesharik.webserver.configuration.run.message.MessageSender;
+import lombok.SneakyThrows;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -122,8 +123,10 @@ public class MessageBusTest {
         bus.addManager(mock(MessageManager.class), eq("qwe"));
     }
 
+    @SneakyThrows
     private void waitForSend() {
         bus.waitForLoop();
-        ForkJoinPool.commonPool().awaitQuiescence(100, TimeUnit.MILLISECONDS);
+        ForkJoinPool.commonPool().awaitQuiescence(10000, TimeUnit.MILLISECONDS);
+        Thread.sleep(10);
     }
 }
