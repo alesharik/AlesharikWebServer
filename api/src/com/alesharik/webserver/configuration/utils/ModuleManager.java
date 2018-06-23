@@ -19,13 +19,40 @@
 package com.alesharik.webserver.configuration.utils;
 
 import com.alesharik.webserver.configuration.module.meta.ModuleProvider;
+import org.apache.commons.collections4.MultiValuedMap;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
 
 public interface ModuleManager extends ModuleProvider {
+    @Nonnull
     List<Module> getModules();
 
-    Module getModule(String name);
+    @Nullable
+    Module getModule(@Nonnull String name);
 
-    ModuleClassLoader getClassLoader(Module module);
+    @Nonnull
+    ModuleClassLoader getClassLoader(@Nonnull Module module);
+
+    @Nonnull
+    MultiValuedMap<SharedLibrary, Module> getModulesWithUnmetDependencies();
+
+    void addListener(@Nonnull UpdateListener listener);
+
+    void removeListener(@Nonnull UpdateListener listener);
+
+    interface UpdateListener {
+        default void onModuleAdd(@Nonnull Module module) {
+        }
+
+        default void onModuleUpdate(@Nonnull Module module) {
+        }
+
+        default void onModuleReload(@Nonnull Module module) {
+        }
+
+        default void onModuleDelete(@Nonnull Module module) {
+        }
+    }
 }

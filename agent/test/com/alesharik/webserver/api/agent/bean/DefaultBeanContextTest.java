@@ -20,7 +20,7 @@ package com.alesharik.webserver.api.agent.bean;
 
 import com.alesharik.webserver.test.AbstractContextTest;
 
-public class DefaultBeanContextTest extends AbstractContextTest {
+public class DefaultBeanContextTest extends AbstractContextTest<DefaultBeanContext> {
     public DefaultBeanContextTest() {
         super(DefaultBeanContext.class);
     }

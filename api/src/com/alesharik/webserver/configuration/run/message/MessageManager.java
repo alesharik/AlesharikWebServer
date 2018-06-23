@@ -16,24 +16,16 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
+package com.alesharik.webserver.configuration.run.message;
 
-import lombok.Getter;
+public interface MessageManager {
+    void init(MessageSender messageSender);
 
-import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
-
-/**
- * This classloader will load all Shared Libraries
- */
-public abstract class SharedLibraryClassLoader extends URLClassLoader {
-    @Getter
-    @Nonnull
-    private final SharedLibrary sharedLibrary;
-
-    protected SharedLibraryClassLoader(URL url, ClassLoader parent, @Nonnull SharedLibrary sharedLibrary) {
-        super(new URL[]{url}, parent);
-        this.sharedLibrary = sharedLibrary;
-    }
+    /**
+     * Will invoke on extension's thread
+     *
+     * @param message
+     * @param sender
+     */
+    void listen(Message message, String sender);
 }

@@ -18,8 +18,6 @@
 
 package com.alesharik.webserver.configuration.utils;
 
-import org.jetbrains.annotations.NotNull;
-
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 
@@ -81,7 +79,7 @@ public final class SharedLibraryVersion implements Comparable<SharedLibraryVersi
     }
 
     @Override
-    public int compareTo(@NotNull SharedLibraryVersion o) {
+    public int compareTo(@Nonnull SharedLibraryVersion o) {
         for(int i = 0; i < version.length; i++) {
             if(i >= o.version.length)
                 if(version[i] != 0)

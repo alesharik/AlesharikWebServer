@@ -16,24 +16,12 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
+package com.alesharik.webserver.main;
 
-import lombok.Getter;
+public final class CommandRedefinitionError extends Error {
+    private static final long serialVersionUID = -8163943533492795460L;
 
-import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
-
-/**
- * This classloader will load all Shared Libraries
- */
-public abstract class SharedLibraryClassLoader extends URLClassLoader {
-    @Getter
-    @Nonnull
-    private final SharedLibrary sharedLibrary;
-
-    protected SharedLibraryClassLoader(URL url, ClassLoader parent, @Nonnull SharedLibrary sharedLibrary) {
-        super(new URL[]{url}, parent);
-        this.sharedLibrary = sharedLibrary;
+    public CommandRedefinitionError(String cmd, String conflictA, String conflictB) {
+        super("Command " + cmd + " was provided by more than 1 extension! Conflict between " + conflictA + " and " + conflictB);
     }
 }

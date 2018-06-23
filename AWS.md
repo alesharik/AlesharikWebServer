@@ -113,6 +113,9 @@ endpoint end { //Endpoint definition, space REQUIRED
     hooks { //Create some hooks
         use a.hook2 as hook
     }
+    modules {
+        use a.mod as module1
+    }
     script { //Main script, new line REQUIRED
         pre-init { //Define script section, all inner elements must be not in the same line as the '{'
             fire hook //Fire the hook

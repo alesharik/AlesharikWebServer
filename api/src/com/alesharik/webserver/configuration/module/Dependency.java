@@ -19,10 +19,20 @@
 package com.alesharik.webserver.configuration.module;
 
 import javax.annotation.Nonnull;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Links Shared Library to the module
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
+@Repeatable(Dependency.Dependencies.class)
 public @interface Dependency {
     /**
      * Shared library name
@@ -44,4 +54,11 @@ public @interface Dependency {
      * @return <code>true</code> - dependency is optional, <code>false</code> - dependency is required
      */
     boolean optional() default false;
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    @Documented
+    @interface Dependencies {
+        Dependency[] value();
+    }
 }

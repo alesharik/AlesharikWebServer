@@ -16,24 +16,18 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
-
-import lombok.Getter;
+package com.alesharik.webserver.configuration.run;
 
 import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.WatchEvent;
 
 /**
- * This classloader will load all Shared Libraries
+ * Watcher will watch the directory and all subdirectories
  */
-public abstract class SharedLibraryClassLoader extends URLClassLoader {
-    @Getter
+public interface DirectoryWatcher {
     @Nonnull
-    private final SharedLibrary sharedLibrary;
+    Path toWatch();
 
-    protected SharedLibraryClassLoader(URL url, ClassLoader parent, @Nonnull SharedLibrary sharedLibrary) {
-        super(new URL[]{url}, parent);
-        this.sharedLibrary = sharedLibrary;
-    }
+    void fileChanged(@Nonnull Path file, @Nonnull WatchEvent.Kind<Path> kind);
 }

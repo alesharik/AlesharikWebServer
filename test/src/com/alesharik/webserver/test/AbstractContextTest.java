@@ -26,8 +26,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public abstract class AbstractContextTest {
-    private BeanContext context;
+public abstract class AbstractContextTest<T extends BeanContext> {
+    protected T context;
     private final Class<?> clazz;
 
     protected AbstractContextTest(Class<?> context) {
@@ -37,7 +37,7 @@ public abstract class AbstractContextTest {
     @Before
     public void setUp() throws Exception {
         //noinspection unchecked
-        context = Contexts.createContext((Class<? extends BeanContext>) clazz);
+        context = (T) Contexts.createContext((Class<? extends BeanContext>) clazz);
     }
 
     @After

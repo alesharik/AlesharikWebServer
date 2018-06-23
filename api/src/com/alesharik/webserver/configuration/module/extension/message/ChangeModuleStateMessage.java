@@ -16,24 +16,20 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
+package com.alesharik.webserver.configuration.module.extension.message;
 
+import com.alesharik.webserver.configuration.utils.Module;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
+@RequiredArgsConstructor
+@Getter
+public final class ChangeModuleStateMessage extends ModuleExtensionMessage {
+    private final Module module;
+    private final ModuleStateChangedMessage.State state;
 
-/**
- * This classloader will load all Shared Libraries
- */
-public abstract class SharedLibraryClassLoader extends URLClassLoader {
-    @Getter
-    @Nonnull
-    private final SharedLibrary sharedLibrary;
-
-    protected SharedLibraryClassLoader(URL url, ClassLoader parent, @Nonnull SharedLibrary sharedLibrary) {
-        super(new URL[]{url}, parent);
-        this.sharedLibrary = sharedLibrary;
+    @Override
+    public String getName() {
+        return "changeState";
     }
 }

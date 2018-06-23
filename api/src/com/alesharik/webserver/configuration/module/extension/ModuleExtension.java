@@ -16,24 +16,11 @@
  *
  */
 
-package com.alesharik.webserver.configuration.utils;
+package com.alesharik.webserver.configuration.module.extension;
 
-import lombok.Getter;
+import com.alesharik.webserver.configuration.run.Extension;
 
-import javax.annotation.Nonnull;
-import java.net.URL;
-import java.net.URLClassLoader;
-
-/**
- * This classloader will load all Shared Libraries
- */
-public abstract class SharedLibraryClassLoader extends URLClassLoader {
-    @Getter
-    @Nonnull
-    private final SharedLibrary sharedLibrary;
-
-    protected SharedLibraryClassLoader(URL url, ClassLoader parent, @Nonnull SharedLibrary sharedLibrary) {
-        super(new URL[]{url}, parent);
-        this.sharedLibrary = sharedLibrary;
-    }
+@Extension.Name(ModuleExtension.NAME)
+public abstract class ModuleExtension implements Extension {
+    public static final String NAME = "module";
 }

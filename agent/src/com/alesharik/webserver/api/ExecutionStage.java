@@ -67,15 +67,19 @@ public enum ExecutionStage {
      */
     CONFIG,
     /**
-     * Server loads shared libraries
-     */
-    SHARED_LIBS,
-    /**
      * Server loads modules
      */
-    LOAD_MODULES,
+    LOAD_EXTENSIONS,
     /**
-     * Server is in execution state: all files are loaded, executing configuration
+     * Server is executing configuration
+     */
+    START,
+    /**
+     * Server is starting all necessary components, all modules already started
+     */
+    POST_START,
+    /**
+     * Server is in execution state: all files are loaded, all modules started
      */
     EXECUTE;
 

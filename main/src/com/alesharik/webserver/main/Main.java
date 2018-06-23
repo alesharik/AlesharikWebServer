@@ -21,6 +21,7 @@ package com.alesharik.webserver.main;
 import com.alesharik.webserver.api.ExecutionStage;
 import com.alesharik.webserver.api.ServerInfo;
 import com.alesharik.webserver.api.agent.Agent;
+import com.alesharik.webserver.base.exception.DevError;
 import com.alesharik.webserver.configuration.ApiHelper;
 import com.alesharik.webserver.configuration.config.lang.ApiEndpointSection;
 import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
@@ -30,11 +31,15 @@ import com.alesharik.webserver.configuration.config.lang.element.ConfigurationOb
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationPrimitive;
 import com.alesharik.webserver.configuration.config.lang.parser.ConfigurationParser;
 import com.alesharik.webserver.configuration.config.lang.parser.FileReader;
+import com.alesharik.webserver.configuration.module.ConfigurationError;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
+import com.alesharik.webserver.internals.InternalHackingError;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.main.console.ConsoleCommand;
 import com.alesharik.webserver.main.console.ConsoleCommandManager;
 import com.alesharik.webserver.main.script.ScriptEngineImpl;
+import lombok.Getter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -53,15 +58,56 @@ import java.util.concurrent.TimeUnit;
 @ExecutionStage.AuthorizedImpl
 public final class Main {
     private static final FileReader FILE_READER = new FileReaderImpl();
+    @Getter
     static CoreModuleManagerImpl coreModuleManager;
-    static ScriptEngineImpl scriptEngine;//TODO add to context 2 interfaces
+    @Getter
+    static ScriptEngineImpl scriptEngine;
+    @Getter
+    static ConfigurationRunner runner;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    static volatile boolean isRunning = true;
+
+    public static void main(String[] args) {
+        try {
+            mainImpl();
+        } catch (CommandRedefinitionError e) {
+            e.printStackTrace();
+            System.err.println("Server misconfigured! Stopping...");
+            shutdownNow();
+        } catch (DevError e) {
+            e.printStackTrace();
+            System.err.println("Development error! Stopping...");
+            shutdownNow();
+        } catch (ConfigurationError e) {//TODO fix
+            e.printStackTrace();
+            System.err.println("Configuration error occurs! Stopping...");
+            shutdown();
+        } catch (UnexpectedBehaviorError e) {
+            e.printStackTrace();
+            System.err.println("Unexpected behavior error occurs! Now server is in undefined state. Please check your java installation!");
+            System.err.println("Stopping...");
+            shutdownNow();
+        } catch (InternalHackingError e) {
+            e.printStackTrace();
+            System.err.println("Internal hacking error occurs! Server can't access JVM internals! Stopping...");
+            shutdownNow();
+        } catch (Error e) {
+            e.printStackTrace();
+            System.err.println("Critical error detected! Stopping...");
+            shutdownNow();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            shutdown();
+        }
+    }
+
+    private static void mainImpl() throws IOException, InterruptedException {
         Logger.setupTemporary();
         ExecutionStage.enable();
         ExecutionStage.setState(ExecutionStage.PRE_LOAD);
         preMain();
 
+        ExecutionStage.setState(ExecutionStage.CORE_MODULES);
         coreModuleManager = new CoreModuleManagerImpl(getCoreModulesFolder());
         coreModuleManager.load();
 
@@ -77,6 +123,7 @@ public final class Main {
             }
         }
 
+        ExecutionStage.setState(ExecutionStage.CONFIG);
 
         File configuration = getConfigurationFile().getAbsoluteFile();
         ConfigurationParser parser = getConfigurationParser(configuration, FILE_READER);
@@ -85,10 +132,7 @@ public final class Main {
         scriptEngine = new ScriptEngineImpl(FILE_READER, endpoint);
         scriptEngine.prepare();
 
-        File sharedLibsDirectory;
-        File moduleDirectory;
         boolean reloadConfig;
-        boolean reloadModules;
 
         {
             ApiEndpointSection api = endpoint.getApiSection();
@@ -135,37 +179,6 @@ public final class Main {
 
             //TODO mode
 
-            ConfigurationObject moduleManagerConfig = (ConfigurationObject) api.getElement("module-manager");
-            if(moduleManagerConfig != null) {
-                if(moduleManagerConfig.hasKey("shared-libraries-directory")) {
-                    ConfigurationElement element = moduleManagerConfig.getElement("shared-libraries-directory");
-                    sharedLibsDirectory = new File(scriptEngine.isExecutable(element)
-                            ? scriptEngine.execute(element, String.class)
-                            : ((ConfigurationPrimitive.String) element).value());
-                } else
-                    sharedLibsDirectory = new File("libs/");
-
-                if(moduleManagerConfig.hasKey("module-directory")) {
-                    ConfigurationElement element = moduleManagerConfig.getElement("module-directory");
-                    moduleDirectory = new File(scriptEngine.isExecutable(element)
-                            ? scriptEngine.execute(element, String.class)
-                            : ((ConfigurationPrimitive.String) element).value());
-                } else
-                    moduleDirectory = new File("modules/");
-
-                if(moduleManagerConfig.hasKey("auto-reload")) {
-                    ConfigurationElement element = moduleManagerConfig.getElement("auto-reload");
-                    reloadModules = scriptEngine.isExecutable(element)
-                            ? scriptEngine.execute(element, Boolean.class)
-                            : ((ConfigurationPrimitive.Boolean) element).value();
-                } else
-                    reloadModules = false;
-            } else {
-                sharedLibsDirectory = new File("libs/");
-                moduleDirectory = new File("modules/");
-                reloadModules = false;
-            }
-
             ConfigurationObject configConfig = (ConfigurationObject) api.getElement("configuration");
             if(configConfig != null)
                 if(configConfig.hasKey("auto-reload")) {
@@ -177,43 +190,15 @@ public final class Main {
                     reloadConfig = false;
             else
                 reloadConfig = false;
-
-            sharedLibsDirectory = sharedLibsDirectory.getAbsoluteFile();
-            moduleDirectory = moduleDirectory.getAbsoluteFile();
         }
 
-        System.out.println("Test");
-//        try {
-//
-//
-//
-//            System.out.println("Server successfully loaded!");
-//
-//            Runtime.getRuntime().addShutdownHook(new ShutdownThread());
-//
-//            startConsoleInput();
-//            return;
-//        } catch (ConfigurationParseError e) {
-//            e.printStackTrace();
-//            System.err.println("Configuration error occurs! Stopping...");
-//            shutdown();
-//        } catch (UnexpectedBehaviorError e) {
-//            e.printStackTrace();
-//            System.err.println("Unexpected behavior error occurs! Now server is in undefined state. Please check your java installation!");
-//            System.err.println("Stopping...");
-//            shutdownNow();
-//        } catch (InternalHackingError e) {
-//            e.printStackTrace();
-//            System.err.println("Internal hacking error occurs! Server can't access JVM internals! Stopping...");
-//            shutdownNow();
-//        } catch (Error e) {
-//            e.printStackTrace();
-//            System.err.println("Critical error detected! Stopping...");
-//            shutdownNow();
-//        } catch (Throwable e) {
-//            e.printStackTrace();
-//            shutdown();
-//        }
+        runner = new ConfigurationRunner(configuration, parser, reloadConfig, endpoint);
+        runner.start();
+        runner.waitForCompletion();
+
+        System.out.println("Server successfully loaded!");
+
+        startConsoleInput();
     }
 
     static File getConfigurationFile() {
@@ -269,7 +254,7 @@ public final class Main {
         System.out.println("Found " + ConsoleCommandManager.getCommands().size() + " console commands");
         System.out.println("Server is listening terminal commands...");
         PrintStream out = Logger.getSystemOut();
-        while(true) {
+        while(isRunning) {
             String command = consoleReader.readLine();
             if(command == null) {
                 System.out.println("Console listener was reached end of stream! Stopping console listening...");
@@ -304,29 +289,27 @@ public final class Main {
 
     private static void preMain() {
         ServerInfo.setProvider(new ServerInfoProvider());
+        Runtime.getRuntime().addShutdownHook(new ShutdownThread());
     }
 
-    private static void shutdownInternal() {
-//        Logger.log("Stopping...");
-//        configurator.shutdown();
-//        Agent.shutdown();
-//        Logger.shutdown();
+    private synchronized static void shutdownInternal() {
+        runner.shutdown();
+        ApiHelper.shutdownLogger();
+        Agent.shutdown();
     }
 
-    public synchronized static void shutdown() {
-//        Logger.log("Stopping...");
-//        configurator.shutdown();
-//        Agent.shutdown();
-//        Logger.shutdown();
-//        System.exit(0);
+    public static void shutdown() {
+        System.out.println("shutdown method invoked");
+        System.out.println("Stopping...");
+        shutdownInternal();
     }
 
     public synchronized static void shutdownNow() {
-//        Logger.log("Emergency stopping...");
-//        configurator.shutdownNow();
-//        Agent.shutdown();
-//        Logger.shutdown();
-//        System.exit(0);
+        System.out.println("Emergency stopping...");
+        runner.shutdownNow();
+        ApiHelper.shutdownLogger();
+        Agent.shutdown();
+        System.exit(1);
     }
 
     private abstract static class ConsoleOrBufferedReader implements ConsoleCommand.Reader {
@@ -401,6 +384,8 @@ public final class Main {
 
         @Override
         public void run() {
+            System.out.println("Signal received: stop");
+            System.out.println("Stopping...");
             shutdownInternal();
         }
     }

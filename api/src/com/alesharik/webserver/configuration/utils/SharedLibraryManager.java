@@ -70,4 +70,49 @@ public interface SharedLibraryManager {
     default boolean hasLibrary(@Nonnull String name) {
         return hasLibrary(name, null);
     }
+
+    /**
+     * Add listener to manager. All listeners must be removed at the end of owner's cycle
+     *
+     * @param listener the listener
+     */
+    void addListener(@Nonnull UpdateListener listener);
+
+    /**
+     * Remove listener
+     *
+     * @param listener the listener
+     */
+    void removeListener(@Nonnull UpdateListener listener);
+
+    /**
+     * Update listeners listen runtime updates. They will be active only after the manager loads all libraries
+     */
+    interface UpdateListener {
+        /**
+         * Triggers when library got deleted
+         *
+         * @param library the library
+         */
+        default void onLibraryDelete(@Nonnull SharedLibrary library) {
+        }
+
+        /**
+         * Triggers when library get updated
+         *
+         * @param library the library
+         */
+        default void onLibraryUpdate(@Nonnull SharedLibrary library) {
+
+        }
+
+        /**
+         * Triggers when library got added
+         *
+         * @param library the library
+         */
+        default void onLibraryAdd(@Nonnull SharedLibrary library) {
+
+        }
+    }
 }

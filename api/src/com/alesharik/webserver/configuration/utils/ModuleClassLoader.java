@@ -22,17 +22,19 @@ package com.alesharik.webserver.configuration.utils;
 import lombok.Getter;
 
 import javax.annotation.Nonnull;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * This classloader is used to load all modules
  */
-public abstract class ModuleClassLoader extends ClassLoader {
+public abstract class ModuleClassLoader extends URLClassLoader {
     @Nonnull
     @Getter
-    private final Module module;
+    protected final Module module;
 
-    protected ModuleClassLoader(ClassLoader parent, @Nonnull Module module) {
-        super(parent);
+    protected ModuleClassLoader(URL u, ClassLoader parent, @Nonnull Module module) {
+        super(u == null ? new URL[0] : new URL[]{u}, parent);
         this.module = module;
     }
 }

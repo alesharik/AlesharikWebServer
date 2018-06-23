@@ -82,7 +82,7 @@ final class CoreModuleManagerImpl implements CoreModuleManager {
             modules.put(coreModule.getName(), coreModule);
             modulesMirror.add(coreModule);
 
-            ClassLoaderImpl classLoader = new ClassLoaderImpl(file, this.getClass().getClassLoader(), coreModule);
+            ClassLoaderImpl classLoader = new ClassLoaderImpl(file, Main.class.getClassLoader(), coreModule);
             classLoaders.put(coreModule, classLoader);
 
             System.out.println("Sending classloader to agent, module: " + coreModule.getName());
@@ -131,7 +131,7 @@ final class CoreModuleManagerImpl implements CoreModuleManager {
 
     private static final class ClassLoaderImpl extends CoreModuleClassLoader {
         public ClassLoaderImpl(File jar, ClassLoader parent, @Nonnull CoreModule module) throws MalformedURLException {
-            super(new URL[]{jar.toURI().toURL()}, parent, module);
+            super(new URL[]{jar.getAbsoluteFile().toURI().toURL()}, parent, module);
         }
     }
 

@@ -80,6 +80,16 @@ public abstract class AbstractBeanContext implements BeanContext {
         return helpers.computeIfAbsent(clazz, claz -> new Helper(claz, beanOverride));
     }
 
+    protected <T> void linkSingleton(Class<T> clazz, T instance) {
+        linkSingleton(clazz, instance, new Bean.Builder()
+                .singleton()
+                .build());
+    }
+
+    protected <T> void linkSingleton(Class<T> clazz, T instance, Bean override) {
+        singletons.put(clazz, new SingletonImpl(instance, getHelper(clazz, override), this));
+    }
+
     @Override
     public void setProperty(@Nonnull String key, @Nullable Object value) {
         if(value == null)

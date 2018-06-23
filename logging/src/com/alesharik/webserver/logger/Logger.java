@@ -64,7 +64,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -954,13 +953,13 @@ public final class Logger {
          */
         private static final int ERROR = 2;
 
-        private final AtomicReference<String> lineBuffer;
+        private final ThreadLocal<String> lineBuffer;
         private final AtomicInteger state;
 
         public LoggerPrintStream(OutputStream out) {
             super(out);
             state = new AtomicInteger(0);
-            lineBuffer = new AtomicReference<>();
+            lineBuffer = ThreadLocal.withInitial(() -> "");
             lineBuffer.set("");
         }
 
@@ -1186,13 +1185,13 @@ public final class Logger {
          */
         private static final int ERROR = 2;
 
-        private final AtomicReference<String> lineBuffer;
+        private final ThreadLocal<String> lineBuffer;
         private final AtomicInteger state;
 
         public LoggerErrorPrintStream(OutputStream out) {
             super(out);
             state = new AtomicInteger(0);
-            lineBuffer = new AtomicReference<>();
+            lineBuffer = ThreadLocal.withInitial(() -> "");
             lineBuffer.set("");
         }
 
@@ -1494,7 +1493,7 @@ public final class Logger {
                 if(namedLogger != null)
                     namedLogger.log(prefix, s);
                 else
-                    Logger.log(prefix, s);
+                    Logger.logMessageUnsafe(prefix, s, 3);
             }
         }
 
@@ -1508,9 +1507,9 @@ public final class Logger {
                     namedLogger.log(prefix, e);
                 else {
                     if(textFormatter == null)
-                        Logger.log(prefix, e);
+                        logThrowable(prefix, e, 3);
                     else
-                        Logger.log(prefix, e, textFormatter);
+                        logThrowable(e, 3, textFormatter, prefix);
                 }
             }
         }
