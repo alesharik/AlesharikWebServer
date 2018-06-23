@@ -299,7 +299,7 @@ public class ConfigurationParserTest {
         FileReader fileReader = fileReaderTabulated();
         when(fileReader.canExecute(any()))
                 .thenReturn(false);
-        module(fileReader, "com/alesharik/webserver/configuration/config/lang/parser/module2WithNoDefine.module");
+        module(fileReader, "com/alesharik/webserver/configuration/config/lang/parser/helpersWithNoName.module");
         fail();
     }
 

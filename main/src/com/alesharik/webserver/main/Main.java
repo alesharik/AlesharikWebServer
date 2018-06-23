@@ -31,6 +31,7 @@ import com.alesharik.webserver.configuration.config.lang.element.ConfigurationOb
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationPrimitive;
 import com.alesharik.webserver.configuration.config.lang.parser.ConfigurationParser;
 import com.alesharik.webserver.configuration.config.lang.parser.FileReader;
+import com.alesharik.webserver.configuration.config.lang.parser.ParserException;
 import com.alesharik.webserver.configuration.module.ConfigurationError;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.internals.InternalHackingError;
@@ -77,6 +78,10 @@ public final class Main {
         } catch (DevError e) {
             e.printStackTrace();
             System.err.println("Development error! Stopping...");
+            shutdownNow();
+        } catch (ParserException e) {
+            e.printStackTrace();
+            System.err.println("Parser exception occurs! Stopping...");
             shutdownNow();
         } catch (ConfigurationError e) {//TODO fix
             e.printStackTrace();
