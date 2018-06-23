@@ -569,7 +569,7 @@ public final class ModuleManagerImpl implements ModuleManager {
     }
 
     @Getter
-    public final class ModuleImpl implements Module {
+    public static final class ModuleImpl implements Module {
         private final List<SharedLibrary> dependencies = new ArrayList<>();
         private final List<SharedLibrary> runtimeDependencies = new ArrayList<>();
         private final List<SharedLibrary> optionalDeps = new ArrayList<>();

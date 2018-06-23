@@ -24,6 +24,7 @@ import com.alesharik.webserver.configuration.run.message.MessageManager;
 import com.alesharik.webserver.configuration.run.message.MessageSender;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
+import com.alesharik.webserver.logger.level.Level;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -37,6 +38,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Prefixes({"[ExtensionManagement]", "[MessageBus]"})
+@Level("main")
 final class MessageBus extends Thread implements ExtensionManager.Listener {
     static {
         Logger.getLoggingLevelManager().createLoggingLevel("main");

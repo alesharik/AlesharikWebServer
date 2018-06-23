@@ -38,7 +38,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.jctools.queues.MpscLinkedQueue;
-import org.jctools.queues.MpscLinkedQueue7;
+import org.jctools.queues.MpscLinkedQueue8;
 import org.jctools.queues.atomic.MpscAtomicArrayQueue;
 import sun.misc.SharedSecrets;
 
@@ -77,9 +77,8 @@ import java.util.logging.LogRecord;
  */
 @Prefixes("[LOGGER]")
 public final class Logger {
-    private static final LoggerMXBean bean = new LoggerMXBeanImpl();
-
     static final HashMap<String, WeakReference<NamedLogger>> loggers = new HashMap<>();
+    private static final LoggerMXBean bean = new LoggerMXBeanImpl();
     /**
      * Default Java System.out
      */
@@ -91,21 +90,17 @@ public final class Logger {
 
     private static final CopyOnWriteArrayList<Handler> loggerHandlers = new CopyOnWriteArrayList<>();
     private static final AtomicBoolean isConfigured = new AtomicBoolean(false);
-
+    private static final LoggerThread loggerThread = new LoggerThread();
+    @Getter
+    private static final LoggingLevelManager loggingLevelManager = new LoggingLevelManagerImpl();
     private static File logFile;
     private static LoggerListenerThread listenerThread;
-
     /**
      * message : caller : location prefix
      */
     private static MpscLinkedQueue<Message> messageQueue;
-    private static final LoggerThread loggerThread = new LoggerThread();
     private static volatile boolean shutdown = false;
-
     private static File tempLog;
-
-    @Getter
-    private static final LoggingLevelManager loggingLevelManager = new LoggingLevelManagerImpl();
 
     public static void shutdown() {
         shutdown = true;
@@ -115,14 +110,31 @@ public final class Logger {
 
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
-     * Use {@link sun.misc.SharedSecrets} for getIpForMicroservice {@link StackTraceElement}
+     * Use {@link sun.misc.SharedSecrets} for {@link StackTraceElement}
      *
-     * @param i number of {@link StackTraceElement}
+     * @param j number of {@link StackTraceElement}
      * @return [ + file name + : + line number + ]
      */
-    static String getPrefixLocation(int i) {
-        StackTraceElement element = SharedSecrets.getJavaLangAccess().getStackTraceElement(new Exception(), i);
+    static String getPrefixLocation(int j) {
+        Class[] callingClasses = CallingClass.INSTANCE.getCallingClasses();
+        int idx = j;
+        for(int i = j - 1; i < callingClasses.length; i++) {
+            if(!callingClasses[i].getCanonicalName().startsWith("com.alesharik.webserver.logger")) {
+                idx = i;
+                break;
+            }
+        }
+        StackTraceElement element = SharedSecrets.getJavaLangAccess().getStackTraceElement(new Exception(), idx - 1);
         return "[" + element.getFileName() + ":" + element.getLineNumber() + "]";
+    }
+
+    static Class<?> getCallingClassOutside(int minDepth) {
+        Class[] callingClasses = CallingClass.INSTANCE.getCallingClasses();
+        for(int i = minDepth - 1; i < callingClasses.length; i++) {
+            if(!callingClasses[i].getCanonicalName().startsWith("com.alesharik.webserver.logger"))
+                return callingClasses[i];
+        }
+        return Logger.class;
     }
 
     /**
@@ -134,11 +146,17 @@ public final class Logger {
      */
     @SuppressWarnings("unchecked")
     static void logMessageUnsafe(String message, int depth, boolean isSout) {
-        messageQueue.add(new Message("", message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1), isSout));
+        messageQueue.add(new Message("", message, getCallingClassOutside(depth + 1), getPrefixLocation(depth + 1), isSout));
 
         synchronized (loggerThread.synchronizerLock) {
             loggerThread.synchronizerLock.notifyAll();
         }
+    }
+
+    private static void logMessageInternal(String message) {
+        StackTraceElement element = SharedSecrets.getJavaLangAccess().getStackTraceElement(new Exception(), 3);
+        String prefix = "[" + element.getFileName() + ":" + element.getLineNumber() + "]";
+        messageQueue.add(new Message("", message, CallingClass.INSTANCE.getCallingClasses()[3], prefix, true));
     }
 
     /**
@@ -151,7 +169,7 @@ public final class Logger {
      */
     @SuppressWarnings("unchecked")
     static void logMessageUnsafe(String prefixes, String message, int depth, boolean isSout) {
-        messageQueue.add(new Message(prefixes, message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1), isSout));
+        messageQueue.add(new Message(prefixes, message, getCallingClassOutside(depth + 1), getPrefixLocation(depth + 1), isSout));
 
         synchronized (loggerThread.synchronizerLock) {
             loggerThread.synchronizerLock.notifyAll();
@@ -167,7 +185,7 @@ public final class Logger {
      */
     @SuppressWarnings("unchecked")
     static void logMessageUnsafeDebug(String message, int depth) {
-        messageQueue.add(new Message("", message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1), false, true));
+        messageQueue.add(new Message("", message, getCallingClassOutside(depth + 1), getPrefixLocation(depth + 1), false, true));
 
         synchronized (loggerThread.synchronizerLock) {
             loggerThread.synchronizerLock.notifyAll();
@@ -184,7 +202,7 @@ public final class Logger {
      */
     @SuppressWarnings("unchecked")
     static void logMessageUnsafeDebug(String prefixes, String message, int depth) {
-        messageQueue.add(new Message(prefixes, message, CallingClass.INSTANCE.getCallingClasses()[depth + 1], getPrefixLocation(depth + 1), false, true));
+        messageQueue.add(new Message(prefixes, message, getCallingClassOutside(depth + 1), getPrefixLocation(depth + 1), false, true));
 
         synchronized (loggerThread.synchronizerLock) {
             loggerThread.synchronizerLock.notifyAll();
@@ -399,22 +417,22 @@ public final class Logger {
                 warningHandler.setFormatter(formatter);
                 loggerHandlers.add(warningHandler);
 
-                messageQueue = new MpscLinkedQueue7<>();
+                messageQueue = new MpscLinkedQueue8<>();
                 loggerThread.start();
 
                 listenerThread = new LoggerListenerThread(listenerQueueCapacity);
                 listenerThread.start();
 
                 isConfigured.set(true);
-                log("Logger successfully initialized");
+                logMessageInternal("Logger successfully initialized");
 
                 System.setOut(new LoggerPrintStream(SYSTEM_OUT));
                 System.setErr(new LoggerErrorPrintStream(SYSTEM_ERR));
 
-                log("Default print streams replaced");
+                logMessageInternal("Default print streams replaced");
                 MXBeanManager.registerMXBean(bean, LoggerMXBean.class, "com.alesharik.webserver.logger:type=Logger");
                 MXBeanManager.registerMXBean(loggingLevelManager, LoggingLevelManagerMXBean.class, "com.alesharik.webserver.logger:type=LoggingLevelManager");
-                log("Logger successfully started");
+                logMessageInternal("Logger successfully started");
             } catch (SecurityException e) {
                 e.printStackTrace(SYSTEM_ERR);
             }
@@ -470,13 +488,13 @@ public final class Logger {
                 System.err.println("Can't merge temporary log!");
                 e.printStackTrace();
             }
-            System.out.println("Temporary log fetched successfully");
+            logMessageInternal("Temporary log fetched successfully");
 
             listenerThread.shutdown();
             listenerThread = new LoggerListenerThread(listenerQueueCapacity);
             listenerThread.start();
 
-            System.out.println("Logger switched to normal mode");
+            logMessageInternal("Logger switched to normal mode");
 
             tempLog = null;
         } else
@@ -1454,7 +1472,7 @@ public final class Logger {
         @Getter
         private final String name;
 
-        private volatile boolean enabled = true;
+        private volatile boolean enabled = Debug.isEnabled();
         @Setter
         @Getter
         private volatile NamedLogger logger = null;

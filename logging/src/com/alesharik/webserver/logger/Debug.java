@@ -33,6 +33,8 @@ public class Debug {
 
     public static void enable() {
         enabled.set(true);
+        for(String s : Logger.getLoggingLevelManager().getLoggingLevels())
+            Logger.getLoggingLevelManager().getLoggingLevel(s).enable();
     }
 
     public static void disable() {
