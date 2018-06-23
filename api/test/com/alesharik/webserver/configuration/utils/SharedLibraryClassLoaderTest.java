@@ -21,13 +21,15 @@ package com.alesharik.webserver.configuration.utils;
 import org.junit.Test;
 
 import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 public class SharedLibraryClassLoaderTest {
     @Test
-    public void get() {
+    public void get() throws IOException {
         SharedLibrary mock = mock(SharedLibrary.class);
         Impl impl = new Impl(null, mock);
         assertEquals(mock, impl.getSharedLibrary());
@@ -35,8 +37,8 @@ public class SharedLibraryClassLoaderTest {
 
     private static final class Impl extends SharedLibraryClassLoader {
 
-        protected Impl(ClassLoader parent, @Nonnull SharedLibrary sharedLibrary) {
-            super(parent, sharedLibrary);
+        protected Impl(ClassLoader parent, @Nonnull SharedLibrary sharedLibrary) throws IOException {
+            super(File.createTempFile("dfdfdsf", "fddsdf").toURI().toURL(), parent, sharedLibrary);
         }
     }
 }
