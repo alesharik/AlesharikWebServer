@@ -127,6 +127,6 @@ public class MessageBusTest {
     private void waitForSend() {
         bus.waitForLoop();
         ForkJoinPool.commonPool().awaitQuiescence(10000, TimeUnit.MILLISECONDS);
-        Thread.sleep(10);
+        Thread.sleep(100);
     }
 }
