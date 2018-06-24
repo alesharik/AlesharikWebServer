@@ -64,6 +64,8 @@ import com.alesharik.webserver.test.AbstractContextTest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.File;
 import java.util.Collections;
@@ -71,6 +73,7 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ModuleBeanContextTest extends AbstractContextTest<ModuleBeanContext> {
     public ModuleBeanContextTest() {
         super(ModuleBeanContext.class);
@@ -79,7 +82,8 @@ public class ModuleBeanContextTest extends AbstractContextTest<ModuleBeanContext
     @BeforeClass
     public static void before() {
         Main.coreModuleManager = new CoreModuleManagerImpl(new File(""));
-        Main.scriptEngine = new ScriptEngineImpl(path -> Collections.emptyList(), mock(ConfigurationEndpoint.class));
+        ConfigurationEndpoint mock = mock(ConfigurationEndpoint.class);
+        Main.scriptEngine = new ScriptEngineImpl(path -> Collections.emptyList(), mock);
     }
 
     @AfterClass
