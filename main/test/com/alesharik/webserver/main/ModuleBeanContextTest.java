@@ -68,10 +68,7 @@ import com.alesharik.webserver.main.script.ScriptEngineImpl;
 import com.alesharik.webserver.test.AbstractContextTest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.File;
 import java.util.Collections;
@@ -79,7 +76,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ModuleBeanContextTest extends AbstractContextTest<ModuleBeanContext> {
     public ModuleBeanContextTest() {
         super(ModuleBeanContext.class);
@@ -129,7 +125,6 @@ public class ModuleBeanContextTest extends AbstractContextTest<ModuleBeanContext
     }
 
     @Test
-    @Ignore // Because travis
     public void singletons() {
         assertEquals(Main.coreModuleManager, context.getSingleton(CoreModuleManager.class));
         assertEquals(Main.scriptEngine, context.getSingleton(ScriptManager.class));
