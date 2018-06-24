@@ -44,6 +44,8 @@ public class MessageBusTest {
         manager = mock(MessageManager.class);
         ExtensionManager.registerMessageManager(manager);
         bus.start();
+        bus.getAnonymousSender().send(mock(Message.class), "a");
+        bus.waitForLoop();
         Thread.sleep(10);//Give thread time
         verify(manager).init(bus.getAnonymousSender());
         MessageManager messageManager = mock(MessageManager.class);

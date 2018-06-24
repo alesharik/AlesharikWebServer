@@ -45,7 +45,6 @@ final class MessageBus extends Thread implements ExtensionManager.Listener {
     }
 
     private final BlockingQueue<Msg> send = new LinkedBlockingQueue<>();
-    @Getter
     private final Sender anonymousSender = new Sender("");
     private final Map<String, MessageManager> managers = new HashMap<>();
     private final Object lock = new Object();
@@ -88,6 +87,10 @@ final class MessageBus extends Thread implements ExtensionManager.Listener {
             }
         }
         ExtensionManager.removeListener(this);
+    }
+
+    public MessageSender getAnonymousSender() {
+        return anonymousSender;
     }
 
     @TestOnly
