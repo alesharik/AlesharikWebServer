@@ -55,7 +55,12 @@
 package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.configuration.config.ext.ScriptManager;
+import com.alesharik.webserver.configuration.config.lang.ApiEndpointSection;
 import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
+import com.alesharik.webserver.configuration.config.lang.ConfigurationModule;
+import com.alesharik.webserver.configuration.config.lang.CustomEndpointSection;
+import com.alesharik.webserver.configuration.config.lang.ExternalLanguageHelper;
+import com.alesharik.webserver.configuration.config.lang.ScriptEndpointSection;
 import com.alesharik.webserver.configuration.module.ModuleBeanContext;
 import com.alesharik.webserver.configuration.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.configuration.utils.CoreModuleManager;
@@ -69,9 +74,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ModuleBeanContextTest extends AbstractContextTest<ModuleBeanContext> {
@@ -82,7 +87,37 @@ public class ModuleBeanContextTest extends AbstractContextTest<ModuleBeanContext
     @BeforeClass
     public static void before() {
         Main.coreModuleManager = new CoreModuleManagerImpl(new File(""));
-        ConfigurationEndpoint mock = mock(ConfigurationEndpoint.class);
+        ConfigurationEndpoint mock = new ConfigurationEndpoint() {
+            @Override
+            public List<ConfigurationModule> getModules() {
+                return null;
+            }
+
+            @Override
+            public String getName() {
+                return null;
+            }
+
+            @Override
+            public CustomEndpointSection getCustomSection(String name) {
+                return null;
+            }
+
+            @Override
+            public ApiEndpointSection getApiSection() {
+                return null;
+            }
+
+            @Override
+            public ScriptEndpointSection getScriptSection() {
+                return null;
+            }
+
+            @Override
+            public List<ExternalLanguageHelper> getHelpers() {
+                return null;
+            }
+        };
         Main.scriptEngine = new ScriptEngineImpl(path -> Collections.emptyList(), mock);
     }
 
