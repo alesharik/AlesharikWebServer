@@ -20,6 +20,7 @@ package com.alesharik.webserver.main.script;
 
 import com.alesharik.webserver.api.collections.TripleHashMap;
 import com.alesharik.webserver.configuration.config.ext.ScriptEngineProvider;
+import com.alesharik.webserver.configuration.config.ext.ScriptExecutionError;
 import com.alesharik.webserver.configuration.config.ext.ScriptManager;
 import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
 import com.alesharik.webserver.configuration.config.lang.ConfigurationModule;
@@ -30,7 +31,6 @@ import com.alesharik.webserver.configuration.config.lang.element.ConfigurationEl
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationFunctionElement;
 import com.alesharik.webserver.configuration.config.lang.parser.FileReader;
 import com.alesharik.webserver.configuration.module.ConfigurationError;
-import com.alesharik.webserver.configuration.module.ConfigurationScriptExecutionError;
 import com.alesharik.webserver.configuration.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.logger.Logger;
@@ -124,7 +124,7 @@ public final class ScriptEngineImpl implements ScriptElementConverter, ScriptMan
             try {
                 engine.eval(codeCache.get(helper));
             } catch (ScriptException e) {
-                throw new ConfigurationScriptExecutionError(helper, e);
+                throw new ScriptExecutionError(helper, e);
             }
         }
     }
@@ -154,12 +154,13 @@ public final class ScriptEngineImpl implements ScriptElementConverter, ScriptMan
 
     private Object executeCodeElement(ConfigurationCodeElement element) {
         ScriptEngine engine = globals.get(element.getLanguageName());
+        ScriptEngineProvider provider = ScriptEngineManager.getProvider(engine);
         if(engine == null)
             throw new ConfigurationError("Language " + element.getLanguageName() + " not found!");
         try {
-            return engine.eval(element.getCode());
-        } catch (ScriptException e) {
-            throw new ConfigurationScriptExecutionError(element, e);
+            return provider.getHelper().executeCode(element.getCode(), engine);
+        } catch (ScriptExecutionError e) {
+            throw new ScriptExecutionError(element, e.getCause());
         }
     }
 
@@ -219,5 +220,11 @@ public final class ScriptEngineImpl implements ScriptElementConverter, ScriptMan
     @Override
     public Set<String> getLanguages() {
         return ScriptEngineManager.getLanguages();
+    }
+
+    @Nullable
+    @Override
+    public ScriptEngineProvider.Helper getHelper(@Nonnull String name) {
+        return ScriptEngineManager.languageExists(name) ? ScriptEngineManager.getProvider(name).getHelper() : null;
     }
 }

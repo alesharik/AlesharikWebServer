@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.configuration.module.meta;
 
+import com.alesharik.webserver.configuration.config.ext.ScriptExecutionError;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
 
 import javax.annotation.Nonnull;
@@ -35,7 +36,7 @@ public interface ScriptElementConverter {
      * @return <code>null</code> if executable returns null, otherwise it's value
      * @throws IllegalArgumentException                                                       if element is not an executable element
      * @throws com.alesharik.webserver.configuration.module.ConfigurationError                if returned object doesn't match expected object
-     * @throws com.alesharik.webserver.configuration.module.ConfigurationScriptExecutionError if script ended with error
+     * @throws ScriptExecutionError if script ended with error
      */
     @Nullable
     <T> T execute(@Nonnull ConfigurationElement element, @Nonnull Class<T> expected);

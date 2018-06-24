@@ -111,7 +111,6 @@ public class SeparatedExecutorPool implements ExecutorPool {
     }
 
     @Nonnull
-    @Override
     public String getName() {
         return "separated-executor-pool";
     }
@@ -139,7 +138,6 @@ public class SeparatedExecutorPool implements ExecutorPool {
         System.out.println("Shutdown successful of pool in " + group.getName() + " thread group");
     }
 
-    @Override
     public boolean isRunning() {
         return workerPool != null && !workerPool.isShutdown() && selectorPool != null;
     }

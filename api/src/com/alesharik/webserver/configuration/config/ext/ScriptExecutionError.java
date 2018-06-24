@@ -16,47 +16,63 @@
  *
  */
 
-package com.alesharik.webserver.configuration.module;
+package com.alesharik.webserver.configuration.config.ext;
 
 import com.alesharik.webserver.configuration.config.lang.ExternalLanguageHelper;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationCodeElement;
+import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import lombok.EqualsAndHashCode;
+import lombok.SneakyThrows;
 
 import javax.script.ScriptException;
+import java.lang.reflect.Field;
 
 @EqualsAndHashCode(callSuper = true)
-public class ConfigurationScriptExecutionError extends ConfigurationError {
+public class ScriptExecutionError extends Error {
+    private static final Field detailedMessageField;
     private static final long serialVersionUID = -3101932142610545397L;
+
+    static {
+        try {
+            detailedMessageField = Throwable.class.getDeclaredField("detailMessage");
+            detailedMessageField.setAccessible(true);
+        } catch (NoSuchFieldException e) {
+            throw new UnexpectedBehaviorError(e);
+        }
+    }
 
     private final String message;
     private final ScriptException exception;
 
-    public ConfigurationScriptExecutionError(ScriptException e) {
-        String msg = e.getLocalizedMessage();
-        if(e.getColumnNumber() != -1)
-            msg += " at column " + e.getColumnNumber();
+    @SneakyThrows(IllegalAccessException.class)
+    public ScriptExecutionError(ScriptException e) {
+        String msg = (String) detailedMessageField.get(e);
         if(e.getLineNumber() != -1)
             msg += " at line " + e.getLineNumber();
+        if(e.getColumnNumber() != -1)
+            msg += " at column " + e.getColumnNumber();
         this.message = msg;
         this.exception = e;
     }
 
-    public ConfigurationScriptExecutionError(ExternalLanguageHelper helper, ScriptException e) {
-        String msg = e.getLocalizedMessage();
-        if(e.getColumnNumber() != -1)
-            msg += " at column " + e.getColumnNumber();
+    @SneakyThrows(IllegalAccessException.class)
+    public ScriptExecutionError(ExternalLanguageHelper helper, ScriptException e) {
+        String msg = (String) detailedMessageField.get(e);
         if(e.getLineNumber() != -1)
             msg += " at line " + e.getLineNumber();
-        this.message = "Script helper init error! Helper: " + helper + ", message: " + msg;
+        if(e.getColumnNumber() != -1)
+            msg += " at column " + e.getColumnNumber();
+        this.message = "ExternalLanguageHelper init error! Helper: " + helper + ", message: " + msg;
         this.exception = e;
     }
 
-    public ConfigurationScriptExecutionError(ConfigurationCodeElement element, ScriptException e) {
-        String msg = e.getLocalizedMessage();
-        if(e.getColumnNumber() != -1)
-            msg += " at column " + e.getColumnNumber();
+    @SneakyThrows(IllegalAccessException.class)
+    public ScriptExecutionError(ConfigurationCodeElement element, ScriptException e) {
+        String msg = (String) detailedMessageField.get(e);
         if(e.getLineNumber() != -1)
             msg += " at line " + e.getLineNumber();
+        if(e.getColumnNumber() != -1)
+            msg += " at column " + e.getColumnNumber();
         this.message = "Code element error! Language: " + element.getLanguageName() + ", message: " + msg + ", code: \n" + element.getCode();
         this.exception = e;
     }

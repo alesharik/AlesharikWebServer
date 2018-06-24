@@ -144,6 +144,10 @@ final class ConfigurationRunner extends Thread implements FileWatcherThread.Conf
         System.out.println("Starting pool...");
         extensionPool.start();
 
+        System.out.println("Loading extensions...");
+        extensionPool.load(configuration, Main.getScriptEngine());
+        extensionPool.waitQuiescence();
+
         System.out.println("Registering extensions...");
         for(Map.Entry<String, Extension> stringExtensionEntry : extensions.entrySet())
             if(stringExtensionEntry.getValue().getMessageManager() != null)
@@ -151,10 +155,6 @@ final class ConfigurationRunner extends Thread implements FileWatcherThread.Conf
         for(Map.Entry<String, Extension> extension : extensions.entrySet())
             for(DirectoryWatcher directoryWatcher : extension.getValue().getFileWatchers())
                 watcherThread.addDirectoryWatcher(new DirectoryWatcherWrapper(directoryWatcher, extensionPool, extension.getKey()));
-
-        System.out.println("Loading extensions...");
-        extensionPool.load(configuration, Main.getScriptEngine());
-        extensionPool.waitQuiescence();
 
         System.out.println("Executing config...");
         ExecutionStage.setState(ExecutionStage.START);
@@ -165,7 +165,7 @@ final class ConfigurationRunner extends Thread implements FileWatcherThread.Conf
             for(ScriptEndpointSection.Command command : preInit.getCommands()) {
                 String one = null;
                 for(Map.Entry<String, Extension> e : extensions.entrySet()) {
-                    if(e.getValue().getCommandExecutor().getPredicate().test(e.getKey())) {
+                    if(e.getValue().getCommandExecutor().getPredicate().test(command.getName())) {
                         extensionPool.executeCommand(e.getKey(), command);
                         if(one != null)
                             throw new CommandRedefinitionError(command.getName(), one, e.getKey());
@@ -178,11 +178,11 @@ final class ConfigurationRunner extends Thread implements FileWatcherThread.Conf
 
         System.out.println("Stage init");
         ScriptEndpointSection.ScriptSection init = section.getSection("init");
-        if(preInit != null) {
+        if(init != null) {
             for(ScriptEndpointSection.Command command : init.getCommands()) {
                 String one = null;
                 for(Map.Entry<String, Extension> e : extensions.entrySet()) {
-                    if(e.getValue().getCommandExecutor().getPredicate().test(e.getKey())) {
+                    if(e.getValue().getCommandExecutor().getPredicate().test(command.getName())) {
                         extensionPool.executeCommand(e.getKey(), command);
                         if(one != null)
                             throw new CommandRedefinitionError(command.getName(), one, e.getKey());
@@ -203,7 +203,7 @@ final class ConfigurationRunner extends Thread implements FileWatcherThread.Conf
             for(ScriptEndpointSection.Command command : postInit.getCommands()) {
                 String one = null;
                 for(Map.Entry<String, Extension> e : extensions.entrySet()) {
-                    if(e.getValue().getCommandExecutor().getPredicate().test(e.getKey())) {
+                    if(e.getValue().getCommandExecutor().getPredicate().test(command.getName())) {
                         extensionPool.executeCommand(e.getKey(), command);
                         if(one != null)
                             throw new CommandRedefinitionError(command.getName(), one, e.getKey());

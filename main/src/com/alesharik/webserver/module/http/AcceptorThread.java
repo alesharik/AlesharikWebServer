@@ -65,8 +65,8 @@ public final class AcceptorThread extends Thread implements SubModule {
      * @param wrapper server socket wrapper
      */
     public void handle(ServerSocketWrapper wrapper) {
-        if(!wrapper.isRunning())
-            return;
+//        if(!wrapper.isRunning())
+//            return;
         wrapper.registerSelector(selector);
         selector.wakeup();
     }

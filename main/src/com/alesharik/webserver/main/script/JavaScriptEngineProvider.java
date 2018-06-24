@@ -19,7 +19,7 @@
 package com.alesharik.webserver.main.script;
 
 import com.alesharik.webserver.configuration.config.ext.ScriptEngineProvider;
-import com.alesharik.webserver.configuration.module.ConfigurationScriptExecutionError;
+import com.alesharik.webserver.configuration.config.ext.ScriptExecutionError;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 import javax.annotation.Nonnull;
@@ -56,13 +56,9 @@ public final class JavaScriptEngineProvider implements ScriptEngineProvider {
 
         @Override
         public boolean hasFunction(String name, ScriptEngine engine) {
-            Invocable invocable = (Invocable) engine;
             try {
-                invocable.invokeFunction(name);
-                return true;
+                return (boolean) engine.eval("typeof " + name + " === 'function'");
             } catch (ScriptException e) {
-                throw new ConfigurationScriptExecutionError(e);
-            } catch (NoSuchMethodException e) {
                 return false;
             }
         }
@@ -71,6 +67,11 @@ public final class JavaScriptEngineProvider implements ScriptEngineProvider {
         public boolean hasFunction(String name, String code) {
             ScriptEngine engine = engines.get();
             engine.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
+            try {
+                engine.eval(code);
+            } catch (ScriptException e) {
+                throw new ScriptExecutionError(e);
+            }
             return hasFunction(name, engine);
         }
 
@@ -80,7 +81,7 @@ public final class JavaScriptEngineProvider implements ScriptEngineProvider {
             try {
                 return invocable.invokeFunction(name);
             } catch (ScriptException e) {
-                throw new ConfigurationScriptExecutionError(e);
+                throw new ScriptExecutionError(e);
             } catch (NoSuchMethodException e) {
                 throw new IllegalArgumentException("Function " + name + " not found!");
             }

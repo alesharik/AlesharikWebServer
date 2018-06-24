@@ -20,10 +20,13 @@ package com.alesharik.webserver.configuration.module;
 
 import com.alesharik.webserver.configuration.config.lang.ApiEndpointSection;
 import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
+import com.alesharik.webserver.configuration.config.lang.CustomEndpointSection;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationPrimitive;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
 import com.alesharik.webserver.configuration.module.extension.ModuleExtension;
+import com.alesharik.webserver.configuration.module.meta.ModuleAdapter;
 import com.alesharik.webserver.configuration.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.configuration.run.DirectoryWatcher;
 import com.alesharik.webserver.configuration.run.Extension;
@@ -102,6 +105,22 @@ public final class ModuleExtensionImpl extends ModuleExtension {
             if(reloadModules)
                 watchers.add(new ModuleWatcher(file.getAbsoluteFile().toPath()));
         }, endpoint);
+
+        CustomEndpointSection modulesSection = endpoint.getCustomSection("modules");
+        if(modulesSection == null)
+            throw new ConfigurationError("Modules section not found!");
+        for(Module module : moduleManager.getModules()) {
+            ModuleAdapter adapter = ((ModuleManagerImpl.ModuleImpl) module).getModuleAdapter();
+            ConfigurationTypedObject object = null;
+            for(CustomEndpointSection.UseDirective useDirective : modulesSection.getUseDirectives()) {
+                if(useDirective.getName().equals(module.getName()))
+                    object = useDirective.getConfiguration();
+            }
+            if(object == null)
+                throw new ConfigurationError("Config for module " + module.getName() + " not found!");
+            adapter.configure(object, scriptEngine);
+        }
+
         moduleManager.addListener(new ModuleListener());
 
         messageManager = new MessageManagerImpl(moduleManager, sharedLibraryManager, startedModules, scriptEngine);

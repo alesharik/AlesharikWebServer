@@ -41,6 +41,7 @@ import com.alesharik.webserver.api.agent.Agent;
 import com.alesharik.webserver.api.agent.Rescanable;
 import com.alesharik.webserver.api.agent.Stages;
 import com.alesharik.webserver.api.agent.bean.Contexts;
+import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenAnnotation;
 import com.alesharik.webserver.api.agent.classPath.SuppressClassLoaderUnloadWarning;
 import com.alesharik.webserver.base.bean.Bean;
@@ -94,6 +95,7 @@ import java.util.function.Predicate;
 @SuppressClassLoaderUnloadWarning
 @Level("module-manager")
 @Prefixes("[ModuleManager]")
+@ClassPathScanner
 public final class ModuleManagerImpl implements ModuleManager {
     private static final List<Class<?>> baseModules = new CopyOnWriteArrayList<>();
     private static final File BASE = new File("/base");

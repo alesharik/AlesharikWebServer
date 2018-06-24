@@ -1071,7 +1071,7 @@ public final class Logger {
 
         @Override
         public void print(String str) {
-            lineBuffer.set(lineBuffer.get().concat(str));
+            lineBuffer.set(lineBuffer.get().concat(str == null ? "null" : str));
         }
 
         @Override

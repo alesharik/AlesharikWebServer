@@ -21,6 +21,7 @@ package com.alesharik.webserver.api.server.wrapper.server.impl.wrapper;
 import com.alesharik.webserver.api.name.Named;
 import com.alesharik.webserver.api.server.wrapper.PortRange;
 import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import org.w3c.dom.Element;
 
@@ -55,9 +56,13 @@ public class NetworkListener implements com.alesharik.webserver.api.server.wrapp
     }
 
     @Nonnull
-    @Override
     public String getName() {
         return "network-listener";
+    }
+
+    @Override
+    public void parseConfig(@Nullable ConfigurationObject element) {
+
     }
 
     @Override
@@ -87,12 +92,10 @@ public class NetworkListener implements com.alesharik.webserver.api.server.wrapp
         }
     }
 
-    @Override
     public boolean isRunning() {
         return serverSocket != null;
     }
 
-    @Override
     public void parseConfig(@Nullable Element element) {
         if(element == null)
             throw new ConfigurationParseError();

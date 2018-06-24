@@ -18,6 +18,8 @@
 
 package com.alesharik.webserver.configuration.config.ext;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.script.ScriptEngineFactory;
 import java.util.Set;
 
@@ -25,9 +27,37 @@ import java.util.Set;
  * Can be used by modules to crete script engines. You can get it from module context
  */
 public interface ScriptManager {
-    ScriptEngineFactory getEngineFactory(String name);
+    /**
+     * Return engine factory by language name
+     *
+     * @param name language name
+     * @return the engine factory. If Language not found then <code>null</code> will be returned
+     */
+    @Nullable
+    ScriptEngineFactory getEngineFactory(@Nonnull String name);
 
-    boolean hasLanguage(String name);
+    /**
+     * Checks if language has support as script
+     *
+     * @param name language name
+     * @return <code>true</code> - language has support, otherwise <code>false</code>
+     */
+    boolean hasLanguage(@Nonnull String name);
 
+    /**
+     * Return all available script languages
+     *
+     * @return the script language set
+     */
+    @Nonnull
     Set<String> getLanguages();
+
+    /**
+     * Return helper for language
+     *
+     * @param name language name
+     * @return helper. If language not found, <code>null</code> will be returned
+     */
+    @Nullable
+    ScriptEngineProvider.Helper getHelper(@Nonnull String name);
 }

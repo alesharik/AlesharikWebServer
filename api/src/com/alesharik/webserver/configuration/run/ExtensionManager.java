@@ -21,6 +21,7 @@ package com.alesharik.webserver.configuration.run;
 import com.alesharik.webserver.api.ExecutionStage;
 import com.alesharik.webserver.api.agent.Stages;
 import com.alesharik.webserver.api.agent.bean.Beans;
+import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
 import com.alesharik.webserver.api.agent.classPath.reload.UnloadClassLoaderHandler;
 import com.alesharik.webserver.api.documentation.PrivateApi;
@@ -32,6 +33,7 @@ import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +44,7 @@ import java.util.concurrent.ForkJoinPool;
 @UtilityClass
 @Prefixes({"[Extensions]", "[ExtensionManager]"})
 @Level("extension-manager")
+@ClassPathScanner
 public class ExtensionManager {
     private static final Map<String, Class<?>> extensions = new ConcurrentHashMap<>();
     private static final List<MessageManager> global = new CopyOnWriteArrayList<>();
@@ -55,6 +58,9 @@ public class ExtensionManager {
     @Stages({ExecutionStage.AGENT, ExecutionStage.PRE_LOAD, ExecutionStage.CORE_MODULES})
     static void listen(Class<?> clazz) {
         System.out.println("Listening " + clazz.getCanonicalName());
+
+        if(clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers()))
+            return;
 
         if(!clazz.isAnnotationPresent(Extension.Name.class)) {
             System.err.println("Class " + clazz.getCanonicalName() + " doesn't have @Name annotation! Ignoring...");

@@ -25,6 +25,7 @@ import com.alesharik.webserver.api.collections.ConcurrentLiveHashMap;
 import com.alesharik.webserver.api.name.Named;
 import com.alesharik.webserver.api.server.wrapper.PortRange;
 import com.alesharik.webserver.api.server.wrapper.server.CloseSocketException;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
 import lombok.Getter;
 import org.w3c.dom.Element;
@@ -76,9 +77,13 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
     }
 
     @Nonnull
-    @Override
     public String getName() {
         return "secured-network-listener";
+    }
+
+    @Override
+    public void parseConfig(@Nullable ConfigurationObject element) {
+
     }
 
     @Override
@@ -108,12 +113,10 @@ public class SecuredNetworkListener implements com.alesharik.webserver.api.serve
         }
     }
 
-    @Override
     public boolean isRunning() {
         return serverSocket != null;
     }
 
-    @Override
     public void parseConfig(@Nullable Element element) {
         if(element == null)
             throw new ConfigurationParseError();
