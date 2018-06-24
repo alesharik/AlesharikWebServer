@@ -25,6 +25,7 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.util.HttpStatus;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 
 import static junit.framework.Assert.assertTrue;
 
+@Ignore
 public class FileBasedErrorPageConstructorTest {
     private static FileBasedErrorPageConstructor constructor;
 
