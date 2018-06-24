@@ -122,8 +122,8 @@ public class MessageBusTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void registerOneManagerTwice() {
-        bus.addManager(mock(MessageManager.class), eq("qwe"));
-        bus.addManager(mock(MessageManager.class), eq("qwe"));
+        bus.addManager(mock(MessageManager.class), "qwe");
+        bus.addManager(mock(MessageManager.class), "qwe");
     }
 
     @SneakyThrows
