@@ -62,6 +62,7 @@ import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.logger.level.Level;
 import com.alesharik.webserver.main.Main;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +99,7 @@ import java.util.function.Predicate;
 @ClassPathScanner
 public final class ModuleManagerImpl implements ModuleManager {
     private static final List<Class<?>> baseModules = new CopyOnWriteArrayList<>();
+    @SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
     private static final File BASE = new File("/base");
     private static final boolean runtimeDepsAreOptional;
 

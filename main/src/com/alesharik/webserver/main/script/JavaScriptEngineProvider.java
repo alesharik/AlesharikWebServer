@@ -52,6 +52,7 @@ public final class JavaScriptEngineProvider implements ScriptEngineProvider {
     }
 
     private static final class HelperImpl implements Helper {
+        private static final ScriptEngineFactory factory = new NashornScriptEngineFactory();
         private static final ThreadLocal<ScriptEngine> engines = ThreadLocal.withInitial(factory::getScriptEngine);
 
         @Override
