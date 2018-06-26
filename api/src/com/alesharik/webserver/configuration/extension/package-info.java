@@ -19,4 +19,7 @@
 /**
  * This package contains all Extension API classes
  */
+@Stable
 package com.alesharik.webserver.configuration.extension;
+
+import com.alesharik.webserver.api.documentation.Stable;

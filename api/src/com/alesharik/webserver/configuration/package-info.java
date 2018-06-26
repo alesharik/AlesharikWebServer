@@ -17,6 +17,9 @@
  */
 
 /**
- * AlesharikWebServer module xml configuration
+ * Config stuff
  */
+@Stable
 package com.alesharik.webserver.configuration;
+
+import com.alesharik.webserver.api.documentation.Stable;

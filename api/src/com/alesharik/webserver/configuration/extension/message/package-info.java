@@ -19,4 +19,7 @@
 /**
  * This package contains messaging stuff for Extension API
  */
+@Stable
 package com.alesharik.webserver.configuration.extension.message;
+
+import com.alesharik.webserver.api.documentation.Stable;

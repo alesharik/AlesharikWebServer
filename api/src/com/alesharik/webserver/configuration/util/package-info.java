@@ -19,4 +19,7 @@
 /**
  * This package contains some utility classes configuration
  */
+@Stable
 package com.alesharik.webserver.configuration.util;
+
+import com.alesharik.webserver.api.documentation.Stable;
