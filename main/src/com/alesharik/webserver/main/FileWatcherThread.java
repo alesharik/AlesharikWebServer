@@ -36,7 +36,7 @@
 
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.configuration.run.DirectoryWatcher;
+import com.alesharik.webserver.configuration.extension.DirectoryWatcher;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.logger.level.Level;
 import org.jetbrains.annotations.TestOnly;

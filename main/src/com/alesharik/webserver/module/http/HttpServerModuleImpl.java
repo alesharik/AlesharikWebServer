@@ -29,11 +29,11 @@ import com.alesharik.webserver.api.statistics.AtomicCounter;
 import com.alesharik.webserver.api.statistics.AverageCounter;
 import com.alesharik.webserver.api.statistics.BasicAverageCounter;
 import com.alesharik.webserver.api.statistics.Counter;
-import com.alesharik.webserver.configuration.module.Module;
-import com.alesharik.webserver.configuration.module.ShutdownNow;
-import com.alesharik.webserver.configuration.module.Start;
-import com.alesharik.webserver.configuration.module.layer.Layer;
 import com.alesharik.webserver.daemon.annotation.Shutdown;
+import com.alesharik.webserver.extension.module.Module;
+import com.alesharik.webserver.extension.module.ShutdownNow;
+import com.alesharik.webserver.extension.module.Start;
+import com.alesharik.webserver.extension.module.layer.Layer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

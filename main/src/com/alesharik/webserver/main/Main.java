@@ -32,8 +32,8 @@ import com.alesharik.webserver.configuration.config.lang.element.ConfigurationPr
 import com.alesharik.webserver.configuration.config.lang.parser.ConfigurationParser;
 import com.alesharik.webserver.configuration.config.lang.parser.FileReader;
 import com.alesharik.webserver.configuration.config.lang.parser.ParserException;
-import com.alesharik.webserver.configuration.module.ConfigurationError;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
+import com.alesharik.webserver.extension.module.ConfigurationError;
 import com.alesharik.webserver.internals.InternalHackingError;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;

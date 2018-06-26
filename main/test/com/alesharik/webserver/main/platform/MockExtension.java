@@ -19,11 +19,11 @@
 package com.alesharik.webserver.main.platform;
 
 import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
-import com.alesharik.webserver.configuration.module.meta.ScriptElementConverter;
-import com.alesharik.webserver.configuration.run.CommandExecutor;
-import com.alesharik.webserver.configuration.run.DirectoryWatcher;
-import com.alesharik.webserver.configuration.run.Extension;
-import com.alesharik.webserver.configuration.run.message.MessageManager;
+import com.alesharik.webserver.configuration.extension.CommandExecutor;
+import com.alesharik.webserver.configuration.extension.DirectoryWatcher;
+import com.alesharik.webserver.configuration.extension.Extension;
+import com.alesharik.webserver.configuration.extension.message.MessageManager;
+import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

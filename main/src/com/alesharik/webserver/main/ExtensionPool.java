@@ -20,8 +20,8 @@ package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.configuration.config.lang.ConfigurationEndpoint;
 import com.alesharik.webserver.configuration.config.lang.ScriptEndpointSection;
-import com.alesharik.webserver.configuration.module.meta.ScriptElementConverter;
-import com.alesharik.webserver.configuration.run.Extension;
+import com.alesharik.webserver.configuration.extension.Extension;
+import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.logger.level.Level;
 import lombok.RequiredArgsConstructor;

@@ -19,9 +19,9 @@
 package com.alesharik.webserver.main;
 
 import com.alesharik.webserver.api.agent.Agent;
-import com.alesharik.webserver.configuration.utils.CoreModule;
-import com.alesharik.webserver.configuration.utils.CoreModuleClassLoader;
-import com.alesharik.webserver.configuration.utils.CoreModuleManager;
+import com.alesharik.webserver.configuration.util.CoreModule;
+import com.alesharik.webserver.configuration.util.CoreModuleClassLoader;
+import com.alesharik.webserver.configuration.util.CoreModuleManager;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.logger.level.Level;

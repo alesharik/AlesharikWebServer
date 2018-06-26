@@ -36,7 +36,7 @@
 
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.configuration.run.DirectoryWatcher;
+import com.alesharik.webserver.configuration.extension.DirectoryWatcher;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;

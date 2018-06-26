@@ -30,9 +30,9 @@ import com.alesharik.webserver.configuration.config.lang.element.ConfigurationCo
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationFunctionElement;
 import com.alesharik.webserver.configuration.config.lang.parser.FileReader;
-import com.alesharik.webserver.configuration.module.ConfigurationError;
-import com.alesharik.webserver.configuration.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
+import com.alesharik.webserver.extension.module.ConfigurationError;
+import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.logger.level.Level;

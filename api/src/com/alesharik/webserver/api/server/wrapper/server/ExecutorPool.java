@@ -19,10 +19,10 @@
 package com.alesharik.webserver.api.server.wrapper.server;
 
 import com.alesharik.webserver.api.server.wrapper.server.mx.ExecutorPoolMXBean;
-import com.alesharik.webserver.configuration.module.Shutdown;
-import com.alesharik.webserver.configuration.module.ShutdownNow;
-import com.alesharik.webserver.configuration.module.Start;
-import com.alesharik.webserver.configuration.module.layer.SubModule;
+import com.alesharik.webserver.extension.module.Shutdown;
+import com.alesharik.webserver.extension.module.ShutdownNow;
+import com.alesharik.webserver.extension.module.Start;
+import com.alesharik.webserver.extension.module.layer.SubModule;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;

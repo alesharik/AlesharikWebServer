@@ -18,13 +18,13 @@
 
 package com.alesharik.webserver.configuration.config;
 
-import com.alesharik.webserver.configuration.module.Configuration;
-import com.alesharik.webserver.configuration.module.ConfigurationValue;
-import com.alesharik.webserver.configuration.module.Module;
-import com.alesharik.webserver.configuration.module.Shutdown;
-import com.alesharik.webserver.configuration.module.Start;
-import com.alesharik.webserver.configuration.module.layer.Layer;
-import com.alesharik.webserver.configuration.module.layer.SubModule;
+import com.alesharik.webserver.extension.module.Configuration;
+import com.alesharik.webserver.extension.module.ConfigurationValue;
+import com.alesharik.webserver.extension.module.Module;
+import com.alesharik.webserver.extension.module.Shutdown;
+import com.alesharik.webserver.extension.module.Start;
+import com.alesharik.webserver.extension.module.layer.Layer;
+import com.alesharik.webserver.extension.module.layer.SubModule;
 
 @Module("test")
 @Configuration

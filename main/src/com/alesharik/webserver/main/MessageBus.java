@@ -18,10 +18,10 @@
 
 package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.configuration.run.ExtensionManager;
-import com.alesharik.webserver.configuration.run.message.Message;
-import com.alesharik.webserver.configuration.run.message.MessageManager;
-import com.alesharik.webserver.configuration.run.message.MessageSender;
+import com.alesharik.webserver.configuration.extension.ExtensionManager;
+import com.alesharik.webserver.configuration.extension.message.Message;
+import com.alesharik.webserver.configuration.extension.message.MessageManager;
+import com.alesharik.webserver.configuration.extension.message.MessageSender;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.logger.level.Level;
