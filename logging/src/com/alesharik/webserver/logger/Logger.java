@@ -686,6 +686,7 @@ public final class Logger {
         @Override
         public void run() {
             try {
+                main:
                 while(!isInterrupted()) {
                     while(messageQueue.isEmpty()) {
                         try {
@@ -696,40 +697,16 @@ public final class Logger {
                         } catch (InterruptedException e) {
                             if(!shutdown)
                                 Logger.SYSTEM_ERR.println("Logger thread was received interrupt signal! Stopping logging...");
-                            return;
+                            break main;
                         }
                     }
 
                     Message message = messageQueue.poll();
                     if(message == null) continue;
 
-                    Class<?> clazz = message.getCaller();
-                    com.alesharik.webserver.logger.level.Level level = (message.isSout || message.isDebug) ? clazz.getAnnotation(com.alesharik.webserver.logger.level.Level.class) : null;
-
-                    String prefix = cache.get(clazz);
-                    if(prefix == null) {
-                        prefix = generatePrefixes(clazz);
-                        cache.add(clazz, prefix);
-                    }
-                    String prefixes = prefix + message.getPrefixes() + message.getClassPrefix();
-                    String msg = prefixes + ": " + message.getMessage();
-
-                    if(level != null && (message.isDebug || level.replaceSout())) {
-                        LoggingLevel loggingLevel = loggingLevelManager.getLoggingLevel(level.value());
-                        if(loggingLevel != null)
-                            loggingLevel.log(msg);
-                    } else {
-                        LogRecord record = new LogRecord(Level.INFO, msg);
-                        record.setMillis(System.currentTimeMillis());
-                        record.setLoggerName("Logger");
-                        loggerHandlers.forEach(handler -> handler.publish(record));
-                    }
-                    LoggerListenerThread listenerThread = Logger.listenerThread;
-                    if(listenerThread != null)
-                        listenerThread.sendMessage(message);
-
-                    statistics.measure(1);
+                    processMessage(message);
                 }
+                dumpLogs();
             } catch (Error e) {
                 Logger.SYSTEM_ERR.println(e.toString());
                 for(StackTraceElement stackTraceElement : e.getStackTrace())
@@ -742,7 +719,43 @@ public final class Logger {
                 for(StackTraceElement stackTraceElement : e.getStackTrace())
                     Logger.SYSTEM_ERR.println(stackTraceElement.toString());
                 Logger.SYSTEM_ERR.println("Logger thread was interrupted! Stopping logging...");
+                dumpLogs();
             }
+        }
+
+        protected void processMessage(Message message) {
+            Class<?> clazz = message.getCaller();
+            com.alesharik.webserver.logger.level.Level level = (message.isSout || message.isDebug) ? clazz.getAnnotation(com.alesharik.webserver.logger.level.Level.class) : null;
+
+            String prefix = cache.get(clazz);
+            if(prefix == null) {
+                prefix = generatePrefixes(clazz);
+                cache.add(clazz, prefix);
+            }
+            String prefixes = prefix + message.getPrefixes() + message.getClassPrefix();
+            String msg = prefixes + ": " + message.getMessage();
+
+            if(level != null && (message.isDebug || level.replaceSout())) {
+                LoggingLevel loggingLevel = loggingLevelManager.getLoggingLevel(level.value());
+                if(loggingLevel != null)
+                    loggingLevel.log(msg);
+            } else {
+                LogRecord record = new LogRecord(Level.INFO, msg);
+                record.setMillis(System.currentTimeMillis());
+                record.setLoggerName("Logger");
+                loggerHandlers.forEach(handler -> handler.publish(record));
+            }
+            LoggerListenerThread listenerThread = Logger.listenerThread;
+            if(listenerThread != null)
+                listenerThread.sendMessage(message);
+
+            statistics.measure(1);
+        }
+
+        private void dumpLogs() {
+            Message message;
+            while((message = messageQueue.poll()) != null)
+                processMessage(message);
         }
 
         @Nullable
