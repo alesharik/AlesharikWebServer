@@ -141,7 +141,7 @@ subprojects {
         into buildDir.toString() + "/libs/"
     }
 
-    task agentTests(type: Test, dependsOn: copyAgentLib) {
+    task agentTests(type: Test, dependsOn: [copyAgentLib, ':alesharikwebserver-api:fatJar']) {
         group = 'test'
 
         useJUnit {
