@@ -138,7 +138,7 @@ subprojects {
 
     task copyAgentLib(type: Copy) {
         from file(buildDir.toString() + "/../../api/out/libs/alesharikwebserver-api-all.jar")
-        into buildDir.toString() + "/libs/"
+        into buildDir.toString() + "/tmp/"
     }
 
     task agentTests(type: Test, dependsOn: [copyAgentLib, ':alesharikwebserver-api:fatJar']) {
@@ -150,7 +150,7 @@ subprojects {
             includeCategories 'com.alesharik.webserver.api.documentation.test.ModuleTest'
         }
 
-        jvmArgs '-javaagent:' + buildDir.toString() + '/libs/alesharikwebserver-api-all.jar'
+        jvmArgs '-javaagent:' + buildDir.toString() + '/tmp/alesharikwebserver-api-all.jar'
     }
 
     test {
