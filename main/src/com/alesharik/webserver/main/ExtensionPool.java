@@ -87,6 +87,7 @@ final class ExtensionPool {
     public void shutdownPool() {
         for(Worker worker : workers.values())
             worker.shutdown();
+        joinAll();
     }
 
     public void shutdownNow() {
@@ -94,12 +95,24 @@ final class ExtensionPool {
             worker.execute(worker.extension::shutdownNow);
             worker.shutdown();
         }
+        joinAll();
     }
 
     public void waitQuiescence() {
         for(Worker worker : workers.values()) {
             while(!worker.isQuiescent())
                 worker.waitForExec();
+        }
+    }
+
+    private void joinAll() {
+        for(Worker worker : workers.values()) {
+            try {
+                worker.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return;
+            }
         }
     }
 
