@@ -29,6 +29,9 @@ sourceSets {
         java {
             srcDirs 'test'
         }
+        resources {
+            srcDirs 'test-res'
+        }
     }
 }
 
@@ -98,3 +101,4 @@ publishing {
 }
 
 jar.dependsOn test
+jar.dependsOn agentTests

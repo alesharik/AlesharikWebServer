@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.main.console;
 
+import com.alesharik.webserver.api.agent.Ignored;
 import org.junit.Test;
 
 import javax.annotation.Nonnull;
@@ -46,6 +47,7 @@ public class ConsoleCommandManagerTest {
         assertFalse(ConsoleCommandManager.containsCommand("testD"));
     }
 
+    @Ignored
     private static final class TestAConsoleCommand implements ConsoleCommand {
 
         @Nonnull
@@ -71,6 +73,7 @@ public class ConsoleCommandManagerTest {
         }
     }
 
+    @Ignored
     private static final class TestBConsoleCommand implements ConsoleCommand {
 
         @Nonnull
@@ -96,6 +99,7 @@ public class ConsoleCommandManagerTest {
         }
     }
 
+    @Ignored
     private static final class TestInvalidConstructorConsoleCommand implements ConsoleCommand {
         private final String asd;
 
@@ -126,6 +130,7 @@ public class ConsoleCommandManagerTest {
         }
     }
 
+    @Ignored
     private static final class ThrowingConsoleCommand implements ConsoleCommand {
         public ThrowingConsoleCommand() {
             throw new RuntimeException("It works!");

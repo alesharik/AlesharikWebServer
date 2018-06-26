@@ -1,0 +1,39 @@
+endpoint main {
+    api {
+        logger: {
+            file: "LOG_MOCK",
+            debug: true
+        }
+        configuration: {
+            auto-reload: true
+        }
+    }
+    test {
+        use null as qw {
+            a: "a",
+            a {
+                use a on b
+            }
+        }
+    }
+    script {
+        pre-init {
+            mock_pre-init
+        }
+        init {
+            mock_init
+        }
+        post-init {
+            mock_post-init
+        }
+        pre-shutdown {
+            mock_pre-shutdown
+        }
+        shutdown {
+            mock_shutdown
+        }
+        post-shutdown {
+            mock_post-shutdown
+        }
+    }
+}

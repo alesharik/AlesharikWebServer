@@ -131,11 +131,11 @@ endpoint end { //Endpoint definition, space REQUIRED
             send-message {to: "module3", test: "test" } //Send the object message to module
         }
         
-        pre-destroy {}
+        pre-shutdown {}
         
-        destroy {}
+        shutdown {}
         
-        post-destroy {}
+        post-shutdown {}
     }
 }
 ```

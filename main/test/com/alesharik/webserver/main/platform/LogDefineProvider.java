@@ -16,21 +16,26 @@
  *
  */
 
-package com.alesharik.webserver;
+package com.alesharik.webserver.main.platform;
 
-import com.alesharik.webserver.configuration.module.Configuration;
-import com.alesharik.webserver.configuration.module.ConfigurationValue;
-import com.alesharik.webserver.configuration.module.Module;
-import com.alesharik.webserver.configuration.module.Start;
+import com.alesharik.webserver.configuration.config.ext.DefineEnvironment;
+import com.alesharik.webserver.configuration.config.ext.DefineProvider;
 
-@Module("a")
-@Configuration
-public class TestModule {
-    @ConfigurationValue("qwert")
-    private String asd;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-    @Start
-    public void start() {
-        System.out.println(asd);
+public class LogDefineProvider implements DefineProvider {
+    static String DEF = "";
+
+    @Nonnull
+    @Override
+    public String getName() {
+        return "LOG_MOCK";
+    }
+
+    @Nullable
+    @Override
+    public String getDefinition(@Nonnull DefineEnvironment environment) {
+        return DEF;
     }
 }

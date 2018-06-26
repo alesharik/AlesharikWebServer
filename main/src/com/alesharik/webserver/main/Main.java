@@ -68,7 +68,33 @@ public final class Main {
 
     static volatile boolean isRunning = true;
 
+    private static short detach = 0; //bitset: 1 bit - in, 2 bit - out
+    private static boolean testing = false;
+
     public static void main(String[] args) {
+        for(String arg : args) {
+            if(arg.startsWith("-detach")) {
+                String a = arg.substring("-detach".length());
+                if(!a.startsWith("="))
+                    throw new PropertyError("-detach must have an argument (=[in|out|all])!");
+                String cmd = a.substring(1);
+                switch (cmd) {
+                    case "in":
+                        detach = 1;
+                        break;
+                    case "out":
+                        detach = 2;
+                        break;
+                    case "all":
+                        detach = 3;
+                        break;
+                    default:
+                        throw new PropertyError("Unrecognized -detach option " + cmd);
+                }
+            } else if(arg.equals("testing"))
+                testing = true;
+        }
+
         try {
             mainImpl();
         } catch (CommandRedefinitionError e) {
@@ -203,7 +229,15 @@ public final class Main {
 
         System.out.println("Server successfully loaded!");
 
-        startConsoleInput();
+        if((detach & 2) != 2) {
+            System.out.println("Logger detach requested! Executing...");
+            Logger.detach();
+        }
+
+        if((detach & 1) != 1) {
+            System.out.println("Console disabled: detach requested");
+            startConsoleInput();
+        }
     }
 
     static File getConfigurationFile() {
@@ -293,14 +327,26 @@ public final class Main {
     }
 
     private static void preMain() {
-        ServerInfo.setProvider(new ServerInfoProvider());
-        Runtime.getRuntime().addShutdownHook(new ShutdownThread());
+        if(!testing) {
+            ServerInfo.setProvider(new ServerInfoProvider());
+            Runtime.getRuntime().addShutdownHook(new ShutdownThread());
+        } else {
+            try {
+                ServerInfo.setProvider(new ServerInfoProvider());
+                Runtime.getRuntime().addShutdownHook(new ShutdownThread());
+            } catch (RuntimeException ignored) {
+            }
+        }
     }
 
     private synchronized static void shutdownInternal() {
         runner.shutdown();
-        ApiHelper.shutdownLogger();
-        Agent.shutdown();
+        if(testing)
+            Logger.reset();
+        else
+            ApiHelper.shutdownLogger();
+        if(!testing)
+            Agent.shutdown();
     }
 
     public static void shutdown() {
@@ -312,9 +358,14 @@ public final class Main {
     public synchronized static void shutdownNow() {
         System.out.println("Emergency stopping...");
         runner.shutdownNow();
-        ApiHelper.shutdownLogger();
-        Agent.shutdown();
-        System.exit(1);
+        if(testing)
+            Logger.reset();
+        else
+            ApiHelper.shutdownLogger();
+        if(!testing) {
+            Agent.shutdown();
+            System.exit(1);
+        }
     }
 
     private abstract static class ConsoleOrBufferedReader implements ConsoleCommand.Reader {

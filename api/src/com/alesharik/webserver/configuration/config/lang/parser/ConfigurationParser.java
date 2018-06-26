@@ -137,6 +137,8 @@ public class ConfigurationParser {
                 throw new CodeParsingException("Unexpected symbol: endpoint expected", actualCodeStartLine + 1, endpointClone);
             if(cutOff == -1)
                 throw new CodeParsingException("Unexpected symbol: { expected", actualCodeStartLine, endpointClone);
+            if(off > cutOff)
+                throw new CodeParsingException("Unexpected end of line: name expected", actualCodeStartLine, endpointClone);
             endpointName = firstLine.substring(off, cutOff).replace(" ", "");
         }
 

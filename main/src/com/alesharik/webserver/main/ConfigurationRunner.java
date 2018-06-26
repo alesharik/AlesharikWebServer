@@ -272,14 +272,72 @@ final class ConfigurationRunner extends Thread implements FileWatcherThread.Conf
         }
     }
 
-    public void shutdown() {//TODO shutdown sequence!
+    public synchronized void shutdown() {
+        if(isAlive() && !isInterrupted())
+            interrupt();
+
+
+        System.out.println("Stage pre-shutdown");
+        ScriptEndpointSection.ScriptSection preShutdown = configuration.getScriptSection().getSection("pre-shutdown");
+        if(preShutdown != null) {
+            for(ScriptEndpointSection.Command command : preShutdown.getCommands()) {
+                String one = null;
+                for(Map.Entry<String, Extension> e : extensions.entrySet()) {
+                    if(e.getValue().getCommandExecutor().getPredicate().test(command.getName())) {
+                        extensionPool.executeCommand(e.getKey(), command);
+                        if(one != null)
+                            throw new CommandRedefinitionError(command.getName(), one, e.getKey());
+                        one = e.getKey();
+                    }
+                }
+            }
+        }
+        System.out.println("Stage shutdown");
+        ScriptEndpointSection.ScriptSection shutdown = configuration.getScriptSection().getSection("shutdown");
+        if(shutdown != null) {
+            for(ScriptEndpointSection.Command command : shutdown.getCommands()) {
+                String one = null;
+                for(Map.Entry<String, Extension> e : extensions.entrySet()) {
+                    if(e.getValue().getCommandExecutor().getPredicate().test(command.getName())) {
+                        extensionPool.executeCommand(e.getKey(), command);
+                        if(one != null)
+                            throw new CommandRedefinitionError(command.getName(), one, e.getKey());
+                        one = e.getKey();
+                    }
+                }
+            }
+        }
+        System.out.println("Shutting down extensions...");
+        extensionPool.shutdownExtensions();
+
+        System.out.println("Stage post-shutdown");
+        ScriptEndpointSection.ScriptSection postShutdown = configuration.getScriptSection().getSection("post-shutdown");
+        if(postShutdown != null) {
+            for(ScriptEndpointSection.Command command : postShutdown.getCommands()) {
+                String one = null;
+                for(Map.Entry<String, Extension> e : extensions.entrySet()) {
+                    if(e.getValue().getCommandExecutor().getPredicate().test(command.getName())) {
+                        extensionPool.executeCommand(e.getKey(), command);
+                        if(one != null)
+                            throw new CommandRedefinitionError(command.getName(), one, e.getKey());
+                        one = e.getKey();
+                    }
+                }
+            }
+        }
+
         watcherThread.shutdown();
-        extensionPool.shutdown();
+        extensionPool.shutdownPool();
+        bus.interrupt();
     }
 
-    public void shutdownNow() {
+    public synchronized void shutdownNow() {
+        if(isAlive() && !isInterrupted())
+            interrupt();
+
         watcherThread.shutdown();
         extensionPool.shutdownNow();
+        bus.interrupt();
     }
 
     public void waitForCompletion() {

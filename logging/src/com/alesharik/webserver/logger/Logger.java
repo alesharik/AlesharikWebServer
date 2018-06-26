@@ -108,6 +108,16 @@ public final class Logger {
         listenerThread.interrupt();
     }
 
+    public static void reset() {
+        if(listenerThread != null)
+            listenerThread.interrupt();
+        listenerThread = null;
+        loggerHandlers.clear();
+        isConfigured.set(false);
+        MXBeanManager.unregisterMXBean("com.alesharik.webserver.logger:type=Logger");
+        MXBeanManager.unregisterMXBean("com.alesharik.webserver.logger:type=LoggingLevelManager");
+    }
+
     /**
      * WARNING! DON'T WORKS IN JDK 9!<br>
      * Use {@link sun.misc.SharedSecrets} for {@link StackTraceElement}
@@ -417,8 +427,10 @@ public final class Logger {
                 warningHandler.setFormatter(formatter);
                 loggerHandlers.add(warningHandler);
 
-                messageQueue = new MpscLinkedQueue8<>();
-                loggerThread.start();
+                if(messageQueue == null)
+                    messageQueue = new MpscLinkedQueue8<>();
+                if(!loggerThread.isAlive())
+                    loggerThread.start();
 
                 listenerThread = new LoggerListenerThread(listenerQueueCapacity);
                 listenerThread.start();
@@ -559,6 +571,14 @@ public final class Logger {
 
         System.setOut(SYSTEM_OUT);
         System.setErr(SYSTEM_ERR);
+    }
+
+    public static void detach() {
+        if(!isConfigured.get())
+            throw new IllegalStateException();
+        loggerHandlers.removeIf(loggerHandler -> loggerHandler instanceof PrintStreamLoggerHandler);
+        SYSTEM_OUT.close();
+        SYSTEM_ERR.close();
     }
 
     /**
@@ -704,7 +724,9 @@ public final class Logger {
                         record.setLoggerName("Logger");
                         loggerHandlers.forEach(handler -> handler.publish(record));
                     }
-                    Logger.listenerThread.sendMessage(message);
+                    LoggerListenerThread listenerThread = Logger.listenerThread;
+                    if(listenerThread != null)
+                        listenerThread.sendMessage(message);
 
                     statistics.measure(1);
                 }

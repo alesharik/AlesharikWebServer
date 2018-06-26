@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 @Level("configuration-runner")
@@ -80,11 +79,14 @@ final class ExtensionPool {
             worker.execute(worker.extension::start);
     }
 
-    public void shutdown() {
-        for(Worker worker : workers.values()) {
+    public void shutdownExtensions() {
+        for(Worker worker : workers.values())
             worker.execute(worker.extension::shutdown);
+    }
+
+    public void shutdownPool() {
+        for(Worker worker : workers.values())
             worker.shutdown();
-        }
     }
 
     public void shutdownNow() {
@@ -124,15 +126,11 @@ final class ExtensionPool {
                 idle = false;
                 if(stop) {
                     while(!tasks.isEmpty()) {
-                        try {
-                            Runnable poll = tasks.poll(1, TimeUnit.MILLISECONDS);
-                            if(poll != null)
-                                poll.run();
-                            else
-                                break main;
-                        } catch (InterruptedException e) {
-                            return;
-                        }
+                        Runnable poll = tasks.poll();
+                        if(poll != null)
+                            poll.run();
+                        else
+                            break main;
                     }
                     break;
                 }
@@ -146,6 +144,8 @@ final class ExtensionPool {
                     idle = false;
                     take.run();
                 } catch (InterruptedException e) {
+                    if(stop)
+                        continue;
                     break;
                 }
             }
@@ -154,6 +154,7 @@ final class ExtensionPool {
 
         public void shutdown() {
             stop = true;
+            interrupt();
         }
 
         @Override

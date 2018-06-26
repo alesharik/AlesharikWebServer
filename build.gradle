@@ -135,6 +135,31 @@ subprojects {
         testCompile group: 'junit', name: 'junit', version: '4.12'
         testCompile group: 'org.mockito', name: 'mockito-core', version: '2.7.21'
     }
+
+    task copyAgentLib(type: Copy) {
+        from file(buildDir.toString() + "/../../api/out/libs/alesharikwebserver-api-all.jar")
+        into buildDir.toString() + "/libs/"
+    }
+
+    task agentTests(type: Test, dependsOn: copyAgentLib) {
+        group = 'test'
+
+        useJUnit {
+            includeCategories 'com.alesharik.webserver.api.documentation.test.PlatformTest'
+            includeCategories 'com.alesharik.webserver.api.documentation.test.IntegrationTest'
+            includeCategories 'com.alesharik.webserver.api.documentation.test.ModuleTest'
+        }
+
+        jvmArgs '-javaagent:' + buildDir.toString() + '/libs/alesharikwebserver-api-all.jar'
+    }
+
+    test {
+        useJUnit {
+            excludeCategories 'com.alesharik.webserver.api.documentation.test.PlatformTest'
+            excludeCategories 'com.alesharik.webserver.api.documentation.test.IntegrationTest'
+            excludeCategories 'com.alesharik.webserver.api.documentation.test.ModuleTest'
+        }
+    }
 }
 
 //====================Publishing====================\\

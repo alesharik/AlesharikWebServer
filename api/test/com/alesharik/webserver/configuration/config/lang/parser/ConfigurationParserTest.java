@@ -303,6 +303,11 @@ public class ConfigurationParserTest {
         fail();
     }
 
+    @Test(expected = CodeParsingException.class)
+    public void parseEndpointWithoutName() {
+        module(fileReaderTabulated(), "com/alesharik/webserver/configuration/config/lang/parser/withoutName.endpoint");
+    }
+
     @Test
     public void parseAllKnown() {
         ConfigurationModule module = module("com/alesharik/webserver/configuration/config/lang/parser/all.module");
