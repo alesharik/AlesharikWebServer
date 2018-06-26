@@ -159,6 +159,11 @@ subprojects {
             excludeCategories 'com.alesharik.webserver.api.documentation.test.IntegrationTest'
             excludeCategories 'com.alesharik.webserver.api.documentation.test.ModuleTest'
         }
+        testLogging {
+            events "failed", "started", "passed"
+            exceptionFormat "full"
+            showStandardStreams = true
+        }
     }
 }
 
