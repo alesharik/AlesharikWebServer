@@ -86,14 +86,14 @@ final class ExtensionPool {
 
     public void shutdownPool() {
         for(Worker worker : workers.values())
-            worker.shutdown();
+            worker.interrupt();
         joinAll();
     }
 
     public void shutdownNow() {
         for(Worker worker : workers.values()) {
             worker.execute(worker.extension::shutdownNow);
-            worker.shutdown();
+            worker.interrupt();
         }
         joinAll();
     }
@@ -109,6 +109,8 @@ final class ExtensionPool {
         for(Worker worker : workers.values()) {
             try {
                 worker.join();
+                while(!worker.isQuiescent())
+                    Thread.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return;
@@ -121,7 +123,6 @@ final class ExtensionPool {
     private final class Worker extends Thread implements Executor {
         private final Extension extension;
         private final BlockingQueue<Runnable> tasks = new LinkedBlockingDeque<>();
-        private volatile boolean stop = false;
         private volatile boolean idle = true;
         private final Object execTrigger = new Object();
 
@@ -134,40 +135,36 @@ final class ExtensionPool {
         @Override
         public void run() {
             System.out.println("Starting up...");
-            main:
             while(isAlive() && !isInterrupted()) {
-                idle = false;
-                if(stop) {
-                    while(!tasks.isEmpty()) {
-                        Runnable poll = tasks.poll();
-                        if(poll != null)
-                            poll.run();
-                        else
-                            break main;
-                    }
-                    break;
-                }
                 try {
-                    idle = true;
-                    synchronized (execTrigger) {
-                        execTrigger.notifyAll();
-                    }
-
-                    Runnable take = tasks.take();
-                    idle = false;
-                    take.run();
+                    loop();
                 } catch (InterruptedException e) {
-                    if(stop)
-                        continue;
                     break;
                 }
             }
             System.out.println("Shutting down...");
+            execAllTasks();
         }
 
-        public void shutdown() {
-            stop = true;
-            interrupt();
+        protected void loop() throws InterruptedException {
+            notifyExecute();
+            Runnable take = tasks.take();
+            idle = false;
+            take.run();
+            idle = true;
+        }
+
+        private void notifyExecute() {
+            synchronized (execTrigger) {
+                execTrigger.notifyAll();
+            }
+        }
+
+        private void execAllTasks() {
+            idle = false;
+            Runnable task;
+            while((task = tasks.poll()) != null)
+                task.run();
         }
 
         @Override
