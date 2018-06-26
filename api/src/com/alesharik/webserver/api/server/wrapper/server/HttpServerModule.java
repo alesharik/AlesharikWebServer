@@ -18,10 +18,8 @@
 
 package com.alesharik.webserver.api.server.wrapper.server;
 
-import com.alesharik.webserver.configuration.Module;
-
 import javax.annotation.concurrent.ThreadSafe;
 
 @ThreadSafe
-public interface HttpServerModule extends HttpServer, Module {
+public interface HttpServerModule extends HttpServer {
 }

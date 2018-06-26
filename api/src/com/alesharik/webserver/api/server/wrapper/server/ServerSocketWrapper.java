@@ -18,8 +18,11 @@
 
 package com.alesharik.webserver.api.server.wrapper.server;
 
-import com.alesharik.webserver.configuration.SubModule;
-import org.w3c.dom.Element;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
+import com.alesharik.webserver.configuration.module.Shutdown;
+import com.alesharik.webserver.configuration.module.ShutdownNow;
+import com.alesharik.webserver.configuration.module.Start;
+import com.alesharik.webserver.configuration.module.layer.SubModule;
 
 import javax.annotation.Nullable;
 
@@ -28,11 +31,21 @@ import javax.annotation.Nullable;
  * realisation classes must be named with @{@link com.alesharik.webserver.api.name.Named}.
  * Realisation classes also must have empty public constructor!
  */
-public interface ServerSocketWrapper extends SocketProvider, SubModule {
+@SubModule("socket")
+public interface ServerSocketWrapper extends SocketProvider {
     /**
      * Parse module configuration
      *
      * @param element the configuration element
      */
-    void parseConfig(@Nullable Element element);
+    void parseConfig(@Nullable ConfigurationObject element);
+
+    @Start
+    void start();
+
+    @Shutdown
+    void shutdown();
+
+    @ShutdownNow
+    void shutdownNow();
 }
