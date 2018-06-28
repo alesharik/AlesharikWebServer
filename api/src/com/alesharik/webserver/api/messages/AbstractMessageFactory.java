@@ -23,6 +23,7 @@ package com.alesharik.webserver.api.messages;
  *
  * @param <T> the specific message
  */
+@Deprecated
 public abstract class AbstractMessageFactory<T extends Message> {
     /**
      * Name of a message

@@ -24,6 +24,7 @@ package com.alesharik.webserver.api.messages;
  * @see Messages
  */
 @FunctionalInterface
+@Deprecated
 public interface MessageListener<T extends Message> {
     void listen(T message);
 }

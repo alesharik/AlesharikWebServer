@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+@Deprecated
 final class MessageHandlers {
     private ConcurrentHashMap<MessageHandler, ArrayList<Holder>> handlers;
 

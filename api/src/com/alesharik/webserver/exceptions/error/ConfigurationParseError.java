@@ -19,8 +19,9 @@
 package com.alesharik.webserver.exceptions.error;
 
 /**
- * Error in {@link com.alesharik.webserver.configuration.Configurator} in api section
+ * Error
  */
+@Deprecated
 public class ConfigurationParseError extends Error {
     public ConfigurationParseError() {
     }

@@ -54,6 +54,7 @@ import java.util.concurrent.Executors;
  * @see MessageListener
  * @see MessageHandler
  */
+@Deprecated
 public final class Messages {
     private static final ConcurrentHashMap<String, ConcurrentHashMap<String, Holder>> factories = new ConcurrentHashMap<>();
     private static final ExecutorService executor = Executors.newCachedThreadPool();

@@ -21,6 +21,7 @@ package com.alesharik.webserver.server.api;
 /**
  * Check if WSApplication can be registered in {@link org.glassfish.grizzly.websockets.WebSocketEngine}
  */
+@Deprecated
 public abstract class WSChecker {
     /**
      * Return true if WebSocket can be registered

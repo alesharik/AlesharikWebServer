@@ -41,13 +41,6 @@ import java.util.List;
 @UtilityClass
 @Deprecated
 public class XmlHelper {
-    private static Configuration configuration = null;
-
-    public static void setConfiguration(Configuration config) {
-        if(configuration == null) {
-            configuration = config;
-        }
-    }
 
     /**
      * Get {@link SecuredStoreModule} form xml config
@@ -68,7 +61,7 @@ public class XmlHelper {
             }
         } else {
             try {
-                return (SecuredStoreModule) configuration.getModuleByName(nameNode.getTextContent());
+                return null;
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }
@@ -94,7 +87,7 @@ public class XmlHelper {
             }
         } else {
             try {
-                return (AdminDataStorage) configuration.getModuleByName(nameNode.getTextContent());
+                return null;
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }
@@ -120,7 +113,7 @@ public class XmlHelper {
             }
         } else {
             try {
-                return (DashboardDataHolder) configuration.getModuleByName(nameNode.getTextContent());
+                return null;
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }
@@ -146,7 +139,7 @@ public class XmlHelper {
             }
         } else {
             try {
-                return (ControlSocketClientModule) configuration.getModuleByName(nameNode.getTextContent());
+                return null;
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }
@@ -173,7 +166,7 @@ public class XmlHelper {
             }
         } else {
             try {
-                return (ControlSocketServerModule) configuration.getModuleByName(nameNode.getTextContent());
+                return null;
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }
@@ -199,7 +192,7 @@ public class XmlHelper {
             }
         } else {
             try {
-                return (HttpServer) configuration.getModuleByName(nameNode.getTextContent());
+                return null;
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }
@@ -376,7 +369,7 @@ public class XmlHelper {
             }
         } else {
             try {
-                return (T) configuration.getModuleByName(nameNode.getTextContent());
+                return null;
             } catch (ClassCastException e) {
                 throw new ConfigurationParseError("Node " + nodeName + " type not expected!", e);
             }
@@ -384,6 +377,6 @@ public class XmlHelper {
     }
 
     public static <T extends Module> T getModuleByName(String name, Class<T> cast) {
-        return cast.cast(configuration.getModuleByName(name));
+        return null;
     }
 }
