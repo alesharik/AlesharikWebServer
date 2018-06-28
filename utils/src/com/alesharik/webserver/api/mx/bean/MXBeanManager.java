@@ -48,7 +48,8 @@ public class MXBeanManager {
         } catch (InstanceAlreadyExistsException e) {
             //Ok, no problem
         } catch (Exception e) {
-            throw new Error(e);
+            System.err.println("Can't load HotspotInternal MBeans!");
+            e.printStackTrace();
         }
     }
 

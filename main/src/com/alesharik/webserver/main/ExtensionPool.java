@@ -109,8 +109,10 @@ final class ExtensionPool {
         for(Worker worker : workers.values()) {
             try {
                 worker.join();
-                while(!worker.isQuiescent())
+                while(!worker.isQuiescent()) {
+                    worker.helpShutdown();
                     Thread.sleep(1);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return;
@@ -123,8 +125,8 @@ final class ExtensionPool {
     private final class Worker extends Thread implements Executor {
         private final Extension extension;
         private final BlockingQueue<Runnable> tasks = new LinkedBlockingDeque<>();
-        private volatile boolean idle = true;
         private final Object execTrigger = new Object();
+        private volatile boolean idle = true;
 
         public Worker(Extension extension, String name) {
             super(threadGroup, "ExtensionWorkerThread: " + name);
@@ -165,6 +167,7 @@ final class ExtensionPool {
             Runnable task;
             while((task = tasks.poll()) != null)
                 task.run();
+            idle = true;
         }
 
         @Override
@@ -178,6 +181,11 @@ final class ExtensionPool {
 
         public boolean isQuiescent() {
             return idle && tasks.isEmpty();
+        }
+
+        public void helpShutdown() {
+            if(!isAlive())
+                execAllTasks();
         }
 
         public void waitForExec() {

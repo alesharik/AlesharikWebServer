@@ -17,8 +17,6 @@ plugins {
     id "com.jfrog.bintray" version "1.5"
     id 'java'
     id 'idea'
-    id 'maven-publish'
-    id "cz.malohlava" version "1.0.2"
     id 'jacoco'
 }
 
@@ -56,18 +54,6 @@ repositories {
     mavenLocal()
 }
 
-visteg {
-    enabled        = true
-    colouredNodes  = true
-    colouredEdges  = true
-    destination    = 'out/reports/visteg.dot'
-    exporter       = 'dot'
-    colorscheme    = 'spectral11'
-    nodeShape      = 'box'
-    startNodeShape = 'hexagon'
-    endNodeShape   = 'doubleoctagon'
-}
-
 subprojects {
     buildscript {
         repositories {
@@ -87,7 +73,6 @@ subprojects {
     apply plugin: 'jacoco'
     apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.bintray'
-    apply plugin: "cz.malohlava"
     apply plugin: 'maven'
 
     sourceCompatibility = 1.8
@@ -143,7 +128,8 @@ subprojects {
 
     task agentTests(type: Test, dependsOn: copyAgentLib) {
         group = 'test'
-
+//        include "**/*Test.class"
+//        scanForTestClasses = false
         useJUnit {
             includeCategories 'com.alesharik.webserver.api.documentation.test.PlatformTest'
             includeCategories 'com.alesharik.webserver.api.documentation.test.IntegrationTest'
@@ -154,7 +140,6 @@ subprojects {
             exceptionFormat "full"
             showStandardStreams = true
         }
-        forkEvery = 1
         jvmArgs '-javaagent:' + buildDir.toString() + '/tmp/alesharikwebserver-api-all.jar'
     }
 
