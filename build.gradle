@@ -149,7 +149,12 @@ subprojects {
             includeCategories 'com.alesharik.webserver.api.documentation.test.IntegrationTest'
             includeCategories 'com.alesharik.webserver.api.documentation.test.ModuleTest'
         }
-
+        testLogging {
+            events "failed", "started", "passed"
+            exceptionFormat "full"
+            showStandardStreams = true
+        }
+        forkEvery = 1
         jvmArgs '-javaagent:' + buildDir.toString() + '/tmp/alesharikwebserver-api-all.jar'
     }
 
