@@ -57,6 +57,7 @@ final class MessageBus extends Thread implements ExtensionManager.Listener {
 
     @Override
     public void run() {
+        ExtensionManager.resetListeners();
         System.out.println("Starting main bus...");
         ExtensionManager.addListener(this);
         System.out.println("Initializing global message managers...");

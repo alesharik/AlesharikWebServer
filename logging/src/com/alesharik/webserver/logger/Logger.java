@@ -1111,7 +1111,7 @@ public final class Logger {
 
         @Override
         public void print(Object obj) {
-            lineBuffer.set(lineBuffer.get().concat(obj.toString()));
+            lineBuffer.set(lineBuffer.get().concat(obj == null ? "null" : obj.toString()));
         }
 
         @Override

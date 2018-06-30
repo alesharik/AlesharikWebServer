@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Extension.Name("mock")
 public class MockExtension implements Extension {
@@ -38,6 +39,10 @@ public class MockExtension implements Extension {
     static final CommandExecutor COMMAND_EXECUTOR_MOCK = mock(CommandExecutor.class);
     static final List<DirectoryWatcher> WATCHERS = new ArrayList<>();
     static final MessageManager MESSAGE_MANAGER_MOCK = mock(MessageManager.class);
+
+    static {
+        when(COMMAND_EXECUTOR_MOCK.getPredicate()).thenReturn(commandName -> false);
+    }
 
     @Override
     public void load(@Nonnull ConfigurationEndpoint endpoint, @Nonnull ScriptElementConverter converter) {

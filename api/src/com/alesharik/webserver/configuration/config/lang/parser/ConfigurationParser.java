@@ -326,7 +326,7 @@ public class ConfigurationParser {
                 if(!"null".equals(parent)) {
                     String[] parts = parent.split("\\.", 2);
                     if(parts.length < 2 || StringUtils.isWhitespace(parts[0]) || StringUtils.isWhitespace(parts[1]))
-                        throw new CodeParsingException("use directive parse error: parent must follow pattern 'module_name:object_name' or be 'null'", lineNumber.get(), linesCopy);
+                        throw new CodeParsingException("use directive parse error: parent must follow pattern 'module_name.object_name' or be 'null'", lineNumber.get(), linesCopy);
                     String moduleName = parts[0];
                     String objectName = parts[1];
                     ConfigurationModule module = findModule(moduleName, modules.values());

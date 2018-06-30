@@ -1,0 +1,23 @@
+include 'm.module'
+endpoint main {
+    api {
+         logger: {
+                    file: "LOG_MOCK",
+                    debug: true
+                }
+    }
+    modules {
+        use cfg.m1 as mock1
+        use cfg.m2 as mock2
+    }
+    script {
+        init {
+            start mock1
+            start mock2
+        }
+        shutdown {
+            shutdown mock1
+            shutdown mock2
+        }
+    }
+}

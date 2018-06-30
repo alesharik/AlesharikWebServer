@@ -28,10 +28,15 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
 @RequiredArgsConstructor
 @Level("configuration-runner")
@@ -100,8 +105,7 @@ final class ExtensionPool {
 
     public void waitQuiescence() {
         for(Worker worker : workers.values()) {
-            while(!worker.isQuiescent())
-                worker.waitForExec();
+            worker.waitForExec();
         }
     }
 
@@ -109,10 +113,7 @@ final class ExtensionPool {
         for(Worker worker : workers.values()) {
             try {
                 worker.join();
-                while(!worker.isQuiescent()) {
-                    worker.helpShutdown();
-                    Thread.sleep(1);
-                }
+                worker.helpShutdown();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return;
@@ -125,8 +126,8 @@ final class ExtensionPool {
     private final class Worker extends Thread implements Executor {
         private final Extension extension;
         private final BlockingQueue<Runnable> tasks = new LinkedBlockingDeque<>();
-        private final Object execTrigger = new Object();
-        private volatile boolean idle = true;
+        private final List<Thread> waiting = new CopyOnWriteArrayList<>();
+        private final AtomicInteger taskCount = new AtomicInteger();
 
         public Worker(Extension extension, String name) {
             super(threadGroup, "ExtensionWorkerThread: " + name);
@@ -145,34 +146,26 @@ final class ExtensionPool {
                 }
             }
             System.out.println("Shutting down...");
-            execAllTasks();
-        }
-
-        protected void loop() throws InterruptedException {
-            notifyExecute();
-            Runnable take = tasks.take();
-            idle = false;
-            take.run();
-            idle = true;
-        }
-
-        private void notifyExecute() {
-            synchronized (execTrigger) {
-                execTrigger.notifyAll();
+            Runnable task;
+            while((task = tasks.poll()) != null) {
+                task.run();
+                taskCount.decrementAndGet();
             }
         }
 
-        private void execAllTasks() {
-            idle = false;
-            Runnable task;
-            while((task = tasks.poll()) != null)
+        protected void loop() throws InterruptedException {
+            Runnable task = tasks.take();
+            do {
                 task.run();
-            idle = true;
+                taskCount.decrementAndGet();
+            } while((task = tasks.poll()) != null);
+            for(Thread thread : waiting) LockSupport.unpark(thread);
         }
 
         @Override
         public void execute(@NotNull Runnable runnable) {
             try {
+                taskCount.incrementAndGet();
                 tasks.put(runnable);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -180,21 +173,46 @@ final class ExtensionPool {
         }
 
         public boolean isQuiescent() {
-            return idle && tasks.isEmpty();
+            return taskCount.get() == 0;
         }
 
         public void helpShutdown() {
-            if(!isAlive())
-                execAllTasks();
+            Runnable task;
+            while((task = tasks.poll()) != null) {
+                task.run();
+                taskCount.decrementAndGet();
+            }
+
+            for(Thread thread : waiting) LockSupport.unpark(thread);
         }
 
         public void waitForExec() {
-            synchronized (execTrigger) {
-                try {
-                    execTrigger.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            try {
+                ManagedBlockerImpl blocker = new ManagedBlockerImpl();
+                ForkJoinPool.managedBlock(blocker);
+                waiting.remove(blocker.thread);
+            } catch (InterruptedException ignored) {
+            }
+        }
+
+        private final class ManagedBlockerImpl implements ForkJoinPool.ManagedBlocker {
+            final Thread thread = Thread.currentThread();
+
+            {
+                waiting.add(thread);
+            }
+
+            @Override
+            public boolean block() {
+                if(isReleasable())
+                    return true;
+                LockSupport.park(this);
+                return isReleasable();
+            }
+
+            @Override
+            public boolean isReleasable() {
+                return thread.isInterrupted() || isQuiescent();
             }
         }
     }

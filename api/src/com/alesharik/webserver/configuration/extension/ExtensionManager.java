@@ -122,6 +122,10 @@ public class ExtensionManager {
         listeners.remove(listener);
     }
 
+    public static void resetListeners() {
+        listeners.clear();
+    }
+
     @PrivateApi
     public interface Listener {
         void messageManagerAdded(MessageManager messageManager);

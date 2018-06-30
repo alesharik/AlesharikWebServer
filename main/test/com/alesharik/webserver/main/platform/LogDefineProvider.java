@@ -25,7 +25,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class LogDefineProvider implements DefineProvider {
-    static String DEF = "";
+    public static String DEF = "";
 
     @Nonnull
     @Override

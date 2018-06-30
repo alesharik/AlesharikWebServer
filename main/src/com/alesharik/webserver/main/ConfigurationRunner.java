@@ -113,6 +113,8 @@ final class ConfigurationRunner extends Thread implements FileWatcherThread.Conf
         this.parser = parser;
         this.reloadConfig = reloadConfig;
         this.configuration = configuration;
+        setDaemon(false);
+        setName("ConfigurationRunner");
     }
 
     @Override
@@ -150,11 +152,15 @@ final class ConfigurationRunner extends Thread implements FileWatcherThread.Conf
 
         System.out.println("Registering extensions...");
         for(Map.Entry<String, Extension> stringExtensionEntry : extensions.entrySet())
-            if(stringExtensionEntry.getValue().getMessageManager() != null)
+            if(stringExtensionEntry.getValue().getMessageManager() != null) {
+                System.out.println("Registering message manager for " + stringExtensionEntry.getKey() + " extension");
                 bus.addManager(new MessageManagerWrapper(stringExtensionEntry.getValue().getMessageManager(), extensionPool, stringExtensionEntry.getKey()), stringExtensionEntry.getKey());
+            }
         for(Map.Entry<String, Extension> extension : extensions.entrySet())
-            for(DirectoryWatcher directoryWatcher : extension.getValue().getFileWatchers())
+            for(DirectoryWatcher directoryWatcher : extension.getValue().getFileWatchers()) {
+                System.out.println("Registering file watcher for " + extension.getKey() + " extension");
                 watcherThread.addDirectoryWatcher(new DirectoryWatcherWrapper(directoryWatcher, extensionPool, extension.getKey()));
+            }
 
         System.out.println("Executing config...");
         ExecutionStage.setState(ExecutionStage.START);

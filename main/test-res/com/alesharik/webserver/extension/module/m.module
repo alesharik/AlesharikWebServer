@@ -1,0 +1,9 @@
+module cfg {
+    m1:mock1 {
+        a: "test"
+    }
+    m2:mock2 {
+        a: 1
+        b: "asd"
+    }
+}

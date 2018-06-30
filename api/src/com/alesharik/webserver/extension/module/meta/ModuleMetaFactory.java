@@ -28,6 +28,7 @@ import com.alesharik.webserver.api.reflection.ReflectUtils;
 import com.alesharik.webserver.base.bean.Bean;
 import com.alesharik.webserver.base.bean.context.BeanContext;
 import com.alesharik.webserver.base.exception.DevError;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.extension.module.ConfigurationError;
@@ -94,13 +95,13 @@ public class ModuleMetaFactory {
             method.setAccessible(true);
             try {
                 if(method.isAnnotationPresent(Configure.class)) {
-                    if(method.getParameterCount() != 1 || method.getParameterTypes()[0] == ConfigurationTypedObject.class)
-                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Configure method in module MUST contains only one parameter - ConfigurationTypedObject. Method: " + method.getName(), module.getClass());
+                    if(method.getParameterCount() != 1 || method.getParameterTypes()[0] != ConfigurationObject.class)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Configure method in module MUST contains only one parameter - ConfigurationObject. Method: " + method.getName(), module.getClass());
                     adapter.configure.add(LOOKUP.unreflect(method).bindTo(module));
                 }
                 if(method.isAnnotationPresent(Reload.class)) {
-                    if(method.getParameterCount() != 1 || method.getParameterTypes()[0] == ConfigurationTypedObject.class)
-                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Reload method in module MUST contains only one parameter - ConfigurationTypedObject. Method: " + method.getName(), module.getClass());
+                    if(method.getParameterCount() != 1 || method.getParameterTypes()[0] != ConfigurationObject.class)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Reload method in module MUST contains only one parameter - ConfigurationObject. Method: " + method.getName(), module.getClass());
                     adapter.reload.add(LOOKUP.unreflect(method).bindTo(module));
                 }
                 if(method.isAnnotationPresent(Start.class)) {
@@ -127,13 +128,13 @@ public class ModuleMetaFactory {
                 continue;
             field.setAccessible(true);
             try {
-                if(field.getClass().isAnnotationPresent(Layer.class)) {
+                if(field.getType().isAnnotationPresent(Layer.class)) {
                     Object layer = field.get(module);
                     if(layer == null)
                         throw new DevError("Unexpected field value in field " + field.getName(), "@Layer field in module cannot be null. Field: " + field.getName(), module.getClass());
                     adapter.layers.add(LayerMetaFactory.create(layer));
                 }
-                if(field.getClass().isAnnotationPresent(SubModule.class)) {
+                if(field.getType().isAnnotationPresent(SubModule.class)) {
                     Object subModule = field.get(module);
                     if(subModule == null)
                         throw new DevError("Unexpected field value in field " + field.getName(), "@Submodule field in module cannot be null. Field: " + field.getName(), module.getClass());
@@ -219,7 +220,7 @@ public class ModuleMetaFactory {
         private static void invoke(List<MethodHandle> handles, ConfigurationTypedObject object) {
             for(MethodHandle methodHandle : handles) {
                 try {
-                    methodHandle.invokeExact(object);
+                    methodHandle.invokeExact((ConfigurationObject) object);
                 } catch (Error e) {
                     throw e;
                 } catch (Throwable throwable) {
@@ -254,7 +255,7 @@ public class ModuleMetaFactory {
 
             for(LayerAdapter layer : layers) layer.shutdown();
             for(SubModuleAdapter subModule : subModules) subModule.shutdown();
-            invoke(start);
+            invoke(shutdown);
             running = false;
         }
 
