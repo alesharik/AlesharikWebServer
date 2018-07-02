@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 @Prefixes("[DaemonThread]")
+@Deprecated
 final class DaemonThread extends Thread {
     private static final byte NOTHING_STATE = 0;
     private static final byte SHUTDOWN_STATE = 1;

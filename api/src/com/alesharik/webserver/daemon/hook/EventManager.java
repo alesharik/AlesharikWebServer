@@ -25,6 +25,7 @@ import javax.annotation.Nonnull;
  *
  * @see com.alesharik.webserver.daemon.annotation.Daemon
  */
+@Deprecated
 public interface EventManager {
     /**
      * Fire event. Do nothing if event not exists

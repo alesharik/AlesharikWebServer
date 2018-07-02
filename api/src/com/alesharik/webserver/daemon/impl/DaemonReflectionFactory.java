@@ -62,6 +62,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Priority: field -> method -> class
  */
 @UtilityClass
+@Deprecated
 class DaemonReflectionFactory {
     private static final int DEFAULT_PRIORITY = Thread.NORM_PRIORITY - 2;
     private static final Map<String, ObjectReflectionWrapper> wrappers = new ConcurrentHashMap<>();

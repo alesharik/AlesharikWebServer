@@ -21,6 +21,7 @@ package com.alesharik.webserver.daemon;
 /**
  * Manages daemon lifecycle
  */
+@Deprecated
 public interface DaemonLifecycleManager {
     /**
      * Start daemon thread

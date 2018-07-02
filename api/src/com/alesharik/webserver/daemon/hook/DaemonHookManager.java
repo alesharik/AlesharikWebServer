@@ -26,6 +26,7 @@ import java.util.List;
 /**
  * This contains all hook logic. It MUST handle start and shutdown hooks!
  */
+@Deprecated
 public interface DaemonHookManager {
     /**
      * Register new hook

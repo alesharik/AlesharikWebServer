@@ -25,6 +25,7 @@ import java.util.function.BiConsumer;
 /**
  * Provides hooks from xml configuration
  */
+@Deprecated
 public interface HookProvider {
     void provide(BiConsumer<String, Hook> consumer);
 }

@@ -25,6 +25,7 @@ import com.alesharik.webserver.daemon.DaemonApiWrapper;
 import lombok.Getter;
 import lombok.Setter;
 
+@Deprecated
 final class DaemonClassLoader extends ClassLoader implements CloseableClassLoader {
     private final DaemonApiWrapperImpl daemonApiWrapper;
 

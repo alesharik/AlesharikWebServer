@@ -21,6 +21,7 @@ package com.alesharik.webserver.daemon;
 /**
  * This MXBean provides information about connected daemon
  */
+@Deprecated
 public interface DaemonManagementBean {
     /**
      * Return <code>true</code> if daemon's thread is alive, overwise <code>false</code>

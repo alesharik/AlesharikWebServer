@@ -30,6 +30,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
+@Deprecated
 public @interface Priority {
     /**
      * Return daemon thread priority. Must be between {@link Thread#MIN_PRIORITY} and {@link Thread#MAX_PRIORITY}

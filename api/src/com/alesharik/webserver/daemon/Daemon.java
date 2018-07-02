@@ -29,6 +29,7 @@ import javax.annotation.Nonnull;
  *
  * @param <A> daemon api type
  */
+@Deprecated
 public interface Daemon<A extends DaemonApi> {
     /**
      * Return daemon type

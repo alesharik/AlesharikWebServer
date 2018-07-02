@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 @ClassPathScanner
 @UtilityClass
+@Deprecated
 public class DaemonManager {
     private static final Map<String, Class<?>> daemonClasses = new ConcurrentHashMap<>();
     private static final Map<String, DaemonThread> daemons = new ConcurrentHashMap<>();

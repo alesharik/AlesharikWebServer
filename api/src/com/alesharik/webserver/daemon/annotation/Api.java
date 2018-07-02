@@ -28,6 +28,7 @@ import java.lang.annotation.Target;
  * Annotation can be placed on field with realisation, getter method or realisation inner class. Inner class can have constructor with 1 parameter -
  * your daemon class, and it will receive your class instance
  */
+@Deprecated
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Api {

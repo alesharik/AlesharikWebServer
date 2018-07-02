@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 /**
  * Wrapper wraps daemon api for keeping api consistency
  */
+@Deprecated
 public abstract class DaemonApiWrapper {
     /**
      * Return {@link DaemonApi} or <code>null</code> if it is'n found

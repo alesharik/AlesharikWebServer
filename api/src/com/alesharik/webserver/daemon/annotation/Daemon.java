@@ -43,6 +43,7 @@ import java.lang.annotation.Target;
  * @see EventManager
  * @see Logger
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented

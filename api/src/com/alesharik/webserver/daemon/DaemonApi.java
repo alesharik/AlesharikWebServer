@@ -23,5 +23,6 @@ package com.alesharik.webserver.daemon;
  *
  * @see com.alesharik.webserver.daemon.annotation.Daemon
  */
+@Deprecated
 public interface DaemonApi {
 }
