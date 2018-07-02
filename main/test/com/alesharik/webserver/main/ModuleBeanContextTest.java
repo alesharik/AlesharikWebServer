@@ -65,7 +65,7 @@ import com.alesharik.webserver.configuration.util.CoreModuleManager;
 import com.alesharik.webserver.extension.module.ModuleBeanContext;
 import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.main.script.ScriptEngineImpl;
-import com.alesharik.webserver.test.AbstractContextTest;
+import com.alesharik.webserver.test.bean.AbstractContextTest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
