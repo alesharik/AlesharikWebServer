@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.extension.module.meta.impl;
 
+import com.alesharik.webserver.api.agent.bean.Beans;
 import com.alesharik.webserver.api.reflection.ReflectUtils;
 import com.alesharik.webserver.base.bean.Bean;
 import com.alesharik.webserver.base.bean.context.BeanContext;
@@ -31,6 +32,8 @@ import com.alesharik.webserver.extension.module.Configuration;
 import com.alesharik.webserver.extension.module.ConfigurationError;
 import com.alesharik.webserver.extension.module.ConfigurationValue;
 import com.alesharik.webserver.extension.module.LinkModule;
+import com.alesharik.webserver.extension.module.configuration.CustomDeserializer;
+import com.alesharik.webserver.extension.module.configuration.ElementDeserializer;
 import com.alesharik.webserver.extension.module.meta.ConfigurationLinker;
 import com.alesharik.webserver.extension.module.meta.ModuleProvider;
 import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
@@ -85,7 +88,17 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
             if(field.isAnnotationPresent(ConfigurationValue.class)) {
                 ConfigurationValue a = field.getAnnotation(ConfigurationValue.class);
                 ConfigurationElement element = getElement(object, a.value(), config.getClass(), a.optional());
-                if(ConfigurationElement.class.isAssignableFrom(field.getType())) {
+                if(field.getType().isAnnotationPresent(CustomDeserializer.class)) {
+                    ElementDeserializer deserializer = Beans.create(field.getType().getAnnotation(CustomDeserializer.class).value());
+                    Object o = element == null ? null : deserializer.deserialize(element, converter);
+                    if(o == null) {
+                        if(a.optional())
+                            field.set(config, null);
+                        else
+                            throw new ConfigurationError("Custom deserializer return null! Class: " + config.getClass().getCanonicalName() + ", field: " + field.getName());
+                    }
+                    field.set(config, o);
+                } else if(ConfigurationElement.class.isAssignableFrom(field.getType())) {
                     if(element == null) {
                         if(a.optional())
                             field.set(config, null);
