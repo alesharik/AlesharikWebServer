@@ -89,8 +89,15 @@ public final class ConfigurationLinkerImpl implements ConfigurationLinker {
                 ConfigurationValue a = field.getAnnotation(ConfigurationValue.class);
                 ConfigurationElement element = getElement(object, a.value(), config.getClass(), a.optional());
                 if(field.getType().isAnnotationPresent(CustomDeserializer.class)) {
-                    ElementDeserializer deserializer = Beans.create(field.getType().getAnnotation(CustomDeserializer.class).value());
-                    Object o = element == null ? null : deserializer.deserialize(element, converter);
+                    Object o = null;
+                    if(element != null) {
+                        ElementDeserializer deserializer = Beans.create(field.getType().getAnnotation(CustomDeserializer.class).value());
+                        try {
+                            o = deserializer.deserialize(element, converter);
+                        } catch (ConfigurationError e) {
+                            throw new ConfigurationError(e.getMessage() + " Class: " + config.getClass().getCanonicalName() + ", field: " + field.getName());
+                        }
+                    }
                     if(o == null) {
                         if(a.optional())
                             field.set(config, null);
