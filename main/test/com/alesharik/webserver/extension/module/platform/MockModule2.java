@@ -27,6 +27,7 @@ import com.alesharik.webserver.extension.module.Shutdown;
 import com.alesharik.webserver.extension.module.ShutdownNow;
 import com.alesharik.webserver.extension.module.Start;
 import com.alesharik.webserver.extension.module.meta.ModuleAdapter;
+import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
 
 import static org.mockito.Mockito.mock;
 
@@ -53,7 +54,7 @@ public class MockModule2 {
     }
 
     @Configure
-    public void configure(ConfigurationObject object) {
+    public void configure(ConfigurationObject object, ScriptElementConverter converter) {
         CFG = config;
     }
 

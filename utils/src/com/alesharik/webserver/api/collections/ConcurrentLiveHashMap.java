@@ -67,7 +67,8 @@ import static com.alesharik.webserver.api.collections.ConcurrentLiveArrayList.DE
 @EqualsAndHashCode(exclude = {"nodesLock", "entrySet", "removeQueue"}, callSuper = false)
 @ToString(exclude = {"nodesLock", "entrySet", "removeQueue"})
 public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Tickable, Stoppable, Cloneable {
-    private final StampedLock nodesLock = new StampedLock();
+    private transient final StampedLock nodesLock = new StampedLock();
+    private transient final BiConsumer<K, V> cleanup;
     private final AtomicBoolean started;
     private final AtomicInteger size;
     private final Queue<K> removeQueue = new LinkedTransferQueue<>();
@@ -98,11 +99,17 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
     }
 
     public ConcurrentLiveHashMap(@Nonnegative long delay, @Nonnegative int count, boolean autoStart) {
+        this(delay, count, autoStart, (k, v) -> {
+        });
+    }
+
+    public ConcurrentLiveHashMap(@Nonnegative long delay, @Nonnegative int count, boolean autoStart, BiConsumer<K, V> cleanup) {
         this.nodes = new AtomicReferenceArray<>(count);
         this.delay = delay;
         this.sizeLimit = count;
         this.size = new AtomicInteger(0);
         this.started = new AtomicBoolean(false);
+        this.cleanup = cleanup;
         if(autoStart)
             start();
     }
@@ -872,8 +879,10 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
         long write = nodesLock.writeLock();
         try {
             K key;
-            while((key = removeQueue.poll()) != null)
-                removeActual(key, hash(key));
+            while((key = removeQueue.poll()) != null) {
+                V v = removeActual(key, hash(key));
+                cleanup.accept(key, v);
+            }
         } finally {
             nodesLock.unlockWrite(write);
         }
@@ -881,17 +890,15 @@ public class ConcurrentLiveHashMap<K, V> extends AbstractMap<K, V> implements Co
 
     @Override
     public ConcurrentLiveHashMap<K, V> clone() {
-        ConcurrentLiveHashMap<K, V> map = new ConcurrentLiveHashMap<>(sizeLimit);
+        ConcurrentLiveHashMap<K, V> map = new ConcurrentLiveHashMap<>(delay, sizeLimit, true, cleanup);
         map.started.set(started.get());
         map.size.set(size.get());
         map.sizeLimit = sizeLimit;
         map.defaultPeriod = defaultPeriod;
         map.tickingPool = tickingPool;
-        map.delay = delay;
 
-        for(int i = 0; i < nodes.length(); i++) {
+        for(int i = 0; i < nodes.length(); i++)
             map.nodes.set(i, nodes.get(i) == null ? null : nodes.get(i).clone());
-        }
         return map;
     }
 

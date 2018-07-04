@@ -20,12 +20,13 @@ package com.alesharik.webserver.module.http;
 
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
-import com.alesharik.webserver.api.server.wrapper.addon.AddOn;
+import com.alesharik.webserver.api.agent.classPath.reload.UnloadClassLoaderHandler;
 import com.alesharik.webserver.logger.Debug;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.logger.level.Level;
 import com.alesharik.webserver.logger.level.LoggingLevel;
+import com.alesharik.webserver.module.http.addon.AddOn;
 import lombok.experimental.UtilityClass;
 
 import java.util.Map;
@@ -53,6 +54,11 @@ class AddOnManager {
         } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    @UnloadClassLoaderHandler
+    static void handleUnload(ClassLoader classLoader) {
+        addOns.values().removeIf(next -> next.getClass().getClassLoader() == classLoader);
     }
 
     static AddOn getAddOn(String addon) {

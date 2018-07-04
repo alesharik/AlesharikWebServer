@@ -881,7 +881,7 @@ public class ConfigurationParser {
                     ConfigElement element = parseElement(l, lines, lineCopy, lineCounter, preparedDefinitions, Integer.toString(array.size()));
                     array.append(element.element);
                     String text1 = element.text.replaceFirst(":", "");//Remove empty name
-                    l = l.substring(text1.length());//Remove last element
+                    l = l.substring(text1.split("\n", 2)[0].length());//Remove last element
                     String l1;
                     if(!l.isEmpty())
                         l1 = l.substring(1).replaceFirst("^\\s*", ""); //Remove spaces

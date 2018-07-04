@@ -18,14 +18,11 @@
 
 package com.alesharik.webserver.module.http;
 
-import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
-import com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper;
-import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
-import com.alesharik.webserver.configuration.SubModule;
+import com.alesharik.webserver.module.http.server.ExecutorPool;
+import com.alesharik.webserver.module.http.server.socket.ServerSocketWrapper;
 import sun.misc.Cleaner;
 
 import java.io.IOException;
-import java.net.StandardSocketOptions;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -37,7 +34,7 @@ import java.util.Set;
  * Acceptor thread accepts new connections and publish them into {@link ExecutorPool},
  * You is free to use this class in your projects, but it isn't designed as public and it's API can be changed
  */
-public final class AcceptorThread extends Thread implements SubModule {
+public final class AcceptorThread extends Thread {
     private final ExecutorPool executorPool;
     private final Selector selector;
     private volatile boolean isRunning;
@@ -50,8 +47,7 @@ public final class AcceptorThread extends Thread implements SubModule {
             Cleaner.create(this, () -> {
                 try {
                     selector.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException ignored) {
                 }
             });
         } catch (IOException e) {
@@ -65,8 +61,6 @@ public final class AcceptorThread extends Thread implements SubModule {
      * @param wrapper server socket wrapper
      */
     public void handle(ServerSocketWrapper wrapper) {
-//        if(!wrapper.isRunning())
-//            return;
         wrapper.registerSelector(selector);
         selector.wakeup();
     }
@@ -89,23 +83,28 @@ public final class AcceptorThread extends Thread implements SubModule {
                     }
 
                     if(next.isAcceptable()) {
-                        SocketProvider.ServerSocketWrapper attachment = (SocketProvider.ServerSocketWrapper) next.attachment();
-                        SocketChannel socket = attachment.getServerSocket().accept();
-                        socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                        ServerSocketWrapper attachment = (ServerSocketWrapper) next.attachment();
+                        SocketChannel socket = attachment.getChannel().accept();
                         if(socket == null)
                             continue;
-                        if(!socket.finishConnect())
+                        if(!socket.finishConnect()) {
+                            System.err.println("Socket " + socket + " didn't finish connectiong in time!");
                             continue;
+                        }
 
                         SelectableChannel socketChannel = socket.configureBlocking(false);
                         executorPool.selectSocket(socketChannel, socket, attachment.getSocketManager());
                     }
                 }
                 keys.clear();
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        try {
+            selector.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -115,20 +114,13 @@ public final class AcceptorThread extends Thread implements SubModule {
         super.start();
     }
 
-    @Override
     public void shutdownNow() {
         isRunning = false;
         selector.wakeup();
     }
 
-    @Override
     public void shutdown() {
         isRunning = false;
         selector.wakeup();
-    }
-
-    @Override
-    public boolean isRunning() {
-        return isRunning;
     }
 }

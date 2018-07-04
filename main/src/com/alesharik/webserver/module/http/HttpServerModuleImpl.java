@@ -18,40 +18,52 @@
 
 package com.alesharik.webserver.module.http;
 
-import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerBundle;
-import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
-import com.alesharik.webserver.api.server.wrapper.server.HttpRequestHandler;
-import com.alesharik.webserver.api.server.wrapper.server.HttpServerModule;
-import com.alesharik.webserver.api.server.wrapper.server.ServerSocketWrapper;
-import com.alesharik.webserver.api.server.wrapper.server.mx.ExecutorPoolMXBean;
-import com.alesharik.webserver.api.server.wrapper.server.mx.HttpServerStatistics;
+import com.alesharik.webserver.api.name.NamedManager;
 import com.alesharik.webserver.api.statistics.AtomicCounter;
 import com.alesharik.webserver.api.statistics.AverageCounter;
 import com.alesharik.webserver.api.statistics.BasicAverageCounter;
 import com.alesharik.webserver.api.statistics.Counter;
-import com.alesharik.webserver.daemon.annotation.Shutdown;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationElement;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
+import com.alesharik.webserver.extension.module.ConfigurationError;
+import com.alesharik.webserver.extension.module.Configure;
 import com.alesharik.webserver.extension.module.Module;
+import com.alesharik.webserver.extension.module.Shutdown;
 import com.alesharik.webserver.extension.module.ShutdownNow;
 import com.alesharik.webserver.extension.module.Start;
-import com.alesharik.webserver.extension.module.layer.Layer;
-import lombok.AllArgsConstructor;
+import com.alesharik.webserver.extension.module.layer.meta.SubModuleAdapter;
+import com.alesharik.webserver.extension.module.layer.meta.SubModuleMetaFactory;
+import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
+import com.alesharik.webserver.internals.instance.ClassInstantiator;
+import com.alesharik.webserver.module.http.bundle.HttpBundle;
+import com.alesharik.webserver.module.http.bundle.HttpHandlerBundle;
+import com.alesharik.webserver.module.http.server.ExecutorPool;
+import com.alesharik.webserver.module.http.server.HttpRequestHandler;
+import com.alesharik.webserver.module.http.server.HttpServer;
+import com.alesharik.webserver.module.http.server.mx.ExecutorPoolMXBean;
+import com.alesharik.webserver.module.http.server.mx.HttpServerStatistics;
+import com.alesharik.webserver.module.http.server.socket.ServerSocketWrapper;
 import lombok.Getter;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.alesharik.webserver.extension.module.ConfigurationUtils.*;
 
 /**
  * Server MXBean shows after server start
  */
-@Module("http-server")//todo rewrite
-public final class HttpServerModuleImpl implements HttpServerModule {
-    private final Set<ServerSocketWrapper> wrappers;
-    private final Set<HttpHandlerBundle> bundles;
+@Module(value = "http-server", autoInvoke = false)
+public final class HttpServerModuleImpl implements HttpServer {
+    private final List<ServerSocketWrapper> wrappers = new CopyOnWriteArrayList<>();
+    private final List<HttpHandlerBundle> bundles = new CopyOnWriteArrayList<>();
     private final HttpServerStatisticsImpl httpServerStatistics = new HttpServerStatisticsImpl();
     private final List<String> addons = new ArrayList<>();
 
@@ -64,154 +76,152 @@ public final class HttpServerModuleImpl implements HttpServerModule {
 
     private volatile AcceptorThread acceptorThread;
     private volatile SelectorContextImpl.Factory factory;
-    private MainLayerImpl mainLayer;
 
-    public HttpServerModuleImpl() {
-        wrappers = new CopyOnWriteArraySet<>();
-        bundles = new CopyOnWriteArraySet<>();
+    @Override
+    public List<ServerSocketWrapper> getServerSocketWrappers() {
+        return wrappers;
     }
 
     @Override
-    public Set<ServerSocketWrapper> getServerSocketWrappers() {
-        return Collections.unmodifiableSet(wrappers);
-    }
-
-    @Override
-    public Set<HttpHandlerBundle> getBundles() {
-        return Collections.unmodifiableSet(bundles);
+    public List<HttpHandlerBundle> getBundles() {
+        return bundles;
     }
 
     @Override
     public void addHttpHandlerBundle(HttpHandlerBundle bundle) {
         bundles.add(bundle);
     }
-//
-//    @Override
-//    public void parse(@Nullable Element configNode) {
-//        if(configNode == null)
-//            throw new ConfigurationParseError("HttpServer configuration must have configuration!");
-//
-//        String groupName = getString("group", configNode, false);
-//        if(groupName == null)
-//            groupName = getName();
-//
-//
-//        Element poolConfig = getXmlElement("pool", configNode, true);
-//
-//        String poolName = getString("name", poolConfig, true);
-//        Class<?> poolClass = NamedManager.getClassForNameAndType(poolName, ExecutorPool.class);
-//        if(poolClass == null)
-//            throw new ConfigurationParseError("Server doesn't have ExecutorPool with name " + poolName + "!");
-//
-//        int selectorCount = getInteger("selector", poolConfig, true, 10);
-//        int workerCount = getInteger("worker", poolConfig, true, 10);
-//
-//        ExecutorPool executorPool;
-//
-//        ThreadGroup threadGroup = new ThreadGroup(groupName);
-//        try {
-//            Constructor<?> constructor = poolClass.getDeclaredConstructor(int.class, int.class, ThreadGroup.class);
-//            constructor.setAccessible(true);
-//            executorPool = (ExecutorPool) constructor.newInstance(selectorCount, workerCount, threadGroup);
-//        } catch (NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
-//            throw new ConfigurationParseError(e);
-//        }
-//
-//
-//        Set<ServerSocketWrapper> wrappers = new HashSet<>();
-//        getElementList("wrappers", "wrapper", configNode, true).forEach((Element element) -> {
-//            String name = getString("name", element, true);
-//            Class<?> clazz = NamedManager.getClassForName(name);
-//            if(clazz == null)
-//                throw new ConfigurationParseError("Server doesn't have ServerSocketWrapper with name " + name + "!");
-//
-//            ServerSocketWrapper wrapper;
-//            try {
-//                wrapper = (ServerSocketWrapper) clazz.newInstance();
-//            } catch (InstantiationException | IllegalAccessException e) {
-//                throw new ConfigurationParseError(e);
-//            }
-//            Element config = getXmlElement("configuration", element, false);
-//
-//            wrapper.setExecutorPool(executorPool);
-//            wrapper.parseConfig(config);
-//
-//            wrappers.add(wrapper);
-//        });
-//
-//        this.wrappers.clear();
-//        this.wrappers.addAll(wrappers);
-//        this.pool = executorPool;
-//        this.serverThreadGroup = threadGroup;
-//
-//        this.bundles.clear();
-//        getList("bundles", "bundle", configNode, true)
-//                .stream()
-//                .map(s -> {
-//                    Class<?> clazz = HttpBundleManager.getBundleClass(s);
-//                    if(clazz == null)
-//                        throw new ConfigurationParseError("Server doesn't have HttpHandlerBundle with name " + s + "!");
-//                    return clazz;
-//                })
-//                .map(aClass -> {
-//                    HttpBundle annotation = aClass.getAnnotation(HttpBundle.class);
-//                    try {
-//                        return Pair.of(aClass, (HttpBundle.Condition) annotation.condition().newInstance());
-//                    } catch (InstantiationException | IllegalAccessException e) {
-//                        throw new ConfigurationParseError(e);
-//                    }
-//                })
-//                .filter(classHttpBundlePair -> classHttpBundlePair.getRight().allow(this))
-//                .map(classConditionPair -> {
-//                    try {
-//                        return (HttpHandlerBundle) classConditionPair.getLeft().newInstance();
-//                    } catch (InstantiationException | IllegalAccessException e) {
-//                        throw new ConfigurationParseError(e);
-//                    }
-//                })
-//                .forEach(bundles::add);
-//
-//        String handlerName = getString("handler", configNode, true);
-//        Class<?> handlerClazz = NamedManager.getClassForNameAndType(handlerName, HttpRequestHandler.class);
-//        if(handlerClazz == null)
-//            throw new ConfigurationParseError("Server doesn't have HttpRequestHandler with name " + handlerName + "!");
-//        HttpRequestHandler httpRequestHandler;
-//        try {
-//            Constructor<?> constructor = handlerClazz.getDeclaredConstructor(Set.class);
-//            constructor.setAccessible(true);
-//            httpRequestHandler = (HttpRequestHandler) constructor.newInstance(bundles);
-//        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-//            throw new ConfigurationParseError(e);
-//        }
-//
-//        addons.addAll(getList("addons", "addon", configNode, true));
-//
-//        this.handler = httpRequestHandler;
-//
-//        this.mainLayer = new MainLayerImpl(wrappers, pool);
-//        this.acceptorThread = new AcceptorThread(threadGroup, executorPool);
-//        this.factory = () -> new SelectorContextImpl(httpServerStatistics, httpRequestHandler, executorPool, addons);
-//    }
+
+    @Override
+    public void removeHttpHandlerBundle(HttpHandlerBundle bundle) {
+        bundles.remove(bundle);
+    }
+
+    @Configure
+    public void parse(ConfigurationTypedObject object, ScriptElementConverter converter) {
+        String groupName = getString("group", object.getElement("group"), converter)
+                .orElse("http-server");
+
+        ConfigurationObject pool = getObject("pool", object.getElement("pool"), converter)
+                .orElseThrow(() -> new ConfigurationError("pool can't be null!"));
+
+        String poolName = getString("name", pool.getElement("name"), converter)
+                .orElseThrow(() -> new ConfigurationError("pool name can't be null!"));
+        Class<?> poolClass = NamedManager.getClassForNameAndType(poolName, ExecutorPool.class);
+        if(poolClass == null)
+            throw new ConfigurationError("Pool " + poolName + " not found!");
+
+        int selectorCount = getInteger("selector", pool.getElement("selector"), converter)
+                .orElse(5);
+        int workerCount = getInteger("worker", pool.getElement("worker"), converter)
+                .orElse(10);
+
+        serverThreadGroup = new ThreadGroup(groupName);
+        try {
+            Constructor<?> constructor = poolClass.getDeclaredConstructor(int.class, int.class, ThreadGroup.class);
+            constructor.setAccessible(true);
+            this.pool = (ExecutorPool) constructor.newInstance(selectorCount, workerCount, serverThreadGroup);
+        } catch (NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            throw new ConfigurationError(e);
+        }
+
+        wrappers.clear();
+
+        getArray("wrappers", object.getElement("wrappers"), converter).ifPresent(configurationElements -> {
+            for(ConfigurationElement configurationElement : configurationElements) {
+                if(!(configurationElement instanceof ConfigurationObject))
+                    throw new ConfigurationError("element in wrappers must be an object!");
+                ConfigurationObject o = (ConfigurationObject) configurationElement;
+
+                String name = getString("name", o.getElement("name"), converter)
+                        .orElseThrow(() -> new ConfigurationError("wrapper name can't be null!"));
+
+                Class<?> clazz = NamedManager.getClassForNameAndType(name, ServerSocketWrapper.class);
+                ServerSocketWrapper wrapper = (ServerSocketWrapper) ClassInstantiator.instantiate(clazz);
+
+                wrapper.setExecutorPool(this.pool);
+                wrapper.parseConfig(
+                        getObject("configuration", o.getElement("configuration"), converter)
+                                .orElse(null)
+                        , converter);
+
+                wrappers.add(wrapper);
+            }
+        });
+
+        getArray("bundles", object.getElement("bundles"), converter).ifPresent(configurationElements -> {
+            for(ConfigurationElement configurationElement : configurationElements) {
+                getString("bundle", configurationElement, converter)
+                        .map(s -> {
+                            Class<?> clazz = HttpBundleManager.getBundleClass(s);
+                            if(clazz == null)
+                                throw new ConfigurationError("Server doesn't have HttpHandlerBundle with name " + s + "!");
+                            return clazz;
+                        })
+                        .map(aClass -> {
+                            HttpBundle annotation = aClass.getAnnotation(HttpBundle.class);
+                            return Pair.of(aClass, (HttpBundle.Condition) ClassInstantiator.instantiate(annotation.condition()));
+                        })
+                        .filter(classHttpBundlePair -> classHttpBundlePair.getRight().allow(this))
+                        .map(classConditionPair -> (HttpHandlerBundle) ClassInstantiator.instantiate(classConditionPair.getKey()))
+                        .ifPresent(bundles::add);
+
+            }
+        });
+
+        String handler = getString("handler", object.getElement("handler"), converter)
+                .orElseThrow(() -> new ConfigurationError("handler can't be null!"));
+        Class<?> handlerClazz = NamedManager.getClassForNameAndType(handler, HttpRequestHandler.class);
+        if(handlerClazz == null)
+            throw new ConfigurationError("Server doesn't have HttpRequestHandler with name " + handler + "!");
+        try {
+            Constructor<?> constructor = handlerClazz.getDeclaredConstructor(List.class);
+            constructor.setAccessible(true);
+            this.handler = (HttpRequestHandler) constructor.newInstance(bundles);
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new ConfigurationError(e);
+        }
+
+        getArray("addons", object.getElement("addons"), converter).ifPresent(configurationElements -> {
+            for(ConfigurationElement configurationElement : configurationElements)
+                getString("addon", configurationElement, converter)
+                        .ifPresent(addons::add);
+
+            acceptorThread = new AcceptorThread(serverThreadGroup, this.pool);
+            factory = () -> new SelectorContextImpl(httpServerStatistics, this.handler, this.pool, addons);
+        });
+    }
 
     @Start
     public void start() {
-        for(ServerSocketWrapper wrapper : this.wrappers) {
-            this.acceptorThread.handle(wrapper);
+        pool.setSelectorContexts(factory);
+        pool.start();
+        for(ServerSocketWrapper wrapper : wrappers) {
+            SubModuleAdapter subModuleAdapter = SubModuleMetaFactory.create(wrapper);
+            subModuleAdapter.start();
+            acceptorThread.handle(wrapper);
         }
         acceptorThread.start();
-        pool.setSelectorContexts(factory);
     }
 
     @Shutdown
     public void shutdown() {
         acceptorThread.shutdown();
-        httpServerStatistics.responseTime.reset();
+        for(ServerSocketWrapper wrapper : wrappers) {
+            SubModuleAdapter subModuleAdapter = SubModuleMetaFactory.create(wrapper);
+            subModuleAdapter.shutdown();
+        }
+        pool.shutdown();
     }
 
     @ShutdownNow
     public void shutdownNow() {
-        acceptorThread.shutdown();
-        httpServerStatistics.responseTime.reset();
+        acceptorThread.shutdownNow();
+        for(ServerSocketWrapper wrapper : wrappers) {
+            SubModuleAdapter subModuleAdapter = SubModuleMetaFactory.create(wrapper);
+            subModuleAdapter.shutdownNow();
+        }
+        pool.shutdownNow();
     }
 
     @Override
@@ -222,38 +232,6 @@ public final class HttpServerModuleImpl implements HttpServerModule {
     @Override
     public HttpServerStatistics getStatistics() {
         return httpServerStatistics;
-    }
-
-    @Layer("main")
-    private static final class MainLayerImpl {
-        private final ExecutorPool executorPool;
-        private final WrapperLayer wrappers;
-
-        public MainLayerImpl(Set<ServerSocketWrapper> wrappers, ExecutorPool executorPool) {
-            this.wrappers = new WrapperLayer(new ArrayList<>(wrappers));
-            this.executorPool = executorPool;
-        }
-
-        @AllArgsConstructor
-        @Layer("wrappers")
-        private static final class WrapperLayer {
-            private final List<ServerSocketWrapper> wrappers;
-
-            @Start
-            public void start() {
-                for(ServerSocketWrapper wrapper : wrappers) wrapper.start();
-            }
-
-            @Shutdown
-            public void shutdown() {
-                for(ServerSocketWrapper wrapper : wrappers) wrapper.shutdown();
-            }
-
-            @ShutdownNow
-            public void shutdownNow() {
-                for(ServerSocketWrapper wrapper : wrappers) wrapper.shutdownNow();
-            }
-        }
     }
 
     static final class HttpServerStatisticsImpl implements HttpServerStatistics {

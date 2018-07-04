@@ -32,6 +32,7 @@ import com.alesharik.webserver.extension.module.layer.SubModule;
 import com.alesharik.webserver.extension.module.layer.meta.LayerAdapter;
 import com.alesharik.webserver.extension.module.layer.meta.SubModuleAdapter;
 import com.alesharik.webserver.extension.module.meta.ModuleAdapter;
+import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
 
 import static org.mockito.Mockito.mock;
 
@@ -65,8 +66,8 @@ public class MockModule1 {
     }
 
     @Reload
-    public void reload(ConfigurationObject object) {
-        MOCK.reload((ConfigurationTypedObject) object, null);
+    public void reload(ConfigurationObject object, ScriptElementConverter converter) {
+        MOCK.reload((ConfigurationTypedObject) object, converter);
     }
 
     @Layer("main")

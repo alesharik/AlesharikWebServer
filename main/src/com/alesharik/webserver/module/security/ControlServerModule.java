@@ -28,7 +28,6 @@ import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketApp
 import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlugin;
 import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPluginListener;
 import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
-import com.alesharik.webserver.generators.ModularErrorPageGenerator;
 import com.alesharik.webserver.handlers.ControlHttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -60,7 +59,7 @@ public class ControlServerModule implements ControlServer {
 
         fileManager = new FileManager(new File("./serverDashboard"), FileManager.FileHoldingMode.HOLD_AND_CHECK);
 
-        ControlHttpHandler controlHttpHandler = new ControlHttpHandler(fileManager, (AdminDataStorageImpl) adminDataStorage, true, new File("./logs/request-log.log"), new ModularErrorPageGenerator(fileManager));
+        ControlHttpHandler controlHttpHandler = new ControlHttpHandler(fileManager, (AdminDataStorageImpl) adminDataStorage, true, new File("./logs/request-log.log"));
         httpServer.getServerConfiguration().addHttpHandler(controlHttpHandler);
         DashboardDataHolder dashboardDataHolder = XmlHelper.getDashboardDataHolder("dashboardDataHolder", configNode, true);
         List<String> webSocketPlugins = XmlHelper.getList("webSocketPlugins", "plugin", configNode, false);

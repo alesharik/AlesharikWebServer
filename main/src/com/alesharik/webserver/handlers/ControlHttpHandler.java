@@ -19,7 +19,6 @@
 package com.alesharik.webserver.handlers;
 
 import com.alesharik.webserver.api.MIMETypes;
-import com.alesharik.webserver.api.errorPageGenerators.ErrorPageGenerator;
 import com.alesharik.webserver.api.fileManager.FileManager;
 import com.alesharik.webserver.control.ControlRequestHandler;
 import com.alesharik.webserver.control.data.storage.AdminDataStorageImpl;
@@ -32,8 +31,6 @@ import org.glassfish.grizzly.http.Cookie;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
-import org.glassfish.grizzly.http.util.HttpStatus;
-import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +44,6 @@ public final class ControlHttpHandler extends HttpHandler {
     private final ControlRequestHandler requestHandler;
     private final FileManager fileManager;
     private final RequestHandlerList requestHandlerList;
-    private final ErrorPageGenerator errorPageGenerator;
 
     private final boolean logRequests;
     private NamedLogger logger;
@@ -55,8 +51,7 @@ public final class ControlHttpHandler extends HttpHandler {
     /**
      * @param logFile can be null
      */
-    public ControlHttpHandler(FileManager fileManager, AdminDataStorageImpl adminDataStorageImpl, boolean logRequests, File logFile, ErrorPageGenerator errorPageGenerator) {
-        this.errorPageGenerator = errorPageGenerator;
+    public ControlHttpHandler(FileManager fileManager, AdminDataStorageImpl adminDataStorageImpl, boolean logRequests, File logFile) {
         this.logRequests = logRequests;
         this.requestHandler = new ControlRequestHandler(adminDataStorageImpl);
         this.fileManager = fileManager;
@@ -92,7 +87,6 @@ public final class ControlHttpHandler extends HttpHandler {
             }
             response.finish();
         } catch (Exception e) {
-            writeInfernalServerErrorResponse(request, response, e, errorPageGenerator);
         }
     }
 
@@ -142,28 +136,6 @@ public final class ControlHttpHandler extends HttpHandler {
             response.setContentLength(bytes.length);
             response.getOutputStream().write(bytes);
         } else {
-            writeNotFoundResponse(request, response, errorPageGenerator);
-        }
-    }
-
-    static void writeNotFoundResponse(Request request, Response response, ErrorPageGenerator errorPageGenerator) throws IOException {
-        if(!response.isCommitted()) {
-            response.reset();
-            response.setContentType("text/html");
-            String responseText = errorPageGenerator.generate(request, 404, new String(HttpStatus.NOT_FOUND_404.getReasonPhraseBytes(), Charsets.ASCII_CHARSET), null, null);
-            response.setContentLength(responseText.length());
-            response.getWriter().append(responseText);
-        }
-    }
-
-    static void writeInfernalServerErrorResponse(Request request, Response response, Exception e, ErrorPageGenerator errorPageGenerator) throws IOException {
-        if(!response.isCommitted()) {
-            response.reset();
-
-            response.setContentType("text/html");
-            String responseText = errorPageGenerator.generate(request, 500, new String(HttpStatus.INTERNAL_SERVER_ERROR_500.getReasonPhraseBytes(), Charsets.ASCII_CHARSET), null, e);
-            response.setContentLength(responseText.length());
-            response.getWriter().append(responseText);
         }
     }
 }

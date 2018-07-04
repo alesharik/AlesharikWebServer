@@ -20,9 +20,10 @@ package com.alesharik.webserver.module.http;
 
 import com.alesharik.webserver.api.agent.classPath.ClassPathScanner;
 import com.alesharik.webserver.api.agent.classPath.ListenInterface;
-import com.alesharik.webserver.api.server.wrapper.bundle.HttpBundle;
-import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerBundle;
+import com.alesharik.webserver.api.agent.classPath.reload.UnloadClassLoaderHandler;
 import com.alesharik.webserver.logger.Prefixes;
+import com.alesharik.webserver.module.http.bundle.HttpBundle;
+import com.alesharik.webserver.module.http.bundle.HttpHandlerBundle;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.Nonnull;
@@ -50,6 +51,11 @@ public class HttpBundleManager {
             return;
 
         bundles.put(annotation.value(), bundle);
+    }
+
+    @UnloadClassLoaderHandler
+    static void listenUnload(ClassLoader loader) {
+        bundles.values().removeIf(aClass -> aClass.getClassLoader() == loader);
     }
 
     @Nullable

@@ -95,13 +95,13 @@ public class ModuleMetaFactory {
             method.setAccessible(true);
             try {
                 if(method.isAnnotationPresent(Configure.class)) {
-                    if(method.getParameterCount() != 1 || method.getParameterTypes()[0] != ConfigurationObject.class)
-                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Configure method in module MUST contains only one parameter - ConfigurationObject. Method: " + method.getName(), module.getClass());
+                    if(method.getParameterCount() != 2 || method.getParameterTypes()[0] != ConfigurationTypedObject.class || method.getParameterTypes()[1] != ScriptElementConverter.class)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Configure method in module MUST contains only 2 parameters - ConfigurationTypedObject and ScriptElementConverter. Method: " + method.getName(), module.getClass());
                     adapter.configure.add(LOOKUP.unreflect(method).bindTo(module));
                 }
                 if(method.isAnnotationPresent(Reload.class)) {
-                    if(method.getParameterCount() != 1 || method.getParameterTypes()[0] != ConfigurationObject.class)
-                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Reload method in module MUST contains only one parameter - ConfigurationObject. Method: " + method.getName(), module.getClass());
+                    if(method.getParameterCount() != 2 || method.getParameterTypes()[0] != ConfigurationTypedObject.class || method.getParameterTypes()[1] != ScriptElementConverter.class)
+                        throw new DevError("Unexpected method parameters in method " + method.getName(), "@Reload method in module MUST contains only 2 parameters - ConfigurationTypedObject and ScriptElementConverter. Method: " + method.getName(), module.getClass());
                     adapter.reload.add(LOOKUP.unreflect(method).bindTo(module));
                 }
                 if(method.isAnnotationPresent(Start.class)) {
@@ -217,10 +217,10 @@ public class ModuleMetaFactory {
             }
         }
 
-        private static void invoke(List<MethodHandle> handles, ConfigurationTypedObject object) {
+        private static void invoke(List<MethodHandle> handles, ConfigurationTypedObject object, ScriptElementConverter converter) {
             for(MethodHandle methodHandle : handles) {
                 try {
-                    methodHandle.invokeExact((ConfigurationObject) object);
+                    methodHandle.invokeExact((ConfigurationObject) object, converter);
                 } catch (Error e) {
                     throw e;
                 } catch (Throwable throwable) {
@@ -286,7 +286,7 @@ public class ModuleMetaFactory {
                 configure(object, converter);
                 start();
             } else
-                invoke(reload, object);
+                invoke(reload, object, converter);
         }
 
         @Override
@@ -300,7 +300,7 @@ public class ModuleMetaFactory {
             } catch (ConfigurationError e) {
                 throw new ConfigurationError(e.getMessage() + " module name: " + name, e.getCause());
             }
-            invoke(configure, object);
+            invoke(configure, object, converter);
             configured = true;
         }
 

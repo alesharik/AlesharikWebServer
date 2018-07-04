@@ -18,24 +18,25 @@
 
 package com.alesharik.webserver.module.http;
 
+import com.alesharik.webserver.api.cache.object.CachedObjectFactory;
 import com.alesharik.webserver.api.cache.object.Recyclable;
 import com.alesharik.webserver.api.cache.object.SmartCachedObjectFactory;
 import com.alesharik.webserver.api.memory.impl.ByteOffHeapVector;
-import com.alesharik.webserver.api.server.wrapper.addon.AddOn;
-import com.alesharik.webserver.api.server.wrapper.addon.AddOnSocketContext;
-import com.alesharik.webserver.api.server.wrapper.addon.AddOnSocketHandler;
-import com.alesharik.webserver.api.server.wrapper.http.HeaderManager;
-import com.alesharik.webserver.api.server.wrapper.http.Request;
-import com.alesharik.webserver.api.server.wrapper.http.Response;
-import com.alesharik.webserver.api.server.wrapper.http.header.ObjectHeader;
-import com.alesharik.webserver.api.server.wrapper.server.CloseSocketException;
-import com.alesharik.webserver.api.server.wrapper.server.ExecutorPool;
-import com.alesharik.webserver.api.server.wrapper.server.HttpRequestHandler;
-import com.alesharik.webserver.api.server.wrapper.server.SelectorContext;
-import com.alesharik.webserver.api.server.wrapper.server.Sender;
-import com.alesharik.webserver.api.server.wrapper.server.SocketProvider;
+import com.alesharik.webserver.module.http.addon.AddOn;
+import com.alesharik.webserver.module.http.addon.AddOnSocketContext;
+import com.alesharik.webserver.module.http.addon.AddOnSocketHandler;
+import com.alesharik.webserver.module.http.http.HttpStatus;
+import com.alesharik.webserver.module.http.http.Request;
+import com.alesharik.webserver.module.http.http.Response;
+import com.alesharik.webserver.module.http.server.CloseSocketException;
+import com.alesharik.webserver.module.http.server.ExecutorPool;
+import com.alesharik.webserver.module.http.server.HttpRequestHandler;
+import com.alesharik.webserver.module.http.server.SelectorContext;
+import com.alesharik.webserver.module.http.server.Sender;
+import com.alesharik.webserver.module.http.server.socket.ServerSocketWrapper;
+import com.alesharik.webserver.module.http.server.socket.SocketWriter;
 import lombok.Getter;
-import org.jctools.queues.atomic.MpscAtomicArrayQueue;
+import org.jctools.queues.atomic.MpscLinkedAtomicQueue;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,149 +48,136 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.util.Iterator;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 
-final class SelectorContextImpl implements SelectorContext {
-    private static final SmartCachedObjectFactory<Session> sessionFactory = new SmartCachedObjectFactory<>(Session::new);
+public final class SelectorContextImpl implements SelectorContext {
+    private static final int SESSION_BUFFER_SIZE;
+    private static final int MAX_MESSAGE_SIZE;
+
+    static {
+        if(System.getProperty("module.http.SESSION_BUFFER_SIZE") != null)
+            SESSION_BUFFER_SIZE = Integer.parseInt(System.getProperty("module.http.SESSION_BUFFER_SIZE"));
+        else
+            SESSION_BUFFER_SIZE = 16 * 1024;
+        if(System.getProperty("module.http.MAX_MESSAGE_SIZE") != null)
+            MAX_MESSAGE_SIZE = Integer.parseInt(System.getProperty("module.http.MAX_MESSAGE_SIZE"));
+        else
+            MAX_MESSAGE_SIZE = 512 * 1024 * 1024;
+    }
+
+    private final HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics;
+    private final HttpRequestHandler requestHandler;
+    private final ExecutorPool executorPool;
+    private final List<String> addons;
 
     private final Selector readSelector;
     private final Selector writeSelector;
-    private final AtomicLong counter;
-    private final MpscAtomicArrayQueue<Session> initQueue;
-    private final HttpServerModuleImpl.HttpServerStatisticsImpl statistics;
-    private final HttpRequestHandler requestHandler;
-    private final ExecutorPool executorPool;
-    private final AtomicBoolean isWriteLocked = new AtomicBoolean(false);
-    private final List<String> addons;
 
-    public SelectorContextImpl(HttpServerModuleImpl.HttpServerStatisticsImpl statistics, HttpRequestHandler requestHandler, ExecutorPool executorPool, List<String> addons) {
-        this.statistics = statistics;
+    private final AtomicInteger socketCount = new AtomicInteger(0);
+    private final MpscLinkedAtomicQueue<Session> init = new MpscLinkedAtomicQueue<>();
+    private final AtomicBoolean writeLock = new AtomicBoolean(false);
+
+    public SelectorContextImpl(HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics, HttpRequestHandler requestHandler, ExecutorPool executorPool, List<String> addons) {
+        this.serverStatistics = serverStatistics;
         this.requestHandler = requestHandler;
         this.executorPool = executorPool;
         this.addons = addons;
+
         try {
             readSelector = Selector.open();
             writeSelector = Selector.open();
-            initQueue = new MpscAtomicArrayQueue<>(2048);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        counter = new AtomicLong(0);
     }
 
     @Override
     public long getSocketCount() {
-        return counter.get();
+        return socketCount.get();
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public void registerSocket(SelectableChannel socket, SocketChannel socketChannel, SocketProvider.SocketManager manager) {
+    public void registerSocket(SelectableChannel socket, SocketChannel socketChannel, ServerSocketWrapper.SocketManager manager) {
         if(!socket.isOpen())
             return;
+        Session session = Session.create(socketChannel, manager, requestHandler, executorPool, serverStatistics, addons, writeSelector);
+
+        while(!writeLock.compareAndSet(false, true))
+            while(writeLock.get()) ;
         try {
-            statistics.aliveConnections.incrementAndGet();
+            init.add(session);
+            readSelector.wakeup();
             try {
-                Session fill = sessionFactory.getInstance().fill(manager, socketChannel, counter, requestHandler, executorPool, statistics, writeSelector);
-                fill.fillAddOn(addons);
-                isWriteLocked.set(true);
-                initQueue.add(fill);
-                readSelector.wakeup();
-                socket.register(readSelector, SelectionKey.OP_READ, fill);
-            } finally {
-                isWriteLocked.set(false);
+                socket.register(readSelector, SelectionKey.OP_READ, session);
+                socketCount.incrementAndGet();
+            } catch (ClosedChannelException e) {
+                init.remove(session);
             }
-            counter.incrementAndGet();
-        } catch (ClosedChannelException ignored) {
-            //Socket closed - ignore it
+        } finally {
+            writeLock.set(false);
         }
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public void iteration() {
         try {
-
             int ops = readSelector.select();
+            if(writeLock.get())
+                while(writeLock.get()) ;
 
-            if(isWriteLocked.get())
-                while(isWriteLocked.get()) ;
-
-            Session s;
-            while((s = initQueue.poll()) != null) {
-                if(!s.init()) {
-                    s.close();
-                    sessionFactory.putInstance(s);
+            Session session;
+            while((session = init.poll()) != null) {
+                if(!session.init()) {
+                    session.close();
+                    Session.recycle(session);
                 }
             }
 
             if(writeSelector.selectNow() > 0)
-                handleWriteOps();
+                handleWrite();
 
             if(ops == 0)
                 return;
 
-            Set<SelectionKey> readKeys = readSelector.selectedKeys();
-            Iterator<SelectionKey> iterator = readKeys.iterator();
-            while(iterator.hasNext()) {
-                SelectionKey next = iterator.next();
-                if(!next.isValid()) {
-                    iterator.remove();
+            Set<SelectionKey> selectionKeys = readSelector.selectedKeys();
+            for(SelectionKey selectionKey : selectionKeys) {
+                if(!selectionKey.isValid())
                     continue;
-                }
 
-                if(next.isReadable()) {
-                    Session attachment = (Session) next.attachment();
-                    if(!attachment.read()) {
-                        next.cancel();
-                        iterator.remove();
-                        attachment.close();
-                        attachment.check();
-                        attachment.clearOnExit(sessionFactory);
+                if(selectionKey.isReadable()) {
+                    Session s = (Session) selectionKey.attachment();
+                    if(!s.read()) {
+                        selectionKey.cancel();
+                        s.flushRemainingData();
+                        s.close();
+                        Session.recycle(s);
                     }
                 }
             }
-            readKeys.clear();
-        } catch (Exception e) {
+            selectionKeys.clear();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * Must be executed ONLY after {@link Selector#selectNow()}
-     */
-    private void handleWriteOps() {
+    private void handleWrite() {
         Set<SelectionKey> selectionKeys = writeSelector.selectedKeys();
-        Iterator<SelectionKey> iterator = selectionKeys.iterator();
-        while(iterator.hasNext()) {
-            SelectionKey next = iterator.next();
-            if(!next.isValid()) {
-                iterator.remove();
+        for(SelectionKey selectionKey : selectionKeys) {
+            if(!selectionKey.isValid())
                 continue;
-            }
-
-            DelayedWrite send = (DelayedWrite) next.attachment();
-            try {
-                boolean usable = false;
-                while(send.getSend().remaining() > 0) {
-                    if(send.getSocketChannel().write(send.getSend()) == 0) {
-                        send.getSocketChannel().register(writeSelector, SelectionKey.OP_WRITE, send);
-                        usable = true;
-                        break;
-                    }
-                }
-                if(!usable)
-                    DelayedWrite.factory.putInstance(send);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            DelayedWrite write = (DelayedWrite) selectionKey.attachment();
+            write.write(writeSelector);
+            DelayedWrite.recycle(write);
         }
+        selectionKeys.clear();
     }
 
     @Override
@@ -197,17 +185,52 @@ final class SelectorContextImpl implements SelectorContext {
         readSelector.wakeup();
     }
 
+    @Override
+    public void close() {
+        try {
+            readSelector.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            writeSelector.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Getter
     private static final class DelayedWrite implements Recyclable {
-        public static final SmartCachedObjectFactory<DelayedWrite> factory = new SmartCachedObjectFactory<>(DelayedWrite::new);
+        public static final SmartCachedObjectFactory<DelayedWrite> FACTORY = new SmartCachedObjectFactory<>(DelayedWrite::new);
 
         private volatile ByteBuffer send;
         private volatile SocketChannel socketChannel;
 
-        public DelayedWrite fill(ByteBuffer byteBuffer, SocketChannel socketChannel) {
-            this.send = byteBuffer;
-            this.socketChannel = socketChannel;
-            return this;
+        public static DelayedWrite create(ByteBuffer send, SocketChannel socket) {
+            DelayedWrite write = FACTORY.getInstance();
+            write.send = send;
+            write.socketChannel = socket;
+            return write;
+        }
+
+        public static void recycle(DelayedWrite write) {
+            FACTORY.putInstance(write);
+        }
+
+        public void write(Selector writeSelector) {
+            if(!socketChannel.isOpen())
+                return;
+
+            try {
+                while(send.remaining() > 0) {
+                    if(socketChannel.write(send) == 0) {
+                        DelayedWrite write = create(send, socketChannel);
+                        socketChannel.register(writeSelector, SelectionKey.OP_WRITE, write);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -217,237 +240,104 @@ final class SelectorContextImpl implements SelectorContext {
         }
     }
 
-    private static final class Session implements Recyclable, Sender, AddOnSocketContext {
-        private static final ByteOffHeapVector data = ByteOffHeapVector.instance();
-        private static final Charset CHARSET = Charset.forName("ISO-8859-1");
+    private static final class Session implements Recyclable, Sender, SocketWriter, AddOnSocketContext {
+        private static final ByteOffHeapVector vector = ByteOffHeapVector.instance();
+        private static final CachedObjectFactory<Session> FACTORY = new SmartCachedObjectFactory<>(Session::new);
 
-        private final ByteBuffer byteBuffer;
-        private final Map<String, Object> params = new ConcurrentHashMap<>();
+        private final ByteBuffer buffer = ByteBuffer.allocateDirect(SESSION_BUFFER_SIZE);
+        private final Map<String, Object> params = new HashMap<>();
+        private SocketChannel socket;
+        private ServerSocketWrapper.SocketManager socketManager;
+        private int messageSize;
+        private long tempBuffer;
+        private State state;
+        private Request.Builder request;
+        private int bodyLength = -1;
+        private byte[] buf = new byte[4096];
 
-        private volatile SocketProvider.SocketManager socketManager;
-        private volatile SocketChannel socketChannel;
-        private volatile long time;
-        private volatile long vector;
-        private volatile AtomicLong counter;
-        private volatile HttpRequestHandler requestHandler;
-        private volatile ExecutorPool executorPool;
-        private volatile HttpServerModuleImpl.HttpServerStatisticsImpl statistics;
-        private volatile Selector writeSelector;
-        private volatile AtomicReference<State> state;
-        private volatile Request.Builder builder;
+        private AddOn addOn;
+        private AddOnSocketHandler addOnSocketHandler;
+        private Request handshakeRequest;
 
-        private volatile SmartCachedObjectFactory<Session> deleteAuto;
+        private HttpRequestHandler requestHandler;
+        private ExecutorPool executorPool;
+        private HttpServerModuleImpl.HttpServerStatisticsImpl statistics;
+        private List<String> addons;
+        private Selector writeSelector;
 
-        private volatile AddOnSocketHandler socketHandler = null;
-        private volatile AddOn addOn;
-        private volatile List<String> addons;
-
-        public Session() {
-            byteBuffer = ByteBuffer.allocate(2048);
+        public static Session create(SocketChannel socketChannel, ServerSocketWrapper.SocketManager manager, HttpRequestHandler requestHandler, ExecutorPool executorPool, HttpServerModuleImpl.HttpServerStatisticsImpl statistics, List<String> addons, Selector writeSelector) {
+            Session session = FACTORY.getInstance();
+            session.socket = socketChannel;
+            session.socketManager = manager;
+            session.tempBuffer = vector.allocate();
+            session.requestHandler = requestHandler;
+            session.executorPool = executorPool;
+            session.statistics = statistics;
+            session.writeSelector = writeSelector;
+            session.addons = addons;
+            return session;
         }
 
-        public Session fillAddOn(List<String> addons) {
-            this.addons = addons;
-            return this;
-        }
-
-        public Session fill(SocketProvider.SocketManager manager, SocketChannel socketChannel, AtomicLong counter, HttpRequestHandler httpRequestHandler, ExecutorPool executorPool, HttpServerModuleImpl.HttpServerStatisticsImpl serverStatistics, Selector readSelector) {
-            this.socketManager = manager;
-            this.socketChannel = socketChannel;
-            this.vector = data.allocate();
-            this.counter = counter;
-            this.requestHandler = httpRequestHandler;
-            this.executorPool = executorPool;
-            this.statistics = serverStatistics;
-            this.writeSelector = readSelector;
-            this.state = new AtomicReference<>(State.NOTHING);
-            return this;
-        }
-
-        public void clearOnExit(SmartCachedObjectFactory<Session> sessionSmartCachedObjectFactory) {
-            this.deleteAuto = sessionSmartCachedObjectFactory;
-        }
-
-        public boolean canDelete() {
-            return this.deleteAuto == null;
-        }
-
-        public boolean init() {
-            try {
-                socketManager.initSocket(socketChannel);
-                time = System.currentTimeMillis();
-                return true;
-            } catch (CloseSocketException e) {
-                return false;
-            }
-        }
-
-        /**
-         * Check automatically except closed
-         *
-         * @return false if socket closed
-         */
-        public boolean read() {
-            if(socketManager.hasCustomRW(socketChannel)) {
-                try {
-                    byte[] read = socketManager.read(socketChannel);
-                    if(read.length > 0) {
-                        vector = data.write(vector, read);
-                        check();
-                    }
-                    return true;
-                } catch (CloseSocketException e) {
-                    return false;
-                }
-            } else {
-                try {
-                    byteBuffer.position(0);
-                    int nRead;
-                    while((nRead = socketChannel.read(byteBuffer)) == 2048) {
-                        vector = data.write(vector, byteBuffer.array());
-                        byteBuffer.clear();
-                    }
-
-                    if(nRead == -1)
-                        return false;
-
-                    if(nRead > 0) {
-                        vector = data.write(vector, byteBuffer.array(), byteBuffer.position() - nRead, nRead);
-                        check();
-                    }
-                    return true;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return false;
-                }
-            }
-        }
-
-        /**
-         * Return true if request was published
-         */
-        public boolean check() {
-            if(data.size(vector) == 0)
-                return false;
-
-            if(socketHandler != null) {
-                requestHandler.handleMessageTask(() -> socketHandler.handle(data.cut(vector, (int) Math.min(data.size(vector), Integer.MAX_VALUE)), this), executorPool, addOn, this);
-                return true;
-            }
-
-            String str = new String(data.toByteArray(vector), CHARSET);
-            while(str.startsWith("\r\n"))
-                str = str.replaceFirst("\r\n", "");
-
-            if(builder == null || this.state.get() == State.NOTHING) { //Parse first line
-                int firstLine = str.indexOf("\r\n");
-                if(firstLine == -1)
-                    return false;
-                builder = Request.Builder.start(str.substring(0, firstLine));
-                this.state.set(State.HEADERS);
-                str = str.substring(firstLine);
-
-                data.free(vector);
-                this.vector = data.fromByteArray(str.getBytes(CHARSET));
-
-                builder.withInfo(((InetSocketAddress) socketChannel.socket().getRemoteSocketAddress()), socketChannel.socket().getLocalAddress(), socketManager.isSecure(socketChannel));
-            }
-
-            int headerEnd = str.indexOf("\r\n\r\n");
-            if(headerEnd == -1)
-                headerEnd = str.length();
-            if(!str.isEmpty() && this.state.get() == State.HEADERS) {
-                builder.withHeaders(str.substring(0, headerEnd));
-                str = str.substring(headerEnd);
-                this.state.set(State.ALL);
-                data.free(vector);
-                this.vector = data.fromByteArray(str.getBytes(CHARSET));
-            }
-
-            if(this.state.get() == State.ALL) { //Parse body
-                if(!socketChannel.isOpen()) {
-                    //Ok :(
-                    publish();
-                    return true;
-                }
-
-                if(builder.containsHeader("Content-Length")) {//ALL REQUESTS WITH MESSAGE BODY MUST CONTAINS VALID Content-Length HEADER
-                    @SuppressWarnings("unchecked")
-                    long length = builder.getHeader(HeaderManager.getHeaderByName("Content-Length", ObjectHeader.class), Long.class);
-                    if(data.size(vector) >= length) {
-                        long last = data.size(vector) - length;
-                        byte[] bytes = data.toByteArray(vector);
-                        if(length > Integer.MAX_VALUE)
-                            System.err.println("Skipping bytes from " + socketChannel.socket().getRemoteSocketAddress().toString());
-                        if(length > 0) {
-                            byte[] bodyBytes = new byte[(int) length];
-                            System.arraycopy(bytes, (int) last, bodyBytes, 0, (int) length);
-                            builder.withBody(bodyBytes);
-                            data.clear(vector);
-                            data.write(vector, bytes, (int) last, (int) length);
-                        }
-                        publish();
-                        return true;
-                    }
-                } else if(str.contains("\r\n\r\n")) {
-                    int index = str.indexOf("\r\n\r\n");
-                    if(index != -1) {
-//                        if(builder.containsHeader(""))//TODO use Content-Type!
-//                            builder.withBody(str.substring(0, index).getBytes());
-                        str = str.substring(index + 4);
-                    }
-                    data.free(vector);
-                    this.vector = data.fromByteArray(str.getBytes(CHARSET));
-                    publish();
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private void publish() {
-            statistics.newRequest();
-            requestHandler.handleRequest(builder, executorPool, this);
-            builder = null;
-            this.state.set(Session.State.NOTHING);
+        public static void recycle(Session session) {
+            FACTORY.putInstance(session);
         }
 
         @Override
-        public void writeBytes(@Nonnull byte[] byteBuffer) {
-            if(socketManager.hasCustomRW(socketChannel)) {
-                try {
-                    socketManager.write(socketChannel, byteBuffer);
-                } catch (CloseSocketException e) {
-                    close();
-                }
-            } else {
-                ByteBuffer bb = ByteBuffer.wrap(byteBuffer);
-                try {
-                    while(bb.remaining() > 0) {
-                        if(socketChannel.write(bb) == 0) {
-                            socketChannel.register(writeSelector, SelectionKey.OP_WRITE, DelayedWrite.factory.getInstance().fill(bb, socketChannel));
-                            return;
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    close();
-                }
+        public void recycle() {
+            socket = null;
+            socketManager = null;
+            buffer.clear();
+            messageSize = 0;
+            vector.clear(tempBuffer);
+            tempBuffer = 0;
+            requestHandler = null;
+            addOnSocketHandler = null;
+            addOn = null;
+            executorPool = null;
+            state = State.EMPTY;
+            bodyLength = -1;
+            statistics = null;
+            addons = null;
+            params.clear();
+            if(handshakeRequest != null && handshakeRequest instanceof Request.Builder)
+                Request.Builder.delete((Request.Builder) handshakeRequest);
+            handshakeRequest = null;
+        }
+
+        public boolean init() {
+            if(!socket.isOpen())
+                return false;
+            try {
+                socketManager.init(socket);
+                return true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        @Override
+        public void writeBytes(@Nonnull ByteBuffer byteBuffer) {
+            try {
+                socketManager.write(socket, byteBuffer, this);
+            } catch (CloseSocketException e) {
+                close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
         @Nonnull
         @Override
         public SocketChannel getChannel() {
-            return socketChannel;
+            return socket;
         }
 
         @Override
         public void setParameter(@Nonnull String name, @Nullable Object o) {
             if(o == null)
                 params.remove(name);
-            else
-                params.put(name, o);
+            params.put(name, o);
         }
 
         @Nullable
@@ -457,15 +347,9 @@ final class SelectorContextImpl implements SelectorContext {
         }
 
         public void close() {
-            if(!socketChannel.isOpen())
-                return;
             try {
-                if(socketHandler != null)
-                    socketHandler.close(this);
-                counter.decrementAndGet();
-                statistics.aliveConnections.decrementAndGet();
-                socketManager.listenSocketClose(socketChannel);
-                socketChannel.close();
+                socketManager.close(socket);
+                socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -473,101 +357,247 @@ final class SelectorContextImpl implements SelectorContext {
 
         @Override
         public Request getHandshakeRequest() {
-            return null;
+            return handshakeRequest;
         }
 
-        @Override
-        public void recycle() {
-            socketManager = null;
-            socketChannel = null;
-            time = 0;
-            byteBuffer.clear();
-            data.free(vector);
-            vector = 0;
-            counter = null;
-            requestHandler = null;
-            executorPool = null;
-            statistics = null;
-            writeSelector = null;
-            state = null;
-            builder = null;
-            deleteAuto = null;
-            addOn = null;
-            socketHandler = null;
-            addons = null;
-            params.clear();
-        }
-
-        @Override
-        public void send(@Nullable Request request, Response response) {
-            if(socketChannel == null || !socketChannel.isOpen())
-                return;
-
-            byte[] toSend = response.toByteArray();
-            if(socketManager.hasCustomRW(socketChannel)) {
+        public boolean read() {
+            while(buffer.remaining() == SESSION_BUFFER_SIZE) {
+                buffer.clear();
                 try {
-                    socketManager.write(socketChannel, toSend);
+                    socketManager.read(socket, buffer);
                 } catch (CloseSocketException e) {
-                    close();
-                }
-            } else {
-                ByteBuffer byteBuffer = ByteBuffer.wrap(toSend);
-                try {
-                    while(byteBuffer.remaining() > 0) {
-                        if(socketChannel.write(byteBuffer) == 0) {
-                            socketChannel.register(writeSelector, SelectionKey.OP_WRITE, DelayedWrite.factory.getInstance().fill(byteBuffer, socketChannel));
-                            Response.delete(response);
-                            statistics.addResponseTimeAvg(System.currentTimeMillis() - response.getCreationTime());
-                            return;
-                        }
-                    }
+                    return false;
                 } catch (IOException e) {
                     e.printStackTrace();
-                    close();
+                    return false;
+                }
+                if(!incrementAndCheckMessageSize(buffer.remaining()))
+                    return false;
+                while(buffer.hasRemaining())
+                    if(!process())
+                        return false;
+            }
+            return true;
+        }
+
+        private boolean process() {
+            if(addOnSocketHandler != null) {
+                requestHandler.handleMessageTask(() -> addOnSocketHandler.handle(buffer.duplicate(), this), executorPool, addOn, this);
+                return true;
+            }
+
+            if(state == State.EMPTY) {
+                while(buffer.hasRemaining()) {//Cut empty lines at start
+                    char c = buffer.getChar();
+                    if(c != '\n' && c != '\r') {
+                        state = State.FIRST_LINE;
+                        vector.write(tempBuffer, Character.toString(c).getBytes(StandardCharsets.ISO_8859_1));
+                        break;
+                    }
                 }
             }
-//
-//            if(((request.getHttpVersion() == HttpVersion.HTTP_1_0 || request.getHttpVersion() == HttpVersion.HTTP_0_9) && !request.containsHeader("Connection: keep-alive")) || request.containsHeader("Connection: close")) {
-//                close();
-//            }
+
+            if(state == State.FIRST_LINE) {
+                StringBuilder firstLine = new StringBuilder();
+                if(vector.size(tempBuffer) > 0) {
+                    firstLine.append(new String(vector.toByteArray(tempBuffer), StandardCharsets.ISO_8859_1));
+                    vector.clear(tempBuffer);
+                }
+                if(!firstLine.toString().endsWith("\r")) {
+                    while(buffer.hasRemaining()) {
+                        char c = buffer.getChar();
+                        firstLine.append(c);
+                        if(c == '\r')
+                            break;
+                    }
+                }
+
+                if(!buffer.hasRemaining()) {
+                    vector.write(tempBuffer, firstLine.toString().getBytes(StandardCharsets.ISO_8859_1));
+                } else {
+                    char c = buffer.getChar();
+                    if(c != '\n')
+                        return false;
+                    firstLine.append(c);
+
+                    String first = firstLine.toString();
+                    if(!first.endsWith("\r\n"))
+                        throw new RuntimeException("WAT");
+
+                    request = Request.Builder.start(first)
+                            .withInfo((InetSocketAddress) socket.socket().getRemoteSocketAddress(), socket.socket().getLocalAddress(), socketManager.isSecure(socket));
+                    state = State.HEADERS;
+                }
+            }
+            if(state == State.HEADERS) {
+                StringBuilder headerBuilder = new StringBuilder();
+                if(vector.size(tempBuffer) > 0) {
+                    headerBuilder.append(new String(vector.toByteArray(tempBuffer), StandardCharsets.ISO_8859_1));
+                    vector.clear(tempBuffer);
+                }
+                while(buffer.hasRemaining()) {
+                    char c = buffer.getChar();
+                    headerBuilder.append(c);
+                    if(c == '\n' && headerBuilder.charAt(headerBuilder.length() - 1) == '\r') {//End found
+                        String header = headerBuilder.toString();
+                        headerBuilder.setLength(0);
+                        if(header.equals("\r\n")) {//Body start
+                            request.buildHeaders();
+                            state = State.BODY;
+                            break;
+                        } else
+                            request.withHeader(header);
+                    }
+                }
+                if(headerBuilder.length() > 0)
+                    vector.write(tempBuffer, headerBuilder.toString().getBytes(StandardCharsets.ISO_8859_1));
+            }
+            if(state == State.BODY) {
+                if(bodyLength == -1) {
+                    long length = request.getHeader("Content-Length");
+                    //TODO check message size
+                    bodyLength = (int) length;
+                }
+                int nRead = (int) Math.min(bodyLength - vector.size(tempBuffer), buffer.remaining());
+                while(nRead > 0) {
+                    int read = Math.min(buf.length, nRead);
+                    buffer.get(buf, 0, read);
+                    nRead -= read;
+                    vector.write(tempBuffer, buf, 0, read);
+                }
+                if(vector.size(tempBuffer) == bodyLength) {
+                    request.withBody(vector.toByteArray(tempBuffer));
+                    vector.clear(tempBuffer);
+                    state = State.END;
+                } else if(vector.size(tempBuffer) > bodyLength)
+                    throw new RuntimeException("WAT");
+            }
+            if(state == State.END) {
+                statistics.newRequest();
+                try {
+                    requestHandler.handleRequest(request, executorPool, this);
+                } catch (CloseSocketException e) {
+                    return false;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                request = null;
+                messageSize = 0;
+                state = State.EMPTY;
+            }
+            return true;
+        }
+
+        public void flushRemainingData() {
+            while(buffer.hasRemaining())
+                if(!process())
+                    return;
+        }
+
+        @Override
+        public void send(Request request, Response response) {
+            if(!socket.isOpen()) {
+                System.err.println("Socket closed! Ignoring response...");
+                return;
+            }
+
+            sendInternal(response);
+
             if(response.isUpgraded()) {
                 if(!addons.contains(response.getUpgrade())) {
                     System.err.println("AddOn is not registered! Name: " + response.getUpgrade());
+                    Response.delete(response);
+                    sendInternalServerError();
+                    if(request instanceof Request.Builder)
+                        Request.Builder.delete((Request.Builder) request);
                     return;
                 }
                 AddOn addOn = AddOnManager.getAddOn(response.getUpgrade());
                 if(addOn == null) {
                     System.err.println("AddOn with name not found! Name: " + response.getUpgrade());
+                    Response.delete(response);
+                    sendInternalServerError();
+                    if(request instanceof Request.Builder)
+                        Request.Builder.delete((Request.Builder) request);
                     return;
                 }
+                handshakeRequest = request;
                 AddOnSocketHandler handler = requestHandler.getAddOnSocketHandler(request, executorPool, addOn);
-                this.socketHandler = handler;
+                this.addOnSocketHandler = handler;
                 this.addOn = addOn;
                 handler.init(this);
+            } else {
+                if(request instanceof Request.Builder)
+                    Request.Builder.delete((Request.Builder) request);
             }
 
             statistics.addResponseTimeAvg(System.currentTimeMillis() - response.getCreationTime());
             if(response.getResponseCode() > 499 && response.getResponseCode() < 600)
                 statistics.newError();
             Response.delete(response);
-            if(request instanceof Request.Builder)
-                Request.Builder.delete((Request.Builder) request);
-
-            if(deleteAuto != null)
-                deleteAuto.putInstance(this);
-
 
         }
 
-        enum State {
-            NOTHING,
-            HEADERS,
-            ALL,
-            END;
+        protected void sendInternalServerError() {
+            Response r = Response.getResponse();
+            r.respond(HttpStatus.INTERNAL_SERVER_ERROR_500);
+            sendInternal(r);
+            Response.delete(r);
+        }
 
-            boolean readEnd() {
-                return this == ALL || this == END;
+        protected void sendInternal(Response response) {
+            byte[] data = response.toByteArray();
+            try {
+                socketManager.write(socket, ByteBuffer.wrap(data), this);
+            } catch (CloseSocketException e) {
+                close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+        }
+
+        private boolean incrementAndCheckMessageSize(int delta) {
+            if(addOnSocketHandler != null)
+                return true;
+
+            messageSize += delta;
+            if(messageSize > MAX_MESSAGE_SIZE) {
+                Response response = Response.getResponse();
+                response.respond(HttpStatus.REQUEST_ENTITY_TOO_LARGE_413);
+                sendInternal(response);
+                Response.delete(response);
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public void write(SocketChannel socketChannel, ByteBuffer byteBuffer) {
+            while(byteBuffer.remaining() > 0) {
+                try {
+                    if(socketChannel.write(byteBuffer) == 0) {
+                        socketChannel.register(writeSelector, SelectionKey.OP_WRITE, DelayedWrite.create(byteBuffer.duplicate(), socket));
+                        return;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+        }
+
+        enum State {
+            /**
+             * Empty lines
+             */
+            EMPTY,
+            /**
+             * First line
+             */
+            FIRST_LINE,
+            HEADERS,
+            BODY,
+            END
         }
     }
 }
