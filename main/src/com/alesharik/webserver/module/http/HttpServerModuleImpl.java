@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.module.http;
 
+import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.api.name.NamedManager;
 import com.alesharik.webserver.api.statistics.AtomicCounter;
 import com.alesharik.webserver.api.statistics.AverageCounter;
@@ -51,6 +52,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -66,6 +69,7 @@ public final class HttpServerModuleImpl implements HttpServer {
     private final List<HttpHandlerBundle> bundles = new CopyOnWriteArrayList<>();
     private final HttpServerStatisticsImpl httpServerStatistics = new HttpServerStatisticsImpl();
     private final List<String> addons = new ArrayList<>();
+    private final Map<ServerSocketWrapper, SubModuleAdapter> wrapperSubmodules = new ConcurrentHashMap<>();
 
     @Getter
     private volatile ExecutorPool pool;
@@ -99,6 +103,7 @@ public final class HttpServerModuleImpl implements HttpServer {
 
     @Configure
     public void parse(ConfigurationTypedObject object, ScriptElementConverter converter) {
+        wrapperSubmodules.clear();
         String groupName = getString("group", object.getElement("group"), converter)
                 .orElse("http-server");
 
@@ -186,29 +191,31 @@ public final class HttpServerModuleImpl implements HttpServer {
             for(ConfigurationElement configurationElement : configurationElements)
                 getString("addon", configurationElement, converter)
                         .ifPresent(addons::add);
-
-            acceptorThread = new AcceptorThread(serverThreadGroup, this.pool);
-            factory = () -> new SelectorContextImpl(httpServerStatistics, this.handler, this.pool, addons);
         });
+
+        acceptorThread = new AcceptorThread(serverThreadGroup, this.pool);
+        factory = () -> new SelectorContextImpl(httpServerStatistics, this.handler, this.pool, addons);
     }
 
     @Start
     public void start() {
-        pool.setSelectorContexts(factory);
         pool.start();
+        pool.setSelectorContexts(factory);
         for(ServerSocketWrapper wrapper : wrappers) {
             SubModuleAdapter subModuleAdapter = SubModuleMetaFactory.create(wrapper);
             subModuleAdapter.start();
+            wrapperSubmodules.put(wrapper, subModuleAdapter);
             acceptorThread.handle(wrapper);
         }
         acceptorThread.start();
+        MXBeanManager.registerMXBean(this, "com.alesharik.webserver.module.http.HttpServerModuleImpl:a=1");
     }
 
     @Shutdown
     public void shutdown() {
         acceptorThread.shutdown();
         for(ServerSocketWrapper wrapper : wrappers) {
-            SubModuleAdapter subModuleAdapter = SubModuleMetaFactory.create(wrapper);
+            SubModuleAdapter subModuleAdapter = wrapperSubmodules.get(wrapper);
             subModuleAdapter.shutdown();
         }
         pool.shutdown();

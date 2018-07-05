@@ -23,26 +23,22 @@ import com.alesharik.webserver.api.cache.object.Recyclable;
 import com.alesharik.webserver.api.cache.object.SmartCachedObjectFactory;
 import com.alesharik.webserver.api.name.Named;
 import com.alesharik.webserver.extension.module.layer.SubModule;
-import com.alesharik.webserver.module.http.server.BatchingForkJoinTask;
 import com.alesharik.webserver.module.http.server.BatchingRunnableTask;
 import com.alesharik.webserver.module.http.server.ExecutorPool;
 import com.alesharik.webserver.module.http.server.SelectorContext;
 import com.alesharik.webserver.module.http.server.socket.ServerSocketWrapper;
-import org.jctools.queues.MpscGrowableArrayQueue;
+import org.jctools.queues.atomic.MpscLinkedAtomicQueue;
 
 import javax.annotation.Nonnull;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class uses separated {@link ForkJoinPool} for provide {@link ExecutorPool} functionality
@@ -59,6 +55,7 @@ public class SeparatedExecutorPool implements ExecutorPool {
 
     protected volatile List<SelectorWorkerThread> selectorPool;
     protected volatile ForkJoinPool workerPool;
+    protected final AtomicBoolean writeLock = new AtomicBoolean();
 
     public SeparatedExecutorPool(int selector, int worker, ThreadGroup threadGroup) {
         this.selectorParallelism = selector;
@@ -109,7 +106,7 @@ public class SeparatedExecutorPool implements ExecutorPool {
 
     @Override
     public long maxBatchQueueSize() {
-        return 64;
+        return -1;
     }
 
     @Nonnull
@@ -166,155 +163,80 @@ public class SeparatedExecutorPool implements ExecutorPool {
     }
 
     @Override
-    public <T, K> Future<T> submitWorkerTask(@Nonnull BatchingForkJoinTask<K, T> task) {
-        Object key = task.getKey();
-        if(workerBatches.containsKey(key)) {
-            if(workerBatches.computeIfAbsent(key, (k) -> BatchingTask.FACTORY.getInstance().fill(workerBatches, key, workerPool).runTask()).add(task))
-                return task;
-        }
-        BatchingTask task1 = BatchingTask.FACTORY.getInstance().fill(workerBatches, key, workerPool);
-        task1.add(task);
-        workerBatches.put(key, task1);
-        task1.runTask();
-        return task;
-    }
-
-    @Override
     public void executeWorkerTask(@Nonnull BatchingRunnableTask task) {
-        Object key = task.getKey();
-        if(workerBatches.containsKey(key)) {
-            if(workerBatches.computeIfAbsent(key, (k) -> BatchingTask.FACTORY.getInstance().fill(workerBatches, key, workerPool).runTask()).add(task))
+        BatchingTask t = workerBatches.get(task.getKey());
+        if(t == null || t.closed) {
+            while(!writeLock.compareAndSet(false, true))
+                //noinspection StatementWithEmptyBody
+                while(writeLock.get()) ;
+            t = BatchingTask.create(workerBatches, task.getKey());
+            BatchingTask removedTask = workerBatches.put(task.getKey(), t);
+            if(removedTask != null) {
+                workerBatches.put(task.getKey(), removedTask);
+                removedTask.queue.add(task);
+                BatchingTask.FACTORY.putInstance(t);
                 return;
+            }
+            writeLock.set(false);
+            t.queue.add(task);
+            workerPool.execute(t);
+        } else {
+            while(!t.closeLock.compareAndSet(false, true))
+                //noinspection StatementWithEmptyBody
+                while(t.closeLock.get()) ;
+            if(t.closed) {
+                while(!writeLock.compareAndSet(false, true))
+                    //noinspection StatementWithEmptyBody
+                    while(writeLock.get()) ;
+                t = BatchingTask.create(workerBatches, task.getKey());
+                workerBatches.put(task.getKey(), t);
+                writeLock.set(false);
+                workerPool.execute(t);
+            } else
+                t.queue.add(task);
+            t.closeLock.set(false);
         }
-        BatchingTask task1 = BatchingTask.FACTORY.getInstance().fill(workerBatches, key, workerPool);
-        task1.add(task);
-        workerBatches.put(key, task1);
-        task1.runTask();
     }
 
     protected static final class BatchingTask implements Runnable, Recyclable {
-        private static final int MAX_COUNT = 1024;
-        private static final SmartCachedObjectFactory<BatchingTask> FACTORY = new SmartCachedObjectFactory<>(BatchingTask::new, 1, TimeUnit.MILLISECONDS, 32);
+        private static final SmartCachedObjectFactory<BatchingTask> FACTORY = new SmartCachedObjectFactory<>(BatchingTask::new);
 
-        private final MpscGrowableArrayQueue<ForkJoinTask> tasks;
-        private final MpscGrowableArrayQueue<Runnable> runnables;
-        private final AtomicReference<State> state;
+        private final Queue<Runnable> queue = new MpscLinkedAtomicQueue<>();
+        private Map<Object, BatchingTask> toRemove;
+        private Object object;
+        private volatile boolean closed;
+        private final AtomicBoolean closeLock = new AtomicBoolean(false);
 
-        private volatile Map<Object, BatchingTask> removeMap;
-        private volatile Object object;
-        private volatile ForkJoinPool pool;
-        private volatile StampedLock stampedLock;
-
-        public BatchingTask() {
-            this.tasks = new MpscGrowableArrayQueue<>(8, MAX_COUNT);
-            this.runnables = new MpscGrowableArrayQueue<>(8, MAX_COUNT);
-            this.state = new AtomicReference<>(State.NOT_COMPLETED);
-            this.stampedLock = new StampedLock();
-        }
-
-        public BatchingTask fill(Map<Object, BatchingTask> removeMap, Object object, ForkJoinPool pool) {
-            this.removeMap = removeMap;
-            this.object = object;
-            this.pool = pool;
-            return this;
-        }
-
-        public BatchingTask runTask() {
-            removeMap.put(object, this);
-            pool.execute(this);
-            return this;
-        }
-
-        public boolean add(ForkJoinTask task) {
-            long stamp = stampedLock.readLock();//Use read lock because queue is concurrent, but method need to interrupt run method and allow concurrent queue adding
-            try {
-                if(state.updateAndGet(state1 -> tasks.size() >= MAX_COUNT ? State.TASKS_COMPLETED : state1) == State.NOT_COMPLETED) {
-                    tasks.add(task);
-                    return true;
-                } else
-                    return false;
-            } finally {
-                stampedLock.unlock(stamp);
-            }
-        }
-
-        public boolean add(Runnable runnable) {
-            long stamp = stampedLock.readLock();//Use read lock because queue is concurrent, but method need to interrupt run method and allow concurrent queue adding
-            try {
-                if(state.updateAndGet(state1 -> runnables.size() >= MAX_COUNT ? State.ALL_COMPLETED : state1) != State.ALL_COMPLETED) {
-                    runnables.add(runnable);
-                    return true;
-                } else
-                    return false;
-            } finally {
-                stampedLock.unlock(stamp);
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
-                while(tasks.isEmpty() && runnables.isEmpty())
-                    Thread.sleep(1);
-                while(!tasks.isEmpty()) {
-                    long writeLock = stampedLock.writeLock();
-                    try {
-                        tasks.poll().invoke();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        stampedLock.unlockWrite(writeLock);
-                    }
-                }
-
-                long lock = stampedLock.writeLock();
-                try {
-                    if(state.updateAndGet(state1 -> tasks.isEmpty() ? State.TASKS_COMPLETED : State.NOT_COMPLETED) == State.NOT_COMPLETED)
-                        run();
-                } finally {
-                    stampedLock.unlockWrite(lock);
-                }
-
-                while(!runnables.isEmpty()) {
-                    long writeLock = stampedLock.writeLock();//TODO use better way to do so(unlock write only if someone tries to add task)
-                    try {
-                        runnables.poll().run();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        stampedLock.unlockWrite(writeLock);
-                    }
-                }
-
-                lock = stampedLock.writeLock();
-                try {
-                    if(state.updateAndGet(state1 -> runnables.isEmpty() ? State.ALL_COMPLETED : State.TASKS_COMPLETED) == State.TASKS_COMPLETED)
-                        run();
-                } finally {
-                    stampedLock.unlockWrite(lock);
-                }
-                removeMap.remove(object);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            FACTORY.putInstance(this);
+        public static BatchingTask create(Map<Object, BatchingTask> toRemove, Object o) {
+            BatchingTask task = FACTORY.getInstance();
+            task.toRemove = toRemove;
+            task.object = o;
+            return task;
         }
 
         @Override
         public void recycle() {
-            removeMap = null;
+            queue.clear();
+            toRemove = null;
             object = null;
-            pool = null;
-            stampedLock = new StampedLock();
-            tasks.clear();
-            runnables.clear();
-            state.set(State.NOT_COMPLETED);
+            closed = false;
         }
 
-        protected enum State {
-            NOT_COMPLETED,
-            TASKS_COMPLETED,
-            ALL_COMPLETED
+        @Override
+        public void run() {
+            Runnable poll;
+            while((poll = queue.poll()) != null)
+                poll.run();
+            toRemove.remove(object);
+            while(!closeLock.compareAndSet(false, true))
+                //noinspection StatementWithEmptyBody
+                while(closeLock.get()) ;
+            closed = true;
+            closeLock.set(false);
+            Runnable poll1;
+            while((poll1 = queue.poll()) != null)
+                poll1.run();
+            FACTORY.putInstance(this);
         }
     }
 

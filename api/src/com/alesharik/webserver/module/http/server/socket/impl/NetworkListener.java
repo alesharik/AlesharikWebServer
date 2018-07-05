@@ -46,6 +46,7 @@ import com.alesharik.webserver.extension.module.Start;
 import com.alesharik.webserver.extension.module.layer.SubModule;
 import com.alesharik.webserver.extension.module.meta.ScriptElementConverter;
 import com.alesharik.webserver.module.http.PortRange;
+import com.alesharik.webserver.module.http.server.CloseSocketException;
 import com.alesharik.webserver.module.http.server.socket.ServerSocketWrapper;
 import com.alesharik.webserver.module.http.server.socket.SocketWriter;
 
@@ -123,7 +124,8 @@ public class NetworkListener implements ServerSocketWrapper {
 
         @Override
         public void read(SocketChannel socketChannel, ByteBuffer byteBuffer) throws IOException {
-            socketChannel.read(byteBuffer);
+            if(socketChannel.read(byteBuffer) == -1)
+                throw new CloseSocketException();
         }
 
         @Override

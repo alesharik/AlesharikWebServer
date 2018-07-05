@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.extension.module.platform;
 
-import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
 import com.alesharik.webserver.extension.module.Configuration;
 import com.alesharik.webserver.extension.module.ConfigurationValue;
@@ -66,8 +65,8 @@ public class MockModule1 {
     }
 
     @Reload
-    public void reload(ConfigurationObject object, ScriptElementConverter converter) {
-        MOCK.reload((ConfigurationTypedObject) object, converter);
+    public void reload(ConfigurationTypedObject object, ScriptElementConverter converter) {
+        MOCK.reload(object, converter);
     }
 
     @Layer("main")

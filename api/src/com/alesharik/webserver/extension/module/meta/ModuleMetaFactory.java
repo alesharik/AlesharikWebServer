@@ -28,7 +28,6 @@ import com.alesharik.webserver.api.reflection.ReflectUtils;
 import com.alesharik.webserver.base.bean.Bean;
 import com.alesharik.webserver.base.bean.context.BeanContext;
 import com.alesharik.webserver.base.exception.DevError;
-import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
 import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.extension.module.ConfigurationError;
@@ -136,8 +135,12 @@ public class ModuleMetaFactory {
                 }
                 if(field.getType().isAnnotationPresent(SubModule.class)) {
                     Object subModule = field.get(module);
-                    if(subModule == null)
-                        throw new DevError("Unexpected field value in field " + field.getName(), "@Submodule field in module cannot be null. Field: " + field.getName(), module.getClass());
+                    if(subModule == null) {
+                        if(meta.autoInvoke())
+                            throw new DevError("Unexpected field value in field " + field.getName(), "@Submodule field in module cannot be null. Field: " + field.getName(), module.getClass());
+                        else
+                            continue;
+                    }
                     adapter.subModules.add(SubModuleMetaFactory.create(subModule));
                 }
             } catch (IllegalAccessException e) {
@@ -220,7 +223,7 @@ public class ModuleMetaFactory {
         private static void invoke(List<MethodHandle> handles, ConfigurationTypedObject object, ScriptElementConverter converter) {
             for(MethodHandle methodHandle : handles) {
                 try {
-                    methodHandle.invokeExact((ConfigurationObject) object, converter);
+                    methodHandle.invokeExact(object, converter);
                 } catch (Error e) {
                     throw e;
                 } catch (Throwable throwable) {
@@ -234,6 +237,7 @@ public class ModuleMetaFactory {
             if(running)
                 throw new IllegalStateException("Module is already running!");
             if(!autoInvoke) {
+                running = true;
                 invoke(start);
                 return;
             }
@@ -249,6 +253,7 @@ public class ModuleMetaFactory {
             if(!running)
                 throw new IllegalStateException("Module is not running!");
             if(!autoInvoke) {
+                running = false;
                 invoke(shutdown);
                 return;
             }
@@ -264,6 +269,7 @@ public class ModuleMetaFactory {
             if(!running)
                 throw new IllegalStateException("Module is not running!");
             if(!autoInvoke) {
+                running = false;
                 invoke(shutdownNow);
                 return;
             }

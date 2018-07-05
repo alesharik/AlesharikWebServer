@@ -229,7 +229,7 @@ public final class Main {
 
         System.out.println("Server successfully loaded!");
 
-        if((detach & 2) != 2) {
+        if((detach & 2) == 2) {
             System.out.println("Logger detach requested! Executing...");
             Logger.detach();
         }

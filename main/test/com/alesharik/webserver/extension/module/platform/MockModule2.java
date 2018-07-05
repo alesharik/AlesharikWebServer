@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.extension.module.platform;
 
-import com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject;
+import com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject;
 import com.alesharik.webserver.extension.module.Configuration;
 import com.alesharik.webserver.extension.module.ConfigurationValue;
 import com.alesharik.webserver.extension.module.Configure;
@@ -54,7 +54,7 @@ public class MockModule2 {
     }
 
     @Configure
-    public void configure(ConfigurationObject object, ScriptElementConverter converter) {
+    public void configure(ConfigurationTypedObject object, ScriptElementConverter converter) {
         CFG = config;
     }
 

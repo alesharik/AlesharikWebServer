@@ -250,7 +250,7 @@ public final class SelectorContextImpl implements SelectorContext {
         private ServerSocketWrapper.SocketManager socketManager;
         private int messageSize;
         private long tempBuffer;
-        private State state;
+        private State state = State.EMPTY;
         private Request.Builder request;
         private int bodyLength = -1;
         private byte[] buf = new byte[4096];
@@ -299,6 +299,7 @@ public final class SelectorContextImpl implements SelectorContext {
             statistics = null;
             addons = null;
             params.clear();
+            //noinspection PointlessNullCheck
             if(handshakeRequest != null && handshakeRequest instanceof Request.Builder)
                 Request.Builder.delete((Request.Builder) handshakeRequest);
             handshakeRequest = null;
@@ -361,7 +362,9 @@ public final class SelectorContextImpl implements SelectorContext {
         }
 
         public boolean read() {
-            while(buffer.remaining() == SESSION_BUFFER_SIZE) {
+            if(!socket.isOpen())
+                return false;
+            do {
                 buffer.clear();
                 try {
                     socketManager.read(socket, buffer);
@@ -371,24 +374,30 @@ public final class SelectorContextImpl implements SelectorContext {
                     e.printStackTrace();
                     return false;
                 }
-                if(!incrementAndCheckMessageSize(buffer.remaining()))
+                if(!incrementAndCheckMessageSize(buffer.position()))
                     return false;
-                while(buffer.hasRemaining())
-                    if(!process())
+                int size = buffer.position();
+                int off = 0;
+                while(size > 0) {
+                    buffer.position(off);
+                    if(!process(size))
                         return false;
-            }
+                    size -= buffer.position();
+                    off += buffer.position();
+                }
+            } while(!buffer.hasRemaining());
             return true;
         }
 
-        private boolean process() {
+        private boolean process(final int size) {
             if(addOnSocketHandler != null) {
                 requestHandler.handleMessageTask(() -> addOnSocketHandler.handle(buffer.duplicate(), this), executorPool, addOn, this);
                 return true;
             }
 
             if(state == State.EMPTY) {
-                while(buffer.hasRemaining()) {//Cut empty lines at start
-                    char c = buffer.getChar();
+                while(buffer.position() < size) {//Cut empty lines at start
+                    char c = (char) buffer.get();
                     if(c != '\n' && c != '\r') {
                         state = State.FIRST_LINE;
                         vector.write(tempBuffer, Character.toString(c).getBytes(StandardCharsets.ISO_8859_1));
@@ -404,18 +413,18 @@ public final class SelectorContextImpl implements SelectorContext {
                     vector.clear(tempBuffer);
                 }
                 if(!firstLine.toString().endsWith("\r")) {
-                    while(buffer.hasRemaining()) {
-                        char c = buffer.getChar();
+                    while(buffer.position() < size) {
+                        char c = (char) buffer.get();
                         firstLine.append(c);
                         if(c == '\r')
                             break;
                     }
                 }
 
-                if(!buffer.hasRemaining()) {
+                if(buffer.position() >= size) {
                     vector.write(tempBuffer, firstLine.toString().getBytes(StandardCharsets.ISO_8859_1));
                 } else {
-                    char c = buffer.getChar();
+                    char c = (char) buffer.get();
                     if(c != '\n')
                         return false;
                     firstLine.append(c);
@@ -423,7 +432,7 @@ public final class SelectorContextImpl implements SelectorContext {
                     String first = firstLine.toString();
                     if(!first.endsWith("\r\n"))
                         throw new RuntimeException("WAT");
-
+                    first = first.substring(0, first.length() - 2);//Delete /r/n
                     request = Request.Builder.start(first)
                             .withInfo((InetSocketAddress) socket.socket().getRemoteSocketAddress(), socket.socket().getLocalAddress(), socketManager.isSecure(socket));
                     state = State.HEADERS;
@@ -435,10 +444,10 @@ public final class SelectorContextImpl implements SelectorContext {
                     headerBuilder.append(new String(vector.toByteArray(tempBuffer), StandardCharsets.ISO_8859_1));
                     vector.clear(tempBuffer);
                 }
-                while(buffer.hasRemaining()) {
-                    char c = buffer.getChar();
+                while(buffer.position() < size) {
+                    char c = (char) buffer.get();
                     headerBuilder.append(c);
-                    if(c == '\n' && headerBuilder.charAt(headerBuilder.length() - 1) == '\r') {//End found
+                    if(c == '\n' && headerBuilder.charAt(headerBuilder.length() - 2) == '\r') {//End found
                         String header = headerBuilder.toString();
                         headerBuilder.setLength(0);
                         if(header.equals("\r\n")) {//Body start
@@ -452,13 +461,15 @@ public final class SelectorContextImpl implements SelectorContext {
                 if(headerBuilder.length() > 0)
                     vector.write(tempBuffer, headerBuilder.toString().getBytes(StandardCharsets.ISO_8859_1));
             }
+            if(bodyLength == -1) {
+                Long length = request.getHeader("Content-Length");
+                if(length == null)
+                    state = State.END;
+                else
+                    bodyLength = length.intValue();
+            }
             if(state == State.BODY) {
-                if(bodyLength == -1) {
-                    long length = request.getHeader("Content-Length");
-                    //TODO check message size
-                    bodyLength = (int) length;
-                }
-                int nRead = (int) Math.min(bodyLength - vector.size(tempBuffer), buffer.remaining());
+                int nRead = (int) Math.min(bodyLength - vector.size(tempBuffer), size - buffer.position());
                 while(nRead > 0) {
                     int read = Math.min(buf.length, nRead);
                     buffer.get(buf, 0, read);
@@ -489,9 +500,15 @@ public final class SelectorContextImpl implements SelectorContext {
         }
 
         public void flushRemainingData() {
-            while(buffer.hasRemaining())
-                if(!process())
+            int size = buffer.position();
+            int off = 0;
+            while(size > 0) {
+                buffer.position(off);
+                if(!process(size))
                     return;
+                size -= buffer.position();
+                off += buffer.position();
+            }
         }
 
         @Override

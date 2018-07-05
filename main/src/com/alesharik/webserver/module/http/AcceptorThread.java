@@ -88,7 +88,7 @@ public final class AcceptorThread extends Thread {
                         if(socket == null)
                             continue;
                         if(!socket.finishConnect()) {
-                            System.err.println("Socket " + socket + " didn't finish connectiong in time!");
+                            System.err.println("Socket " + socket + " didn't finish connecting in time!");
                             continue;
                         }
 

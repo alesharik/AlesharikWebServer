@@ -24,7 +24,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotated methods will be executed when the module got configured. All methods must have 1 parameter - {@link com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject}
+ * Annotated methods will be executed when the module got configured. All methods must have 1 parameter - {@link com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject}
  *
  * @see Configuration
  * @see Start

@@ -45,7 +45,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
-@Named("default-http-request-handler")
+@Named("default")
 public class DefaultHttpRequestHandler implements HttpRequestHandler {
     private final List<HttpHandlerBundle> bundles;
 
@@ -112,7 +112,7 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
                     break;
                 }
             }
-            Debug.log("Request from " + request.getRemote().toString());
+            Debug.log("Request from " + request.getRemote().toString() + ": " + request.getRawUri());
             if(bundle == null) {
                 System.err.println("Bundle not found for " + request.getContextPath());
                 return;
@@ -163,7 +163,7 @@ public class DefaultHttpRequestHandler implements HttpRequestHandler {
                 response = Response.getResponse();
                 errorHandler.handleException(e, request, response, ErrorHandler.Pool.WORKER);
             } finally {
-                Debug.log("Response sent to " + request.getRemote().toString());
+                Debug.log("Response sent to " + request.getRemote().toString() + ": " + response.getResponseCode());
                 sender.send(request, response);
             }
             FACTORY.putInstance(this);

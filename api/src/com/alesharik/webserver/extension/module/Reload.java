@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 
 /**
  * Annotated method will be invoked when module will be reloaded. It happens when module receives new configuration or
- * by user signal. Default action is restarting the module, but annotated method overrides it. All methods must have 1 parameter - {@link com.alesharik.webserver.configuration.config.lang.element.ConfigurationObject}
+ * by user signal. Default action is restarting the module, but annotated method overrides it. All methods must have 1 parameter - {@link com.alesharik.webserver.configuration.config.lang.element.ConfigurationTypedObject}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

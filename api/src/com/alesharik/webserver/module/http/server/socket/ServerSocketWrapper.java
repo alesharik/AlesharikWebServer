@@ -57,7 +57,7 @@ public interface ServerSocketWrapper {
      */
     default void registerSelector(Selector selector) {
         try {
-            getChannel().register(selector, SelectionKey.OP_ACCEPT);
+            getChannel().register(selector, SelectionKey.OP_ACCEPT, this);
         } catch (ClosedChannelException e) {
             throw new CloseSocketException();
         }

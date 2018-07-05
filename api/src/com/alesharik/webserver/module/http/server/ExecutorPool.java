@@ -29,7 +29,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.Future;
 
 /**
  * ExecutorPool is thread pool for HTTP server. It has 2 types of threads: selector and worker.
@@ -48,8 +47,6 @@ public interface ExecutorPool extends ExecutorPoolMXBean {
      * Add socket to one of selector contexts
      */
     void selectSocket(SelectableChannel socket, SocketChannel socketChannel, ServerSocketWrapper.SocketManager socketManager);
-
-    <T, K> Future<T> submitWorkerTask(@Nonnull BatchingForkJoinTask<K, T> task);
 
     void executeWorkerTask(@Nonnull BatchingRunnableTask task);
 

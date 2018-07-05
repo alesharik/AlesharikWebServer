@@ -145,9 +145,11 @@ public final class ModuleExtensionImpl extends ModuleExtension {
     public void shutdown() {
         for(Module module : moduleManager.getModules()) {
             ModuleManagerImpl.ModuleImpl mod = (ModuleManagerImpl.ModuleImpl) module;
-            messageManager.modulePreShutdown(module, mod.getModuleAdapter(), mod.getInstance());
-            mod.getModuleAdapter().shutdown();
-            messageManager.moduleShutdown(module, mod.getModuleAdapter(), mod.getInstance());
+            if(mod.isRunning()) {
+                messageManager.modulePreShutdown(module, mod.getModuleAdapter(), mod.getInstance());
+                mod.getModuleAdapter().shutdown();
+                messageManager.moduleShutdown(module, mod.getModuleAdapter(), mod.getInstance());
+            }
         }
     }
 
@@ -155,9 +157,11 @@ public final class ModuleExtensionImpl extends ModuleExtension {
     public void shutdownNow() {
         for(Module module : moduleManager.getModules()) {
             ModuleManagerImpl.ModuleImpl mod = (ModuleManagerImpl.ModuleImpl) module;
-            messageManager.modulePreShutdownNow(module, mod.getModuleAdapter(), mod.getInstance());
-            mod.getModuleAdapter().shutdownNow();
-            messageManager.moduleShutdownNow(module, mod.getModuleAdapter(), mod.getInstance());
+            if(mod.isRunning()) {
+                messageManager.modulePreShutdownNow(module, mod.getModuleAdapter(), mod.getInstance());
+                mod.getModuleAdapter().shutdownNow();
+                messageManager.moduleShutdownNow(module, mod.getModuleAdapter(), mod.getInstance());
+            }
         }
     }
 
