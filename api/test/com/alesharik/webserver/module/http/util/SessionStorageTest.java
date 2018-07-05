@@ -41,7 +41,7 @@ public class SessionStorageTest {
 
     @Test
     public void visit() throws Exception {
-        Request request = Request.Builder.start("GET / HTTP/2").withHeaders("").withBody(new byte[0]);
+        Request request = Request.Builder.start("GET / HTTP/2").buildHeaders().withBody(new byte[0]);
         Response response = Response.getResponse();
 
         sessionStorage.process(request, response);

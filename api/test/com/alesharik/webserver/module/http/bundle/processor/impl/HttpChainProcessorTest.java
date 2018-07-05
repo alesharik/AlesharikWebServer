@@ -18,10 +18,10 @@
 
 package com.alesharik.webserver.module.http.bundle.processor.impl;
 
-import com.alesharik.webserver.api.server.wrapper.bundle.processor.Filter;
-import com.alesharik.webserver.api.server.wrapper.bundle.processor.Handler;
-import com.alesharik.webserver.api.server.wrapper.bundle.processor.HttpErrorHandler;
-import com.alesharik.webserver.api.server.wrapper.bundle.processor.HttpProcessor;
+import com.alesharik.webserver.module.http.bundle.processor.Filter;
+import com.alesharik.webserver.module.http.bundle.processor.Handler;
+import com.alesharik.webserver.module.http.bundle.processor.HttpErrorHandler;
+import com.alesharik.webserver.module.http.bundle.processor.HttpProcessor;
 import com.alesharik.webserver.module.http.http.Request;
 import com.alesharik.webserver.module.http.http.Response;
 import org.junit.Test;

@@ -774,7 +774,9 @@ public class ConfigurationParser {
             boolean finish = false;
             String content = def.replaceFirst("\\{\\s*", ""); //Remove start bracket
 
-            StringBuilder text = new StringBuilder(parts[0] + ':' + defSpaces);
+            StringBuilder text = new StringBuilder();
+            if(nameOverride.isEmpty())
+                text.append(parts[0]).append(':').append(defSpaces);
             text.append(def, 0, def.length() - content.length());
 
             if(!content.isEmpty()) {
