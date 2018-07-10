@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.module.http.http;
 
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.module.http.http.data.ContentDisposition;
 import com.alesharik.webserver.module.http.http.data.ContentRange;
 import com.alesharik.webserver.module.http.http.data.ContentType;

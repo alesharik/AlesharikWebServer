@@ -18,8 +18,8 @@
 
 package com.alesharik.webserver.module.http.http.header;
 
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.module.http.http.Header;
+import com.alesharik.webserver.module.http.http.Utils;
 import com.alesharik.webserver.module.http.http.data.WeightCharset;
 import sun.misc.FloatingDecimal;
 

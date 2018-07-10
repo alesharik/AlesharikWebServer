@@ -18,7 +18,7 @@
 
 package com.alesharik.webserver.module.http.http.data;
 
-import com.alesharik.webserver.api.Utils;
+import com.alesharik.webserver.module.http.http.Utils;
 import lombok.Getter;
 
 import java.nio.charset.Charset;
