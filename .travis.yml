@@ -13,6 +13,7 @@ before_install:
 install:
   - sudo apt-get install --allow-unauthenticated -qq clang-3.4 util-linux libblkid1 libblkid-dev
   - export CXX="clang++-3.4"
+  - curl https://sh.rustup.rs -sSf | sh
 before_script:
   - chmod +x gradlew
 script:
