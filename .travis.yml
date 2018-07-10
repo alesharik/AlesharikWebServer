@@ -11,9 +11,8 @@ before_install:
   - sudo add-apt-repository -y ppa:h-rayflood/llvm
   - sudo apt-get update -qq
 install:
-  - sudo apt-get install --allow-unauthenticated -qq clang-3.4 util-linux libblkid1 libblkid-dev
+- sudo apt-get install --allow-unauthenticated -qq clang-3.4 util-linux libblkid1 libblkid-dev rustup
   - export CXX="clang++-3.4"
-  - curl https://sh.rustup.rs -sSf | sh
 before_script:
   - chmod +x gradlew
 script:
