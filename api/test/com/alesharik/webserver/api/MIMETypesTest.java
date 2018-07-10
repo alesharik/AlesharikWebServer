@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.exceptions.MIMETypeAlreadyExistsException;
 import com.alesharik.webserver.test.TestUtils;
 import org.junit.Test;
 
@@ -29,44 +28,44 @@ import static org.junit.Assert.*;
 
 public class MIMETypesTest {
     @Test
-    public void addType() throws Exception {
+    public void addType() {
         MIMETypes.addType(".test", "test/test");
         assertTrue(MIMETypes.types.containsKey(".test"));
         assertTrue(MIMETypes.types.containsValue("test/test"));
     }
 
     @Test(expected = MIMETypeAlreadyExistsException.class)
-    public void addExistsType() throws Exception {
+    public void addExistsType() {
         MIMETypes.addType(".x3d", "test/test");
     }
 
     @Test
-    public void getMIMETypes() throws Exception {
+    public void getMIMETypes() {
         Set<String> types = new HashSet<>(MIMETypes.getMIMETypes());
         types.removeIf(MIMETypes.types::containsValue);
         assertTrue(types.isEmpty());
     }
 
     @Test
-    public void getFileExtensions() throws Exception {
+    public void getFileExtensions() {
         Set<String> types = new HashSet<>(MIMETypes.getFileExtensions());
         types.removeIf(MIMETypes.types::containsKey);
         assertTrue(types.isEmpty());
     }
 
     @Test
-    public void findType() throws Exception {
+    public void findType() {
         assertEquals("text/plain", MIMETypes.findType(".txt"));
     }
 
     @Test
-    public void contains() throws Exception {
+    public void contains() {
         assertTrue(MIMETypes.contains(".txt"));
         assertFalse(MIMETypes.contains(".wtfIsThis"));
     }
 
     @Test
-    public void testUtilsClass() throws Exception {
+    public void testUtilsClass() {
         TestUtils.assertUtilityClass(MIMETypes.class);
     }
 }

@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api.utils.lambda;
 
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.test.TestUtils;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -77,7 +76,7 @@ public class LambdaUtilsTest {
     @Test
     public void testLazySingleton() throws Exception {
         Supplier<TestContainer> mock = mock(Supplier.class);
-        Mockito.when(mock.get()).thenReturn(new TestContainer(Utils.getRandomString(10)));
+        Mockito.when(mock.get()).thenReturn(new TestContainer("eqwweqwqew"));
 
         Supplier<TestContainer> supplier = lazySingleton(mock);
 
