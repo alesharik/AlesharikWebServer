@@ -22,6 +22,7 @@ package com.alesharik.webserver.control.dashboard.websocket;
  * @param <T> plugin
  */
 @FunctionalInterface
+@Deprecated
 public interface DashboardWebSocketPluginListener<T> {
     void onCreate(T plugin);
 }

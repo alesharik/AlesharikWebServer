@@ -37,7 +37,6 @@
 package com.alesharik.webserver.control.data.storage;
 
 import com.alesharik.webserver.api.LoginPasswordCoder;
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.utils.crypto.StringCipher;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.configuration.XmlHelper;
@@ -78,6 +77,7 @@ import java.util.List;
  * This class used ONLY in AlesharikWebServer. Do not use it!
  */
 @Prefixes(value = {"[ServerControl]", "[AdminDataStorage]"})
+@Deprecated
 public final class AdminDataStorageImpl implements AdminDataStorage, SecuredStoreAccessController {//FIXME
     private static SecretKey SECRET_KEY;
 
@@ -141,7 +141,7 @@ public final class AdminDataStorageImpl implements AdminDataStorage, SecuredStor
             throw new ConfigurationParseError(e);
         }
         if(key.isEmpty()) {
-            key = Utils.getRandomString(24);
+//            key = Utils.getRandomString(24);
             try {
                 securedStoreModule.writeString("adminKey", key);
             } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InvalidKeySpecException | IOException e) {

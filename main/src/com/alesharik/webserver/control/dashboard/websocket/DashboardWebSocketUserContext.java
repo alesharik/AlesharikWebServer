@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
  * byte    : messaging : command :          Base64<br>
  */
 @Prefixes("[DashboardWebSocketUserContext]")
+@Deprecated
 final class DashboardWebSocketUserContext implements WebSocketListener {
     private final AtomicBoolean isClosed;
     private final Map<String, DashboardWebSocketPlugin> plugins;

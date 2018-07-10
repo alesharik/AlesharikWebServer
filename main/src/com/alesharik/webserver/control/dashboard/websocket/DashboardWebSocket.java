@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Dashboard Web Socket. Contains simply ping-like login protocol
  */
+@Deprecated
 final class DashboardWebSocket extends DefaultWebSocket {
     private static final String HELLO_MSG = "hello";
 

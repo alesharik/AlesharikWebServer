@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.module.security;
 
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.api.utils.crypto.StringCipher;
 import com.alesharik.webserver.configuration.Layer;
 import com.alesharik.webserver.exceptions.error.ConfigurationParseError;
@@ -188,11 +187,11 @@ public class SecuredStoreModuleImpl implements SecuredStoreModule {
     }
 
     private void writeNewKey() throws InvalidKeySpecException, InvalidKeyException, IOException {
-        String k = Utils.getRandomString(24);
-        SecretKey secretKey = StringCipher.generateKey(k);
-        Files.write(store.toPath(), Base64Utils.encodeToString(secretKey.getEncoded(), false).concat("\n").getBytes(Charsets.UTF8_CHARSET), StandardOpenOption.CREATE);
+//        String k = Utils.getRandomString(24);
+//        SecretKey secretKey = StringCipher.generateKey(k);
+//        Files.write(store.toPath(), Base64Utils.encodeToString(secretKey.getEncoded(), false).concat("\n").getBytes(Charsets.UTF8_CHARSET), StandardOpenOption.CREATE);
     }
-
+//
     @Override
     public void start() {
     }

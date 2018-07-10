@@ -45,6 +45,7 @@ import java.io.Writer;
 /**
  * This class used for add {@link EncryptedPropertiesReader} and {@link EncryptedPropertiesWriter} to configuration
  */
+@Deprecated
 final class EncryptedIOFactory extends PropertiesConfiguration.DefaultIOFactory {
     private String key;
 

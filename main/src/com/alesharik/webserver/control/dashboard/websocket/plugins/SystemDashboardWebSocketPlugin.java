@@ -26,6 +26,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import javax.annotation.Nonnull;
 
 @Prefixes({"[DashboardWebSocketPlugin]", "[SystemDashboardWebSocketPlugin]"})
+@Deprecated
 public class SystemDashboardWebSocketPlugin extends DashboardWebSocketPlugin {
     private static final String GC_COMMAND = "gc";
 

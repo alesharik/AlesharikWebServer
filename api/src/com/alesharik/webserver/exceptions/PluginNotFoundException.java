@@ -20,6 +20,7 @@ package com.alesharik.webserver.exceptions;
 
 import lombok.Getter;
 
+@Deprecated
 public class PluginNotFoundException extends RuntimeException {
     @Getter
     private final String plugin;

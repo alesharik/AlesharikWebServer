@@ -50,6 +50,7 @@ import java.security.spec.InvalidKeySpecException;
 /**
  * This class decrypt properties using specific key
  */
+@Deprecated
 final class EncryptedPropertiesReader extends PropertiesConfiguration.PropertiesReader {
     private static final String COMMENT_CHARS = "#!";
     private String key;

@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * This manager holds all plugin {@link Class}es and {@link DashboardWebSocketPluginManagerMXBean} implementation
  */
 @ClassPathScanner
+@Deprecated
 public final class DashboardWebSocketPluginManager {
     private static final Map<String, Class<?>> plugins = new ConcurrentHashMap<>();
     private static final DashboardWebSocketPluginManagerMXBean mxBean = new DashboardWebSocketPluginManagerMXBean() {

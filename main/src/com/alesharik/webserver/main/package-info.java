@@ -16,20 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.control.dashboard.websocket.plugins;
+/**
+ * This package contains main classes
+ */
+@Stable
+package com.alesharik.webserver.main;
 
-import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlugin;
-import com.alesharik.webserver.control.dashboard.websocket.WebSocketSender;
-
-//TODO
-@Deprecated
-public class MenuPluginsDashboardWebSocketPlugin extends DashboardWebSocketPlugin {
-    public MenuPluginsDashboardWebSocketPlugin(WebSocketSender sender) {
-        super(sender);
-    }
-
-    @Override
-    public String getName() {
-        return "menuPlugins";
-    }
-}
+import com.alesharik.webserver.api.documentation.Stable;

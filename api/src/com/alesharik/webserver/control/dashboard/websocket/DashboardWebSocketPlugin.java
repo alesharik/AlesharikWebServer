@@ -28,6 +28,7 @@ import javax.annotation.Nonnull;
 /**
  * DashboardWebSocket plugin used for communicate with dashboard through WebSocket
  */
+@Deprecated
 public abstract class DashboardWebSocketPlugin extends DashboardWebSocketPluginSubModule {
     private final WebSocketSender sender;
     @Getter(AccessLevel.PROTECTED)

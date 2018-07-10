@@ -51,6 +51,7 @@ import java.security.spec.InvalidKeySpecException;
 /**
  * This class used for encrypt properties with specific key
  */
+@Deprecated
 final class EncryptedPropertiesWriter extends PropertiesConfiguration.PropertiesWriter {
     private String key;
 

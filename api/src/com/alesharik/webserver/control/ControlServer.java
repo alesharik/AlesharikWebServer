@@ -24,6 +24,7 @@ import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlu
 
 import javax.annotation.Nonnull;
 
+@Deprecated
 public interface ControlServer extends Module {
     <T extends DashboardWebSocketPlugin> void addDashboardWebSocketPluginListener(@Nonnull String name, @Nonnull Class<T> pluginClazz, @Nonnull DashboardWebSocketPluginListener<T> listener);
 

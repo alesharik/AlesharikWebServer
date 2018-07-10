@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Prefixes("[ServerControl]")
+@Deprecated
 public class ControlRequestHandler implements RequestHandler {
     private final ConcurrentLiveArrayList<UUID> sessions = new ConcurrentLiveArrayList<>();
     private final AdminDataStorageImpl holder;

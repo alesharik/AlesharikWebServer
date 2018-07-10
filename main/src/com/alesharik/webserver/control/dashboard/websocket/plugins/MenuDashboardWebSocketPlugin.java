@@ -28,6 +28,7 @@ import javax.annotation.Nonnull;
  * Used in navigator
  */
 @Prefixes({"[DashboardWebSocketPlugin]", "[MenuDashboardWebSocketPlugin]"})
+@Deprecated
 public class MenuDashboardWebSocketPlugin extends DashboardWebSocketPlugin {
     public MenuDashboardWebSocketPlugin(WebSocketSender sender) {
         super(sender);

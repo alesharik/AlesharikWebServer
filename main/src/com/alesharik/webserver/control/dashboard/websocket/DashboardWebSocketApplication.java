@@ -40,6 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Always disabled for auto registration. Must be registered by control server
  */
 @WSApplication(value = "/dashboard", checker = WSChecker.Disabled.class)
+@Deprecated
 public class DashboardWebSocketApplication extends WebSocketApplication {
     private final Set<String> plugins;
     private final DashboardDataHolder dashboardDataHolder;

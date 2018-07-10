@@ -16,17 +16,10 @@
  *
  */
 
-package com.alesharik.webserver.exceptions;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 /**
- * Thrown by {@link com.alesharik.webserver.api.MIMETypes} class. Means that file extension already defined
+ * This folder contains module extension implementation
  */
-@AllArgsConstructor
-@Getter
-public class MIMETypeAlreadyExistsException extends RuntimeException {
-    private final String mimeType;
-    private final String fileExtension;
-}
+@Stable
+package com.alesharik.webserver.extension.module;
+
+import com.alesharik.webserver.api.documentation.Stable;

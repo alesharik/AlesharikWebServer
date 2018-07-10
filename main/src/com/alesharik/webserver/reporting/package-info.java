@@ -16,18 +16,5 @@
  *
  */
 
-package com.alesharik.webserver.control.file.explorer;
-
-import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlugin;
-import com.alesharik.webserver.control.dashboard.websocket.WebSocketSender;
-
-public final class FileExplorerDashboardWebSocketPlugin extends DashboardWebSocketPlugin {
-    public FileExplorerDashboardWebSocketPlugin(WebSocketSender sender) {
-        super(sender);
-    }
-
-    @Override
-    public String getName() {
-        return "file-explorer";
-    }
-}
+//TODO rewrite
+package com.alesharik.webserver.reporting;

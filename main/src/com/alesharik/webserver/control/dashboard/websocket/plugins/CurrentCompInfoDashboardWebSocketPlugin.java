@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.control.dashboard.websocket.plugins;
 
-import com.alesharik.webserver.api.ComputerData;
 import com.alesharik.webserver.control.dashboard.websocket.DashboardWebSocketPlugin;
 import com.alesharik.webserver.control.dashboard.websocket.WebSocketSender;
 import com.alesharik.webserver.logger.Prefixes;
@@ -28,6 +27,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 @Prefixes({"[DashboardWebSocketPlugin]", "[CurrentCompInfoDashboardWebSocketPlugin]"})
+@Deprecated
 public class CurrentCompInfoDashboardWebSocketPlugin extends DashboardWebSocketPlugin {
     private static final String SET_COMMAND = "set";
     private static final String START_COMMAND = "start";
@@ -75,7 +75,6 @@ public class CurrentCompInfoDashboardWebSocketPlugin extends DashboardWebSocketP
     private final class Sender extends TimerTask {
         @Override
         public void run() {
-            send(SET_COMMAND, ComputerData.INSTANCE.stringify());
         }
     }
 }

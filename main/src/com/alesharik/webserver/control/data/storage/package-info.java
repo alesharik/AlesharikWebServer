@@ -19,4 +19,5 @@
 /**
  * This package contains {@link com.alesharik.webserver.control.AdminDataStorage} implementation
  */
+@Deprecated
 package com.alesharik.webserver.control.data.storage;

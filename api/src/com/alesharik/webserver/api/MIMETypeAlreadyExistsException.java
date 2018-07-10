@@ -16,16 +16,18 @@
  *
  */
 
-package com.alesharik.webserver.control.file.explorer;
+package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.configuration.Module;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-import javax.annotation.Nonnull;
-
-public interface FileExplorerModule extends Module {
-    @Nonnull
-    @Override
-    default String getName() {
-        return "dashboard-file-explorer";
-    }
+/**
+ * Thrown by {@link com.alesharik.webserver.api.MIMETypes} class. Means that file extension already defined
+ */
+@AllArgsConstructor
+@Getter
+public final class MIMETypeAlreadyExistsException extends RuntimeException {
+    private static final long serialVersionUID = 922977358553763931L;
+    private final String mimeType;
+    private final String fileExtension;
 }

@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * SubModule implementation for DashboardWebSocketPlugin
  */
+@Deprecated
 public abstract class DashboardWebSocketPluginSubModule implements SubModule {
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 

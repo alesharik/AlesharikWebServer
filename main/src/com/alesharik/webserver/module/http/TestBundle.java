@@ -28,6 +28,7 @@ import com.alesharik.webserver.module.http.http.HttpStatus;
 import javax.annotation.Nonnull;
 
 @HttpBundle("test")
+@Deprecated
 public class TestBundle implements HttpHandlerBundle {
     @Nonnull
     @Override

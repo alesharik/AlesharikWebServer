@@ -23,6 +23,7 @@ import javax.annotation.Nonnull;
 /**
  * Send things to WebSocket
  */
+@Deprecated
 public interface WebSocketSender {
     /**
      * Send text message

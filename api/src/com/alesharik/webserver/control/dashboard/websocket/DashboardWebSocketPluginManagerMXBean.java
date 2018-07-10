@@ -20,6 +20,7 @@ package com.alesharik.webserver.control.dashboard.websocket;
 
 import java.util.Collection;
 
+@Deprecated
 public interface DashboardWebSocketPluginManagerMXBean {
     /**
      * Return plugin count

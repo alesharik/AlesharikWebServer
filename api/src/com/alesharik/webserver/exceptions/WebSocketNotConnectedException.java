@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.exceptions;
 
+@Deprecated
 public class WebSocketNotConnectedException extends RuntimeException {
     public WebSocketNotConnectedException() {
     }
