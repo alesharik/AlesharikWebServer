@@ -89,3 +89,9 @@
 config.aws
 
 /work
+
+*.lock
+
+/native/rust/agent/target
+/native/rust/library/target
+/native/res-generated

@@ -1,6 +1,8 @@
 sudo: required
 dist: trusty
 language: java
+rust:
+- nightly
 jdk:
   - oraclejdk8
 compiler:

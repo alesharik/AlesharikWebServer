@@ -1,0 +1,16 @@
+[package]
+
+name = "alesharik_web_server"
+version = "0.0.1"
+authors = [ "alesharik" ]
+
+[dependencies]
+dbus = "0.6.2"
+jni = "0.10.1"
+alesharik_web_server_agent = { path = "../agent" }
+nix = { git = "https://github.com/nix-rust/nix" }
+regex = "1.0.1"
+
+[lib]
+crate_type = ["cdylib"]
+name = "alesharikwebserver"

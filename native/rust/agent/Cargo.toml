@@ -1,0 +1,20 @@
+[package]
+
+name = "alesharik_web_server_agent"
+version = "0.0.1"
+authors = [ "alesharik" ]
+
+[dependencies]
+dbus = "0.6.2"
+systemd = "~0.2"
+log = "0.4"
+env_logger = "0.5.10"
+blkid = "0.2.1"
+blkid-sys = "0.1.3"
+nix = "0.11.0"
+
+[lib]
+name = "alehsarik_web_server_agent"
+
+[[bin]]
+name = "alesharikwebserveranget"

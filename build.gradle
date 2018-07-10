@@ -45,7 +45,7 @@ task cleanDeployFolder(type: Delete) {
 }
 
 clean.dependsOn cleanDeployFolder
-clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean", "alesharikwebserver-agent:clean", "alesharikwebserver-jcstress:clean", "alesharikwebserver-utils:clean", "alesharikwebserver-logging:clean", "alesharikwebserver-base:clean", "alesharikwebserver-serverless:clean",  "alesharikwebserver-test:clean"
+clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean", "alesharikwebserver-agent:clean", "alesharikwebserver-jcstress:clean", "alesharikwebserver-utils:clean", "alesharikwebserver-logging:clean", "alesharikwebserver-base:clean", "alesharikwebserver-serverless:clean",  "alesharikwebserver-test:clean", "alesharikwebserver-native:clean"
 
 //====================Config====================\\
 
@@ -166,7 +166,8 @@ task bintray(dependsOn: [':alesharikwebserver-api:bintrayUpload',
                          ':alesharikwebserver-logging:bintrayUpload',
                          ':alesharikwebserver-base:bintrayUpload',
                          ':alesharikwebserver-serverless:bintrayUpload',
-                         ':alesharikwebserver-test:bintrayUpload']) {
+                         ':alesharikwebserver-test:bintrayUpload',
+                         ':alesharikwebserver-native:bintrayUpload']) {
     description = "Publish artifacts to bintray"
     group = 'distribution'
 }
@@ -180,129 +181,10 @@ task publishArtifacts(dependsOn: [':alesharikwebserver-api:publishMavenJavaPubli
                                   ':alesharikwebserver-logging:publishMavenJavaPublicationToMavenLocal',
                                   ':alesharikwebserver-base:publishMavenJavaPublicationToMavenLocal',
                                   ':alesharikwebserver-serverless:publishMavenJavaPublicationToMavenLocal',
-                                  ':alesharikwebserver-test:publishMavenJavaPublicationToMavenLocal']) {
+                                  ':alesharikwebserver-test:publishMavenJavaPublicationToMavenLocal',
+                                  ':alesharikwebserver-native:publishMavenJavaPublicationToMavenLocal']) {
     description = "Publish artifacts to maven local"
     group = 'distribution'
-}
-
-//====================Preparing server to deploy====================\\
-
-task checkDeployDir {
-    group = DEPLOY_GROUP
-    description = "Create deploy dir if not exitst"
-
-    if(!deployDir.exists())
-        deployDir.mkdirs()
-}
-
-task copyArtifacts(dependsOn: [checkDeployDir, ':alesharikwebserver-api:buildDeploy', 'alesharikwebserver-main:buildDeploy'], type: Copy) {
-    group = DEPLOY_GROUP
-    description = "Copy builded jars"
-
-    from('./api/out/libs/') {
-        include 'alesharikwebserver-api-all.jar'
-    }
-    from ('./main/out/libs/') {
-        include 'alesharikwebserver-main.jar'
-    }
-
-    rename('alesharikwebserver-api-all.jar', 'agent.jar')
-    rename('alesharikwebserver-main.jar', 'main.jar')
-    into deployDir.toString()
-}
-
-task generateConfig(dependsOn: checkDeployDir) {
-    group = DEPLOY_GROUP
-    description = "Generates configuration"
-
-//    def config = deployDir.toPath().resolve("configuration.xml").toAbsolutePath().toFile()
-//    config.createNewFile()
-//    config.text = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
-//            "<configuration>\n" +
-//            "    <api>\n" +
-//            "        <config>\n" +
-//            "            <fileCheckEnabled>true</fileCheckEnabled> <!-- REQUIRED. Enable config file hot reload -->\n" +
-//            "        </config>\n" +
-//            "        <logger>\n" +
-//            "            <listenerQueueCapacity>128</listenerQueueCapacity>\n" +
-//            "            <logFile>./logs/log-{\$time}.log</logFile>\n" +
-//            "            <debug>false</debug>\n" +
-//            "        </logger>\n" +
-//            "        <pluginManager>\n" +
-//            "            <folder>./plugins/</folder>\n" +
-//            "            <hotReload>false</hotReload>\n" +
-//            "        </pluginManager>\n" +
-//            "    </api>\n" +
-//            "    <modules>\n" +
-//            "\n" +
-//            "    </modules>\n" +
-//            "    <main>\n" +
-//            "        <init>\n" +
-//            "\n" +
-//            "        </init>\n" +
-//            "    </main>\n" +
-//            "</configuration>"
-}
-
-//noinspection GroovyAssignabilityCheck
-task generateRootStartScript(dependsOn: checkDeployDir) {
-    group = DEPLOY_GROUP
-    description = "generates rootStart.sg script"
-
-//    def startScript = deployDir.toPath().resolve("rootStart.sh").toAbsolutePath().toFile()
-//    startScript.createNewFile()
-//    startScript.text = "#!/usr/bin/env bash\n" +
-//            "if type -p java; then\n" +
-//            "    echo found java executable in PATH\n" +
-//            "    _java=java\n" +
-//            "elif [[ -n \"\$JAVA_HOME\" ]] && [[ -x \"\$JAVA_HOME/bin/java\" ]];  then\n" +
-//            "    echo found java executable in JAVA_HOME\n" +
-//            "    _java=\"\$JAVA_HOME/bin/java\"\n" +
-//            "else\n" +
-//            "    echo \"no java found!\"\n" +
-//            "    exit 1\n" +
-//            "fi\n" +
-//            "sudo -s \${_java} -javaagent:agent.jar -jar main.jar"
-}
-
-task generateStartScript(dependsOn: checkDeployDir) {
-    group = DEPLOY_GROUP
-    description = "generates start.sg script"
-
-//    def startScript = deployDir.toPath().resolve("start.sh").toAbsolutePath().toFile()
-//    startScript.createNewFile()
-//    startScript.text = "#!/usr/bin/env bash\n" +
-//            "if type -p java; then\n" +
-//            "    echo found java executable in PATH\n" +
-//            "    _java=java\n" +
-//            "elif [[ -n \"\$JAVA_HOME\" ]] && [[ -x \"\$JAVA_HOME/bin/java\" ]];  then\n" +
-//            "    echo found java executable in JAVA_HOME\n" +
-//            "    _java=\"\$JAVA_HOME/bin/java\"\n" +
-//            "else\n" +
-//            "    echo \"no java found!\"\n" +
-//            "    exit 1\n" +
-//            "fi\n" +
-//            "\${_java} -javaagent:agent.jar -jar main.jar"
-}
-
-task copyServerDashboard(dependsOn: checkDeployDir, type: Copy) {
-    group = DEPLOY_GROUP
-
-//    from(rootProject.projectDir.toString() + "/serverDashboard/")
-//    into(deployDir.toString() + "/serverDashboard/")
-}
-
-task generateFiles(dependsOn: [generateConfig, generateStartScript, generateRootStartScript, copyServerDashboard]) {
-    group = DEPLOY_GROUP
-}
-
-task prepareDeploy(dependsOn: [cleanDeployFolder, generateFiles, copyArtifacts]) {
-    group = DEPLOY_GROUP
-    description = "Build server and configure it"
-
-    doLast {
-        println 'Take server at ./deploy folder'
-    }
 }
 
 task codeCoverageReport(type: JacocoReport) {
@@ -323,6 +205,10 @@ task codeCoverageReport(type: JacocoReport) {
 codeCoverageReport.dependsOn {
     subprojects*.test
 }
+
+//====================Install tasks====================\\
+task installServer(dependsOn: 'alesharikwebserver-native:installAgent') {}
+
 
 //TODO move error page generators to api
 //TODO add object storage for request
