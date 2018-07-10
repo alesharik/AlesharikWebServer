@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api.messages;
 
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Logger;
 
 import java.util.Objects;
@@ -72,8 +71,6 @@ public final class Messages {
      * @throws IllegalStateException if {@link Messages} don't have any {@link AbstractMessageFactory} for this message
      */
     public static <T extends Message> void registerNewTranslator(String name, String subName, MessageTranslator<T> translator) {
-        Utils.requireNotNullOrEmpty(name);
-        Utils.requireNotNullOrEmpty(subName);
         Objects.requireNonNull(translator);
 
         Holder holder = getFromFactories(name, subName);
@@ -92,8 +89,6 @@ public final class Messages {
      * @throws IllegalStateException    if {@link Messages} don't have any {@link AbstractMessageFactory} for this message
      */
     public static <T extends Message> void unregisterTranslator(String name, String subName, MessageTranslator<T> translator) {
-        Utils.requireNotNullOrEmpty(name);
-        Utils.requireNotNullOrEmpty(subName);
         Objects.requireNonNull(translator);
 
         Holder holder = getFromFactories(name, subName);
@@ -114,8 +109,6 @@ public final class Messages {
      * @throws IllegalStateException if {@link Messages} don't have any {@link AbstractMessageFactory} for this message
      */
     public static <T extends Message> void registerNewListener(String name, String subName, MessageListener<T> listener) {
-        Utils.requireNotNullOrEmpty(name);
-        Utils.requireNotNullOrEmpty(subName);
         Objects.requireNonNull(listener);
 
         Holder holder = getFromFactories(name, subName);
@@ -134,8 +127,6 @@ public final class Messages {
      * @throws IllegalStateException    if {@link Messages} don't have any {@link AbstractMessageFactory} for this message
      */
     public static <T extends Message> void unregisterListener(String name, String subName, MessageListener<T> listener) {
-        Utils.requireNotNullOrEmpty(name);
-        Utils.requireNotNullOrEmpty(subName);
         Objects.requireNonNull(listener);
 
         Holder holder = getFromFactories(name, subName);
@@ -156,8 +147,6 @@ public final class Messages {
      * @throws IllegalStateException if {@link Messages} don't have any {@link AbstractMessageFactory} for this message
      */
     public static <T extends Message> void publishMessage(String name, String subName) {
-        Utils.requireNotNullOrEmpty(name);
-        Utils.requireNotNullOrEmpty(subName);
 
         try {
             Holder<T> holder = getFromFactories(name, subName);
@@ -198,7 +187,6 @@ public final class Messages {
      * @throws IllegalArgumentException if factory already exists
      */
     public static <T extends Message> void registerNewMessage(String name, AbstractMessageFactory<T> factory) {
-        Utils.requireNotNullOrEmpty(name);
         Objects.requireNonNull(factory);
 
         Holder<T> holder = new Holder<>(factory);

@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.exceptions.MIMETypeAlreadyExistsException;
 import lombok.experimental.UtilityClass;
 
 import javax.annotation.concurrent.ThreadSafe;
