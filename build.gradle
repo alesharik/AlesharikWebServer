@@ -115,7 +115,7 @@ subprojects {
         testCompile group: 'org.mockito', name: 'mockito-core', version: '2.7.21'
     }
 
-    task copyAgentLib(type: Copy, dependsOn: ':alesharikwebserver-api:fatJar') {
+    task copyAgentLib(type: Copy, dependsOn: ':alesharikwebserver-api:shadowJar') {
         from file(buildDir.toString() + "/../../api/out/libs/alesharikwebserver-api-all.jar")
         into buildDir.toString() + "/tmp/"
     }
