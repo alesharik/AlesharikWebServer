@@ -30,7 +30,6 @@ allprojects {
 
 //====================Some vars====================\\
 
-def deployDir = new File("./deploy/")
 def userProp = project.hasProperty('user') ? project.property('user') : System.getenv('user')
 def keyProp = project.hasProperty('key') ? project.property('key') : System.getenv('key')
 
@@ -40,11 +39,6 @@ clean.doFirst {
     delete 'out'
 }
 
-task cleanDeployFolder(type: Delete) {
-    delete 'deploy'
-}
-
-clean.dependsOn cleanDeployFolder
 clean.dependsOn "alesharikwebserver-internals:clean", "alesharikwebserver-api:clean", "alesharikwebserver-main:clean", "alesharikwebserver-database:clean", "alesharikwebserver-agent:clean", "alesharikwebserver-jcstress:clean", "alesharikwebserver-utils:clean", "alesharikwebserver-logging:clean", "alesharikwebserver-base:clean", "alesharikwebserver-serverless:clean",  "alesharikwebserver-test:clean", "alesharikwebserver-native:clean"
 
 //====================Config====================\\
@@ -128,8 +122,6 @@ subprojects {
 
     task agentTests(type: Test, dependsOn: copyAgentLib) {
         group = 'test'
-//        include "**/*Test.class"
-//        scanForTestClasses = false
         useJUnit {
             includeCategories 'com.alesharik.webserver.api.documentation.test.PlatformTest'
             includeCategories 'com.alesharik.webserver.api.documentation.test.IntegrationTest'
@@ -207,8 +199,5 @@ codeCoverageReport.dependsOn {
 }
 
 //====================Install tasks====================\\
-task installServer(dependsOn: 'alesharikwebserver-native:installAgent') {}
-
-
-//TODO move error page generators to api
-//TODO add object storage for request
+task installServer(dependsOn: 'alesharikwebserver-native:installAgent') { //FIXME
+}

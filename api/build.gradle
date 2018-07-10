@@ -2,19 +2,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: "com.github.johnrengelman.shadow"
 
-def nativesSrc = 'com/alesharik/webserver/api/native/'
-def nativeClasses = new ArrayList<String>()
-nativeClasses.add("com.alesharik.webserver.api.Utils")
-
 buildDir = new File('./out/')
-def nativeLibsDir = new File('./out/nativeLibs')
-
-
-//====================Deploy====================\\
-
-task buildDeploy {
-
-}
 
 //====================Cleaning====================\\
 
@@ -100,120 +88,13 @@ dependencies {
     compile project(':alesharikwebserver-agent')
 }
 
-
-//====================Native====================\\
-
-task generateJavaHeaders(dependsOn: compileJava, type: Exec) {
-    group = NATIVE_GROUP
-
-    def classesDir = sourceSets.main.output.classesDirs[0]
-
-    def classpath = ""
-    sourceSets.main.output.classesDirs.forEach({
-        if(!classpath.empty)
-            classpath += ":"
-        classpath += it.toString()
-    })
-
-    workingDir classesDir
-    executable "${System.properties["java.home"]}/../bin/javah"
-    args "-d", classesDir.toString() + '/' + nativesSrc
-    args "-classpath", buildDir.parent.toString() + "/one-nio/one-nio.jar:" + classpath
-    doFirst {
-        nativeClasses.forEach{ clazz -> args clazz }
-    }
-
-    errorOutput = System.out
-}
-
-task addJavaCritical(dependsOn: generateJavaHeaders) {
-    group = NATIVE_GROUP
-    doFirst {
-        System.err.println("Asd")
-        new File(sourceSets.main.output.classesDir.toString() + '/' + nativesSrc).listFiles().each {
-//            System.err.println("test")
-//            System.err.println(it)
-//            if (it.name == "com_alesharik_webserver_api_Utils.h") {
-//                it.text = it.text
-//                        .replaceAll("Java_com_alesharik_webserver_api_Utils_cast__J", "JavaCritical_com_alesharik_webserver_api_Utils_cast__J")
-//                        .replaceAll("Java_com_alesharik_webserver_api_Utils_cast__I", "JavaCritical_com_alesharik_webserver_api_Utils_cast__I")
-//            }
-        }
-    }
-}
-
-task copyNativeDir(dependsOn: compileJava, type: Copy) {
-    group = NATIVE_GROUP
-
-    from './src/' + nativesSrc
-    into sourceSets.main.output.classesDir.toString() + '/' + nativesSrc
-}
-
-task executeCmake(dependsOn: [copyNativeDir, addJavaCritical], type: Exec) {
-    group = NATIVE_GROUP
-
-    workingDir sourceSets.main.output.classesDir.toString() + '/' + nativesSrc
-    commandLine 'cmake', '.'
-
-    errorOutput = System.out
-}
-
-task makeNatives(dependsOn: executeCmake, type: Exec) {
-    group = NATIVE_GROUP
-
-    workingDir sourceSets.main.output.classesDirs[0].toString() + '/' + nativesSrc
-
-    commandLine "make"
-
-    errorOutput = System.out
-}
-
-task copyNatives(dependsOn: makeNatives, type: Copy) {
-    group = NATIVE_GROUP
-
-    sourceSets.main.output.classesDirs.forEach({
-        from(it.toString() + '/' + nativesSrc) {
-            include '**/*.so'
-            include '**/*.dll'
-        }
-    })
-
-    from(projectDir.toString() + "/one-nio/native") {
-        include '**/*.so'
-        include '**/*.dll'
-    }
-    includeEmptyDirs = false
-    into nativeLibsDir.toString()
-}
-
 //====================Build====================\\
-
-task checkDirs {
-    if(!buildDir.exists())
-        buildDir.mkdirs()
-    if(!nativeLibsDir.exists())
-        nativeLibsDir.mkdirs()
-}
-
-build.dependsOn checkDirs
-build.dependsOn test
-
-buildDeploy.dependsOn checkDirs
-buildDeploy.dependsOn test
-
-task fatJar(dependsOn: shadowJar) {}
-
-test.dependsOn fatJar
+test.dependsOn shadowJar
 
 shadowJar {
     baseName = project.name + '-all'
     classifier = null
     version = null
-
-    from (nativeLibsDir) {
-        include '**/*.so'
-        include '**/*.dll'
-    }
 }
 
 jar {
@@ -232,15 +113,20 @@ jar {
                 .filter { it.toString().contains("one-nio") }
                 .collect { it.isDirectory() ? it : zipTree(it) }
     }
-    from (nativeLibsDir) {
-        include '**/*.so'
-        include '**/*.dll'
-    }
 }
 
 test {
-//    jvmArgs '-javaagent:' + buildDir.toString() + '/libs/alesharikwebserver-api-all.jar'
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+    }
 }
+
+build {}
+build.dependsOn test
+
+//====================Publishing====================\\
 
 javadoc.destinationDir = new File(buildDir.toString() + '/javadoc/')
 
@@ -255,14 +141,6 @@ task packageSources(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     group = 'build'
 }
-
-build {}
-
-shadowJar.dependsOn copyNatives
-jar.dependsOn copyNatives
-jar.dependsOn test
-
-//====================Publishing====================\\
 
 artifacts {
     archives packageJavadoc
@@ -280,12 +158,3 @@ publishing {
         }
     }
 }
-
-test {
-    testLogging {
-        events "failed"
-        exceptionFormat "full"
-    }
-}
-
-test.testLogging.showStandardStreams = true
