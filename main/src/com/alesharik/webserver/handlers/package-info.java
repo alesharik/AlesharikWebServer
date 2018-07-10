@@ -17,4 +17,5 @@
  */
 
 //TODO move all
+@Deprecated
 package com.alesharik.webserver.handlers;

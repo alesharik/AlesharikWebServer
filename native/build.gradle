@@ -55,7 +55,8 @@ clean {
 task buildLibrary(type: Exec) {
     workingDir "./rust/library"
 
-    commandLine "cargo", "build --release"
+    executable "bash"
+    args "-c", "cargo build --release"
 }
 
 task copyNative(type: Copy, dependsOn: buildLibrary) {
@@ -74,7 +75,8 @@ task copyNative(type: Copy, dependsOn: buildLibrary) {
 task buildAgent(type: Exec) {
     workingDir "./rust/agent"
 
-    commandLine "cargo", "build --release"
+    executable "bash"
+    args "-c", "cargo build --release"
 }
 
 task installAgent() {
