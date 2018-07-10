@@ -7,15 +7,24 @@ jdk:
   - oraclejdk8
 compiler:
   - clang
+before_script:
+  - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.27.0 -y
+  - export PATH=$HOME/.cargo/bin:$PATH
+  - chmod +x gradlew
 before_install:
   - sudo add-apt-repository -y ppa:h-rayflood/llvm
   - sudo apt-get update -qq
 install:
   - sudo apt-get install --allow-unauthenticated -qq clang-3.4 util-linux libblkid1 libblkid-dev
   - export CXX="clang++-3.4"
-before_script:
-  - chmod +x gradlew
 script:
   - ./gradlew codeCoverageReport
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+cache:
+  directories:
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
+  - $HOME/.cargo/registry/cache/
+  - $HOME/.cargo/registry/src/
+  - $HOME/.cargo/bin/
