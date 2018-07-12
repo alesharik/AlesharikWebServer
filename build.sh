@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-sudo add-apt-repository -y ppa:h-rayflood/llvm
-sudo apt-get update -qq
-sudo apt-get install --allow-unauthenticated -qq clang-3.4 util-linux libblkid1 libblkid-dev systemd libsystemd-daemon-dev libsystemd-login-dev libsystemd-journal-dev libdbus-1-dev libsystemd-dev
+add-apt-repository -y ppa:h-rayflood/llvm
+apt-get update -qq
+apt-get install --allow-unauthenticated -qq curl openjdk-8-jdk gcc
+apt-get install --allow-unauthenticated -qq clang-3.4 util-linux libblkid1 libblkid-dev systemd libsystemd-daemon-dev libsystemd-login-dev libsystemd-journal-dev libdbus-1-dev libsystemd-dev
 export CXX="clang++-3.4"
 
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.27.0 -y
