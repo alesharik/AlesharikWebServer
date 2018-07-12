@@ -18,16 +18,15 @@
 
 package com.alesharik.webserver.module.http;
 
-import com.alesharik.webserver.api.server.wrapper.bundle.ErrorHandler;
-import com.alesharik.webserver.api.server.wrapper.bundle.FilterChain;
-import com.alesharik.webserver.api.server.wrapper.bundle.HttpBundle;
-import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandler;
-import com.alesharik.webserver.api.server.wrapper.bundle.HttpHandlerBundle;
-import com.alesharik.webserver.api.server.wrapper.bundle.RequestRouter;
-import com.alesharik.webserver.api.server.wrapper.bundle.Validator;
+import com.alesharik.webserver.module.http.bundle.ErrorHandler;
+import com.alesharik.webserver.module.http.bundle.HttpBundle;
+import com.alesharik.webserver.module.http.bundle.HttpHandlerBundle;
+import com.alesharik.webserver.module.http.bundle.Validator;
+import com.alesharik.webserver.module.http.bundle.processor.HttpProcessor;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.annotation.Nonnull;
 import java.io.PrintStream;
 
 import static org.junit.Assert.assertEquals;
@@ -68,58 +67,42 @@ public class HttpBundleManagerTest {
     }
 
     private static final class Test1 implements HttpHandlerBundle {
-
+        @Nonnull
         @Override
         public Validator getValidator() {
             return null;
         }
 
+        @Nonnull
         @Override
-        public RequestRouter getRouter() {
+        public ErrorHandler getErrorHandler() {
             return null;
         }
 
+        @Nonnull
         @Override
-        public FilterChain[] getFilterChains() {
-            return new FilterChain[0];
-        }
-
-        @Override
-        public HttpHandler[] getHttpHandlers() {
-            return new HttpHandler[0];
-        }
-
-        @Override
-        public ErrorHandler getErrorHandler() {
+        public HttpProcessor getProcessor() {
             return null;
         }
     }
 
     @HttpBundle("test")
     private static final class Test2 implements HttpHandlerBundle {
-
+        @Nonnull
         @Override
         public Validator getValidator() {
             return null;
         }
 
+        @Nonnull
         @Override
-        public RequestRouter getRouter() {
+        public ErrorHandler getErrorHandler() {
             return null;
         }
 
+        @Nonnull
         @Override
-        public FilterChain[] getFilterChains() {
-            return new FilterChain[0];
-        }
-
-        @Override
-        public HttpHandler[] getHttpHandlers() {
-            return new HttpHandler[0];
-        }
-
-        @Override
-        public ErrorHandler getErrorHandler() {
+        public HttpProcessor getProcessor() {
             return null;
         }
     }

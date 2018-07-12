@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.microservices.client;
 
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.microservices.api.MicroserviceEvent;
@@ -40,7 +39,7 @@ public class MicroserviceClient {
 
         if(mode == WorkingMode.ADVANCED) {
             //FIXME
-            server = new MicroserviceServer(Utils.getExternalIp(), 6800, MicroserviceServer.WorkingMode.SIMPLE, Utils.getExternalIp());
+            server = new MicroserviceServer("0.0.0.0", 6800, MicroserviceServer.WorkingMode.SIMPLE, "0.0.0.0");
         }
         Logger.log("Microservice client successfully initialized!");
     }

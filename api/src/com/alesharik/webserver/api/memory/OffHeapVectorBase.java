@@ -26,9 +26,9 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * <pre>
- * ┌────────────┬─────────────┬───────────┬──────┐
- * │ BASE(long) │ COUNT(long) │ MAX(long) │ DATA │
- * └────────────┴─────────────┴───────────┴──────┘
+ * -----------------------------------------------
+ * | BASE(long) | COUNT(long) | MAX(long) | DATA |
+ * -----------------------------------------------
  * </pre>
  * This is base of OffHeapVector. It contains basic methods array methods for size, maximum size, etc
  *

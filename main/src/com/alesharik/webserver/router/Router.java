@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.router;
 
-import com.alesharik.webserver.api.Utils;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 
@@ -60,7 +59,6 @@ public final class Router {
     }
 
     public Future<String> getIpForMicroservice(String name) throws IOException {
-        Utils.requireNotNullOrEmpty(name);
 
         return CompletableFuture.supplyAsync(() -> {
             try {

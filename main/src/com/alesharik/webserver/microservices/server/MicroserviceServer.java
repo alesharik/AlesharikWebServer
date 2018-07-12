@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.microservices.server;
 
-import com.alesharik.webserver.api.server.Server;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
 import com.alesharik.webserver.microservices.api.Microservice;
@@ -30,14 +29,13 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Prefixes("[MicroserviceServer]")//TODO refactor
-public class MicroserviceServer extends Server implements Runnable {
+public class MicroserviceServer implements Runnable {
     private ConcurrentHashMap<String, Microservice> microservices = new ConcurrentHashMap<>();
     private Disruptor<Event> disruptor;
     private volatile RingBuffer<Event> ringBuffer;
     private MicroserviceServerRequestProcessor processor;
 
     public MicroserviceServer(String host, int port, WorkingMode mode, String routerIp) {
-        super(host, port);
         //TODO use CPU L3 cache size without 1024
         disruptor = new Disruptor<>(new EventFactoryImpl(), 1024, new DisruptorThreadFactory());
         disruptor.setDefaultExceptionHandler(new DisruptorExceptionHandler<>());
@@ -55,7 +53,6 @@ public class MicroserviceServer extends Server implements Runnable {
         microservice.setup();
     }
 
-    @Override
     public void start() throws IOException {
         disruptor.start();
         ringBuffer = disruptor.getRingBuffer();
@@ -63,7 +60,6 @@ public class MicroserviceServer extends Server implements Runnable {
         new Thread(this).start();
     }
 
-    @Override
     public void shutdown() {
         disruptor.shutdown();
         ringBuffer = null;

@@ -17,8 +17,6 @@
  */
 
 package com.alesharik.webserver.router;
-
-import com.alesharik.webserver.api.server.Server;
 import com.alesharik.webserver.logger.Prefixes;
 
 import java.io.IOException;
@@ -36,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ol>
  */
 @Prefixes("[RouterServer]")
-public final class RouterServer extends Server {
+public final class RouterServer {
     static final String OK = "200";
     static final String NOT_FOUND = "404";
     static final String INTERNAL_ERROR = "500";
@@ -45,7 +43,6 @@ public final class RouterServer extends Server {
     private final Servers servers;
 
     public RouterServer(int port, String host, int threadCount) {
-        super(host, port);
         servers = new Servers();
         processor = new RouterServerRequestProcessor(port, host, threadCount, servers);
     }

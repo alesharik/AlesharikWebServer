@@ -1,26 +1,9 @@
+os: linux
+services: docker
+language: generic
 sudo: required
-dist: trusty
-language: java
-rust:
-- stable
-jdk:
-  - oraclejdk8
-compiler:
-  - clang
-before_script:
-  - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.27.0 -y
-  - export PATH=$HOME/.cargo/bin:$PATH
-  - chmod +x gradlew
-before_install:
-  - sudo add-apt-repository -y ppa:h-rayflood/llvm
-  - sudo apt-get update -qq
-install:
-  - sudo apt-get install --allow-unauthenticated -qq clang-3.4 util-linux libblkid1 libblkid-dev systemd libsystemd-daemon-dev libsystemd-login-dev libsystemd-journal-dev libdbus-1-dev libsystemd-dev
-  - export CXX="clang++-3.4"
 script:
-  - ./gradlew codeCoverageReport
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+- docker run -ti --name test -v "${HOME}/.gradle":$HOME/.gradle -v "${HOME}/.cargo":$HOME/.cargo -v "${PWD}":/home ubuntu:latest ./build.sh
 cache:
   directories:
   - $HOME/.gradle/caches/

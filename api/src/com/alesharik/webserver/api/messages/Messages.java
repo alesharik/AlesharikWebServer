@@ -31,17 +31,17 @@ import java.util.concurrent.Executors;
  * The message lifecycle:<br><pre>
  *     <code>publishMessage(name, subName)</code>
  *          |
- *          ∨
+ *          |
  *     {@link AbstractMessageFactory} - used for generate messages
  *          |
- *          ∨
+ *          |
  *     {@link MessageTranslator} - used for setup messages
  *          |
- *          ∨
+ *          |
  *     <code>   message.clone()</code>
  *          |       |
  *          |       ---------->{@link MessageHandler} - used for listen multiple messages
- *          ∨
+ *          |
  *     {@link MessageListener} - used for listen messages IN NEW THREAD
  * </pre>
  * The messages divided by groups: the message has the name(received as method var, is a group) and the
