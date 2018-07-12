@@ -3,6 +3,7 @@ services: docker
 language: generic
 sudo: required
 script:
+- chmod +x build.sh
 - docker run -ti --name test -v "${HOME}/.gradle":$HOME/.gradle -v "${HOME}/.cargo":$HOME/.cargo -v "${PWD}":/home ubuntu:latest /home/build.sh
 cache:
   directories:
