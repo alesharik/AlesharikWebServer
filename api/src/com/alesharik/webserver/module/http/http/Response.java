@@ -219,13 +219,12 @@ public class Response implements Recyclable {
 
     @Override
     public void recycle() {
-        status = null;
         version = HttpVersion.HTTP_1_1;
         headers.clear();
         cookies.clear();
-        buffer = null;
-        writer = null;
-        status = null;
+        buffer.clear();
+        writer.setCharset(StandardCharsets.ISO_8859_1);
+        status = HttpStatus.NOT_IMPLEMENTED_501;
         creationTime = -1;
         marks.clear();
     }

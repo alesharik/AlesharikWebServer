@@ -76,25 +76,7 @@ public class DefaultErrorPageProviderTest {
         response.respond(HttpStatus.INTERNAL_SERVER_ERROR_500);
         response.getWriter().write("asd");
 
-        String expect = "<html>" +
-                "<head>" +
-                "<style>" +
-                "h1, p, pre {" +
-                "   text-align: center;" +
-                "}" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<h1>" +
-                500 + " " + "internal Server Error" +
-                "</h1>" +
-                "<pre>" +
-                "asd" +
-                "</pre>" +
-                "<hr/>" +
-                "<p>AlesharikWebServer</p>" +
-                "</body>" +
-                "</html>";
+        String expect = "<html><head><style>h1, p, pre {   text-align: center;}</style></head><body><h1>500 Internal Server Error</h1><pre>asd</pre><hr/><p>AlesharikWebServer</p></body></html>";
 
 
         assertTrue(provider.isApplicable(request, response));
@@ -115,25 +97,7 @@ public class DefaultErrorPageProviderTest {
         response.getWriter().write("asd");
 
         ExceptionWithoutStacktrace e = new ExceptionWithoutStacktrace("a");
-        String expect = "<html>" +
-                "<head>" +
-                "<style>" +
-                "h1, p, pre {" +
-                "   text-align: center;" +
-                "}" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<h1>" +
-                500 + " " + "internal Server Error" +
-                "</h1>" +
-                "<pre>" +
-                e.getMessage() +
-                "</pre>" +
-                "<hr/>" +
-                "<p>AlesharikWebServer</p>" +
-                "</body>" +
-                "</html>";
+        String expect = "<html><head><style>h1, p, pre {   text-align: center;}</style></head><body><h1>500 Internal Server Error</h1><pre></pre><hr/><p>AlesharikWebServer</p></body></html>";
 
         provider.sendExceptionErrorPage(request, response, e);
 

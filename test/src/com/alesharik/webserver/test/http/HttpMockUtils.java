@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 @UtilityClass
@@ -135,7 +136,7 @@ public class HttpMockUtils {
         }
 
         public Validator body(byte[] body) {
-            assertEquals("Body not equals! Body: " + Arrays.toString(body) + ", response: " + response.toStringResponse(), response.getBody(), body);
+            assertArrayEquals("Body not equals! Request body: " + Arrays.toString(body) + ", response: " + response.toStringResponse(), response.getBody(), body);
             return this;
         }
 
