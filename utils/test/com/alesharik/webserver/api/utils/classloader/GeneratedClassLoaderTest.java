@@ -82,7 +82,7 @@ public class GeneratedClassLoaderTest {
     }
 
     @Test(expected = ClassAlreadyExistsException.class)
-    public void testRegisterSameClass() throws Exception {
+    public void registerSameClass() throws Exception {
         classLoader.addGeneratedClass("Test", classData);
         classLoader.addGeneratedClass("Test", classData);
     }
