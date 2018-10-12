@@ -16,6 +16,17 @@ sourceSets {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+                'Premain-Class': 'com.alesharik.webserver.api.agent.Agent',
+                'Agent-Class': 'com.alesharik.webserver.api.agent.Agent',
+                'Can-Retransform-Classes': 'true',
+                'Can-Redefine-Classes': 'true'
+        )
+    }
+}
+
 build {}
 
 build.dependsOn test
@@ -50,7 +61,6 @@ publishing {
 }
 
 dependencies {
-    compile group: 'org.ow2.asm', name: 'asm-all', version: '5.2'
     compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.1'
 
 
