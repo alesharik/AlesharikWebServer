@@ -40,4 +40,16 @@ public @interface ForeignKey {
      * @return column name. Empty string will be replaced by field column name
      */
     String columnName() default "";
+
+    Action onDelete() default Action.RESTRICT;
+
+    Action onUpdate() default Action.NO_ACTION;
+
+    enum Action {
+        RESTRICT,
+        NO_ACTION,
+        CASCADE,
+        SET_NULL,
+        SET_DEFAULT
+    }
 }

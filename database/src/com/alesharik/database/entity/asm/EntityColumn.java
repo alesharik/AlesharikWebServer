@@ -18,6 +18,7 @@
 
 package com.alesharik.database.entity.asm;
 
+import com.alesharik.database.entity.ForeignKey;
 import com.alesharik.webserver.api.reflection.FieldAccessor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -44,12 +45,16 @@ public final class EntityColumn {
     private final String overrideDomain;
     private final boolean bridge;
     private final boolean lazy;
+    private final ForeignKey.Action deleteAction;
+    private final ForeignKey.Action updateAction;
 
-    EntityColumn(Field fieldName, String columnName, boolean foreign, String foreignTable, String foreignColumn, boolean indexed, boolean primary, boolean unique, boolean nullable, String constraint, String constraintName, String overrideDomain, boolean bridge, boolean lazy) {
+    EntityColumn(Field fieldName, String columnName, boolean foreign, String foreignTable, String foreignColumn, boolean indexed, boolean primary, boolean unique, boolean nullable, String constraint, String constraintName, String overrideDomain, boolean bridge, boolean lazy, ForeignKey.Action deleteAction, ForeignKey.Action updateAction) {
         this.field = fieldName;
         this.constraint = constraint;
         this.constraintName = constraintName;
         this.overrideDomain = overrideDomain;
+        this.deleteAction = deleteAction;
+        this.updateAction = updateAction;
         this.columnName = columnName.isEmpty() ? fieldName.getName() : columnName;
         this.foreign = foreign;
         this.foreignTable = foreignTable;

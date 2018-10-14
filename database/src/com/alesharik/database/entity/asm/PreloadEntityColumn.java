@@ -18,6 +18,7 @@
 
 package com.alesharik.database.entity.asm;
 
+import com.alesharik.database.entity.ForeignKey;
 import lombok.AllArgsConstructor;
 import lombok.Generated;
 import lombok.Getter;
@@ -62,7 +63,14 @@ final class PreloadEntityColumn {
                 throw new IllegalArgumentException(clazz.toString());
             }
         }
-        return new EntityColumn(f, columnName, foreign, foreignTable, foreignColumn, indexed, primary, unique, nullable, constraint, constraintName, overrideDomain, bridge, lazy);
+        ForeignKey.Action deleteAction = null;
+        ForeignKey.Action updateAction = null;
+        if(foreign) {
+            ForeignKey annotation = f.getAnnotation(ForeignKey.class);
+            deleteAction = annotation.onDelete();
+            updateAction = annotation.onUpdate();
+        }
+        return new EntityColumn(f, columnName, foreign, foreignTable, foreignColumn, indexed, primary, unique, nullable, constraint, constraintName, overrideDomain, bridge, lazy, deleteAction, updateAction);
     }
 
     /**

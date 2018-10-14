@@ -22,6 +22,7 @@ import com.alesharik.database.connection.ConnectionProvider;
 import com.alesharik.database.data.EntityPreparedStatement;
 import com.alesharik.database.data.Schema;
 import com.alesharik.database.data.Table;
+import com.alesharik.database.entity.ForeignKey;
 import com.alesharik.database.entity.asm.EntityColumn;
 import com.alesharik.database.entity.asm.EntityDescription;
 import com.alesharik.database.exception.DatabaseCloseSQLException;
@@ -111,6 +112,10 @@ final class PostgresTable<E> implements Table<E> {
                                 request.append(entityColumn.getForeignColumn());
                                 request.append(')');
                             }
+                            request.append(" ON DELETE ");
+                            request.append(convertAction(entityColumn.getDeleteAction()));
+                            request.append(" ON UPDATE ");
+                            request.append(convertAction(entityColumn.getUpdateAction()));
                         }
                         request.append(entityColumn.isNullable() ? " NULL" : " NOT NULL");
                         if(entityColumn.isUnique())
@@ -162,6 +167,23 @@ final class PostgresTable<E> implements Table<E> {
             }
         } catch (SQLException e) {
             throw new DatabaseCloseSQLException(e);
+        }
+    }
+
+    private static String convertAction(ForeignKey.Action action) {
+        switch (action) {
+            case RESTRICT:
+                return "RESTRICT";
+            case CASCADE:
+                return "CASCADE";
+            case SET_NULL:
+                return "SET NULL";
+            case NO_ACTION:
+                return "NO ACTION";
+            case SET_DEFAULT:
+                return "SET DEFAULT";
+            default:
+                return "";
         }
     }
 
