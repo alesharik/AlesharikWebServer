@@ -83,7 +83,7 @@ public class ClassInstantiator {
                        nulls[i] = 0;
                    else if(type == byte.class)
                        //noinspection UnnecessaryBoxing
-                       nulls[i] = new Byte((byte) 0);
+                       nulls[i] = Byte.valueOf((byte) 0);
                    else if(type == double.class)
                        //noinspection UnnecessaryBoxing
                        nulls[i] = new Double(0);
@@ -92,13 +92,13 @@ public class ClassInstantiator {
                        nulls[i] = new Float(0);
                    else if(type == short.class)
                        //noinspection UnnecessaryBoxing
-                       nulls[i] = new Short((short) 0);
+                       nulls[i] = Short.valueOf((short) 0);
                    else if(type == long.class)
                        //noinspection UnnecessaryBoxing
-                       nulls[i] = new Long(0);
+                       nulls[i] = Long.valueOf(0);
                    else if(type == char.class)
                        //noinspection UnnecessaryBoxing
-                       nulls[i] = new Character((char) 0);
+                       nulls[i] = Character.valueOf((char) 0);
                 } else
                     nulls[i] = null;
             }
