@@ -400,7 +400,7 @@ public final class SelectorContextImpl implements SelectorContext {
                     char c = (char) buffer.get();
                     if(c != '\n' && c != '\r') {
                         state = State.FIRST_LINE;
-                        vector.write(tempBuffer, Character.toString(c).getBytes(StandardCharsets.ISO_8859_1));
+                        tempBuffer = vector.write(tempBuffer, Character.toString(c).getBytes(StandardCharsets.ISO_8859_1));
                         break;
                     }
                 }
@@ -422,7 +422,7 @@ public final class SelectorContextImpl implements SelectorContext {
                 }
 
                 if(buffer.position() >= size) {
-                    vector.write(tempBuffer, firstLine.toString().getBytes(StandardCharsets.ISO_8859_1));
+                    tempBuffer = vector.write(tempBuffer, firstLine.toString().getBytes(StandardCharsets.ISO_8859_1));
                 } else {
                     char c = (char) buffer.get();
                     if(c != '\n')
@@ -459,7 +459,7 @@ public final class SelectorContextImpl implements SelectorContext {
                     }
                 }
                 if(headerBuilder.length() > 0)
-                    vector.write(tempBuffer, headerBuilder.toString().getBytes(StandardCharsets.ISO_8859_1));
+                    tempBuffer = vector.write(tempBuffer, headerBuilder.toString().getBytes(StandardCharsets.ISO_8859_1));
             }
             if(bodyLength == -1) {
                 Long length = request.getHeader("Content-Length");
@@ -474,7 +474,7 @@ public final class SelectorContextImpl implements SelectorContext {
                     int read = Math.min(buf.length, nRead);
                     buffer.get(buf, 0, read);
                     nRead -= read;
-                    vector.write(tempBuffer, buf, 0, read);
+                    tempBuffer = vector.write(tempBuffer, buf, 0, read);
                 }
                 if(vector.size(tempBuffer) == bodyLength) {
                     request.withBody(vector.toByteArray(tempBuffer));

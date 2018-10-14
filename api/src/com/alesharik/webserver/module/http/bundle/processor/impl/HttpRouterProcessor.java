@@ -49,7 +49,10 @@ public class HttpRouterProcessor implements HttpProcessor {
     @Override
     public void process(@Nonnull Request request, @Nonnull Response response) {
         try {
-            HttpProcessor processor = processors.get(request.getContextPath());
+            String contextPath = request.getContextPath();
+            if(contextPath.endsWith("/"))
+                contextPath = contextPath.substring(0, contextPath.length() - 1);
+            HttpProcessor processor = processors.get(contextPath);
             if(processor == null)
                 processor = def;
             if(processor == null)

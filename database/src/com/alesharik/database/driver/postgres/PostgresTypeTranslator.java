@@ -167,6 +167,14 @@ final class PostgresTypeTranslator {
             return resultSet.getClob(nameOverride);
         else if(type == Blob.class)
             return resultSet.getBlob(nameOverride);
+        else if(type == byte[].class)
+            return resultSet.getBytes(nameOverride);
+        else if(type == Byte[].class) {
+            byte[] a = resultSet.getBytes(nameOverride);
+            Byte[] b = new Byte[a.length];
+            for(int i = 0; i < a.length; i++) b[i] = a[i];
+            return b;
+        }
         return null;
     }
 

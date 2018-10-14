@@ -18,12 +18,15 @@
 
 package com.alesharik.webserver.module.http.http.data;
 
-import com.alesharik.webserver.module.http.http.Utils;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.nio.charset.Charset;
 
 @Getter
+@EqualsAndHashCode
+@ToString
 public class ContentType {
     private final MimeType type;
     private Charset charset;
@@ -50,17 +53,17 @@ public class ContentType {
     }
 
     public String toHeaderString() {
-        return hasBoundary() ? type.toMimeType() + "; boundary=" + boundary : type.toMimeType() + (charset == null ? null : "; charset=" + charset.toString());
+        return hasBoundary() ? type.toMimeType() + "; boundary=" + boundary : type.toMimeType() + (charset == null ? "" : "; charset=" + charset.toString());
     }
 
     public static ContentType parse(String s) {
-        String[] parts = Utils.divideStringUnsafe(s, s.indexOf(';'), 2);
+        String[] parts = s.split(";", 2);
         MimeType type = MimeType.parseType(parts[0]);
         if(parts.length == 1)
             return new ContentType(type);
-        else if(type.toMimeType().equals("multipart/form-data"))
-            return new ContentType(type, parts[1].substring("boundary=".length()));
+        else if(type.toMimeType().trim().equals("multipart/form-data"))
+            return new ContentType(type, parts[1].substring("boundary=".length() + 1));
         else
-            return new ContentType(type, parts[1].substring("charset=".length()));
+            return new ContentType(type, Charset.forName(parts[1].trim().substring("charset=".length())));
     }
 }
