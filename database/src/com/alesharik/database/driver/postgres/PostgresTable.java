@@ -106,6 +106,10 @@ final class PostgresTable<E> implements Table<E> {
                         request.append(PostgresTypeTranslator.getColumnType(entityColumn));
                         if(entityColumn.isForeign()) {
                             request.append(" REFERENCES ");
+                            if(!entityColumn.getForeignTable().contains(".")) { //No scheme
+                                request.append(schema.getName());
+                                request.append('.');
+                            }
                             request.append(entityColumn.getForeignTable());
                             if(!entityColumn.getForeignColumn().isEmpty()) {
                                 request.append('(');
