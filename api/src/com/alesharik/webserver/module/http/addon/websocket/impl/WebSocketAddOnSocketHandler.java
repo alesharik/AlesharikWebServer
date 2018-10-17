@@ -158,12 +158,12 @@ final class WebSocketAddOnSocketHandler implements AddOnSocketHandler {
             while(data.hasRemaining()) {
                 lastRemaining = data.remaining();
                 data.get(buf);
-                vector.write(buffer, buf);
+                buffer = vector.write(buffer, buf);
                 while(canDoMove())
                     publish();
             }
             if(lastRemaining > 0) {
-                vector.write(buffer, buf, 0, lastRemaining);
+                buffer = vector.write(buffer, buf, 0, lastRemaining);
                 while(canDoMove())
                     publish();
             }
