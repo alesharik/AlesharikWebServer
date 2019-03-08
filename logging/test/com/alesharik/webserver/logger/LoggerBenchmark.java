@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.logger;
 
-import com.alesharik.webserver.benchmark.BenchmarkTest;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Group;
@@ -36,7 +35,6 @@ import java.io.IOException;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.TimeUnit;
 
-@BenchmarkTest("Logger")
 @Measurement(timeUnit = TimeUnit.NANOSECONDS)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)

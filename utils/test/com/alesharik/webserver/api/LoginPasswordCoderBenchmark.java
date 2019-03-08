@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.benchmark.BenchmarkTest;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Group;
@@ -32,7 +31,6 @@ import org.openjdk.jmh.annotations.State;
 
 import java.util.concurrent.TimeUnit;
 
-@BenchmarkTest("LoginPasswordCoder")
 @Measurement(timeUnit = TimeUnit.NANOSECONDS)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)

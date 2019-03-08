@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api.collections;
 
-import com.alesharik.webserver.benchmark.BenchmarkTest;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -34,7 +33,6 @@ import org.openjdk.jmh.annotations.Warmup;
 
 import java.util.concurrent.TimeUnit;
 
-@BenchmarkTest("triple-hash-map")
 @Measurement(timeUnit = TimeUnit.NANOSECONDS)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)

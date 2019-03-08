@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.benchmark.BenchmarkTest;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Group;
@@ -35,7 +34,6 @@ import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.DataFormatException;
 
-@BenchmarkTest("CompressionUtils")
 @Measurement(timeUnit = TimeUnit.MICROSECONDS)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)

@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api.fileManager;
 
-import com.alesharik.webserver.benchmark.BenchmarkTest;
 import com.alesharik.webserver.logger.Logger;
 import org.glassfish.grizzly.utils.Charsets;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -40,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 @Measurement(timeUnit = TimeUnit.NANOSECONDS)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)
-@BenchmarkTest("FileManager")
 public class FileManagerBenchmark {
     private FileManager fileManager;
     private final byte[] TEST_FILE_BYTES = "test".getBytes(Charsets.UTF8_CHARSET);

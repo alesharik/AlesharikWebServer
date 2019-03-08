@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.benchmark.BenchmarkTest;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@BenchmarkTest("java")
 @Measurement(timeUnit = TimeUnit.NANOSECONDS)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)

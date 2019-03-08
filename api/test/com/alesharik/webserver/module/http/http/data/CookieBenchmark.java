@@ -36,7 +36,6 @@
 
 package com.alesharik.webserver.module.http.http.data;
 
-import com.alesharik.webserver.benchmark.BenchmarkTest;
 import org.glassfish.grizzly.http.util.CookieSerializerUtils;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -50,7 +49,6 @@ import org.openjdk.jmh.annotations.State;
 
 import java.util.concurrent.TimeUnit;
 
-@BenchmarkTest("cookiesTest")
 @Measurement(timeUnit = TimeUnit.NANOSECONDS)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)

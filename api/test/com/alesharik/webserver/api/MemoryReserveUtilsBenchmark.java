@@ -18,7 +18,6 @@
 
 package com.alesharik.webserver.api;
 
-import com.alesharik.webserver.benchmark.BenchmarkTest;
 import com.alesharik.webserver.internals.MemoryReserveUtils;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -28,7 +27,6 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 
 import java.util.concurrent.TimeUnit;
 
-@BenchmarkTest("memory-reserve-utils")
 @Measurement(timeUnit = TimeUnit.NANOSECONDS)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class MemoryReserveUtilsBenchmark {//Benchmarks API located in api module
