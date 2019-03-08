@@ -37,17 +37,6 @@ public final class BenchmarkRunner {
         }
     }
 
-    private static void scanBenchmarks() {
-        new FastClasspathScanner()
-                .matchClassesWithAnnotation(BenchmarkTest.class, BenchmarkRunner::addBenchmark)
-                .scan(pool, PARALLELISM);
-    }
-
-    private static void addBenchmark(Class<?> benchmark) {
-        BenchmarkTest annotation = benchmark.getAnnotation(BenchmarkTest.class);
-        benchmarks.put(annotation.value(), benchmark);
-    }
-
     private static String parseArgs(String[] args) {
         String arg = args.length >= 1 ? args[0] : "";
         switch (arg) {
