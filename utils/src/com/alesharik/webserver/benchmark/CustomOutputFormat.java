@@ -39,7 +39,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 final class CustomOutputFormat extends AbstractOutputFormat {
-
     private final OutputFormat format;
 
     public CustomOutputFormat(PrintStream out, VerboseMode verbose) {

@@ -18,47 +18,18 @@
 
 package com.alesharik.webserver.benchmark;
 
-import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.VerboseMode;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.concurrent.ForkJoinPool;
-
 /**
  * This class runs all benchmarks
  */
 public final class BenchmarkRunner {
-    private static final int PARALLELISM = Runtime.getRuntime().availableProcessors();
-
-    private static final HashMap<String, Class<?>> benchmarks = new HashMap<>();
-    private static final ForkJoinPool pool = new ForkJoinPool(PARALLELISM);
-
-    private static boolean runAll = true;
-    private static String benchName;
-
-    public static void main(String[] args) throws IOException {
-        scanBenchmarks();
-        parseArgs(args);
+    public static void main(String[] args) {
         OptionsBuilder options = new OptionsBuilder();
-
-        if(runAll) {
-            System.out.println("Running all benchmarks");
-            benchmarks.forEach((s, aClass) -> options.include(aClass.getCanonicalName()));
-        } else {
-            if(!benchmarks.containsKey(benchName)) {
-                System.out.println("Don't have benchmark " + benchName);
-//                stop();
-            } else {
-                options.include(benchmarks.get(benchName).getCanonicalName());
-            }
-        }
-        options.include("com.alesharik.webserver.api.collections.TripleHashMapBenchmark");
-
-
+        options.include(parseArgs(args));
         try {
             new Runner(options.forks(1).build(), new CustomOutputFormat(System.out, VerboseMode.EXTRA)).run();
         } catch (RunnerException e) {
@@ -77,32 +48,28 @@ public final class BenchmarkRunner {
         benchmarks.put(annotation.value(), benchmark);
     }
 
-    private static void parseArgs(String[] args) throws IOException {
-        for(int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            switch (arg) {
-                case "-h":
-                case "--help": {
-                    System.out.println("-h, --help                                 show help");
-                    System.out.println("-b [benchmark], --benchmark [benchmark]    run benchmark");
-                    break;
-                }
-                case "-b":
-                case "--benchmark": {
-                    i++;
-                    benchName = args[i];
-                    runAll = false;
-                    break;
-                }
-                default:
-                    System.out.println("WTF! Argument not expected!");
-                    break;
+    private static String parseArgs(String[] args) {
+        String arg = args.length >= 1 ? args[0] : "";
+        switch (arg) {
+            case "-h":
+            case "--help": {
+                System.err.println("-h, --help                                 show help");
+                System.err.println("-b [benchmark], --benchmark [benchmark]    run benchmark(class name required)");
+                System.exit(0);
+                break;
             }
+            case "-b":
+            case "--benchmark": {
+                if(args.length < 2) {
+                    System.err.println("Second argument(benchmark class) required!");
+                    System.exit(0);
+                }
+                return args[2];
+            }
+            default:
+                System.err.println("WTF! Argument not expected!");
+                System.exit(1);
         }
-    }
-
-    private static void stop() {
-        pool.shutdown();
-        System.exit(0);
+        return "";
     }
 }

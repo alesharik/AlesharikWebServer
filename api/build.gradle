@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: "com.github.johnrengelman.shadow"
@@ -95,6 +97,25 @@ shadowJar {
     baseName = project.name + '-all'
     classifier = null
     version = null
+}
+
+task benchmarkShadowJar(type: ShadowJar, dependsOn: jar) {
+    baseName = project.name + '-benchmark-all'
+    classifier = null
+    version = null
+
+    manifest {
+        attributes 'Main-Class': 'com.alesharik.webserver.benchmark.BenchmarkRunner'
+    }
+
+    from(project.convention.getPlugin(JavaPluginConvention).sourceSets.main.output
+            + subprojects
+                .collect { it.sourceSets.test.output}
+                .inject(project.convention.getPlugin(JavaPluginConvention).sourceSets.test.output) {
+                    item1, item2 -> item1 + item2
+                })
+    configurations = [project.configurations.runtime]
+    exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
 
 jar {

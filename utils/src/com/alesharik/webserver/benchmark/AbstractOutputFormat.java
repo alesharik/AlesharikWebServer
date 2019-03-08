@@ -24,16 +24,9 @@ import org.openjdk.jmh.runner.options.VerboseMode;
 import java.io.IOException;
 import java.io.PrintStream;
 
-public abstract class AbstractOutputFormat implements OutputFormat {
-
-    /**
-     * Verbose-mode?
-     */
-    final VerboseMode verbose;
-    /**
-     * PrintStream to use
-     */
-    final PrintStream out;
+abstract class AbstractOutputFormat implements OutputFormat {
+    private final VerboseMode verbose;
+    protected final PrintStream out;
 
     public AbstractOutputFormat(PrintStream out, VerboseMode verbose) {
         this.out = out;
@@ -57,9 +50,8 @@ public abstract class AbstractOutputFormat implements OutputFormat {
 
     @Override
     public void verbosePrintln(String s) {
-        if(verbose == VerboseMode.EXTRA) {
+        if(verbose == VerboseMode.EXTRA)
             out.println(s);
-        }
     }
 
     @Override
@@ -74,6 +66,5 @@ public abstract class AbstractOutputFormat implements OutputFormat {
 
     @Override
     public void close() {
-        // do nothing
     }
 }
