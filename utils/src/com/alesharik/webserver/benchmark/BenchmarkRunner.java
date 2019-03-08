@@ -23,42 +23,61 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.VerboseMode;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * This class runs all benchmarks
  */
 public final class BenchmarkRunner {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws RunnerException {
         OptionsBuilder options = new OptionsBuilder();
-        options.include(parseArgs(args));
-        try {
-            new Runner(options.forks(1).build(), new CustomOutputFormat(System.out, VerboseMode.EXTRA)).run();
-        } catch (RunnerException e) {
-            e.printStackTrace();
-        }
+
+        List<String> strings = parseArgs(args);
+        if(strings.isEmpty())
+            options.include(".*");
+        else
+            strings.forEach(options::include);
+
+        new Runner(options.forks(1).build(), new CustomOutputFormat(System.out, VerboseMode.EXTRA)).run();
     }
 
-    private static String parseArgs(String[] args) {
+    private static List<String> parseArgs(String[] args) {
         String arg = args.length >= 1 ? args[0] : "";
         switch (arg) {
             case "-h":
             case "--help": {
                 System.err.println("-h, --help                                 show help");
-                System.err.println("-b [benchmark], --benchmark [benchmark]    run benchmark(class name required)");
+                System.err.println("-b [class], --benchmark [class]            specify benchmark class to run");
+                System.err.println("-l [class],[class], --list [class],[class] specify benchmark classes to run");
+                System.err.println("-a, --all                                  run all benchmarks");
                 System.exit(0);
                 break;
             }
             case "-b":
             case "--benchmark": {
                 if(args.length < 2) {
-                    System.err.println("Second argument(benchmark class) required!");
+                    System.err.println("Second argument (benchmark class) required!");
                     System.exit(0);
                 }
-                return args[2];
+                return Collections.singletonList(args[2]);
             }
+            case "-l":
+            case "--list": {
+                if(args.length < 2) {
+                    System.err.println("Second argument (benchmark classes) required!");
+                    System.exit(0);
+                }
+                return Arrays.asList(args[2].split(","));
+            }
+            case "-a":
+            case "--all":
+                return Collections.emptyList();
             default:
                 System.err.println("WTF! Argument not expected!");
                 System.exit(1);
         }
-        return "";
+        return null;
     }
 }
