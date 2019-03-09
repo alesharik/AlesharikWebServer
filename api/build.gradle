@@ -109,7 +109,7 @@ task benchmarkShadowJar(type: ShadowJar, dependsOn: jar) {
     }
 
     from(project.convention.getPlugin(JavaPluginConvention).sourceSets.main.output
-            + subprojects
+            + parent.subprojects
                 .collect { it.sourceSets.test.output}
                 .inject(project.convention.getPlugin(JavaPluginConvention).sourceSets.test.output) {
                     item1, item2 -> item1 + item2

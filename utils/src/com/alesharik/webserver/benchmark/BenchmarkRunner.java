@@ -61,7 +61,7 @@ public final class BenchmarkRunner {
                     System.err.println("Second argument (benchmark class) required!");
                     System.exit(0);
                 }
-                return Collections.singletonList(args[2]);
+                return Collections.singletonList(args[1]);
             }
             case "-l":
             case "--list": {
@@ -69,7 +69,7 @@ public final class BenchmarkRunner {
                     System.err.println("Second argument (benchmark classes) required!");
                     System.exit(0);
                 }
-                return Arrays.asList(args[2].split(","));
+                return Arrays.asList(args[1].split(","));
             }
             case "-a":
             case "--all":
