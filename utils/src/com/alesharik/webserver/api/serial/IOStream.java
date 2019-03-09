@@ -28,6 +28,7 @@ import com.alesharik.webserver.internals.UnsafeAccess;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Cleaner;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
@@ -254,19 +255,19 @@ interface IOStream extends Recyclable {
         }
 
         @Override
-        public void writeBytes(@NotNull String s) {
+        public void writeBytes(@Nonnull String s) {
             for(char c : s.toCharArray())
                 writeByte(c);
         }
 
         @Override
-        public void writeChars(@NotNull String s) {
+        public void writeChars(@Nonnull String s) {
             for(char c : s.toCharArray())
                 writeChar(c);
         }
 
         @Override
-        public void writeUTF(@NotNull String s) throws IOException {
+        public void writeUTF(@Nonnull String s) throws IOException {
             if(s.length() > Short.MAX_VALUE)
                 throw new UTFDataFormatException();
             writeShort(s.length());
@@ -368,13 +369,13 @@ interface IOStream extends Recyclable {
         }
 
         @Override
-        public void readFully(@NotNull byte[] b) {
+        public void readFully(@Nonnull byte[] b) {
             byte[] read = stream.read(b.length);
             System.arraycopy(read, 0, b, 0, b.length);
         }
 
         @Override
-        public void readFully(@NotNull byte[] b, int off, int len) {
+        public void readFully(@Nonnull byte[] b, int off, int len) {
             byte[] read = stream.read(len);
             System.arraycopy(read, 0, b, off, len);
         }
