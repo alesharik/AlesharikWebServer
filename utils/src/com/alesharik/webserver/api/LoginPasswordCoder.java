@@ -45,15 +45,13 @@ public final class LoginPasswordCoder {
         }
 
         char[] max;
-        if(Integer.compare(Math.max(log.length, pass.length), log.length) == 0) {
+        if(Math.max(log.length, pass.length) == log.length)
             max = log;
-        } else {
+        else
             max = pass;
-        }
 
-        for(int i = Math.min(log.length, pass.length); i < Math.max(log.length, pass.length); i++) {
+        for(int i = Math.min(log.length, pass.length); i < Math.max(log.length, pass.length); i++)
             sb.append(max[i]);
-        }
         return sb.toString();
     }
 
@@ -64,8 +62,9 @@ public final class LoginPasswordCoder {
      * @param logpass  second logPass
      * @return true if they are equals
      */
-    @Nonnull
     public static boolean isEquals(@Nullable String login, @Nullable String password, @Nullable String logpass) {
-        return (login == null && password == null && logpass == null) || !(login == null || password == null || logpass == null) && encode(login, password).equals(logpass);
+        return (login == null && password == null && logpass == null)
+                || (!(login == null || password == null || logpass == null)
+                    && encode(login, password).equals(logpass));
     }
 }

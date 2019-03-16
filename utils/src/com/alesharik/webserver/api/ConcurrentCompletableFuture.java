@@ -50,10 +50,9 @@ public final class ConcurrentCompletableFuture<V> implements Future<V> {
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
         if(isCancelled.compareAndSet(false, true)) {
-            for(Thread thread : waiting) {
+            for(Thread thread : waiting)
                 if(!thread.isInterrupted())
                     LockSupport.unpark(thread);
-            }
             waiting.clear();
             return true;
         }
@@ -114,10 +113,9 @@ public final class ConcurrentCompletableFuture<V> implements Future<V> {
     public void set(@Nonnull V value) {
         if(isDone.compareAndSet(false, true)) {
             this.value = value;
-            for(Thread thread : waiting) {
+            for(Thread thread : waiting)
                 if(!thread.isInterrupted())
                     LockSupport.unpark(thread);
-            }
             waiting.clear();
         }
     }
@@ -140,13 +138,12 @@ public final class ConcurrentCompletableFuture<V> implements Future<V> {
         }
 
         public boolean block() {
-            if(isReleasable()) {
+            if(isReleasable())
                 return true;
-            } else if(deadline == 0L) {
+            else if(deadline == 0L)
                 LockSupport.park(this);
-            } else if(nanos > 0L) {
+            else if(nanos > 0L)
                 LockSupport.parkNanos(this, nanos);
-            }
             return isReleasable();
         }
 
