@@ -16,21 +16,18 @@
  *
  */
 
-package com.alesharik.webserver.benchmark;
+package com.alesharik.webserver.internals.instance;
 
-import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Class annotated by this annotation will be executed by {@link BenchmarkRunner}
+ * Defines default factory method. It will be used as a constructor to create current class. The class must have @{@link Factory} annotation.
+ * The method must be static, accept no arguments and return current class instance
  */
-@Documented
-@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Deprecated
-public @interface BenchmarkTest {
-    String value();
+@Target(ElementType.METHOD)
+public @interface FactoryMethod {
 }
