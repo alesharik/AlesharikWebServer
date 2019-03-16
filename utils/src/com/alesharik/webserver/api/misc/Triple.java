@@ -137,6 +137,7 @@ public abstract class Triple<A, B, C> implements Cloneable {
         protected final B b;
         protected final C c;
 
+        @SuppressWarnings("unused")
         protected ImmutableTriple() {
             a = null;
             b = null;
@@ -174,6 +175,7 @@ public abstract class Triple<A, B, C> implements Cloneable {
         protected B b;
         protected C c;
 
+        @SuppressWarnings("unused")
         protected MutableTriple() {
         }
 
@@ -181,6 +183,7 @@ public abstract class Triple<A, B, C> implements Cloneable {
             return super.clone();
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public MutableTriple<A, B, C> clone() {
             MutableTriple<A, B, C> clone = (MutableTriple<A, B, C>) clone0();
@@ -200,6 +203,7 @@ public abstract class Triple<A, B, C> implements Cloneable {
             super(a, b, c);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public MutableTriple<A, B, C> clone() {
             MutableSerializableTriple<A, B, C> clone = (MutableSerializableTriple<A, B, C>) clone0();
