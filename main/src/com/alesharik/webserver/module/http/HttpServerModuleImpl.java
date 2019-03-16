@@ -104,8 +104,6 @@ public final class HttpServerModuleImpl implements HttpServer {
     @Configure
     public void parse(ConfigurationTypedObject object, ScriptElementConverter converter) {
         wrapperSubmodules.clear();
-        String groupName = getString("group", object.getElement("group"), converter)
-                .orElse("http-server");
 
         ConfigurationObject pool = getObject("pool", object.getElement("pool"), converter)
                 .orElseThrow(() -> new ConfigurationError("pool can't be null!"));
@@ -121,6 +119,8 @@ public final class HttpServerModuleImpl implements HttpServer {
         int workerCount = getInteger("worker", pool.getElement("worker"), converter)
                 .orElse(10);
 
+        String groupName = getString("group", object.getElement("group"), converter)
+                .orElse("http-server");
         serverThreadGroup = new ThreadGroup(groupName);
         try {
             Constructor<?> constructor = poolClass.getDeclaredConstructor(int.class, int.class, ThreadGroup.class);

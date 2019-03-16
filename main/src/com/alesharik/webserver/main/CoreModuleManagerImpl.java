@@ -56,7 +56,7 @@ final class CoreModuleManagerImpl implements CoreModuleManager {
     public CoreModuleManagerImpl(File folder) {
         this.folder = folder;
         if(folder.exists() && !folder.isDirectory())
-            throw new IllegalArgumentException("" + folder.getAbsolutePath() + " must be a directory!");
+            throw new IllegalArgumentException(folder.getAbsolutePath() + " must be a directory!");
     }
 
     @SneakyThrows(MalformedURLException.class)

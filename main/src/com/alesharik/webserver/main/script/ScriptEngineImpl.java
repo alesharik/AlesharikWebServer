@@ -154,9 +154,9 @@ public final class ScriptEngineImpl implements ScriptElementConverter, ScriptMan
 
     private Object executeCodeElement(ConfigurationCodeElement element) {
         ScriptEngine engine = globals.get(element.getLanguageName());
-        ScriptEngineProvider provider = ScriptEngineManager.getProvider(engine);
         if(engine == null)
             throw new ConfigurationError("Language " + element.getLanguageName() + " not found!");
+        ScriptEngineProvider provider = ScriptEngineManager.getProvider(engine);
         try {
             return provider.getHelper().executeCode(element.getCode(), engine);
         } catch (ScriptExecutionError e) {

@@ -110,7 +110,6 @@ public final class ModuleExtensionImpl extends ModuleExtension {
         if(modulesSection == null)
             throw new ConfigurationError("Modules section not found!");
         for(Module module : moduleManager.getModules()) {
-            ModuleAdapter adapter = ((ModuleManagerImpl.ModuleImpl) module).getModuleAdapter();
             ConfigurationTypedObject object = null;
             for(CustomEndpointSection.UseDirective useDirective : modulesSection.getUseDirectives()) {
                 if(useDirective.getName().equals(module.getName()))
@@ -118,6 +117,7 @@ public final class ModuleExtensionImpl extends ModuleExtension {
             }
             if(object == null)
                 throw new ConfigurationError("Config for module " + module.getName() + " not found!");
+            ModuleAdapter adapter = ((ModuleManagerImpl.ModuleImpl) module).getModuleAdapter();
             adapter.configure(object, scriptEngine);
         }
 
