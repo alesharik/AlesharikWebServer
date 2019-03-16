@@ -55,7 +55,7 @@ public class InstantiableClassLoader extends ClassLoader {
                     return constructor.newInstance();
                 } catch (NoSuchMethodException e1) {
                     return null;
-                } catch (IllegalAccessException e1) {
+                } catch (IllegalAccessException e1) {//FIXME
                     throw new UnexpectedBehaviorError("IllegalAccessException after setAccessible? Java 9 is not supported yet", e1);
                 } catch (InvocationTargetException e1) {
                     throw new RuntimeException(e.getCause());
