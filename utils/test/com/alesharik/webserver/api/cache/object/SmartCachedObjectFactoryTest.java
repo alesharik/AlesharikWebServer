@@ -23,36 +23,37 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.*;
 
 public class SmartCachedObjectFactoryTest {
-    private SmartCachedObjectFactory<TestClass> factory;
+    private SmartCachedObjectFactory<Recyclable> factory;
 
     @Before
-    public void setUp() throws Exception {
-        factory = new SmartCachedObjectFactory<>(TestClass::new);
+    public void setUp() {
+        factory = new SmartCachedObjectFactory<>(() -> mock(Recyclable.class));
     }
 
     @Test
-    public void testSupplyBigHeap() throws Exception {
-        for(int i = 0; i < 1000; i++) {
+    public void testSupplyBigHeap() {
+        for(int i = 0; i < 1000; i++)
             assertNotNull(factory.getInstance());
-        }
     }
 
     @Test
-    public void testCacheWorks() throws Exception {
-        TestClass[] cacheDump = new TestClass[16];
-        for(int i = 0; i < 16; i++) {
+    public void testCacheWorks() {
+        Recyclable[] cacheDump = new Recyclable[16];
+        for(int i = 0; i < 16; i++)
             cacheDump[i] = factory.getInstance();
-        }
 
-        for(TestClass testClass : cacheDump) {
+        for(Recyclable testClass : cacheDump)
             factory.putInstance(testClass);
-        }
+
+        for(Recyclable recyclable : cacheDump)
+            verify(recyclable, times(1)).recycle();
     }
 
     @Test
-    public void testMxBeanOptions() throws Exception {
+    public void testMxBeanOptions() {
         assertEquals(32, factory.getMinCachedObjectCount());
     }
 
@@ -60,7 +61,7 @@ public class SmartCachedObjectFactoryTest {
     public void testBasicConcurrency() throws Exception {
         Thread a = new Thread(() -> {
             for(int i = 0; i < 100; i++) {
-                TestClass instance = factory.getInstance();
+                Recyclable instance = factory.getInstance();
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
@@ -71,7 +72,7 @@ public class SmartCachedObjectFactoryTest {
         });
         Thread b = new Thread(() -> {
             for(int i = 0; i < 100; i++) {
-                TestClass instance = factory.getInstance();
+                Recyclable instance = factory.getInstance();
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
@@ -84,13 +85,5 @@ public class SmartCachedObjectFactoryTest {
         b.start();
         a.join();
         b.join();
-    }
-
-    private static final class TestClass implements Recyclable {
-
-        @Override
-        public void recycle() {
-
-        }
     }
 }

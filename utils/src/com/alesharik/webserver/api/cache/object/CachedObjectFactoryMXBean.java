@@ -18,10 +18,25 @@
 
 package com.alesharik.webserver.api.cache.object;
 
+/**
+ * This management bean expose some information about cached object factory
+ */
 public interface CachedObjectFactoryMXBean {
+    /**
+     * Return maximum cached object count
+     * @return maximum cached object count
+     */
     int getMaxCachedObjectCount();
 
+    /**
+     * Return minimum cached object count
+     * @return minimum cached object count
+     */
     int getMinCachedObjectCount();
 
+    /**
+     * Return current object count
+     * @return current object count
+     */
     int getCurrentCachedObjectCount();
 }

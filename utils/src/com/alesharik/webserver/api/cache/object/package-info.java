@@ -16,20 +16,7 @@
  *
  */
 
-package com.alesharik.webserver.api.cache.object;
-
-import javax.annotation.Nonnull;
-
 /**
- * Object factory produces <code>T</code> instances
- *
- * @param <T> produced instances type
+ * This package contains all cached object factories
  */
-@FunctionalInterface
-public interface ObjectFactory<T> {
-    /**
-     * Create and return new instance
-     */
-    @Nonnull
-    T newInstance();
-}
+package com.alesharik.webserver.api.cache.object;

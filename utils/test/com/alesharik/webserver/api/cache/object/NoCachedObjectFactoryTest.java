@@ -18,18 +18,16 @@
 
 package com.alesharik.webserver.api.cache.object;
 
-import javax.annotation.Nonnull;
+import org.junit.Test;
 
-/**
- * Object factory produces <code>T</code> instances
- *
- * @param <T> produced instances type
- */
-@FunctionalInterface
-public interface ObjectFactory<T> {
-    /**
-     * Create and return new instance
-     */
-    @Nonnull
-    T newInstance();
+import static org.junit.Assert.assertSame;
+
+public class NoCachedObjectFactoryTest {
+
+    @Test
+    public void getInstance() {
+        Recyclable test = () -> { };
+        NoCachedObjectFactory<Recyclable> factory = new NoCachedObjectFactory<>(() -> test);
+        assertSame(test, factory.getInstance());
+    }
 }

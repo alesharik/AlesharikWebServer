@@ -23,7 +23,9 @@ import com.alesharik.webserver.api.statistics.TimeCountStatistics;
 import lombok.Getter;
 import sun.misc.Cleaner;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -31,40 +33,41 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * This object factory doesn't track cache object state and it is preferable to use {@link #putInstance(Recyclable)}
+ * This factory uses smart refilling strategy to ensure that object will not be created concurrently when they are needed
+ * and also to clean all unused object
  *
  * @param <T>
  */
+@SuppressWarnings("StatementWithEmptyBody")
+@ThreadSafe
 public final class SmartCachedObjectFactory<T extends Recyclable> implements CachedObjectFactory<T> {
     private static final int MAX_COUNT = 100;
-
+    private static final int MAX_EXPONENTIAL_BACKOFF_TIME = 500;
     private final ObjectFactory<T> factory;
     private final List<T> cache;
-
     private final TimeCountStatistics suppliedObjects;
     private final TimeCountStatistics retrievedObjects;
     private final TimeCountStatistics createdObjects;
     private final TaskImpl task;
     private final int defaultObjectCount;
     private final AtomicInteger maxObjectCount = new AtomicInteger();
-
     //====================Exponential backoff algorithm====================\\
     private final AtomicBoolean lock = new AtomicBoolean(false);
     private final AtomicBoolean putLock = new AtomicBoolean(false);
 
-    public SmartCachedObjectFactory(ObjectFactory<T> factory) {
+    public SmartCachedObjectFactory(@Nonnull ObjectFactory<T> factory) {
         this(factory, CachedObjectFactoryTaskExecutor.DEFAULT, 32);
     }
 
-    public SmartCachedObjectFactory(ObjectFactory<T> factory, long monitorTime, TimeUnit timeUnit, int defaultObjectCount) {
+    public SmartCachedObjectFactory(@Nonnull ObjectFactory<T> factory, long monitorTime, @Nonnull TimeUnit timeUnit, int defaultObjectCount) {
         this(factory, monitorTime, timeUnit, CachedObjectFactoryTaskExecutor.DEFAULT, defaultObjectCount);
     }
 
-    public SmartCachedObjectFactory(ObjectFactory<T> factory, CachedObjectFactoryTaskExecutor executor, int defaultObjectCount) {
+    public SmartCachedObjectFactory(@Nonnull ObjectFactory<T> factory, @Nonnull CachedObjectFactoryTaskExecutor executor, int defaultObjectCount) {
         this(factory, 500, TimeUnit.MILLISECONDS, executor, defaultObjectCount);
     }
 
-    public SmartCachedObjectFactory(ObjectFactory<T> factory, long monitorTime, TimeUnit timeUnit, CachedObjectFactoryTaskExecutor executor, int defaultObjectCount) {
+    public SmartCachedObjectFactory(@Nonnull ObjectFactory<T> factory, long monitorTime, @Nonnull TimeUnit timeUnit, @Nonnull CachedObjectFactoryTaskExecutor executor, int defaultObjectCount) {
         this.factory = factory;
         this.cache = new CopyOnWriteArrayList<>();
         suppliedObjects = new PreciseConcurrentTimeCountStatistics(timeUnit.toMillis(monitorTime));
@@ -76,6 +79,16 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
         Cleaner.create(this, () -> executor.remove(task));
         this.defaultObjectCount = defaultObjectCount;
         this.maxObjectCount.set(defaultObjectCount);
+    }
+
+    private static int exponentialBackoff(int failedAttempts) {
+        double v = (Math.pow(2, failedAttempts) - 1) / 2;
+        return v > MAX_EXPONENTIAL_BACKOFF_TIME ? MAX_EXPONENTIAL_BACKOFF_TIME : (int) v;
+    }
+
+    private static void sleep(int ns) {
+        long start = System.nanoTime();
+        while(System.nanoTime() - start < ns) ;
     }
 
     @Override
@@ -116,9 +129,8 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
     public void refill() {
         try {
             acquirePutLock();
-            for(int i = 0; i < maxObjectCount.get() - cache.size(); i++) {
+            for(int i = 0; i < maxObjectCount.get() - cache.size(); i++)
                 cache.add(factory.newInstance());
-            }
         } finally {
             putLock.set(false);
         }
@@ -160,19 +172,6 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
         }
     }
 
-    private static final int MAX_EXPONENTIAL_BACKOFF_TIME = 500;
-
-    private static int exponentialBackoff(int failedAttempts) {
-        double v = (Math.pow(2, failedAttempts) - 1) / 2;
-        return v > MAX_EXPONENTIAL_BACKOFF_TIME ? MAX_EXPONENTIAL_BACKOFF_TIME : (int) v;
-    }
-
-    private static void sleep(int ns) {
-        long start = System.nanoTime();
-        //noinspection StatementWithEmptyBody
-        while(System.nanoTime() - start < ns) ;
-    }
-
     private final class TaskImpl implements CachedObjectFactoryTaskExecutor.Task {
         private final long[][] data;
         @Getter
@@ -200,14 +199,12 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
                 if(maxCreated > 0) {
                     long min = Math.min(20, maxCreated / 2);
                     maxObjectCount.addAndGet((int) min);
-                    for(int i = 0; i < min; i++) {//Do not create a lot of objects!
+                    for(int i = 0; i < min; i++)//Do not create a lot of objects!
                         cache.add(factory.newInstance());
-                    }
                 } else if(minDiff != Integer.MAX_VALUE) {
                     long min = Math.min(MAX_COUNT, minDiff);
-                    for(int i = 0; i < min; i++) {//When load suddenly drop, pool tires to optimise itself, but it can be long process
+                    for(int i = 0; i < min; i++)//When load suddenly drop, pool tires to optimise itself, but this can be long process
                         cache.remove(0);
-                    }
                     maxObjectCount.addAndGet((int) (-1 * min));
                 }
             } finally {

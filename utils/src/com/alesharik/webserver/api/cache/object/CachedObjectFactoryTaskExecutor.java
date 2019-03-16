@@ -18,11 +18,17 @@
 
 package com.alesharik.webserver.api.cache.object;
 
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * This executor is used for scheduling smart cached object factories tasks. 'scheduling' means executing tasks at
+ * fixed rate
+ */
 public interface CachedObjectFactoryTaskExecutor {
     CachedObjectFactoryTaskExecutor DEFAULT = new CachedObjectFactoryTaskExecutor() {
         private final Timer timer = new Timer("CachedObjectFactoryTaskDefaultExecutor", true);
@@ -55,14 +61,32 @@ public interface CachedObjectFactoryTaskExecutor {
         }
     };
 
+    /**
+     * Submit task to scheduling
+     * @param task the task
+     */
+    void submit(@Nonnull Task task);
 
-    void submit(Task task);
+    /**
+     * Remove task from scheduling
+     * @param task the task
+     */
+    void remove(@Nonnull Task task);
 
-    void remove(Task task);
-
+    /**
+     * This interface represents the task
+     */
     interface Task {
+        /**
+         * Task scheduling interval in milliseconds
+         * @return task scheduling interval in milliseconds
+         */
+        @Nonnegative
         long getInterval();
 
+        /**
+         * Task main function
+         */
         void execute();
     }
 }

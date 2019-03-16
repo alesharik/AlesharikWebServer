@@ -21,66 +21,55 @@ package com.alesharik.webserver.api.cache.object;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class FixedCachedObjectFactoryTest {
-    private FixedCachedObjectFactory<TestClass> factory;
+    private FixedCachedObjectFactory<Recyclable> factory;
 
     @Before
-    public void setUp() throws Exception {
-        factory = new FixedCachedObjectFactory<>(16, TestClass::new);
+    public void setUp() {
+        factory = new FixedCachedObjectFactory<>(16, () -> mock(Recyclable.class));
     }
 
     @Test
-    public void testCreateObjectHeap() throws Exception {
-        for(int i = 0; i < 1000; i++) {
+    public void testCreateObjectHeap() {
+        for(int i = 0; i < 1000; i++)
             assertNotNull(factory.getInstance());
-        }
     }
 
     @Test
-    public void testCacheWorks() throws Exception {
-        TestClass[] cacheDump = new TestClass[16];
-        for(int i = 0; i < 16; i++) {
+    public void testCacheWorks() {
+        Recyclable[] cacheDump = new Recyclable[16];
+        for(int i = 0; i < 16; i++)
             cacheDump[i] = factory.getInstance();
-        }
 
-        for(TestClass testClass : cacheDump) {
+        for(Recyclable testClass : cacheDump)
             factory.putInstance(testClass);
-        }
 
-        for(int i = 0; i < 16; i++) {
-            assertEquals(cacheDump[i], factory.getInstance());
-        }
+        for(Recyclable recyclable : cacheDump)
+            verify(recyclable, times(1)).recycle();
+
+        for(int i = 0; i < 16; i++)
+            assertSame(cacheDump[i], factory.getInstance());
     }
 
     @Test
-    public void testMxBeanOptions() throws Exception {
+    public void testMxBeanOptions() {
         assertEquals(0, factory.getMinCachedObjectCount());
         assertEquals(16, factory.getMaxCachedObjectCount());
 
         assertEquals(16, factory.getCurrentCachedObjectCount());
 
-        TestClass[] dump = new TestClass[8];
-        for(int i = 0; i < 8; i++) {
+        Recyclable[] dump = new Recyclable[8];
+        for(int i = 0; i < 8; i++)
             dump[i] = factory.getInstance();
-        }
 
         assertEquals(8, factory.getCurrentCachedObjectCount());
 
-        for(TestClass testClass : dump) {
+        for(Recyclable testClass : dump)
             factory.putInstance(testClass);
-        }
 
         assertEquals(16, factory.getCurrentCachedObjectCount());
-    }
-
-    private static final class TestClass implements Recyclable {
-
-        @Override
-        public void recycle() {
-            //Ok
-        }
     }
 }

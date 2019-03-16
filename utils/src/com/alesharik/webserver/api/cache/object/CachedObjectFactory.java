@@ -18,18 +18,33 @@
 
 package com.alesharik.webserver.api.cache.object;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * This class provides objects from cache or create new ones if cache empty
+ * This interface describes all cached object factories. Cached object factory is a thing that will try to reuse
+ * existing classes instead of creating new ones. But you must explicitly return class to the factory by {@link #putInstance(Recyclable)}
+ * after the moment when the object can be recycled and reused
  *
- * @param <T>
+ * @param <T> the object type
  */
 @ThreadSafe
 public interface CachedObjectFactory<T extends Recyclable> extends CachedObjectFactoryMXBean {
+    /**
+     * Return cached or new object instance
+     * @return cached or new object instance
+     */
+    @Nonnull
     T getInstance();
 
-    void putInstance(T i);
+    /**
+     * Put instance for recycling
+     * @param i the instance
+     */
+    void putInstance(@Nonnull T i);
 
+    /**
+     * Refill object factory with new instances
+     */
     void refill();
 }
