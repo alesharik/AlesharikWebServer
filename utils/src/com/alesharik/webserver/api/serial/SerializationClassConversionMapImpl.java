@@ -158,6 +158,22 @@ final class SerializationClassConversionMapImpl implements SerializationClassCon
         }
     }
 
+    long count() {
+        long l = lock.tryOptimisticRead();
+
+        long count = map.size();
+        if(!lock.validate(l)) {
+            l = lock.readLock();
+            try {
+                count = map.size();
+            } finally {
+                lock.unlockRead(l);
+            }
+        }
+
+        return count;
+    }
+
     @Data
     private static final class ComparableClass implements Comparable<ComparableClass> {
         private final Class<?> clazz;

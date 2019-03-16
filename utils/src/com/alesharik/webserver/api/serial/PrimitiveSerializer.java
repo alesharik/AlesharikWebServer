@@ -61,7 +61,7 @@ abstract class PrimitiveSerializer implements Serializer {
         @Override
         public Object deserializeDefault(byte[] data) {
             if(data.length != 4)
-                throw new IllegalArgumentException("Expected 4 bytes, got " + data.length + "!");
+                throw new DataOverflowException("Expected 4 bytes, got " + data.length + "!");
             return ((data[3] & 0xFF)) +
                     ((data[2] & 0xFF) << 8) +
                     ((data[1] & 0xFF) << 16) +
@@ -87,7 +87,7 @@ abstract class PrimitiveSerializer implements Serializer {
         @Override
         public Object deserializeDefault(byte[] data) {
             if(data.length != 1)
-                throw new IllegalArgumentException("Expected 1 byte, got " + data.length + "!");
+                throw new DataOverflowException("Expected 1 byte, got " + data.length + "!");
             return data[0] != 0;
         }
     }
@@ -111,7 +111,7 @@ abstract class PrimitiveSerializer implements Serializer {
         @Override
         public Object deserializeDefault(byte[] data) {
             if(data.length != 2)
-                throw new IllegalArgumentException("Expected 2 bytes, got " + data.length + "!");
+                throw new DataOverflowException("Expected 2 bytes, got " + data.length + "!");
             return (char) ((data[1] & 0xFF) +
                     (data[0] << 8));
         }
@@ -136,7 +136,7 @@ abstract class PrimitiveSerializer implements Serializer {
         @Override
         public Object deserializeDefault(byte[] data) {
             if(data.length != 2)
-                throw new IllegalArgumentException("Expected 2 bytes, got " + data.length + "!");
+                throw new DataOverflowException("Expected 2 bytes, got " + data.length + "!");
             //noinspection UnnecessaryBoxing
             return Short.valueOf((short) ((data[1] & 0xFF) + (data[0] << 8)));
         }
@@ -163,7 +163,7 @@ abstract class PrimitiveSerializer implements Serializer {
         @Override
         public Object deserializeDefault(byte[] data) {
             if(data.length != 4)
-                throw new IllegalArgumentException("Expected 4 bytes, got " + data.length + "!");
+                throw new DataOverflowException("Expected 4 bytes, got " + data.length + "!");
             int i = ((data[3] & 0xFF)) +
                     ((data[2] & 0xFF) << 8) +
                     ((data[1] & 0xFF) << 16) +
@@ -197,7 +197,7 @@ abstract class PrimitiveSerializer implements Serializer {
         @Override
         public Object deserializeDefault(byte[] data) {
             if(data.length != 8)
-                throw new IllegalArgumentException("Expected 8 bytes, got " + data.length + "!");
+                throw new DataOverflowException("Expected 8 bytes, got " + data.length + "!");
             return ((data[7] & 0xFFL)) +
                     ((data[6] & 0xFFL) << 8) +
                     ((data[5] & 0xFFL) << 16) +
@@ -234,7 +234,7 @@ abstract class PrimitiveSerializer implements Serializer {
         @Override
         public Object deserializeDefault(byte[] data) {
             if(data.length != 8)
-                throw new IllegalArgumentException("Expected 8 bytes, got " + data.length + "!");
+                throw new DataOverflowException("Expected 8 bytes, got " + data.length + "!");
             return Double.longBitsToDouble(((data[7] & 0xFFL)) +
                     ((data[6] & 0xFFL) << 8) +
                     ((data[5] & 0xFFL) << 16) +

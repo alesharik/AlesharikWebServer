@@ -57,7 +57,7 @@ final class ClassSerializer implements Serializer {
     @Override
     public Object deserializeDefault(byte[] data) {
         if(data.length != 8)
-            throw new IllegalArgumentException("Expected 8 bytes, got " + data.length + "!");
+            throw new DataOverflowException("Expected 8 bytes, got " + data.length + "!");
         long id = ((data[7] & 0xFFL)) +
                 ((data[6] & 0xFFL) << 8) +
                 ((data[5] & 0xFFL) << 16) +

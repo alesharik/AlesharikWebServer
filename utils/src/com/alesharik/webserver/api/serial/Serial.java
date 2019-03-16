@@ -18,6 +18,7 @@
 
 package com.alesharik.webserver.api.serial;
 
+import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.internals.instance.ClassInstantiator;
 import lombok.experimental.UtilityClass;
@@ -43,6 +44,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.alesharik.webserver.api.serial.PrimitiveSerializer.*;
 
@@ -79,6 +81,7 @@ public class Serial {
     private static final SerializationClassConversionMapImpl conversionMap = new SerializationClassConversionMapImpl();
     private static final Map<Pair<Class<?>, Double>, Serializer> serializers = new ConcurrentHashMap<>();
     private static final ThreadLocal<ByteBuffer> buffers = ThreadLocal.withInitial(() -> ByteBuffer.allocate(20));
+    private static final SerialMXBeanImpl bean = new SerialMXBeanImpl();
 
     static {
         try {
@@ -96,19 +99,21 @@ public class Serial {
         putSerializer(String.class, 7, new StringSerializer());
         putSerializer(Class.class, 8, new ClassSerializer());
         //some useful objects
-        pregenerateSerializer(Date.class, 9);
-        pregenerateSerializer(ArrayList.class, 10);
-        pregenerateSerializer(LinkedList.class, 11);
-        pregenerateSerializer(Vector.class, 12);
-        pregenerateSerializer(HashSet.class, 13);
-        pregenerateSerializer(TreeSet.class, 14);
-        pregenerateSerializer(LinkedHashSet.class, 15);
-        pregenerateSerializer(HashMap.class, 16);
-        pregenerateSerializer(TreeMap.class, 17);
-        pregenerateSerializer(LinkedHashMap.class, 18);
-        pregenerateSerializer(Hashtable.class, 19);
-        pregenerateSerializer(IdentityHashMap.class, 20);
-        pregenerateSerializer(ConcurrentHashMap.class, 21);
+        preGenerateSerializer(Date.class, 9);
+        preGenerateSerializer(ArrayList.class, 10);
+        preGenerateSerializer(LinkedList.class, 11);
+        preGenerateSerializer(Vector.class, 12);
+        preGenerateSerializer(HashSet.class, 13);
+        preGenerateSerializer(TreeSet.class, 14);
+        preGenerateSerializer(LinkedHashSet.class, 15);
+        preGenerateSerializer(HashMap.class, 16);
+        preGenerateSerializer(TreeMap.class, 17);
+        preGenerateSerializer(LinkedHashMap.class, 18);
+        preGenerateSerializer(Hashtable.class, 19);
+        preGenerateSerializer(IdentityHashMap.class, 20);
+        preGenerateSerializer(ConcurrentHashMap.class, 21);
+
+        MXBeanManager.registerMXBean(bean, SerialMXBean.class, "com.alesharik.webserver.api.serial.Serial:ready=true");
     }
 
     /**
@@ -118,8 +123,15 @@ public class Serial {
      * @param <T>  object type
      * @return deserialized object
      * @throws SerializationMappingNotFoundException if there is object with unknown id in the data
+     * @throws DataOverflowException if some serializer has too much data to deserialize
+     * @throws DataUnderflowException if the serializer cannot read enough data for deserialization
      */
     public static <T> T deserialize(@Nonnull byte[] data) {
+        if(data.length < 8) {
+            bean.newUnderflow();
+            throw new DataUnderflowException("Cannot read id from less than 8 bytes!");
+        }
+
         ByteBuffer byteBuffer = buffers.get();
         byteBuffer.rewind();
         byteBuffer.put(data, 0, 8);
@@ -134,14 +146,21 @@ public class Serial {
     }
 
     private static <T> T deserializeObject(@Nonnull byte[] data, ByteBuffer byteBuffer, long id) {
+        if(data.length < 16) {
+            bean.newUnderflow();
+            throw new DataUnderflowException("Cannot read id and version from less than 16 bytes!");
+        }
+
         byteBuffer.rewind();
         byteBuffer.put(data, 8, 8);
         byteBuffer.rewind();
 
         double version = byteBuffer.getDouble();
         Class<?> clazz = conversionMap.resolveConversion(id);
-        if(clazz == null)
+        if(clazz == null) {
+            bean.newMappingMismatch();
             throw new SerializationMappingNotFoundException(id);
+        }
 
         Serializer serializer = serializers.computeIfAbsent(Pair.of(clazz, version), classDoublePair -> {
             AnnotationAdapter.Adapter adapter = getAnnotationAdapter(classDoublePair.getKey());
@@ -149,12 +168,30 @@ public class Serial {
         });
         byte[] dat = new byte[data.length - 16];
         System.arraycopy(data, 16, dat, 0, data.length - 16);
-        //noinspection unchecked
-        return (T) serializer.deserialize(dat);
+        try {
+            //noinspection unchecked
+            return (T) serializer.deserialize(dat);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            bean.newUnderflow();
+            throw new DataUnderflowException("Serializer threw ArrayIndexOutOfBoundException: " + e.getMessage(), e);
+        } catch (DataUnderflowException e) {
+            bean.newUnderflow();
+            throw e;
+        } catch (DataOverflowException e) {
+            bean.newOverflow();
+            throw e;
+        } catch (SerializationMappingNotFoundException e) {
+            bean.newMappingMismatch();
+            throw e;
+        }
     }
 
     @Nonnull
     private static <T> T deserializeEnum(@Nonnull byte[] data, ByteBuffer byteBuffer) {
+        if(data.length < 20) {
+            bean.newUnderflow();
+            throw new DataUnderflowException("Cannot read id, enum id and name string length from less than 20 bytes!");
+        }
         byteBuffer.rewind();
         byteBuffer.put(data, 8, 12);
         byteBuffer.rewind();
@@ -165,6 +202,11 @@ public class Serial {
             throw new SerializationMappingNotFoundException(id);
 
         int size = byteBuffer.getInt();
+        if(data.length < 20 + size) {
+            bean.newUnderflow();
+            throw new DataUnderflowException("Cannot read name string from less than 20(header) + " + size + " bytes, but first 20 bytes is present!");
+        }
+
         byte[] nameData = new byte[size];
         System.arraycopy(data, 20, nameData, 0, size);
         String name = new String(nameData, StandardCharsets.UTF_16LE);
@@ -288,7 +330,7 @@ public class Serial {
         serializers.put(Pair.of(clazz, -1D), serializer);
     }
 
-    private static void pregenerateSerializer(Class<?> clazz, long id) {
+    private static void preGenerateSerializer(Class<?> clazz, long id) {
         conversionMap.addConversion(id, clazz);
         getSerializer(clazz);
     }
@@ -300,5 +342,59 @@ public class Serial {
         else
             adapter = DefaultAnnotationAdapter.INSTANCE;
         return adapter;
+    }
+
+    private static final class SerialMXBeanImpl implements SerialMXBean {
+        private final AtomicLong failedMappingCount = new AtomicLong();
+        private final AtomicLong underflowCount = new AtomicLong();
+        private final AtomicLong overflowCount = new AtomicLong();
+
+        @Override
+        public long getSerializerCount() {
+            return Serial.serializers.size();
+        }
+
+        @Override
+        public long getConversionCount() {
+            return conversionMap.count();
+        }
+
+        @Override
+        public String getConversionFor(long id) {
+            Class<?> conversion = conversionMap.resolveConversion(id);
+            return conversion == null ? "" : conversion.getName();
+        }
+
+        @Override
+        public long getFailedMappingCount() {
+            return failedMappingCount.get();
+        }
+
+        @Override
+        public long getSizeMismatchCount() {
+            return overflowCount.get() + underflowCount.get();
+        }
+
+        @Override
+        public long getUnderflowCount() {
+            return underflowCount.get();
+        }
+
+        @Override
+        public long getOverflowCount() {
+            return overflowCount.get();
+        }
+
+        void newOverflow() {
+            overflowCount.incrementAndGet();
+        }
+
+        void newUnderflow() {
+            underflowCount.incrementAndGet();
+        }
+
+        void newMappingMismatch() {
+            failedMappingCount.incrementAndGet();
+        }
     }
 }
