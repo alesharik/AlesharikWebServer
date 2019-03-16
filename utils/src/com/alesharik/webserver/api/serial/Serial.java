@@ -32,6 +32,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.alesharik.webserver.api.serial.PrimitiveSerializer.*;
+
 /**
  * This class is main entry into Serialization API.
  * Serialization API data chunk graph:<br><pre>
@@ -48,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *   data = 0 bytes                        \---------------------------------------------/
  *   deserialized object = null
  *   </pre>
- *   Object serialization algorithm: <pre>
+ * Object serialization algorithm: <pre>
  *       /------------------------------------------------------------------------------\
  *       |     Type    |                      How it is serialized                      |
  *       +------------------------------------------------------------------------------+
@@ -72,6 +74,13 @@ public class Serial {
         } catch (ClassNotFoundException e) {
             throw new UnexpectedBehaviorError(e);
         }
+        putSerializer(Boolean.class, 0, new BooleanSerializer());
+        putSerializer(Character.class, 1, new CharSerializer());
+        putSerializer(Short.class, 2, new ShortSerializer());
+        putSerializer(Integer.class, 3, new IntSerializer());
+        putSerializer(Float.class, 4, new FloatSerializer());
+        putSerializer(Long.class, 5, new LongSerializer());
+        putSerializer(Double.class, 6, new DoubleSerializer());
     }
 
     /**
@@ -244,6 +253,11 @@ public class Serial {
         AnnotationAdapter.Adapter annotationAdapter = getAnnotationAdapter(clazz);
         double version = annotationAdapter.hasVersionAnnotation(clazz) ? annotationAdapter.getVersion(clazz) : -1;
         return serializers.computeIfAbsent(Pair.of(clazz, version), classDoublePair -> SerializerFactory.create(classDoublePair.getKey(), annotationAdapter, classDoublePair.getValue()));
+    }
+
+    private static void putSerializer(Class<?> clazz, long id, Serializer serializer) {
+        conversionMap.addConversion(id, clazz);
+        serializers.put(Pair.of(clazz, -1D), serializer);
     }
 
     private static AnnotationAdapter.Adapter getAnnotationAdapter(Class<?> clazz) {
