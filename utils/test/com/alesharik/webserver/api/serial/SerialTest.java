@@ -189,6 +189,18 @@ public class SerialTest {
         }
     }
 
+    @Test
+    public void serializeString() {
+        byte[] tests = Serial.serialize("test");
+        assertEquals("test", Serial.deserialize(tests));
+    }
+
+    @Test
+    public void serializeClass() {
+        byte[] serialize = Serial.serialize(TypeNotPresentException.class);
+        assertEquals(TypeNotPresentException.class, Serial.deserialize(serialize));
+    }
+
     @Getter
     @EqualsAndHashCode
     @ToString

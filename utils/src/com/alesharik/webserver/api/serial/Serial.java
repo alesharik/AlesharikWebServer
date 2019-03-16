@@ -29,7 +29,19 @@ import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.alesharik.webserver.api.serial.PrimitiveSerializer.*;
@@ -81,6 +93,22 @@ public class Serial {
         putSerializer(Float.class, 4, new FloatSerializer());
         putSerializer(Long.class, 5, new LongSerializer());
         putSerializer(Double.class, 6, new DoubleSerializer());
+        putSerializer(String.class, 7, new StringSerializer());
+        putSerializer(Class.class, 8, new ClassSerializer());
+        //some useful objects
+        pregenerateSerializer(Date.class, 9);
+        pregenerateSerializer(ArrayList.class, 10);
+        pregenerateSerializer(LinkedList.class, 11);
+        pregenerateSerializer(Vector.class, 12);
+        pregenerateSerializer(HashSet.class, 13);
+        pregenerateSerializer(TreeSet.class, 14);
+        pregenerateSerializer(LinkedHashSet.class, 15);
+        pregenerateSerializer(HashMap.class, 16);
+        pregenerateSerializer(TreeMap.class, 17);
+        pregenerateSerializer(LinkedHashMap.class, 18);
+        pregenerateSerializer(Hashtable.class, 19);
+        pregenerateSerializer(IdentityHashMap.class, 20);
+        pregenerateSerializer(ConcurrentHashMap.class, 21);
     }
 
     /**
@@ -258,6 +286,11 @@ public class Serial {
     private static void putSerializer(Class<?> clazz, long id, Serializer serializer) {
         conversionMap.addConversion(id, clazz);
         serializers.put(Pair.of(clazz, -1D), serializer);
+    }
+
+    private static void pregenerateSerializer(Class<?> clazz, long id) {
+        conversionMap.addConversion(id, clazz);
+        getSerializer(clazz);
     }
 
     private static AnnotationAdapter.Adapter getAnnotationAdapter(Class<?> clazz) {
