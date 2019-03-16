@@ -33,11 +33,10 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class SerialTest {
-
-    public static final double DOUBLE_STEP = 1.79769313486232 * Math.pow(10, 304);
-    public static final double FLOAT_STEP = 429496.7296;
-    public static final int INT_STEP = 500_000;
-    public static final double LONG_STEP = 2L * Math.pow(10, 15);
+    private static final double DOUBLE_STEP = 1.79769313486232 * Math.pow(10, 304);
+    private static final double FLOAT_STEP = 429496.7296;
+    private static final int INT_STEP = 500_000;
+    private static final double LONG_STEP = 2L * Math.pow(10, 15);
 
     @Test
     public void serializeDefaultArray() {
