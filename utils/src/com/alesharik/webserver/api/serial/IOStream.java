@@ -25,6 +25,7 @@ import com.alesharik.webserver.api.cache.object.SmartCachedObjectFactory;
 import com.alesharik.webserver.exception.error.UnexpectedBehaviorError;
 import com.alesharik.webserver.internals.MemoryReserveUtils;
 import com.alesharik.webserver.internals.UnsafeAccess;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Cleaner;
 
@@ -35,10 +36,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectInputValidation;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import java.io.UTFDataFormatException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("unused")
 interface IOStream extends Recyclable {
@@ -152,6 +156,7 @@ interface IOStream extends Recyclable {
     }
 
     final class ObjectOutputImpl extends ObjectOutputStream implements ObjectOutput {
+        private final PutFieldImpl putField = new PutFieldImpl();
         private final IOStream stream;
         private final Serializer serializer;
         private final Object object;
@@ -183,13 +188,12 @@ interface IOStream extends Recyclable {
 
         @Override
         public PutField putFields() {
-            throw new UnsupportedOperationException("Can't implement due to serialization specifics!");
+            return putField;
         }
 
         @Override
         public void writeFields() {
-            //FIXME
-            throw new UnsupportedOperationException("Can't implement due to serialization specifics!");
+            writeObjectOverride(putField);
         }
 
         @Override
@@ -281,6 +285,69 @@ interface IOStream extends Recyclable {
         @Override
         public void close() {
         }
+
+        private static final class PutFieldImpl extends PutField implements Serializable {
+            @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+            private final Map<String, Object> map = new HashMap<>();
+
+            @Override
+            public void put(String name, boolean val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void put(String name, byte val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void put(String name, char val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void put(String name, short val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void put(String name, int val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void put(String name, long val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void put(String name, float val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void put(String name, double val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void put(String name, Object val) {
+                map.put(name, val);
+            }
+
+            @Override
+            public void write(ObjectOutput out) throws IOException {
+                out.writeObject(this);
+            }
+
+            Object get(String name) {
+                return map.get(name);
+            }
+
+            boolean contains(String name) {
+                return map.containsKey(name);
+            }
+        }
     }
 
     final class ObjectInputImpl extends ObjectInputStream implements ObjectInput {
@@ -325,8 +392,7 @@ interface IOStream extends Recyclable {
 
         @Override
         public GetField readFields() {
-            //FIXME
-            throw new UnsupportedOperationException("Due to serialization specifics");
+            return new GetFieldImpl((ObjectOutputImpl.PutFieldImpl) readObjectOverride());
         }
 
         @Override
@@ -454,6 +520,66 @@ interface IOStream extends Recyclable {
             short s = readShort();
             byte[] dat = stream.read(s);
             return new String(dat, StandardCharsets.UTF_8);
+        }
+
+        @RequiredArgsConstructor
+        private static final class GetFieldImpl extends GetField {
+            private final ObjectOutputImpl.PutFieldImpl putField;
+
+            @Override
+            public ObjectStreamClass getObjectStreamClass() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean defaulted(String name) {
+                return !putField.contains(name);
+            }
+
+            @Override
+            public boolean get(String name, boolean val) {
+                return putField.contains(name) ? (boolean) putField.get(name) : val;
+            }
+
+            @Override
+            public byte get(String name, byte val) {
+                return putField.contains(name) ? (byte) putField.get(name) : val;
+            }
+
+            @Override
+            public char get(String name, char val) {
+                return putField.contains(name) ? (char) putField.get(name) : val;
+            }
+
+            @Override
+            public short get(String name, short val) {
+                return putField.contains(name) ? (short) putField.get(name) : val;
+            }
+
+            @Override
+            public int get(String name, int val) {
+                return putField.contains(name) ? (int) putField.get(name) : val;
+            }
+
+            @Override
+            public long get(String name, long val) {
+                return putField.contains(name) ? (long) putField.get(name) : val;
+            }
+
+            @Override
+            public float get(String name, float val) {
+                return putField.contains(name) ? (float) putField.get(name) : val;
+            }
+
+            @Override
+            public double get(String name, double val) {
+                return putField.contains(name) ? (double) putField.get(name) : val;
+            }
+
+            @Override
+            public Object get(String name, Object val) {
+                return putField.contains(name) ? putField.get(name) : val;
+            }
         }
     }
 
