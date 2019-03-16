@@ -130,10 +130,15 @@ final class SerializationClassConversionMapImpl implements SerializationClassCon
         }
         if(!lock.validate(l)) {
             l = lock.readLock();
+            long readL = l;
             try {
                 ret = map.getKey(clazz);
                 if(ret == null) {
                     l = lock.tryConvertToWriteLock(l);
+                    if(l == 0) {
+                        lock.unlockRead(readL);
+                        l = lock.writeLock();
+                    }
                     ret = map.getKey(value);
                     if(ret != null)
                         return ret;
