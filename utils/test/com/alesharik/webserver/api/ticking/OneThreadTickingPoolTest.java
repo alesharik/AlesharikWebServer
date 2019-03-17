@@ -66,22 +66,22 @@ public class OneThreadTickingPoolTest {
 
     @Test
     public void getThreadCountTest() {
-        assertTrue(forMBeanTest.getThreadCount() == 1);
+        assertEquals(1, forMBeanTest.getThreadCount());
     }
 
     @Test
     public void getTotalTaskCount() {
-        assertTrue(forMBeanTest.getTotalTaskCount() == 4);
+        assertEquals(4, forMBeanTest.getTotalTaskCount());
     }
 
     @Test
     public void getRunningTaskCount() {
-        assertTrue(forMBeanTest.getRunningTaskCount() == 3);
+        assertEquals(3, forMBeanTest.getRunningTaskCount());
     }
 
     @Test
     public void getPauseTaskCount() {
-        assertTrue(forMBeanTest.getPauseTaskCount() == 1);
+        assertEquals(1, forMBeanTest.getPauseTaskCount());
     }
 
     @Test
@@ -156,21 +156,5 @@ public class OneThreadTickingPoolTest {
         Thread.sleep(100);
         assertTrue(atomicBoolean.get());
         pool1.shutdown();
-    }
-
-    @Test
-    public void equals() {
-        assertFalse(pool.equals(not));
-        assertFalse(not.equals(not1));
-    }
-
-    @Test
-    public void hashCodeTest() {
-        assertTrue(Integer.compare(pool.hashCode(), not.hashCode()) != 0);
-    }
-
-    @Test
-    public void toStringTest() {
-        assertNotNull(pool.toString());
     }
 }

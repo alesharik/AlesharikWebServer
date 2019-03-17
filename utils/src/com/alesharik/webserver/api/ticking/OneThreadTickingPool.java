@@ -22,6 +22,7 @@ import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.logger.Prefixes;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.ToString;
 import sun.misc.Cleaner;
 
 import javax.annotation.Nonnull;
@@ -41,6 +42,7 @@ import static com.alesharik.webserver.api.ticking.ExecutorPoolBasedTickingPool.*
  */
 @Prefixes({"[TickingPool]", "[OneThreadTickingPool]"})
 @ThreadSafe
+@ToString(of = {"tickables", "executor", "id"})
 public final class OneThreadTickingPool implements TickingPool {
     private static final AtomicLong COUNTER = new AtomicLong(0);
 
@@ -146,32 +148,6 @@ public final class OneThreadTickingPool implements TickingPool {
     @Override
     public void shutdownNow() {
         executor.shutdownNow();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if(this == o) return true;
-        if(!(o instanceof OneThreadTickingPool)) return false;
-
-        OneThreadTickingPool that = (OneThreadTickingPool) o;
-
-        if(tickables != null ? !tickables.equals(that.tickables) : that.tickables != null) return false;
-        return executor != null ? executor.equals(that.executor) : that.executor == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = tickables != null ? tickables.hashCode() : 0;
-        result = 31 * result + (executor != null ? executor.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "OneThreadTickingPool{" +
-                "tickables=" + tickables +
-                ", executor=" + executor +
-                '}';
     }
 
     @Override

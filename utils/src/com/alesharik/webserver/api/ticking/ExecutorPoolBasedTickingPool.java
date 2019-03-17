@@ -20,8 +20,9 @@ package com.alesharik.webserver.api.ticking;
 
 import com.alesharik.webserver.api.mx.bean.MXBeanManager;
 import com.alesharik.webserver.logger.Prefixes;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.experimental.UtilityClass;
 import sun.misc.Cleaner;
 
@@ -30,8 +31,9 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -45,6 +47,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Prefixes({"[TickingPool]", "[ExecutorPoolBasedTickingPool]"})
 @ThreadSafe
+@ToString
 public final class ExecutorPoolBasedTickingPool implements TickingPool {
     private static final AtomicLong COUNTER = new AtomicLong(0);
 
@@ -54,6 +57,7 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
     private final ScheduledExecutorService executor;
 
     private final int parallelism;
+    @Getter
     private final long id;
 
     /**
@@ -87,9 +91,8 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
      * @throws IllegalArgumentException if parallelism <= 0
      */
     public ExecutorPoolBasedTickingPool(int parallelism, @Nonnull ThreadFactory threadFactory) {
-        if(parallelism <= 0) {
+        if(parallelism <= 0)
             throw new IllegalArgumentException();
-        }
 
         this.parallelism = parallelism;
         this.tickables = new ConcurrentHashMap<>();
@@ -103,10 +106,8 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
 
     @Override
     public void startTicking(@Nonnull Tickable tickable, long periodInMs) {
-        if(periodInMs <= 0) {
+        if(periodInMs <= 0)
             throw new IllegalArgumentException();
-        }
-
 
         ExecutorTask command = new ExecutorTask(tickable, tickables);
         tickables.put(command.getTickable(), true);
@@ -154,32 +155,6 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if(this == o) return true;
-        if(!(o instanceof ExecutorPoolBasedTickingPool)) return false;
-
-        ExecutorPoolBasedTickingPool that = (ExecutorPoolBasedTickingPool) o;
-
-        if(tickables != null ? !tickables.equals(that.tickables) : that.tickables != null) return false;
-        return executor != null ? executor.equals(that.executor) : that.executor == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = tickables != null ? tickables.hashCode() : 0;
-        result = 31 * result + (executor != null ? executor.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "ExecutorPoolBasedTickingPool{" +
-                "tickables=" + tickables +
-                ", executor=" + executor +
-                '}';
-    }
-
-    @Override
     public int getThreadCount() {
         return parallelism;
     }
@@ -204,13 +179,6 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
     }
 
     /**
-     * The id used for find needed {@link TickingPool} in {@link javax.management.MXBean}
-     */
-    public long getId() {
-        return id;
-    }
-
-    /**
      * This task handles {@link Tickable}. It check if pool contains {@link Tickable}(if not - shutdown itself) and if {@link Tickable} is running and tick the {@link Tickable}
      */
     @Immutable
@@ -219,7 +187,7 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
         private final TickableCache tickable;
         private final ConcurrentHashMap<TickableCache, Boolean> tickables;
 
-        public ExecutorTask(@Nonnull Tickable tickable, @Nonnull ConcurrentHashMap<TickableCache, Boolean> tickables) {
+        public ExecutorTask(Tickable tickable, ConcurrentHashMap<TickableCache, Boolean> tickables) {
             this.tickable = TickableCacheManager.addTickable(tickable);
             this.tickables = tickables;
         }
@@ -234,9 +202,8 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
                         e.printStackTrace();
                     }
                 }
-            } else {
+            } else
                 throw new RuntimeException("Stop the task!");
-            }
         }
     }
 
@@ -245,38 +212,19 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
      */
     @Immutable
     @Getter
+    @EqualsAndHashCode(of = "hashCode")
     static final class TickableCache {
+        @Getter
         private final Tickable tickable;
         private final int hashCode;
 
-        public TickableCache(@Nonnull Tickable tickable) {
+        public TickableCache(Tickable tickable) {
             this.tickable = tickable;
             this.hashCode = tickable.objectHashCode();
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if(this == o) return true;
-            if(!(o instanceof TickableCache)) return false;
-
-            TickableCache that = (TickableCache) o;
-
-            return Integer.compare(hashCode, that.hashCode) == 0;
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
         public void tick() throws Exception {
             tickable.tick();
-        }
-
-        @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION") //tickable is always non-null!
-        @Nonnull
-        public Tickable getTickable() {
-            return tickable;
         }
     }
 
@@ -286,7 +234,7 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
     @ThreadSafe
     @UtilityClass
     static final class TickableCacheManager {
-        private static final CopyOnWriteArraySet<WeakReference<TickableCache>> cache = new CopyOnWriteArraySet<>();
+        private static final List<WeakReference<TickableCache>> cache = new ArrayList<>();
 
         /**
          * Get cache for tickable
@@ -295,7 +243,11 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
          * @return cache if cache found, null - tickable doesn't have a cache
          */
         @Nullable
-        public static TickableCache forTickable(@Nonnull Tickable tickable) {
+        public static synchronized TickableCache forTickable(@Nonnull Tickable tickable) {
+            return forTickable0(tickable);
+        }
+
+        private static ExecutorPoolBasedTickingPool.TickableCache forTickable0(Tickable tickable) {
             for(WeakReference<TickableCache> tickableCache : cache) {
                 TickableCache cache = tickableCache.get();
                 if(tickableCache.isEnqueued() || cache == null) {
@@ -303,9 +255,8 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
                     continue;
                 }
 
-                if(cache.getTickable().objectEquals(tickable)) {
+                if(cache.getTickable().objectEquals(tickable))
                     return cache;
-                }
             }
             return null;
         }
@@ -316,15 +267,14 @@ public final class ExecutorPoolBasedTickingPool implements TickingPool {
          * @param tickable tickable
          * @return new or existing tickable cache
          */
-        public static TickableCache addTickable(@Nonnull Tickable tickable) {
-            TickableCache tickableCache = forTickable(tickable);
+        public static synchronized TickableCache addTickable(@Nonnull Tickable tickable) {
+            TickableCache tickableCache = forTickable0(tickable);
             if(tickableCache == null) {
                 tickableCache = new TickableCache(tickable);
                 cache.add(new WeakReference<>(tickableCache));
                 return tickableCache;
-            } else {
+            } else
                 return tickableCache;
-            }
         }
     }
 }
