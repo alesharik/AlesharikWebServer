@@ -1,11 +1,17 @@
 apply plugin: 'jcstress'
 
+buildDir = new File('./out/')
+
 sourceSets {
     main {
         java {
             srcDirs 'src'
         }
     }
+}
+
+clean.doFirst {
+    delete buildDir
 }
 
 dependencies {

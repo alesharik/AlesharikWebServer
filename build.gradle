@@ -25,7 +25,7 @@ allprojects {
     ext.DEPLOY_GROUP = 'deploy'
     ext.NATIVE_GROUP = "native"
 
-    version = "0.3.1"
+    version = "0.3.13"
 }
 
 //====================Some vars====================\\
@@ -89,6 +89,8 @@ subprojects {
     tasks.withType(Javadoc) {
         options.addStringOption('Xdoclint:none', '-quiet')
     }
+
+    group = "com.alesharik"
 
     bintray {
         user = userProp

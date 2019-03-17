@@ -44,36 +44,36 @@ dependencies {
     compile project(':alesharikwebserver-api')
 }
 
-clean {
-    delete "./rust/agent/target"
-    delete "./rust/library/target"
-    delete "./rust/agent/Cargo.lock"
-    delete "./rust/library/Cargo.lock"
+clean.doFirst {
+    delete project.projectDir.absolutePath + "/rust/agent/target"
+    delete project.projectDir.absolutePath + "/rust/library/target"
+    delete project.projectDir.absolutePath + "/rust/agent/Cargo.lock"
+    delete project.projectDir.absolutePath + "/rust/library/Cargo.lock"
     delete buildDir.toString()
 }
 
 task buildLibrary(type: Exec) {
-    workingDir "./rust/library"
+    workingDir project.projectDir.absolutePath + "/rust/library"
 
     executable "bash"
     args "-c", "cargo build --release"
 }
 
 task copyNative(type: Copy, dependsOn: buildLibrary) {
-    from("./rust/library/target/release") {
+    from(project.projectDir.absolutePath + "/rust/library/target/release") {
         include "*.so"
     }
-    into "./res-generated/"
+    into project.projectDir.absolutePath + "/res-generated/"
 
     doFirst {
-        File f = new File("./res-generated/")
+        File f = new File(project.projectDir.absolutePath + "/res-generated/")
         if(!f.exists())
             f.mkdir()
     }
 }
 
 task buildAgent(type: Exec) {
-    workingDir "./rust/agent"
+    workingDir project.projectDir.absolutePath + "/rust/agent"
 
     executable "bash"
     args "-c", "cargo build --release"

@@ -16,6 +16,10 @@ sourceSets {
     }
 }
 
+clean.doFirst {
+    delete buildDir
+}
+
 build {}
 
 build.dependsOn test

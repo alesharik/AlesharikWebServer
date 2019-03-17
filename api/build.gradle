@@ -10,9 +10,7 @@ buildDir = new File('./out/')
 
 clean.doFirst {
     delete 'deploy'
-    delete 'build'
-    delete 'out'
-    delete buildDir.toString()
+    delete buildDir
     delete projectDir.toString() + "/reporting/"
 }
 

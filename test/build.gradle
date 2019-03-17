@@ -16,6 +16,10 @@ sourceSets {
     }
 }
 
+clean.doFirst {
+    delete buildDir
+}
+
 build {}
 
 build.dependsOn test
@@ -51,6 +55,7 @@ publishing {
 
 dependencies {
     compile project(':alesharikwebserver-api')
+    
     compile group: 'junit', name: 'junit', version: '4.10'
-    compile group: 'org.mockito', name: 'mockito-core', version: '2.7.21'
+    compile group: 'org.mockito', name: 'mockito-core', version: '2.25.1'
 }
