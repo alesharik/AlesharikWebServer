@@ -23,7 +23,6 @@ import com.alesharik.webserver.api.agent.transformer.Param;
 import com.alesharik.webserver.api.agent.transformer.Transform;
 import com.alesharik.webserver.api.agent.transformer.TransformAll;
 import com.alesharik.webserver.logger.Prefixes;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -84,7 +83,6 @@ final class AgentClassTransformer implements ClassFileTransformer {
                 });
     }
 
-    @SuppressFBWarnings("DM_EXIT")
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
         try {

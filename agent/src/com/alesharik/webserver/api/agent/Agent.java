@@ -125,8 +125,7 @@ public final class Agent {
      * Check agent installation. If agent is not installed, it install in on the current VM
      */
     public static void checkInstall() {
-        if(instrumentation == null) {
+        if(instrumentation == null)
             AgentInstaller.install();
-        }
     }
 }

@@ -32,13 +32,15 @@ import com.alesharik.webserver.api.collections.ConcurrentTripleHashMap;
 import com.alesharik.webserver.api.misc.Triple;
 import com.alesharik.webserver.logger.Logger;
 import com.alesharik.webserver.logger.Prefixes;
-import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
-import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
+import io.github.classgraph.ScanResult;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.jctools.queues.atomic.MpscLinkedAtomicQueue;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
@@ -103,44 +105,55 @@ final class ClassPathScannerThread extends Thread {
     }
 
     private void iteration() throws InterruptedException {
-        try {
-            synchronized (scanLock) {
-                scanLock.wait();
-            }
-
-            ClassLoader classLoader = classLoaderQueue.poll();
-            if(classLoader != null)
-                scanClassLoader(classLoader);
-            ClassLoader toRescan = removeQueue.poll();
-            if(toRescan != null)
-                removeClassLoaderImpl(toRescan);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        synchronized (scanLock) {
+            scanLock.wait();
         }
+
+        ClassLoader classLoader = classLoaderQueue.poll();
+        if(classLoader != null)
+            scanClassLoader(classLoader);
+        ClassLoader toRescan = removeQueue.poll();
+        if(toRescan != null)
+            removeClassLoaderImpl(toRescan);
     }
 
-    private void scanClassLoader(ClassLoader classLoader) throws InterruptedException, ExecutionException {
+    private void scanClassLoader(ClassLoader classLoader) {
         taskCount.incrementAndGet();
         ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> newListeners = new ConcurrentTripleHashMap<>();
         Map<MethodHandle, Method> rel = new HashMap<>();
 
-        ScanResult result = new FastClasspathScanner()
+        try (ScanResult result = new ClassGraph()
                 .ignoreParentClassLoaders()
                 .overrideClassLoaders(classLoader)
-                .matchClassesWithAnnotation(ClassPathScanner.class, classWithAnnotation -> matchClassPathScanner(classWithAnnotation, newListeners, false, rel))
-                .matchClassesWithAnnotation(ClassTransformer.class, transformer -> {
-                    if(transformer.isAnnotationPresent(Ignored.class))
-                        return;
-                    AgentClassTransformer.addTransformer(transformer, false);
-                })
-                .verbose(false)
-                .scanAsync(workerPool, PARALLELISM)
-                .get();
+                .ignoreClassVisibility()
+                .ignoreFieldVisibility()
+                .ignoreMethodVisibility()
+                .whitelistPackages("*")
+                .enableAllInfo()
+                .scan(workerPool, PARALLELISM)) {
+            for(ClassInfo classInfo : result.getClassesWithAnnotation(ClassTransformer.class.getCanonicalName())) {
+                if(classInfo.hasAnnotation(Ignored.class.getCanonicalName()))
+                    continue;
 
-        if(result.getMatchProcessorExceptions().size() > 0) {
-            System.err.println("Exceptions detected while processing classloader!");
-            for(Throwable throwable : result.getMatchProcessorExceptions())
-                throwable.printStackTrace();
+                try {
+                    AgentClassTransformer.addTransformer(classLoader.loadClass(classInfo.getName()), false);
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            for(ClassInfo classInfo : result.getClassesWithAnnotation(ClassPathScanner.class.getCanonicalName())) {
+                if(classInfo.hasAnnotation(Ignored.class.getCanonicalName()))
+                    continue;
+
+                try {
+                    matchClassPathScanner(classLoader.loadClass(classInfo.getName()), newListeners, false, rel);
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         new ClassLoaderScanTask(listeners, Collections.singleton(classLoader), workerPool, rel).run();
@@ -193,8 +206,6 @@ final class ClassPathScannerThread extends Thread {
         AtomicBoolean classLoaderMemoryLeakSuspected = new AtomicBoolean(!clazz.isAnnotationPresent(SuppressClassLoaderUnloadWarning.class));
         Stream.of(clazz.getDeclaredMethods())
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
-                .filter(method -> method.isAnnotationPresent(ListenAnnotation.class) || method.isAnnotationPresent(ListenClass.class) || method.isAnnotationPresent(ListenInterface.class)
-                        || method.isAnnotationPresent(ListenReloadStart.class) || method.isAnnotationPresent(ListenReloadEnd.class) || method.isAnnotationPresent(UnloadClassLoaderHandler.class))
                 .forEach(method -> {
                     if(method.isAnnotationPresent(ListenAnnotation.class)) {
                         ListenAnnotation annotation = method.getAnnotation(ListenAnnotation.class);
@@ -286,7 +297,47 @@ final class ClassPathScannerThread extends Thread {
     }
 
     @RequiredArgsConstructor
-    private static final class ClassLoaderScanTask implements Runnable {
+    private final class ClassLoaderRemoveTask implements Runnable {
+        private final MultiValuedMap<Type, MethodHandle> listeners;
+        private final ClassLoader classLoader;
+        private final Map<MethodHandle, Method> rel;
+
+        @Override
+        public void run() {
+            listeners.get(Type.RELOAD_START).forEach(this::invokeMethod);
+            listeners.get(Type.UNLOAD_CLASS_LOADER).forEach(methodHandle -> invokeMethod(methodHandle, classLoader));
+            listeners.get(Type.RELOAD_END).forEach(this::invokeMethod);
+        }
+
+        private void invokeMethod(MethodHandle methodHandle, ClassLoader classLoader) {
+            Stages stages = rel.get(methodHandle).getAnnotation(Stages.class);
+            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
+                return;
+            try {
+                methodHandle.invoke(classLoader);
+            } catch (Error error) {
+                throw error;
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        }
+
+        private void invokeMethod(MethodHandle methodHandle) {
+            Stages stages = rel.get(methodHandle).getAnnotation(Stages.class);
+            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
+                return;
+            try {
+                methodHandle.invoke();
+            } catch (Error error) {
+                throw error;
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        }
+    }
+
+    @RequiredArgsConstructor
+    private final class ClassLoaderScanTask implements Runnable {
         private final ConcurrentTripleHashMap<Class<?>, Type, MethodHandle> listeners;
         private final Set<ClassLoader> classLoaders;
         private final ForkJoinPool forkJoinPool;
@@ -294,115 +345,62 @@ final class ClassPathScannerThread extends Thread {
 
         @Override
         public void run() {
-            FastClasspathScanner scanner = new FastClasspathScanner().ignoreParentClassLoaders();
-            ClassPathScannerThread.taskCount.incrementAndGet();
-            listeners.forEach((aClass, type, method) -> {
-                switch (type) {
-                    case ANNOTATION:
-                        scanner.matchClassesWithAnnotation(aClass, classWithAnnotation -> {
-                            if(classWithAnnotation.isAnnotationPresent(Ignored.class))
-                                return;
-                            Stages stages = rel.get(method).getAnnotation(Stages.class);
-                            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
-                                return;
-
-                            try {
-                                method.invokeExact(classWithAnnotation);
-                            } catch (Throwable e) {
-                                Logger.log(e);
-                            }
-                        });
-                        break;
-                    case CLASS:
-                        scanner.matchSubclassesOf(aClass, subclass -> {
-                            if(subclass.isAnnotationPresent(Ignored.class))
-                                return;
-                            Stages stages = rel.get(method).getAnnotation(Stages.class);
-                            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
-                                return;
-                            try {
-                                method.invokeExact(subclass);
-                            } catch (Throwable e) {
-                                Logger.log(e);
-                            }
-                        });
-                        break;
-                    case INTERFACE:
-                        scanner.matchClassesImplementing(aClass, implementingClass -> {
-                            if(implementingClass.isAnnotationPresent(Ignored.class))
-                                return;
-                            Stages stages = rel.get(method).getAnnotation(Stages.class);
-                            if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
-                                return;
-                            try {
-                                method.invokeExact(implementingClass);
-                            } catch (Throwable e) {
-                                Logger.log(e);
-                            }
-                        });
-                }
-            });
-            scanner.overrideClassLoaders(classLoaders.toArray(new ClassLoader[classLoaders.size()]));
-            CompletableFuture.supplyAsync(ClassPathScannerThread.taskCount::incrementAndGet)
-                    .thenApply(integer -> {
+            CompletableFuture.supplyAsync(ClassPathScannerThread.taskCount::incrementAndGet, workerPool)
+                    .thenApply(integer -> new ClassGraph()
+                            .enableAllInfo()
+                            .ignoreMethodVisibility()
+                            .ignoreFieldVisibility()
+                            .ignoreClassVisibility()
+                            .overrideClassLoaders(classLoaders.toArray(new ClassLoader[0]))
+                            .ignoreParentClassLoaders())
+                    .thenApply(scanner -> {
                         try {
                             return scanner.scanAsync(forkJoinPool, PARALLELISM).get();
                         } catch (InterruptedException | ExecutionException e) {
-                            e.printStackTrace();
-                            return null;
+                            throw new RuntimeException(e);
                         }
                     })
-                    .thenRun(ClassPathScannerThread.taskCount::decrementAndGet);
-
-            ClassPathScannerThread.taskCount.decrementAndGet();
+                    .thenAccept(this::processResult)
+                    .thenRun(ClassPathScannerThread.taskCount::decrementAndGet)
+                    .exceptionally(throwable -> {
+                        throwable.getCause().printStackTrace();
+                        return null;
+                    });
         }
-    }
 
-    @RequiredArgsConstructor
-    private static final class ClassLoaderRemoveTask implements Runnable {
-        private final MultiValuedMap<Type, MethodHandle> listeners;
-        private final ClassLoader classLoader;
-        private final Map<MethodHandle, Method> rel;
-
-        @Override
-        public void run() {
-            for(MethodHandle methodHandle : listeners.get(Type.RELOAD_START)) {
+        private void processResult(ScanResult result) {
+            listeners.forEach((aClass, type, methodHandle) -> {
                 Stages stages = rel.get(methodHandle).getAnnotation(Stages.class);
                 if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
                     return;
-                try {
-                    methodHandle.invoke();
-                } catch (Error error) {
-                    throw error;
-                } catch (Throwable throwable) {
-                    throwable.printStackTrace();
-                }
-            }
 
-            for(MethodHandle methodHandle : listeners.get(Type.UNLOAD_CLASS_LOADER)) {
-                Stages stages = rel.get(methodHandle).getAnnotation(Stages.class);
-                if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
-                    return;
-                try {
-                    methodHandle.invoke(classLoader);
-                } catch (Error error) {
-                    throw error;
-                } catch (Throwable throwable) {
-                    throwable.printStackTrace();
+                switch (type) {
+                    case CLASS:
+                        result.getSubclasses(aClass.getCanonicalName())
+                                .filter(classInfo -> classInfo.hasAnnotation(Ignored.class.getCanonicalName()))
+                                .forEach(classInfo -> invokeMethod(methodHandle, classInfo));
+                        break;
+                    case INTERFACE:
+                        result.getClassesImplementing(aClass.getCanonicalName())
+                                .filter(classInfo -> classInfo.hasAnnotation(Ignored.class.getCanonicalName()))
+                                .forEach(classInfo -> invokeMethod(methodHandle, classInfo));
+                        break;
+                    case ANNOTATION:
+                        result.getClassesWithAnnotation(aClass.getCanonicalName())
+                                .filter(classInfo -> classInfo.hasAnnotation(Ignored.class.getCanonicalName()))
+                                .forEach(classInfo -> invokeMethod(methodHandle, classInfo));
+                        break;
                 }
-            }
+            });
+        }
 
-            for(MethodHandle methodHandle : listeners.get(Type.RELOAD_END)) {
-                Stages stages = rel.get(methodHandle).getAnnotation(Stages.class);
-                if(stages != null && ExecutionStage.isEnabled() && !ExecutionStage.valid(stages.value()))
-                    return;
-                try {
-                    methodHandle.invoke();
-                } catch (Error error) {
-                    throw error;
-                } catch (Throwable throwable) {
-                    throwable.printStackTrace();
-                }
+        private void invokeMethod(MethodHandle methodHandle, ClassInfo clazz) {
+            try {
+                methodHandle.invokeExact(clazz.loadClass());
+            } catch (Exception e) {
+                e.printStackTrace();
+            } catch (Throwable e) {
+                throw (Error) e;
             }
         }
     }
