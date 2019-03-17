@@ -249,7 +249,7 @@ public final class HttpServerModuleImpl implements HttpServer {
         private final AverageCounter responseTime = new BasicAverageCounter();
 
         public HttpServerStatisticsImpl() {
-            responseTime.setTimeDelay(1, TimeUnit.SECONDS);
+            responseTime.setTimePeriod(1, TimeUnit.SECONDS);
         }
 
         @Override
@@ -259,7 +259,7 @@ public final class HttpServerModuleImpl implements HttpServer {
 
         @Override
         public long getConnectionCount() {
-            return connectionCounter.getAmount();
+            return connectionCounter.get();
         }
 
         @Override
@@ -285,7 +285,7 @@ public final class HttpServerModuleImpl implements HttpServer {
 
         @Override
         public long getRequestCount() {
-            return requestCounter.getAmount();
+            return requestCounter.get();
         }
 
         @Override
@@ -295,7 +295,7 @@ public final class HttpServerModuleImpl implements HttpServer {
 
         @Override
         public long getErrorCount() {
-            return errorCounter.getAmount();
+            return errorCounter.get();
         }
 
         @Override

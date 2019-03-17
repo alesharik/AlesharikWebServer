@@ -18,13 +18,32 @@
 
 package com.alesharik.webserver.api.statistics;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 /**
- * Used for collect count in time. Minimal value is millisecond.
+ * This interface is used for collect a count in time period. In the next time period count will be reset
  */
+@ThreadSafe
 public interface TimeCountStatistics {
+    /**
+     * Add count to statistics value
+     * @param count the count. May be negative
+     */
     void measure(int count);
 
+    /**
+     * Force-update statistics
+     */
     void update();
 
-    long getCount();
+    /**
+     * Reset count to 0
+     */
+    void reset();
+
+    /**
+     * Return count
+     * @return the count
+     */
+    long get();
 }

@@ -19,50 +19,114 @@
 package com.alesharik.webserver.api.statistics;
 
 import javax.annotation.Nonnull;
-import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.StampedLock;
 
-@NotThreadSafe
+/**
+ * Basic implementation of {@link TimeCountStatistics}. It updates value on every {@link #update()}/{@link #measure(int)} method call
+ */
+@ThreadSafe
 public class FuzzyTimeCountStatistics implements TimeCountStatistics {
     private final long delta;
+    private final StampedLock lock = new StampedLock();
+    private final AtomicLong count = new AtomicLong();
 
-    private volatile long count;
-    private volatile long time;
+    private long time;
+    private long lastCount;
 
-    private volatile long lastCount;
-
+    /**
+     * Create statistics with time period
+     * @param delta the period
+     * @param timeUnit time unit
+     */
     public FuzzyTimeCountStatistics(long delta, @Nonnull TimeUnit timeUnit) {
         this.delta = timeUnit.toMillis(delta);
         this.lastCount = 0;
-        this.count = 0;
 
         this.time = System.currentTimeMillis();
     }
 
+    @Override
     public void measure(int count) {
         long current = System.currentTimeMillis();
-        if(current < time + delta) {
-            this.count += count;
-        } else {
-            lastCount = this.count;
-            time = System.currentTimeMillis();
-            this.count = count;
+        long l = lock.tryOptimisticRead();
+        long time = this.time;
+        if(!lock.validate(l)) {
+            l = lock.readLock();
+            try {
+                time = this.time;
+            } finally {
+                lock.unlockRead(l);
+            }
+        }
+
+        if(current < time + delta)
+            this.count.addAndGet(count);
+        else {
+            long wl = lock.writeLock();
+            try {
+                lastCount = this.count.getAndSet(count);
+                this.time = System.currentTimeMillis();
+            } finally {
+                lock.unlockWrite(wl);
+            }
         }
     }
 
+    @Override
     public void update() {
         long current = System.currentTimeMillis();
-        if(current >= time + delta) {
-            lastCount = this.count;
+        long l = lock.tryOptimisticRead();
+        long time = this.time;
+        if(!lock.validate(l)) {
+            l = lock.readLock();
+            try {
+                time = this.time;
+            } finally {
+                lock.unlockRead(l);
+            }
+        }
+
+        if(current < time + delta)
+            return;
+
+        long wl = lock.writeLock();
+        try {
+            lastCount = this.count.getAndSet(0);
+            this.time = System.currentTimeMillis();
+        } finally {
+            lock.unlockWrite(wl);
+        }
+    }
+
+    @Override
+    public void reset() {
+        long l = lock.writeLock();
+        try {
+            lastCount = 0;
+            count.set(0);
             time = System.currentTimeMillis();
-            count = 0;
+        } finally {
+            lock.unlockWrite(l);
         }
     }
 
     /**
      * This method is thread-safe
      */
-    public long getCount() {
-        return lastCount;
+    public long get() {
+        long l = lock.tryOptimisticRead();
+        long ret = lastCount;
+        if(!lock.validate(l)) {
+            l = lock.readLock();
+            try {
+                ret = lastCount;
+            } finally {
+                lock.unlockRead(l);
+            }
+        }
+        return ret;
     }
 }

@@ -29,13 +29,13 @@ public class BasicAverageCounterTest {
     private BasicAverageCounter averageCounter;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         averageCounter = new BasicAverageCounter();
     }
 
     @Test
     public void testWorking() throws Exception {
-        averageCounter.setTimeDelay(1, TimeUnit.SECONDS);
+        averageCounter.setTimePeriod(1, TimeUnit.SECONDS);
 
         averageCounter.addUnit(500);
         averageCounter.addUnit(100);
@@ -47,7 +47,7 @@ public class BasicAverageCounterTest {
 
         averageCounter.addUnit(700);
 
-        Thread.sleep(1000);
+        Thread.sleep(900);
 
         averageCounter.update();
         assertEquals(400, averageCounter.getAverage());

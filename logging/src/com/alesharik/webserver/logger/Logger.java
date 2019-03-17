@@ -773,7 +773,7 @@ public final class Logger {
 
         public long getMessagePerSecond() {
             statistics.update();
-            return statistics.getCount();
+            return statistics.get();
         }
     }
 
@@ -931,7 +931,7 @@ public final class Logger {
         @Override
         public long getMessagesPerSecond() {
             statistics.update();
-            return statistics.getCount();
+            return statistics.get();
         }
 
         @Override

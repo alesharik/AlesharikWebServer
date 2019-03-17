@@ -18,22 +18,46 @@
 
 package com.alesharik.webserver.api.statistics;
 
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 
+/**
+ * Basic average counter implementation
+ */
+@ThreadSafe
 public class BasicAverageCounter implements AverageCounter {
     protected final StampedLock lock = new StampedLock();
+    protected final AtomicLong period;
 
-    protected final AtomicLong delay = new AtomicLong(1000);
+    protected long lastTime;
+    protected long lastAverage;
+    protected long currentCount;
+    protected long currentSum;
 
-    protected volatile long lastTime = 0;
-    protected volatile long lastAverage = 0;
-    protected volatile long currentAvg = 0;
+    /**
+     * Create counter with default time period - 1 second
+     */
+    public BasicAverageCounter() {
+        this(1, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Create average counter with custom time period
+     *
+     * @param time the period
+     * @param unit time unit
+     */
+    public BasicAverageCounter(long time, @Nonnull TimeUnit unit) {
+        period = new AtomicLong(unit.toMillis(time));
+        lastTime = System.currentTimeMillis();
+    }
 
     @Override
-    public void setTimeDelay(long time, TimeUnit unit) {
-        delay.set(unit.toMillis(time));
+    public void setTimePeriod(long time, TimeUnit unit) {
+        period.set(unit.toMillis(time));
     }
 
     @Override
@@ -57,13 +81,14 @@ public class BasicAverageCounter implements AverageCounter {
         long stamp = lock.writeLock();
         try {
             long d = System.currentTimeMillis() - lastTime;
-            if(d >= delay.get()) {
+            if(d >= period.get()) {
                 lastTime = System.currentTimeMillis();
-                lastAverage = currentAvg;
-                currentAvg = 0;
+                lastAverage = currentCount == 0 ? 0 : (currentSum / currentCount);
+                currentSum = 0;
+                currentCount = 0;
             }
-
-            currentAvg = currentAvg == 0 ? l : (currentAvg + l) / 2;
+            currentSum += l;
+            currentCount++;
         } finally {
             lock.unlockWrite(stamp);
         }
@@ -74,7 +99,9 @@ public class BasicAverageCounter implements AverageCounter {
         long stamp = lock.writeLock();
         try {
             lastAverage = 0;
-            currentAvg = 0;
+            currentCount = 0;
+            currentSum = 0;
+            lastTime = System.currentTimeMillis();
         } finally {
             lock.unlockWrite(stamp);
         }
@@ -85,8 +112,9 @@ public class BasicAverageCounter implements AverageCounter {
         long stamp = lock.writeLock();
         try {
             lastTime = System.currentTimeMillis();
-            lastAverage = currentAvg;
-            currentAvg = 0;
+            lastAverage = currentCount == 0 ? 0 : (currentSum / currentCount);
+            currentSum = 0;
+            currentCount = 0;
         } finally {
             lock.unlockWrite(stamp);
         }

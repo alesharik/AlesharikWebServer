@@ -18,11 +18,19 @@
 
 package com.alesharik.webserver.api.statistics;
 
+import sun.misc.Cleaner;
+
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This class uses timer thread to update values
+ */
+@ThreadSafe
 public class PreciseConcurrentTimeCountStatistics implements TimeCountStatistics {
     private static final ScheduledExecutorService DEFAULT_TIMER = Executors.newSingleThreadScheduledExecutor((r) -> {
         Thread thread = new Thread(r);
@@ -50,14 +58,13 @@ public class PreciseConcurrentTimeCountStatistics implements TimeCountStatistics
         this.counter = new AtomicLong();
         this.time = new AtomicLong();
 
-        //noinspection StatementWithEmptyBody
-        while((System.nanoTime() % 1000000) < 900000) ;
-        timer.scheduleAtFixedRate(this::update, 0, delay, TimeUnit.MILLISECONDS);
+        update();
+        ScheduledFuture<?> future = timer.scheduleAtFixedRate(this::update, 0, delay, TimeUnit.MILLISECONDS);
+        Cleaner.create(this, () -> future.cancel(false));
     }
 
     @Override
     public void measure(int count) {
-        //noinspection StatementWithEmptyBody
         counter.addAndGet(count);
     }
 
@@ -68,17 +75,25 @@ public class PreciseConcurrentTimeCountStatistics implements TimeCountStatistics
         if(currentTime - l < delay)
             return;
 
+        long cnt = counter.get();
         while(!time.compareAndSet(l, currentTime)) {
             currentTime = System.currentTimeMillis();
             l = time.get();
             if(currentTime - l < delay)
                 return;
+            cnt = counter.get();
         }
+        counter.compareAndSet(cnt, 0);
+    }
+
+    @Override
+    public void reset() {
+        time.set(0);
         counter.set(0);
     }
 
     @Override
-    public long getCount() {
+    public long get() {
         return counter.get();
     }
 

@@ -18,14 +18,35 @@
 
 package com.alesharik.webserver.api.statistics;
 
-public interface Counter {
-    long getAmount();
+import javax.annotation.concurrent.ThreadSafe;
 
+/**
+ * This interface represents a basic thread-safe counter with increment, add, get and reset methods
+ */
+@ThreadSafe
+public interface Counter {
+    /**
+     * Return counter value
+     * @return counter value
+     */
+    long get();
+
+    /**
+     * Increment the counter
+     */
     default void add() {
         add(1);
     }
 
+    /**
+     * Add value to counter
+     * @param delta the value. May be negative
+     */
     void add(long delta);
 
+    /**
+     * Reset counter to 0
+     * @return counter value just before reset
+     */
     long reset();
 }

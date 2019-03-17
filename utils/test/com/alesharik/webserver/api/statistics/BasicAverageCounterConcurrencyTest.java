@@ -35,7 +35,7 @@ public class BasicAverageCounterConcurrencyTest {
         static final BasicAverageCounter basicAverageCounter = new BasicAverageCounter();
 
         static {
-            basicAverageCounter.setTimeDelay(1, TimeUnit.MILLISECONDS);
+            basicAverageCounter.setTimePeriod(1, TimeUnit.MILLISECONDS);
         }
     }
 

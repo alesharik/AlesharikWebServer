@@ -409,7 +409,7 @@ public abstract class AbstractBeanContext implements BeanContext {
 
         @Override
         public long getCreatedObjects() {
-            return createdObjects.getAmount();
+            return createdObjects.get();
         }
 
         public void incrementCreatedObjects() {

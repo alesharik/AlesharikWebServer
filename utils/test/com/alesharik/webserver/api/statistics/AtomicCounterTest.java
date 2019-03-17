@@ -18,37 +18,22 @@
 
 package com.alesharik.webserver.api.statistics;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.assertEquals;
 
-public class PreciseConcurrentTimeCountStatisticsTest {
-    private PreciseConcurrentTimeCountStatistics statistics;
-    private ScheduledExecutorService timer;
-
-    @Before
-    public void setUp() throws Exception {
-        timer = Executors.newSingleThreadScheduledExecutor();
-        statistics = new PreciseConcurrentTimeCountStatistics(1, timer);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        timer.shutdown();
-    }
-
+public class AtomicCounterTest {
     @Test
-    public void testLogic() throws Exception {
-        statistics.measure(1);
-        statistics.measure(100);
-        assertEquals(101, statistics.get());
-        Thread.sleep(2);
-        statistics.update();
-        assertEquals(0, statistics.get());
+    public void logic() {
+        Counter counter = new AtomicCounter(10);
+        assertEquals(10, counter.get());
+        counter.add();
+        assertEquals(11, counter.get());
+        counter.add(100);
+        assertEquals(111, counter.get());
+        counter.add(-100);
+        assertEquals(11, counter.get());
+        counter.reset();
+        assertEquals(0, counter.get());
     }
 }

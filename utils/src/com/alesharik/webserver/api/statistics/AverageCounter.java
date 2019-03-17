@@ -18,16 +18,41 @@
 
 package com.alesharik.webserver.api.statistics;
 
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This counter count average of given units by time period
+ */
+@ThreadSafe
 public interface AverageCounter {
-    void setTimeDelay(long time, TimeUnit unit);
+    /**
+     * Set time period
+     * @param time the period
+     * @param unit time unit
+     */
+    void setTimePeriod(long time, @Nonnull TimeUnit unit);
 
+    /**
+     * Return counted average
+     * @return counted average
+     */
     long getAverage();
 
+    /**
+     * Add unit
+     * @param l the unit. May be negative
+     */
     void addUnit(long l);
 
+    /**
+     * Reset counter to 0
+     */
     void reset();
 
+    /**
+     * Force-update average
+     */
     void update();
 }

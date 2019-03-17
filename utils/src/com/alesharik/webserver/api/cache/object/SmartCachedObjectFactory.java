@@ -215,9 +215,9 @@ public final class SmartCachedObjectFactory<T extends Recyclable> implements Cac
         private void newSample() {
             System.arraycopy(data, 1, data, 0, 4);
             data[4][0] = cache.size();
-            data[4][1] = suppliedObjects.getCount();
-            data[4][2] = retrievedObjects.getCount();
-            data[4][3] = createdObjects.getCount();
+            data[4][1] = suppliedObjects.get();
+            data[4][2] = retrievedObjects.get();
+            data[4][3] = createdObjects.get();
         }
     }
 }

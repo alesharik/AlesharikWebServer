@@ -18,13 +18,30 @@
 
 package com.alesharik.webserver.api.statistics;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This class uses atomic long to provide {@link Counter} functions
+ */
+@ThreadSafe
 public class AtomicCounter implements Counter {
     protected final AtomicLong counter = new AtomicLong();
 
+    public AtomicCounter() {
+        counter.set(0);
+    }
+
+    /**
+     * Creates atomic counter
+     * @param value initial counter value
+     */
+    public AtomicCounter(long value) {
+        counter.set(value);
+    }
+
     @Override
-    public long getAmount() {
+    public long get() {
         return counter.get();
     }
 
